@@ -1,0 +1,155 @@
+import type { ReactElement } from 'react';
+import { getResolvedSlot } from '@cookbook/router';
+import type { MatchedRoute, ResolvedSlot, ResolvedInterceptedRoute } from '@cookbook/router';
+import {
+  OutletContext,
+  RouteRenderContext,
+  useRouterContext,
+  useSlotRenderContext,
+} from '../context/router-context';
+import { asComponent, renderMatches } from './router-provider';
+
+export interface SlotProps<T = unknown> {
+  readonly name: string;
+  readonly context?: T;
+}
+
+export function Slot<T = unknown>(props: SlotProps<T>): ReactElement | null {
+  const value = useSlotRenderContext();
+  const routerContext = useRouterContext();
+
+  if (!value) {
+    return null;
+  }
+
+  const intercepted = getActiveIntercept(
+    routerContext.state.match?.intercepted,
+    props.name,
+    value.ownerRouteId,
+  );
+
+  if (intercepted) {
+    return renderInterceptedRoute(intercepted, intercepted.context ?? props.context);
+  }
+
+  const slot = getResolvedSlot(value.slots, value.ownerRouteId, props.name);
+
+  if (!slot) {
+    return null;
+  }
+
+  return renderResolvedSlot(slot, props.context);
+}
+
+function renderInterceptedRoute(
+  intercepted: ResolvedInterceptedRoute,
+  context: unknown,
+): ReactElement | null {
+  const Component = asComponent(intercepted.component);
+
+  if (!Component) {
+    return null;
+  }
+
+  const match = intercepted.match.branch[intercepted.match.branch.length - 1];
+
+  if (!match) {
+    return null;
+  }
+
+  const element = <Component />;
+
+  return (
+    <RouteRenderContext.Provider value={{ match }}>
+      <OutletContext.Provider value={{ outlet: element, context }}>
+        {element}
+      </OutletContext.Provider>
+    </RouteRenderContext.Provider>
+  );
+}
+
+function renderResolvedSlot(slot: ResolvedSlot, context: unknown): ReactElement | null {
+  if (slot.status === 'disabled' || slot.status === 'empty') {
+    return null;
+  }
+
+  if (slot.status === 'matched' && slot.branch) {
+    const rendered = renderMatches(slot.branch, null);
+    return (
+      <OutletContext.Provider value={{ outlet: rendered, context }}>
+        {rendered}
+      </OutletContext.Provider>
+    );
+  }
+
+  const Component = asComponent(slot.component);
+
+  if (!Component) {
+    return null;
+  }
+
+  const match = createSlotRenderMatch(slot);
+  const element = <Component />;
+
+  if (!match) {
+    return (
+      <OutletContext.Provider value={{ outlet: element, context }}>
+        {element}
+      </OutletContext.Provider>
+    );
+  }
+
+  return (
+    <RouteRenderContext.Provider value={{ match }}>
+      <OutletContext.Provider value={{ outlet: element, context }}>
+        {element}
+      </OutletContext.Provider>
+    </RouteRenderContext.Provider>
+  );
+}
+
+function getActiveIntercept(
+  intercepted: ResolvedInterceptedRoute | undefined,
+  slotName: string,
+  ownerRouteId: string,
+): ResolvedInterceptedRoute | null {
+  if (!intercepted || intercepted.slot !== slotName) {
+    return null;
+  }
+
+  return intercepted.sourceRouteId === ownerRouteId ? intercepted : null;
+}
+
+function createSlotRenderMatch(slot: ResolvedSlot): MatchedRoute | null {
+  if (slot.match) {
+    return slot.match;
+  }
+
+  if (!slot.fallback) {
+    return null;
+  }
+
+  return {
+    id: slot.fallback.id,
+    route: {
+      id: slot.fallback.id,
+      children: [],
+      component: slot.fallback.component,
+      params: [],
+      index: false,
+      score: 0,
+      order: -1,
+      route: {
+        id: slot.fallback.id,
+        component: slot.fallback.component,
+        ...(slot.fallback.meta === undefined ? {} : { meta: slot.fallback.meta }),
+        ...(slot.fallback.notFound === undefined ? {} : { notFound: slot.fallback.notFound }),
+      },
+      slotOwnerId: slot.ownerRouteId,
+      slotName: slot.name,
+      slotRoute: true,
+      intercepts: [],
+    },
+    params: slot.params,
+  };
+}

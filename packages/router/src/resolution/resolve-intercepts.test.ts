@@ -1,0 +1,187 @@
+import { describe, expect, it } from 'vitest';
+import { matchRoutes } from '../matching/match-routes';
+import { normalizeRoutes } from '../matching/normalize-routes';
+import {
+  createInterceptHistoryState,
+  normalizeCallSiteIntercept,
+  normalizeConfiguredIntercepts,
+  resolveIntercept,
+  restoreInterceptFromState,
+  validateInterceptTargets,
+} from './resolve-intercepts';
+
+function BlogLayout() {}
+function BlogIndex() {}
+function BlogPostPage() {}
+function BlogPostModal() {}
+
+const routes = normalizeRoutes([
+  {
+    id: 'blog',
+    path: '/blog',
+    layout: {
+      component: BlogLayout,
+      slots: {
+        modal: { fallback: null },
+      },
+    },
+    intercepts: {
+      modal: {
+        to: ['{slug:regex([a-z0-9-]+)}'],
+        component: BlogPostModal,
+      },
+    },
+    children: [{ id: 'blog.index', index: true, component: BlogIndex }],
+  },
+  { id: 'blog.posts.show', path: '/blog/{slug:regex([a-z0-9-]+)}', component: BlogPostPage },
+] as const);
+
+describe('resolveIntercept', () => {
+  it('normalizes configured intercepts to absolute path patterns', () => {
+    const blog = routes[0];
+
+    expect(blog && normalizeConfiguredIntercepts(blog)).toEqual([
+      {
+        sourceRouteId: 'blog',
+        slot: 'modal',
+        to: '/blog/{slug:regex([a-z0-9-]+)}',
+        component: BlogPostModal,
+      },
+    ]);
+  });
+
+  it('resolves configured interception from a source route to a destination route', () => {
+    const source = matchRoutes(routes, '/blog');
+    const destination = matchRoutes(routes, '/blog/hello-world');
+
+    expect(
+      resolveIntercept({
+        source,
+        destination,
+        destinationPathname: '/blog/hello-world',
+        intercept: 'modal',
+      }),
+    ).toMatchObject({
+      slot: 'modal',
+      sourceRouteId: 'blog',
+      targetRouteId: 'blog.posts.show',
+      component: BlogPostModal,
+      configured: true,
+    });
+  });
+
+  it('resolves call-site interception with component or element', () => {
+    expect(normalizeCallSiteIntercept({ slot: 'modal', element: BlogPostModal })).toEqual({
+      slot: 'modal',
+      component: BlogPostModal,
+    });
+  });
+
+  it('throws when a call-site intercept has no render target', () => {
+    expect(() => normalizeCallSiteIntercept({ slot: 'modal' })).toThrow(
+      /must define component or element/,
+    );
+  });
+
+  it('throws for a missing slot in development', () => {
+    const source = matchRoutes(routes, '/blog');
+    const destination = matchRoutes(routes, '/blog/hello-world');
+
+    expect(() =>
+      resolveIntercept({
+        source,
+        destination,
+        destinationPathname: '/blog/hello-world',
+        intercept: { slot: 'drawer', component: BlogPostModal },
+      }),
+    ).toThrow(/does not define or render that slot/);
+  });
+
+  it('returns null for a missing slot in production mode so navigation can continue normally', () => {
+    const source = matchRoutes(routes, '/blog');
+    const destination = matchRoutes(routes, '/blog/hello-world');
+
+    expect(
+      resolveIntercept({
+        source,
+        destination,
+        destinationPathname: '/blog/hello-world',
+        intercept: { slot: 'drawer', component: BlogPostModal },
+        production: true,
+      }),
+    ).toBeNull();
+  });
+
+  it('restores configured interception and navigation context from browser history state', () => {
+    const source = matchRoutes(routes, '/blog');
+    const destination = matchRoutes(routes, '/blog/hello-world');
+    const context = { source: 'article-card', index: 1 };
+    const resolved = resolveIntercept({
+      source,
+      destination,
+      destinationPathname: '/blog/hello-world',
+      intercept: 'modal',
+      context,
+    });
+
+    expect(resolved).not.toBeNull();
+    expect(resolved?.context).toEqual(context);
+
+    const state = createInterceptHistoryState(resolved!, '/blog');
+
+    expect(() => structuredClone(state)).not.toThrow();
+    expect(state.__cookbookRouterIntercept.context).toEqual(context);
+    expect(restoreInterceptFromState(state, source, destination)).toMatchObject({
+      slot: 'modal',
+      targetRouteId: 'blog.posts.show',
+      component: BlogPostModal,
+      context,
+    });
+  });
+
+  it('stores call-site intercept components outside cloneable browser history state', () => {
+    const source = matchRoutes(routes, '/blog');
+    const destination = matchRoutes(routes, '/blog/hello-world');
+    const context = { source: 'call-site-card' };
+    const resolved = resolveIntercept({
+      source,
+      destination,
+      destinationPathname: '/blog/hello-world',
+      intercept: { slot: 'modal', component: BlogPostModal },
+      context,
+    });
+
+    expect(resolved).not.toBeNull();
+
+    const state = createInterceptHistoryState(resolved!, '/blog');
+
+    expect(state.__cookbookRouterIntercept).not.toHaveProperty('component');
+    expect(state.__cookbookRouterIntercept.componentKey).toMatch(/^call-site:/);
+    expect(() => structuredClone(state)).not.toThrow();
+    expect(state.__cookbookRouterIntercept.context).toEqual(context);
+    expect(restoreInterceptFromState(state, source, destination)).toMatchObject({
+      slot: 'modal',
+      targetRouteId: 'blog.posts.show',
+      component: BlogPostModal,
+      configured: false,
+      context,
+    });
+  });
+
+  it('validates that configured intercept targets point at canonical routes', () => {
+    expect(() => validateInterceptTargets(routes)).not.toThrow();
+
+    const invalid = normalizeRoutes([
+      {
+        id: 'blog',
+        path: '/blog',
+        layout: { slots: { modal: { fallback: null } } },
+        intercepts: {
+          modal: { to: ['/missing/{slug:regex([a-z0-9-]+)}'], component: BlogPostModal },
+        },
+      },
+    ] as const);
+
+    expect(() => validateInterceptTargets(invalid)).toThrow(/targets unknown pattern/);
+  });
+});

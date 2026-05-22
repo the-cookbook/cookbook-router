@@ -1,0 +1,27 @@
+{
+  "routes": [
+    {
+      "id": "root",
+      "path": "/",
+      "index": false
+    },
+    {
+      "id": "home",
+      "path": "/",
+      "parentId": "root",
+      "index": true
+    },
+    {
+      "id": "users.show",
+      "path": "/users/{id:int}",
+      "parentId": "root",
+      "index": false
+    },
+    {
+      "id": "blocked",
+      "path": "/blocked",
+      "parentId": "root",
+      "index": false
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+import { renderHook } from '@testing-library/react';
+import { createMemoryRouter, defineRoutes } from '@cookbook/router';
+import { describe, expect, test } from 'vitest';
+import { RouterProvider } from '../components/router-provider';
+import { useLocation } from './use-location';
+
+function Page() {
+  return null;
+}
+
+describe('useLocation', () => {
+  test('returns current location including search and hash', async () => {
+    const router = createMemoryRouter({
+      routes: defineRoutes([{ id: 'page', path: '/page', component: Page }] as const),
+      initialEntries: ['/page?tab=a#top'],
+    });
+    await router.resolveCurrent();
+    const wrapper = ({ children }: { children: import('react').ReactNode }) => (
+      <RouterProvider router={router}>{children}</RouterProvider>
+    );
+
+    const { result } = renderHook(() => useLocation(), { wrapper });
+
+    expect(result.current).toMatchObject({
+      pathname: '/page',
+      search: '?tab=a',
+      hash: '#top',
+      href: '/page?tab=a#top',
+    });
+  });
+});

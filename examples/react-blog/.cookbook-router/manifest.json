@@ -1,0 +1,50 @@
+{
+  "routes": [
+    {
+      "id": "entry",
+      "path": "/",
+      "index": false
+    },
+    {
+      "id": "blog",
+      "path": "/blog",
+      "index": false
+    },
+    {
+      "id": "blog.home",
+      "path": "/blog",
+      "parentId": "blog",
+      "index": true
+    },
+    {
+      "id": "blog.articles",
+      "path": "/blog/articles",
+      "parentId": "blog",
+      "index": false
+    },
+    {
+      "id": "blog.articles.show",
+      "path": "/blog/articles/{slug:regex([a-z0-9-]+)}",
+      "parentId": "blog",
+      "index": false
+    },
+    {
+      "id": "blog.archive",
+      "path": "/blog/archive",
+      "parentId": "blog",
+      "index": false
+    },
+    {
+      "id": "blog.members",
+      "path": "/blog/members",
+      "parentId": "blog",
+      "index": false
+    },
+    {
+      "id": "blog.login",
+      "path": "/blog/login",
+      "parentId": "blog",
+      "index": false
+    }
+  ]
+}

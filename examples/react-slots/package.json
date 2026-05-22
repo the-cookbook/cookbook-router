@@ -1,0 +1,26 @@
+{
+  "name": "react-slots",
+  "private": true,
+  "type": "module",
+  "description": "Layout slots and outlet context example",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run --config ../../vitest.config.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "@cookbook/router": "workspace:*",
+    "@cookbook/router-react": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.2.0",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "vite": "^8.0.14",
+    "vitest": "^4.1.7"
+  }
+}

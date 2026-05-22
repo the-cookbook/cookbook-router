@@ -1,0 +1,44 @@
+name: Bug report
+description: Report incorrect Cookbook Router behavior.
+title: '[Bug]: '
+labels: ['bug']
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the observed behavior and the expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Provide a minimal reproduction or a failing test.
+    validations:
+      required: true
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      options:
+        - '@cookbook/router'
+        - '@cookbook/router-react'
+        - '@cookbook/router-cli'
+        - examples
+        - documentation
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include Node, pnpm, browser, React, and operating system versions where relevant.
+    validations:
+      required: true

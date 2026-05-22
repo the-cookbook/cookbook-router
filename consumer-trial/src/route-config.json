@@ -1,0 +1,110 @@
+{
+  "routes": [
+    {
+      "id": "root",
+      "path": "/",
+      "layout": {
+        "slots": {
+          "sidebar": {
+            "fallback": {
+              "id": "root.sidebar.fallback",
+              "component": "TrialSidebarFallback",
+              "meta": {
+                "title": "Sidebar"
+              }
+            },
+            "routes": [
+              {
+                "id": "root.sidebar.user",
+                "path": "users/{id:int}",
+                "component": "UserSidebar",
+                "meta": {
+                  "title": "User sidebar"
+                }
+              }
+            ]
+          },
+          "modal": {
+            "fallback": null
+          }
+        }
+      },
+      "children": [
+        {
+          "id": "home",
+          "index": true,
+          "meta": {
+            "title": "Home"
+          }
+        },
+        {
+          "id": "users.show",
+          "path": "users/{id:int}",
+          "search": {
+            "tab": {
+              "type": "string",
+              "optional": true
+            },
+            "preview": {
+              "type": "boolean",
+              "optional": true
+            }
+          },
+          "hash": ["profile", "settings"],
+          "meta": {
+            "title": "User",
+            "requiresAuth": true
+          }
+        },
+        {
+          "id": "login",
+          "path": "login",
+          "meta": {
+            "title": "Login"
+          }
+        },
+        {
+          "id": "private.dashboard",
+          "path": "private",
+          "meta": {
+            "title": "Private dashboard",
+            "requiresAuth": true
+          }
+        },
+        {
+          "id": "blog",
+          "path": "blog",
+          "layout": {
+            "slots": {
+              "modal": {
+                "fallback": null
+              }
+            }
+          },
+          "intercepts": {
+            "modal": {
+              "to": ["{slug:regex([a-z0-9-]+)}"],
+              "component": "BlogPostModal"
+            }
+          },
+          "children": [
+            {
+              "id": "blog.index",
+              "index": true,
+              "meta": {
+                "title": "Blog"
+              }
+            }
+          ]
+        },
+        {
+          "id": "blog.posts.show",
+          "path": "/blog/{slug:regex([a-z0-9-]+)}",
+          "meta": {
+            "title": "Blog post"
+          }
+        }
+      ]
+    }
+  ]
+}

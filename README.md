@@ -1,0 +1,228 @@
+# Cookbook Router
+
+Cookbook Router is a typed, SSR-ready routing framework built on top of `@cookbook/pathkit`. The repository contains a framework-agnostic runtime, React bindings, and a CLI that generates TypeScript contracts and route manifests from route definitions.
+
+## Table of contents
+
+- [Packages](#packages)
+- [Requirements](#requirements)
+- [Install](#install)
+- [Quick start](#quick-start)
+- [Generate contracts](#generate-contracts)
+- [Core concepts](#core-concepts)
+- [Examples](#examples)
+- [Repository scripts](#repository-scripts)
+- [Git hooks](#git-hooks)
+- [Release workflow](#release-workflow)
+- [Documentation](#documentation)
+- [Development notes](#development-notes)
+
+## Packages
+
+| Package                  | Purpose                                                                                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@cookbook/router`       | Route definitions, validation, normalization, matching, href generation, middleware, lifecycle, SSR, histories, slots, intercepts, and redirects. |
+| `@cookbook/router-react` | React provider, links, outlets, slots, hooks, outlet context, and static rendering integration.                                                   |
+| `@cookbook/router-cli`   | Contract generation, manifest generation, route validation, and watch mode.                                                                       |
+
+## Requirements
+
+- Node.js `>=22.22.1`
+- pnpm `>=9.0.0`
+- React apps must provide `react` and `react-dom` `>=18`
+
+## Install
+
+```sh
+pnpm add @cookbook/router
+pnpm add @cookbook/router-react react react-dom
+pnpm add -D @cookbook/router-cli typescript
+```
+
+For non-React usage, install only `@cookbook/router`. `@cookbook/pathkit` is installed transitively by `@cookbook/router`.
+
+## Quick start
+
+Define routes with stable route IDs. Use `component` for page components and `layout.component` for layout wrappers.
+
+```tsx
+import { defineRoutes } from '@cookbook/router';
+import { HomePage, RootLayout, UserPage } from './pages';
+
+export const routes = defineRoutes([
+  {
+    id: 'root',
+    path: '/',
+    layout: {
+      component: RootLayout,
+    },
+    children: [
+      {
+        id: 'home',
+        index: true,
+        component: HomePage,
+      },
+      {
+        id: 'users.show',
+        path: 'users/{id:int}',
+        search: {
+          tab: 'string',
+        },
+        hash: ['profile', 'settings'],
+        component: UserPage,
+        meta: {
+          title: 'User',
+          requiresAuth: true,
+        },
+      },
+    ],
+  },
+] as const);
+```
+
+Create and render a router.
+
+```tsx
+import { createRouter } from '@cookbook/router';
+import { RouterProvider } from '@cookbook/router-react';
+import { routes } from './routes';
+
+const router = createRouter({ routes });
+await router.resolveCurrent();
+
+export function App() {
+  return <RouterProvider router={router} fallback={<h1>Not found</h1>} />;
+}
+```
+
+Navigate by route ID.
+
+```tsx
+import { Link, useParams } from '@cookbook/router-react';
+
+export function UserLink() {
+  return (
+    <Link to="users.show" params={{ id: '42' }} search={{ tab: 'settings' }} hash="profile">
+      Open user
+    </Link>
+  );
+}
+
+export function UserPage() {
+  const params = useParams('users.show');
+  return <h1>User {params.id}</h1>;
+}
+```
+
+## Generate contracts
+
+The CLI reads route definitions and generates contract files used for route ID, params, search, hash, metadata, and path inference.
+
+```sh
+cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router
+```
+
+Generated files:
+
+```txt
+.cookbook-router/
+  contracts.ts
+  register.d.ts
+  manifest.json
+```
+
+Include the generated files in your TypeScript program:
+
+```json
+{
+  "include": ["src", ".cookbook-router/contracts.ts", ".cookbook-router/register.d.ts"]
+}
+```
+
+## Core concepts
+
+- **Route IDs are the public navigation API.** Paths declare URL matching; route IDs drive links, programmatic navigation, href generation, redirects, and type inference.
+- **Path params are strings.** Constraints such as `{id:int}` validate URL shape but generated param values are typed as `string`.
+- **Search schemas drive generated optional string fields.** Runtime search values are serialized into the query string; descriptors are not runtime validators.
+- **Layouts render child routes through `<Outlet />`.** Layout slots render parallel UI regions through `<Slot name="..." />`.
+- **Intercepts preserve the current branch while rendering a destination into a slot.** Direct visits to the same destination URL render the canonical full page.
+- **Route redirects are first-class.** Use `redirect: { route: 'target' }` for internal route redirects and `redirect: 'https://example.com'` for external redirects.
+- **SSR uses static routers.** Server code uses `createStaticRouter()`, `StaticRouterProvider`, and serialized router state for hydration.
+
+## Examples
+
+| Example                     | Shows                                                                                                        |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `examples/react-basic`      | Typed params, search, hash, middleware, lifecycle, and generated contracts.                                  |
+| `examples/react-slots`      | Layout slots, slot fallbacks, slot routes, disabled slots, and outlet context.                               |
+| `examples/react-intercepts` | Configured and call-site route interception.                                                                 |
+| `examples/react-blog`       | Real-world blog routing, protected area, login redirect, slots, search, archive, and modal article previews. |
+| `examples/react-ssr`        | Static router SSR, hydration data, and Vite dev SSR.                                                         |
+
+Run an example:
+
+```sh
+pnpm install
+pnpm build:packages
+pnpm --filter react-blog dev
+```
+
+## Repository scripts
+
+| Command                 | Purpose                                                      |
+| ----------------------- | ------------------------------------------------------------ |
+| `pnpm build:packages`   | Build all packages.                                          |
+| `pnpm build:examples`   | Typecheck and build all examples.                            |
+| `pnpm test`             | Run package tests.                                           |
+| `pnpm test:examples`    | Run example tests.                                           |
+| `pnpm test:e2e`         | Run repository-level E2E tests.                              |
+| `pnpm typecheck:all`    | Typecheck packages and examples.                             |
+| `pnpm validate:release` | Run release readiness checks.                                |
+| `pnpm hooks:pre-commit` | Run the same validation used by the pre-commit hook.         |
+| `pnpm hooks:pre-push`   | Run the same validation used by the pre-push hook.           |
+| `pnpm changeset`        | Create a release note and version bump intent.               |
+| `pnpm version-packages` | Apply pending changesets to package versions and changelogs. |
+| `pnpm release`          | Validate and publish packages with Changesets.               |
+
+## Git hooks
+
+Husky installs Git hooks through the root `prepare` script after `pnpm install`. The pre-commit hook uses `lint-staged` so ESLint and Prettier run only against staged files. The hooks call visible package scripts instead of hiding logic inside shell files.
+
+| Hook         | Script                  | Purpose                                                                |
+| ------------ | ----------------------- | ---------------------------------------------------------------------- |
+| `pre-commit` | `pnpm hooks:pre-commit` | Staged-file lint/format checks, docs API validation, and blocker scan. |
+| `pre-push`   | `pnpm hooks:pre-push`   | Full `pnpm test:ci` validation before pushing.                         |
+
+See [Git hooks](docs/git-hooks.md) for setup, skipping, and troubleshooting.
+
+## Release workflow
+
+Releases use Changesets. Add a changeset for user-visible package changes, validate with `pnpm test:ci`, let `pnpm version-packages` apply pending changesets to versions and changelogs, then publish with `pnpm release`.
+
+See [Releasing](docs/releasing.md) for the full maintainer workflow, release gates, and common failure fixes.
+
+## Documentation
+
+- [Getting started](docs/getting-started.md)
+- [Core API reference](docs/api.md)
+- [Routing](docs/routing.md)
+- [Navigation](docs/navigation.md)
+- [React integration](docs/react-integration.md)
+- [Contracts](docs/contracts.md)
+- [Code generation](docs/codegen.md)
+- [Search and hash](docs/search-and-hash.md)
+- [Middleware](docs/middleware.md)
+- [Lifecycle](docs/lifecycle.md)
+- [SSR](docs/ssr.md)
+- [Examples guide](docs/examples.md)
+- [Testing](docs/testing.md)
+- [Git hooks](docs/git-hooks.md)
+- [Releasing](docs/releasing.md)
+- [Troubleshooting](docs/troubleshooting.md)
+
+## Development notes
+
+- Tests for package source live next to the source file they cover.
+- Generated files under `.cookbook-router/` should be regenerated after route definition changes.
+- Build package outputs before running examples against recently changed package code: `pnpm build:packages`.
+- Do not deep import from package internals; public APIs are exported from package roots.

@@ -1,0 +1,12 @@
+node_modules
+coverage
+dist
+.env
+.DS_Store
+.cookbook-router
+!examples/**/.cookbook-router/
+!examples/**/.cookbook-router/**
+!consumer-trial/.cookbook-router/
+!consumer-trial/.cookbook-router/**
+.tmp
+consumer-trial/dist

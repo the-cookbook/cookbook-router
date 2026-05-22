@@ -1,0 +1,55 @@
+/* eslint-disable */
+export interface RouteParams {
+  root: {};
+  home: {};
+  'articles.show': { slug: string };
+  'ssr.users.show': { id: string };
+}
+
+export interface RouteSearch {
+  root: {};
+  home: {};
+  'articles.show': { preview?: string };
+  'ssr.users.show': { tab?: string };
+}
+
+export interface RouteHash {
+  root: never;
+  home: never;
+  'articles.show': 'comments' | 'summary';
+  'ssr.users.show': never;
+}
+
+export interface RouteMeta {
+  root: {};
+  home: { title?: string };
+  'articles.show': { title?: string };
+  'ssr.users.show': { title?: string };
+}
+
+export interface RoutePaths {
+  root: '/';
+  home: '/';
+  'articles.show': '/articles/{slug:regex([a-z0-9-]+)}';
+  'ssr.users.show': '/ssr/users/{id:int}';
+}
+
+export interface RouteOutletContext {}
+
+export const routeIds = ['root', 'home', 'articles.show', 'ssr.users.show'] as const;
+export const routePaths = {
+  root: '/',
+  home: '/',
+  'articles.show': '/articles/{slug:regex([a-z0-9-]+)}',
+  'ssr.users.show': '/ssr/users/{id:int}',
+} as const;
+
+export interface RouterContracts {
+  params: RouteParams;
+  search: RouteSearch;
+  hash: RouteHash;
+  meta: RouteMeta;
+  paths: RoutePaths;
+  outletContext: RouteOutletContext;
+}
+/* eslint-enable */

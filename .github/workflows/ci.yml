@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate monorepo
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22.22.1, 24]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Validate release candidate metadata
+        run: pnpm validate:rc
+
+      - name: Lint packages and examples
+        run: pnpm lint
+
+      - name: Typecheck packages and examples
+        run: pnpm typecheck:all
+
+      - name: Test packages with coverage
+        run: pnpm test:coverage
+
+      - name: Test examples
+        run: pnpm test:examples
+
+      - name: Run repository E2E tests
+        run: pnpm test:e2e
+
+      - name: Build packages
+        run: pnpm build:packages
+
+      - name: Build examples
+        run: pnpm build:examples
+
+      - name: Publish dry run
+        run: pnpm publish:dry-run
+
+      - name: Run consumer trial app
+        run: pnpm test:consumer-trial
+
+      - name: Upload coverage reports
+        if: always() && matrix.node-version == 22
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            packages/*/coverage
+            coverage
+          if-no-files-found: ignore

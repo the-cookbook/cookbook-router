@@ -1,0 +1,36 @@
+import { renderHook } from '@testing-library/react';
+import { createMemoryRouter, defineRoutes } from '@cookbook/router';
+import { describe, expect, test } from 'vitest';
+import { Outlet } from '../components/outlet';
+import { RouterProvider } from '../components/router-provider';
+import { useMatches } from './use-matches';
+
+function Layout() {
+  return <Outlet />;
+}
+function Page() {
+  return null;
+}
+
+describe('useMatches', () => {
+  test('returns current route branch', async () => {
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        {
+          id: 'root',
+          path: '/',
+          layout: { component: Layout },
+          children: [{ id: 'child', index: true, component: Page }],
+        },
+      ] as const),
+    });
+    await router.resolveCurrent();
+    const wrapper = ({ children }: { children: import('react').ReactNode }) => (
+      <RouterProvider router={router}>{children}</RouterProvider>
+    );
+
+    const { result } = renderHook(() => useMatches(), { wrapper });
+
+    expect(result.current.map((match) => match.id)).toEqual(['root', 'child']);
+  });
+});
