@@ -90,24 +90,24 @@ type RouteIntercepts = Readonly<Record<string, RouteInterceptConfig>>;
 
 ## Field reference
 
-| Field              | Purpose                                                                                      |
-| ------------------ | -------------------------------------------------------------------------------------------- |
-| `id`               | Required stable route ID. Used for navigation, contracts, diagnostics, and metadata lookup.  |
-| `path`             | URL pattern. Child paths are relative unless they start with `/`.                            |
-| `index`            | Marks a child as the default route for its parent path. Index routes must not define `path`. |
-| `component`        | Page component rendered for this route.                                                      |
-| `layout.component` | Layout wrapper component. Layouts render child branches through `<Outlet />`.                |
-| `layout.slots`     | Named layout regions rendered through `<Slot name="..." />`.                                 |
-| `children`         | Primary child route branch.                                                                  |
-| `intercepts`       | Configured source-route interception rules keyed by target slot name.                        |
-| `redirect`         | Internal or external redirect target. Redirect-only routes do not need components.           |
-| `search`           | Search contract source. Generated fields are optional strings.                               |
-| `hash`             | Allowed hash fragment values for generated contracts.                                        |
-| `meta`             | Arbitrary metadata preserved in generated contracts and runtime route definitions.           |
-| `notFound`         | Route-level not-found component.                                                             |
-| `errorComponent`   | Route-level error component placeholder for error rendering flows.                           |
-| `lifecycle`        | Route-level transition hooks.                                                                |
-| `middleware`       | Route-level middleware.                                                                      |
+| Field              | Purpose                                                                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `id`               | Required stable route ID. Used for navigation, contracts, diagnostics, and metadata lookup.                 |
+| `path`             | URL pattern. Child paths are relative unless they start with `/`.                                           |
+| `index`            | Marks a child as the default route for its parent path. Index routes must not define `path`.                |
+| `component`        | Page component rendered for this route.                                                                     |
+| `layout.component` | Layout wrapper component. Layouts render child branches through `<Outlet />`.                               |
+| `layout.slots`     | Named layout regions rendered through `<Slot name="..." />`.                                                |
+| `children`         | Primary child route branch.                                                                                 |
+| `intercepts`       | Configured source-route interception rules keyed by target slot name.                                       |
+| `redirect`         | Internal or external redirect target. Redirect-only routes do not need components.                          |
+| `search`           | Search contract source. Use `{ type: 'one' }` for single values and `{ type: 'many' }` for repeated values. |
+| `hash`             | Allowed hash fragment values for generated contracts.                                                       |
+| `meta`             | Arbitrary metadata preserved in generated contracts and runtime route definitions.                          |
+| `notFound`         | Route-level not-found component.                                                                            |
+| `errorComponent`   | Route-level error component placeholder for error rendering flows.                                          |
+| `lifecycle`        | Route-level transition hooks.                                                                               |
+| `middleware`       | Route-level middleware.                                                                                     |
 
 ## Path composition
 
@@ -238,19 +238,21 @@ Search contracts are generated from the keys of `search`.
   id: 'articles.index',
   path: '/articles',
   search: {
-    query: 'string',
-    tag: 'string',
+    query: { type: 'one', optional: true },
+    tag: { type: 'one', optional: true },
+    filters: { type: 'many', optional: true },
   },
   component: ArticlesPage,
 }
 ```
 
-Generated fields are optional strings:
+Generated fields follow the declared cardinality:
 
 ```ts
 type ArticlesSearch = {
   query?: string;
   tag?: string;
+  filters?: string | readonly string[];
 };
 ```
 

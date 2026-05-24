@@ -59,7 +59,7 @@ const routes = defineRoutes([
     id: 'users.show',
     path: '/users/{id:int}',
     search: {
-      tab: 'string',
+      tab: { type: 'one', optional: true },
     },
     hash: ['profile', 'settings'],
     component: UserPage,

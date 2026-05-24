@@ -77,7 +77,7 @@ const routes = defineRoutes([
       {
         id: 'user',
         path: 'users/{id:int}',
-        search: { tab: 'optional-string' },
+        search: { tab: { type: 'one', optional: true } },
         hash: ['profile', 'details'],
         component: UserPage,
         lifecycle: {

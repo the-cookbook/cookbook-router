@@ -14,7 +14,7 @@ const routes = defineRoutes([
     id: 'user',
     path: '/users/{id:int}',
     hash: ['profile'],
-    search: { tab: { type: 'string', optional: true } },
+    search: { tab: { type: 'one', optional: true } },
   },
 ] as const);
 

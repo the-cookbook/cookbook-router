@@ -25,7 +25,7 @@ export interface RouteSearch {
   home: {};
   'users.show': {
     tab?: string;
-    preview?: boolean;
+    preview?: string;
   };
   login: {};
   'private.dashboard': {};

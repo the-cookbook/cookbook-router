@@ -152,7 +152,32 @@ function validateRouteShape(route: RouteDefinition): void {
 
   validateRedirect(route);
   validateRecordKeys(route.id, 'search', route.search);
+  validateSearchSchema(route);
   validateRecordKeys(route.id, 'meta', route.meta);
+}
+
+function validateSearchSchema(route: RouteDefinition): void {
+  if (!route.search) {
+    return;
+  }
+
+  for (const [key, value] of Object.entries(route.search)) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      throw new Error(
+        `Route "${route.id}" search param "${key}" must use { type: 'one' | 'many', optional?: boolean }.`,
+      );
+    }
+
+    if (value.type !== 'one' && value.type !== 'many') {
+      throw new Error(`Route "${route.id}" search param "${key}" type must be "one" or "many".`);
+    }
+
+    if (value.optional !== undefined && typeof value.optional !== 'boolean') {
+      throw new Error(
+        `Route "${route.id}" search param "${key}" optional must be a boolean when provided.`,
+      );
+    }
+  }
 }
 
 function validateRedirect(route: RouteDefinition): void {

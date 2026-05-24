@@ -12,6 +12,7 @@ describe('generateContracts', () => {
     expect(output).toContain("'users.show': { id: string };");
     expect(output).toContain('tab?: string');
     expect(output).toContain('page?: string');
+    expect(output).toContain('filters?: string | readonly string[]');
     expect(output).toContain("'profile' | 'settings'");
     expect(output).toContain("'users.show': '/users/{id:int}';");
     expect(output).toContain('outletContext: RouteOutletContext;');
@@ -41,5 +42,8 @@ describe('generateContracts', () => {
 
   test('throws for invalid route configuration', () => {
     expect(() => generateContracts([{ id: 'bad', index: true, path: '/bad' }])).toThrow('index');
+    expect(() =>
+      generateContracts([{ id: 'bad', path: '/', search: { query: 'string' } } as never]),
+    ).toThrow('must use');
   });
 });

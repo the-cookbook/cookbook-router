@@ -93,7 +93,7 @@ export const routes = defineRoutes([
       {
         id: 'users.show',
         path: 'users/{id:int}',
-        search: { tab: 'optional-string' },
+        search: { tab: { type: 'one', optional: true } },
         hash: ['profile', 'settings', 'security'],
         component: UserPage,
         meta: { title: 'User', requiresAuth: true },

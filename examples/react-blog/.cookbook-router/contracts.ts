@@ -17,7 +17,7 @@ export interface RouteSearch {
   blog: {};
   'blog.home': { query?: string };
   'blog.articles': { query?: string };
-  'blog.articles.show': { ref?: string };
+  'blog.articles.show': { ref?: string; filters?: string | readonly string[] };
   'blog.archive': {};
   'blog.members': {};
   'blog.login': { redirect?: string };

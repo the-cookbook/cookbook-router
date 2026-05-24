@@ -25,6 +25,8 @@ export type {
   RouteMeta,
   RouteParamDefinition,
   RouteSearchSchema,
+  RouteSearchValueSchema,
+  RouteSearchValueType,
   RouteSlotConfig,
   RouteSlotDefinition,
   RouteSlotDefinitions,

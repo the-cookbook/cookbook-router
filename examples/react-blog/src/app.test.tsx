@@ -78,7 +78,9 @@ describe('react-blog example', () => {
     expect(getByText('Modal route for typed-routing')).toBeTruthy();
     expect(getByText('Rendered on articles')).toBeTruthy();
     expect(getByText('All articles')).toBeTruthy();
-    expect(router.state.location.href).toBe('/blog/articles/typed-routing?ref=articles#comments');
+    expect(router.state.location.href).toBe(
+      '/blog/articles/typed-routing?filters=Engineering&filters=articles&ref=articles#comments',
+    );
   });
 
   test('call-site article interception is clone-safe and keeps the list route mounted', async () => {
@@ -91,7 +93,9 @@ describe('react-blog example', () => {
     await waitFor(() => expect(getByText('Modal route for modal-routes')).toBeTruthy());
     expect(getByText('Rendered on call-site')).toBeTruthy();
     expect(getByText('All articles')).toBeTruthy();
-    expect(router.state.location.href).toBe('/blog/articles/modal-routes?ref=call-site#share');
+    expect(router.state.location.href).toBe(
+      '/blog/articles/modal-routes?filters=call-site&ref=call-site#share',
+    );
   });
 
   test('article modal Back button returns to the previous route', async () => {
@@ -102,7 +106,9 @@ describe('react-blog example', () => {
     fireEvent.click(getAllByText('Read in modal')[0]!);
 
     await waitFor(() => expect(getByRole('dialog', { name: 'Blog post modal' })).toBeTruthy());
-    expect(router.state.location.href).toBe('/blog/articles/typed-routing?ref=articles#comments');
+    expect(router.state.location.href).toBe(
+      '/blog/articles/typed-routing?filters=Engineering&filters=articles&ref=articles#comments',
+    );
 
     fireEvent.click(getByRole('button', { name: 'Back' }));
 
@@ -131,7 +137,7 @@ describe('react-blog example', () => {
     const { getByText, queryByText, queryByRole } = render(<App router={router} />);
 
     expect(getByText('Full page route for modal-routes')).toBeTruthy();
-    expect(getByText('ref direct')).toBeTruthy();
+    expect(getByText('ref: direct')).toBeTruthy();
     expect(queryByText('Modal route for modal-routes')).toBeNull();
     expect(queryByRole('dialog', { name: 'Blog post modal' })).toBeNull();
     expectTypeOf<{ slug: string }>().toEqualTypeOf<{ slug: string }>();

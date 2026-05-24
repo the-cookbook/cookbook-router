@@ -42,11 +42,11 @@
           "path": "users/{id:int}",
           "search": {
             "tab": {
-              "type": "string",
+              "type": "one",
               "optional": true
             },
             "preview": {
-              "type": "boolean",
+              "type": "one",
               "optional": true
             }
           },

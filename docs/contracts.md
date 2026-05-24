@@ -108,7 +108,8 @@ Search fields are generated from route `search` keys.
   id: 'blog.articles',
   path: '/blog/articles',
   search: {
-    query: 'string',
+    query: { type: 'one', optional: true },
+    filters: { type: 'many', optional: true },
   },
   component: ArticlesPage,
 }
@@ -118,11 +119,11 @@ Generated contract:
 
 ```ts
 export interface RouteSearch {
-  'blog.articles': { query?: string };
+  'blog.articles': { query?: string; filters?: string | readonly string[] };
 }
 ```
 
-The current generator renders search values as optional strings. It does not interpret descriptor values as runtime validators.
+Search values use `type: 'one'` for single query params and `type: 'many'` for repeated query params. The descriptors generate TypeScript contracts; they do not coerce URL values at runtime.
 
 ## Hash
 
@@ -208,7 +209,7 @@ Use route-ID overloads only when the generated or augmented contracts actually i
 Generated contracts improve TypeScript inference. They do not replace runtime validation.
 
 - Params are still validated by path matching/compilation.
-- Search descriptor values are not runtime validators.
+- Search descriptors generate TypeScript contracts; they do not coerce runtime values.
 - Metadata shapes come from declared literal values.
 - Slot fallback IDs are not generated as route contracts.
 - Slot route IDs are generated when they are declared under `layout.slots.<name>.routes`.

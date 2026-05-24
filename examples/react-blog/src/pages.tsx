@@ -21,6 +21,14 @@ import {
   type Article,
 } from './articles';
 
+const normalizeManyValues = (
+  value: string | readonly string[] | undefined,
+): readonly string[] | null => {
+  if (!value) return null;
+
+  return typeof value === 'string' ? [value] : value;
+};
+
 export function BlogLayout() {
   return (
     <main className="site-shell">
@@ -188,8 +196,9 @@ export function ArticlePage() {
         ))}
       </div>
       <footer className="article-footer">
-        <p>ref {normalizeSingleValue(search.ref) ?? 'direct'}</p>
-        <p>hash {hash ?? 'none'}</p>
+        <p>ref: {normalizeSingleValue(search.ref) ?? 'direct'}</p>
+        <p>filters: {normalizeManyValues(search.filters)?.join(', ') ?? 'none'}</p>
+        <p>hash: {hash ?? 'none'}</p>
       </footer>
     </article>
   );
@@ -402,7 +411,7 @@ function ArticleActions(props: { readonly article: Article; readonly referrer: s
       <Link
         to="blog.articles.show"
         params={{ slug: props.article.slug }}
-        search={{ ref: props.referrer }}
+        search={{ filters: [props.article.category, props.referrer], ref: props.referrer }}
         hash="comments"
         intercept="modal"
         context={{ source: props.referrer }}
@@ -413,7 +422,7 @@ function ArticleActions(props: { readonly article: Article; readonly referrer: s
       <Link
         to="blog.articles.show"
         params={{ slug: props.article.slug }}
-        search={{ ref: 'call-site' }}
+        search={{ filters: 'call-site', ref: 'call-site' }}
         hash="share"
         intercept={{ slot: 'modal', component: ArticleModal }}
         context={{ source: 'call-site' }}
@@ -448,7 +457,7 @@ function ArticleCard(props: { readonly article: Article; readonly referrer: stri
           <Link
             to="blog.articles.show"
             params={{ slug: props.article.slug }}
-            search={{ ref: props.referrer }}
+            search={{ filters: [props.article.category, props.referrer], ref: props.referrer }}
             hash="comments"
           >
             {props.article.title}
@@ -461,7 +470,7 @@ function ArticleCard(props: { readonly article: Article; readonly referrer: stri
         <Link
           to="blog.articles.show"
           params={{ slug: props.article.slug }}
-          search={{ ref: props.referrer }}
+          search={{ filters: [props.article.category, props.referrer], ref: props.referrer }}
           hash="comments"
           intercept="modal"
           context={{ source: props.referrer }}
@@ -472,7 +481,7 @@ function ArticleCard(props: { readonly article: Article; readonly referrer: stri
         <Link
           to="blog.articles.show"
           params={{ slug: props.article.slug }}
-          search={{ ref: 'call-site' }}
+          search={{ filters: 'call-site', ref: 'call-site' }}
           hash="share"
           intercept={{ slot: 'modal', component: ArticleModal }}
           context={{ source: 'call-site' }}

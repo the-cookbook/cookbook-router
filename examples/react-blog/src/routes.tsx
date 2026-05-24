@@ -75,7 +75,7 @@ export const routes = defineRoutes([
         index: true,
         component: BlogHomePage,
         search: {
-          query: 'optional-string',
+          query: { type: 'one', optional: true },
         },
         meta: {
           title: 'Home',
@@ -86,7 +86,7 @@ export const routes = defineRoutes([
         path: 'articles',
         component: ArticlesPage,
         search: {
-          query: 'optional-string',
+          query: { type: 'one', optional: true },
         },
         layout: {
           slots: {
@@ -108,7 +108,8 @@ export const routes = defineRoutes([
         path: 'articles/{slug:regex([a-z0-9-]+)}',
         component: ArticlePage,
         search: {
-          ref: 'optional-string',
+          ref: { type: 'one', optional: true },
+          filters: { type: 'many', optional: true },
         },
         hash: ['comments', 'share'],
         meta: {
@@ -138,7 +139,7 @@ export const routes = defineRoutes([
         path: 'login',
         component: LoginPage,
         search: {
-          redirect: 'optional-string',
+          redirect: { type: 'one', optional: true },
         },
         meta: {
           title: 'Login',

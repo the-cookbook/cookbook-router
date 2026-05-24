@@ -20,7 +20,7 @@ const validRoutes = [
       {
         id: 'users.show',
         path: 'users/{id:int}',
-        search: { tab: 'optional-string' },
+        search: { tab: { type: 'one', optional: true } },
         hash: ['profile', 'settings'],
       },
     ],

@@ -18,7 +18,7 @@ declare module './contracts' {
       };
       search: {
         home: {};
-        'users.show': { tab?: string };
+        'users.show': { tab?: string; filters?: string | readonly string[] };
       };
       hash: {
         home: never;
@@ -43,7 +43,10 @@ describe('registered contracts', () => {
   it('narrows route IDs and route-specific values', () => {
     expectTypeOf<RouteId>().toEqualTypeOf<'home' | 'users.show'>();
     expectTypeOf<RouteParams<'users.show'>>().toEqualTypeOf<{ id: string }>();
-    expectTypeOf<RouteSearch<'users.show'>>().toEqualTypeOf<{ tab?: string }>();
+    expectTypeOf<RouteSearch<'users.show'>>().toEqualTypeOf<{
+      tab?: string;
+      filters?: string | readonly string[];
+    }>();
     expectTypeOf<RouteHashInput<'users.show'>>().toEqualTypeOf<
       'profile' | 'settings' | '#profile' | '#settings' | null
     >();
@@ -54,7 +57,7 @@ describe('registered contracts', () => {
   it('exposes a reusable URL options type for lower-boilerplate consumer APIs', () => {
     expectTypeOf<RouteUrlOptions<'users.show'>>().toEqualTypeOf<{
       readonly params?: { id: string };
-      readonly search?: { tab?: string };
+      readonly search?: { tab?: string; filters?: string | readonly string[] };
       readonly hash?: 'profile' | 'settings' | '#profile' | '#settings' | null;
     }>();
   });

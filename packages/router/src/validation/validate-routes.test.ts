@@ -245,3 +245,33 @@ test('rejects malformed route redirect configuration', () => {
     validateRoutes([{ id: 'entry', path: '/', redirect: { route: 'home', params: [] } as never }]),
   ).toThrow('redirect.params must be an object');
 });
+
+test('validates search param cardinality descriptors', () => {
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'articles.index',
+        path: '/articles',
+        search: {
+          query: { type: 'one', optional: true },
+          filters: { type: 'many', optional: true },
+          requiredToken: { type: 'one' },
+        },
+      },
+    ]),
+  ).not.toThrow();
+
+  expect(() =>
+    validateRoutes([{ id: 'bad', path: '/', search: { query: 'string' } } as never]),
+  ).toThrow('must use');
+
+  expect(() =>
+    validateRoutes([{ id: 'bad', path: '/', search: { query: { type: 'string' } } } as never]),
+  ).toThrow('type must be "one" or "many"');
+
+  expect(() =>
+    validateRoutes([
+      { id: 'bad', path: '/', search: { query: { type: 'one', optional: 'yes' } } } as never,
+    ]),
+  ).toThrow('optional must be a boolean');
+});

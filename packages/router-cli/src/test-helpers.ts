@@ -71,11 +71,9 @@ export const sampleRoutes = [
         id: 'users.show',
         path: 'users/{id:int}',
         search: {
-          tab: {
-            type: 'string',
-            optional: true,
-          },
-          page: 'number',
+          tab: { type: 'one', optional: true },
+          page: { type: 'one', optional: true },
+          filters: { type: 'many', optional: true },
         },
         hash: ['profile', 'settings'],
         meta: {

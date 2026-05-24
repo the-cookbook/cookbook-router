@@ -3,7 +3,14 @@ import type { RouterPathOptions } from '../pathkit/pathkit';
 
 export type RouteComponent = unknown;
 export type RouteMeta = Record<string, unknown>;
-export type RouteSearchSchema = Record<string, unknown>;
+export type RouteSearchValueType = 'one' | 'many';
+
+export interface RouteSearchValueSchema {
+  readonly type: RouteSearchValueType;
+  readonly optional?: boolean;
+}
+
+export type RouteSearchSchema = Readonly<Record<string, RouteSearchValueSchema>>;
 export type { RouterPathOptions };
 
 export interface RouteInterceptConfig {

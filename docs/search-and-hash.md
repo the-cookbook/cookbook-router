@@ -20,23 +20,25 @@ Search and hash declarations describe URL state for generated contracts. Runtime
   id: 'articles.index',
   path: '/articles',
   search: {
-    query: 'string',
-    tag: 'string',
+    query: { type: 'one', optional: true },
+    tag: { type: 'one', optional: true },
+    filters: { type: 'many', optional: true },
   },
   component: ArticlesPage,
 }
 ```
 
-The current generator uses the keys of `search` and emits optional string fields:
+The generator uses the keys and cardinality of `search` to emit route-specific fields:
 
 ```ts
 {
   query?: string;
   tag?: string;
+  filters?: string | readonly string[];
 }
 ```
 
-Descriptor values are not runtime validators. Use them as stable documentation/contract markers.
+`type: 'one'` generates a single `string` value. `type: 'many'` generates `string | readonly string[]` so callers may pass either one value or repeated values.
 
 ## Generate search URLs
 
@@ -46,6 +48,7 @@ router.href({
   search: {
     query: 'routing',
     tag: 'typescript',
+    filters: ['ssr', 'react'],
   },
 });
 ```
@@ -53,7 +56,7 @@ router.href({
 Generated URL:
 
 ```txt
-/articles?query=routing&tag=typescript
+/articles?filters=ssr&filters=react&query=routing&tag=typescript
 ```
 
 Undefined and null search values are omitted.
@@ -145,4 +148,4 @@ The hook returns the hash without the leading `#`, or `null`.
 - Use params for required path identity and search for optional filters/sorting.
 - Use hash for in-page sections, tabs, or share anchors.
 - Keep search values string-friendly. Serialize complex values yourself before navigation.
-- Do not rely on `search` descriptor values for runtime validation.
+- Use `type: 'many'` for repeated query params and normalize values in UI code when necessary.

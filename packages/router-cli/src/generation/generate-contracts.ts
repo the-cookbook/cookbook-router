@@ -4,6 +4,7 @@ import type {
   NormalizedRouteSlotConfig,
   RouteDefinition,
   RouteParamDefinition,
+  RouteSearchValueSchema,
 } from '@cookbook/router';
 
 interface GeneratedRouteContract {
@@ -107,15 +108,16 @@ function renderSearch(search: RouteDefinition['search']): string {
     return '{}';
   }
 
-  const entries = Object.entries(search).map(
-    ([key, value]) => `${quoteProperty(key)}?: ${renderSearchValue(value)}`,
-  );
+  const entries = Object.entries(search).map(([key, value]) => {
+    const optional = value.optional ? '?' : '';
+    return `${quoteProperty(key)}${optional}: ${renderSearchValue(value)}`;
+  });
 
   return renderObject(entries);
 }
 
-function renderSearchValue(_value: unknown): string {
-  return 'string';
+function renderSearchValue(value: RouteSearchValueSchema): string {
+  return value.type === 'many' ? 'string | readonly string[]' : 'string';
 }
 
 function renderHash(hash: RouteDefinition['hash']): string {

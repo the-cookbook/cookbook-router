@@ -129,23 +129,23 @@ interface RouteDefinition {
 }
 ```
 
-| Field            | Purpose                                                                                             |
-| ---------------- | --------------------------------------------------------------------------------------------------- |
-| `id`             | Stable public route ID used by links, hrefs, navigation, redirects, generated contracts, and tests. |
-| `path`           | Local path segment or absolute path. Index routes must not define `path`.                           |
-| `index`          | Marks the route as the default child for its parent path.                                           |
-| `component`      | Route component or framework-owned render value. The core package treats it as `unknown`.           |
-| `layout`         | Layout component and named slot definitions.                                                        |
-| `children`       | Primary child routes.                                                                               |
-| `intercepts`     | Configured route interception targets for named slots.                                              |
-| `redirect`       | Internal route redirect object or literal href string.                                              |
-| `search`         | Search key schema used by generated contracts. Descriptor values are not runtime validators.        |
-| `hash`           | Allowed hash values used by generated contracts.                                                    |
-| `meta`           | Arbitrary route metadata.                                                                           |
-| `notFound`       | Route-level not-found component.                                                                    |
-| `errorComponent` | Route-level error component.                                                                        |
-| `lifecycle`      | Route lifecycle hooks.                                                                              |
-| `middleware`     | Route-specific middleware pipeline.                                                                 |
+| Field            | Purpose                                                                                                                   |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `id`             | Stable public route ID used by links, hrefs, navigation, redirects, generated contracts, and tests.                       |
+| `path`           | Local path segment or absolute path. Index routes must not define `path`.                                                 |
+| `index`          | Marks the route as the default child for its parent path.                                                                 |
+| `component`      | Route component or framework-owned render value. The core package treats it as `unknown`.                                 |
+| `layout`         | Layout component and named slot definitions.                                                                              |
+| `children`       | Primary child routes.                                                                                                     |
+| `intercepts`     | Configured route interception targets for named slots.                                                                    |
+| `redirect`       | Internal route redirect object or literal href string.                                                                    |
+| `search`         | Search key schema used by generated contracts. `type: 'one'` is a single value; `type: 'many'` is a repeated query param. |
+| `hash`           | Allowed hash values used by generated contracts.                                                                          |
+| `meta`           | Arbitrary route metadata.                                                                                                 |
+| `notFound`       | Route-level not-found component.                                                                                          |
+| `errorComponent` | Route-level error component.                                                                                              |
+| `lifecycle`      | Route lifecycle hooks.                                                                                                    |
+| `middleware`     | Route-specific middleware pipeline.                                                                                       |
 
 Related: [Routing](routing.md), [Search and hash](search-and-hash.md), [Middleware](middleware.md), [Lifecycle](lifecycle.md).
 

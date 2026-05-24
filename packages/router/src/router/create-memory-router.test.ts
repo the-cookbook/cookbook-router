@@ -40,10 +40,10 @@ describe('create-memory-router', () => {
     expect(
       router.href('users.show', {
         params: { id: '42' },
-        search: { tab: 'settings' },
+        search: { filters: ['hello', 'world'], tab: 'settings' },
         hash: 'profile',
       }),
-    ).toBe('/app/users/42?tab=settings#profile');
+    ).toBe('/app/users/42?filters=hello&filters=world&tab=settings#profile');
     expect(router.href('users.show', { params: { id: '1' }, hash: '#settings' })).toBe(
       '/app/users/1#settings',
     );
