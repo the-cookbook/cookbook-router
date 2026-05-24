@@ -28,6 +28,8 @@ pnpm test:e2e
 
 The repository uses a pnpm workspace. Packages live under `packages/`, examples live under `examples/`, and repository-level integration tests live under `e2e/`.
 
+For the day-to-day contributor workflow, including targeted validation commands and changeset timing during PR work, see [Developing](docs/developing.md).
+
 ## Git hooks
 
 Husky is installed through the root `prepare` script during `pnpm install`. The pre-commit hook uses `lint-staged` to keep staged-file linting and formatting fast. The committed hook files call visible package scripts:

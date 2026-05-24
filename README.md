@@ -231,6 +231,8 @@ Husky installs Git hooks through the root `prepare` script after `pnpm install`.
 
 See [Git hooks](docs/git-hooks.md) for setup, skipping, and troubleshooting.
 
+For day-to-day contribution workflow, including when to add changesets during development, see [Developing](docs/developing.md).
+
 ## Release workflow
 
 Releases use Changesets. Add a changeset for user-visible package changes, validate with `pnpm test:ci`, let `pnpm version-packages` apply pending changesets to versions and changelogs, then publish with `pnpm release`.
@@ -252,6 +254,7 @@ See [Releasing](docs/releasing.md) for the full maintainer workflow, release gat
 - [SSR](docs/ssr.md)
 - [Examples guide](docs/examples.md)
 - [Testing](docs/testing.md)
+- [Developing](docs/developing.md)
 - [Git hooks](docs/git-hooks.md)
 - [Releasing](docs/releasing.md)
 - [Troubleshooting](docs/troubleshooting.md)
@@ -265,6 +268,7 @@ See [Releasing](docs/releasing.md) for the full maintainer workflow, release gat
 | Use generated route types      | [Code generation](docs/codegen.md)         | [Contracts](docs/contracts.md), [API reference](docs/api.md#contract-registration)                              |
 | Render on the server           | [SSR](docs/ssr.md)                         | [React integration](docs/react-integration.md#static-provider), [API reference](docs/api.md#serialization-apis) |
 | Debug a failing route          | [Troubleshooting](docs/troubleshooting.md) | [Testing](docs/testing.md), [API reference](docs/api.md)                                                        |
+| Contribute to the repo         | [Developing](docs/developing.md)           | [Contributing](CONTRIBUTING.md), [Git hooks](docs/git-hooks.md), [Releasing](docs/releasing.md)                 |
 
 ## Development notes
 
