@@ -1,0 +1,27 @@
+{
+  "routes": [
+    {
+      "id": "root",
+      "path": "/",
+      "index": false
+    },
+    {
+      "id": "home",
+      "path": "/",
+      "parentId": "root",
+      "index": true
+    },
+    {
+      "id": "articles.show",
+      "path": "/articles/{slug:regex([a-z0-9-]+)}",
+      "parentId": "root",
+      "index": false
+    },
+    {
+      "id": "ssr.users.show",
+      "path": "/ssr/users/{id:int}",
+      "parentId": "root",
+      "index": false
+    }
+  ]
+}

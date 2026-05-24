@@ -83,7 +83,7 @@
   "homepage": "https://github.com/the-cookbook/cookbook-router#readme",
   "lint-staged": {
     "*.{js,jsx,ts,tsx,mjs,cjs}": [
-      "eslint --max-warnings=0",
+      "eslint --max-warnings=0 --no-warn-ignored",
       "prettier --check"
     ],
     "*.{json,md,css,yml,yaml}": [

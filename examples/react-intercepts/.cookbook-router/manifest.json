@@ -1,0 +1,25 @@
+{
+  "routes": [
+    {
+      "id": "entry",
+      "path": "/",
+      "index": false
+    },
+    {
+      "id": "gallery",
+      "path": "/gallery",
+      "index": false
+    },
+    {
+      "id": "gallery.index",
+      "path": "/gallery",
+      "parentId": "gallery",
+      "index": true
+    },
+    {
+      "id": "photos.show",
+      "path": "/photos/{id:int}",
+      "index": false
+    }
+  ]
+}

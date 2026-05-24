@@ -1,0 +1,38 @@
+{
+  "routes": [
+    {
+      "id": "entry",
+      "path": "/",
+      "index": false
+    },
+    {
+      "id": "dashboard",
+      "path": "/dashboard",
+      "index": false
+    },
+    {
+      "id": "dashboard.overview",
+      "path": "/dashboard",
+      "parentId": "dashboard",
+      "index": true
+    },
+    {
+      "id": "dashboard.activity",
+      "path": "/dashboard/activity",
+      "parentId": "dashboard",
+      "index": false
+    },
+    {
+      "id": "dashboard.settings",
+      "path": "/dashboard/settings",
+      "parentId": "dashboard",
+      "index": false
+    },
+    {
+      "id": "dashboard.fullscreen",
+      "path": "/dashboard/fullscreen",
+      "parentId": "dashboard",
+      "index": false
+    }
+  ]
+}

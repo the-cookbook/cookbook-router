@@ -28,7 +28,7 @@ export function GalleryIndexPage() {
       </p>
       <Link
         to="photos.show"
-        params={{ id: 1 }}
+        params={{ id: '1' }}
         search={{ source: 'configured' }}
         hash="details"
         intercept="modal"
@@ -37,7 +37,7 @@ export function GalleryIndexPage() {
       </Link>
       <Link
         to="photos.show"
-        params={{ id: 2 }}
+        params={{ id: '2' }}
         search={{ source: 'call-site' }}
         hash="comments"
         intercept={{ slot: 'modal', component: PhotoModal }}
@@ -48,7 +48,7 @@ export function GalleryIndexPage() {
         type="button"
         onClick={() =>
           void navigate.to('photos.show', {
-            params: { id: 3 },
+            params: { id: '3' },
             search: { source: 'button' },
             hash: 'details',
             intercept: { slot: 'modal', component: PhotoModal },

@@ -58,18 +58,10 @@ export interface RouteOutletContext {
   'dashboard.activity': {};
   'dashboard.settings': {};
   'dashboard.fullscreen': {};
-  'dashboard.sidebar.activity': { user: string };
+  'dashboard.sidebar.activity': {};
 }
 
-export const routeIds = [
-  'entry',
-  'dashboard',
-  'dashboard.overview',
-  'dashboard.activity',
-  'dashboard.settings',
-  'dashboard.fullscreen',
-  'dashboard.sidebar.activity',
-] as const;
+export const routeIds = ['entry', 'dashboard', 'dashboard.overview', 'dashboard.activity', 'dashboard.settings', 'dashboard.fullscreen', 'dashboard.sidebar.activity'] as const;
 export const routePaths = {
   entry: '/',
   dashboard: '/dashboard',
@@ -88,4 +80,5 @@ export interface RouterContracts {
   paths: RoutePaths;
   outletContext: RouteOutletContext;
 }
+
 /* eslint-enable */
