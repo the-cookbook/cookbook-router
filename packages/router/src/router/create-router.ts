@@ -13,7 +13,9 @@ import {
   matchPathPattern,
   normalizePathOptions,
   prunePathname,
+  registerPathConstraints,
   type PathkitCompileParams,
+  type RouterPathConstraints,
   type RouterPathOptions,
 } from '../pathkit/pathkit';
 import { validateRoutes } from '../validation/validate-routes';
@@ -41,6 +43,7 @@ import type {
   RouteRedirect,
 } from '../routes/contracts';
 import type { RouteId, RouteUrlOptions } from '../contracts';
+import { getDefineRoutesOptions } from '../routes/define-routes';
 import {
   createGeneratedHrefMismatchError,
   createHydrationMismatchError,
@@ -63,6 +66,7 @@ export interface CreateRouterOptions {
   readonly hydrationData?: SerializedRouterState;
   readonly history?: RouterHistory;
   readonly pathOptions?: RouterPathOptions;
+  readonly pathConstraints?: RouterPathConstraints;
   readonly maxRedirectDepth?: number;
   readonly maxRedirectionDepth?: number;
 }
@@ -134,7 +138,10 @@ export function createRouter(options: CreateRouterOptions): Router {
 export function createRouterRuntime(
   options: Required<Pick<CreateRouterOptions, 'history'>> & CreateRouterOptions,
 ): Router {
-  const pathOptions = normalizePathOptions(options.pathOptions);
+  const definedRouteOptions = getDefineRoutesOptions(options.routes);
+  registerPathConstraints(definedRouteOptions?.pathConstraints);
+  registerPathConstraints(options.pathConstraints);
+  const pathOptions = normalizePathOptions(options.pathOptions ?? definedRouteOptions?.pathOptions);
   const maxRedirectDepth = normalizeMaxRedirectDepth(options);
   validateRoutes(options.routes, pathOptions);
   const normalizedRoutes = normalizeRoutes(options.routes, pathOptions);

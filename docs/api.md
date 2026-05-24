@@ -13,9 +13,9 @@ This page lists the public APIs exported from `@cookbook/router`, `@cookbook/rou
 
 ## `@cookbook/router`
 
-### `defineRoutes(routes)`
+### `defineRoutes(routes, options?)`
 
-Preserves route literals for route definitions.
+Preserves route literals for route definitions and runs immediate route validation. Pass `pathConstraints` here when the route tree uses custom pathkit constraints.
 
 ```ts
 import { defineRoutes } from '@cookbook/router';
@@ -42,17 +42,50 @@ const router = createRouter({
 
 Supported options:
 
-| Option                | Type                         | Purpose                                                              |
-| --------------------- | ---------------------------- | -------------------------------------------------------------------- |
-| `routes`              | `readonly RouteDefinition[]` | Required route tree.                                                 |
-| `basename`            | `string`                     | Visible URL prefix. Matching strips it; href generation includes it. |
-| `middleware`          | `readonly Middleware[]`      | Global middleware pipeline.                                          |
-| `lifecycle`           | `GlobalLifecycle`            | Global transition hooks.                                             |
-| `hydrationData`       | `SerializedRouterState`      | SSR hydration state.                                                 |
-| `history`             | `RouterHistory`              | Custom history implementation.                                       |
-| `pathOptions`         | `RouterPathOptions`          | Pathkit options. Defaults to `{ prune: 'all' }`.                     |
-| `maxRedirectDepth`    | `number`                     | Redirect loop guard.                                                 |
-| `maxRedirectionDepth` | `number`                     | Backward-compatible alias for `maxRedirectDepth`.                    |
+| Option                | Type                         | Purpose                                                                                                                                |
+| --------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `routes`              | `readonly RouteDefinition[]` | Required route tree.                                                                                                                   |
+| `basename`            | `string`                     | Visible URL prefix. Matching strips it; href generation includes it.                                                                   |
+| `middleware`          | `readonly Middleware[]`      | Global middleware pipeline.                                                                                                            |
+| `lifecycle`           | `GlobalLifecycle`            | Global transition hooks.                                                                                                               |
+| `hydrationData`       | `SerializedRouterState`      | SSR hydration state.                                                                                                                   |
+| `history`             | `RouterHistory`              | Custom history implementation.                                                                                                         |
+| `pathOptions`         | `RouterPathOptions`          | Pathkit options. Defaults to `{ prune: 'all' }`.                                                                                       |
+| `pathConstraints`     | `RouterPathConstraints`      | Custom constraints created with `createConstraint()`. Prefer passing them to `defineRoutes()` when routes use custom constraint names. |
+| `maxRedirectDepth`    | `number`                     | Redirect loop guard.                                                                                                                   |
+| `maxRedirectionDepth` | `number`                     | Backward-compatible alias for `maxRedirectDepth`.                                                                                      |
+
+### `createConstraint(definition)`
+
+Re-exports `@cookbook/pathkit`'s `createConstraint()` so apps can define custom path constraints without importing pathkit directly.
+
+```ts
+import { createConstraint, createRouter, defineRoutes } from '@cookbook/router';
+
+const slug = createConstraint({
+  parse: (paramName, value) => {
+    if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
+      throw new Error(`Parameter "${paramName}" must be a valid slug.`);
+    }
+  },
+  verify: (_paramName, params) => {
+    if (params) {
+      throw new Error('slug does not accept parameters.');
+    }
+  },
+  toRegExp: () => '[a-z0-9-]+',
+});
+
+const routes = defineRoutes([{ id: 'posts.show', path: '/posts/{slug:slug}' }] as const, {
+  pathConstraints: { slug },
+});
+
+const router = createRouter({
+  routes,
+});
+```
+
+`defineRoutes(..., { pathConstraints })` registers constraints before immediate route validation. `createRouter({ pathConstraints })` is still accepted for unvalidated route arrays. Use the same constraint setup on server and client when SSR or hydration is involved.
 
 ### `createMemoryRouter(options)`
 

@@ -118,7 +118,7 @@ export const router = createRouter({
 });
 ```
 
-The default router chooses browser history when `window` exists and memory history otherwise. You can pass `basename`, `middleware`, `lifecycle`, `pathOptions`, or a custom `history` when needed.
+The default router chooses browser history when `window` exists and memory history otherwise. You can pass `basename`, `middleware`, `lifecycle`, `pathOptions`, or a custom `history` when needed. If route definitions use custom path constraints, pass `pathConstraints` to `defineRoutes()` so immediate validation can see them.
 
 ## Render React
 

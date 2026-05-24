@@ -29,8 +29,12 @@ export type {
   RouteSlotDefinition,
   RouteSlotDefinitions,
   RouteSlotFallback,
-  RouterPathOptions,
 } from './routes/contracts';
+export type {
+  RouterPathConstraint,
+  RouterPathConstraints,
+  RouterPathOptions,
+} from './pathkit/pathkit';
 export type {
   Register,
   RegisteredContracts,
@@ -67,6 +71,14 @@ export type {
   ResolvedIntercept,
 } from './resolution/resolve-intercepts';
 export type { RouterNavigationState } from './navigation/transition';
+export type { DefineRoutesOptions } from './routes/define-routes';
+export {
+  hasConstraint,
+  getConstraint,
+  unregisterConstraint,
+  createConstraint,
+  registerPathConstraints,
+} from './pathkit/pathkit';
 export { defineRoutes } from './routes/define-routes';
 export { matchRoutes } from './matching/match-routes';
 export { flattenRoutes, rankRoutes } from './matching/rank-routes';

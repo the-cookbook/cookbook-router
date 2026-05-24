@@ -1,12 +1,27 @@
-import { compile, match, tokenize, validateRoute } from '@cookbook/pathkit';
-import type { MatchedParam, RouteSegment } from '@cookbook/pathkit';
+import {
+  compile,
+  match,
+  hasConstraint,
+  getConstraint,
+  unregisterConstraint,
+  createConstraint,
+  registerConstraint,
+  tokenize,
+  validateRoute,
+} from '@cookbook/pathkit';
+import type { ConstraintValidation, MatchedParam, RouteSegment } from '@cookbook/pathkit';
 import type { RouteParamDefinition } from '../routes/contracts';
+
+export { hasConstraint, getConstraint, unregisterConstraint, createConstraint };
 
 export type PathPruneOption = 'all' | 'duplication' | 'trailing' | false;
 
 export interface RouterPathOptions {
   readonly prune?: PathPruneOption;
 }
+
+export type RouterPathConstraint = ConstraintValidation;
+export type RouterPathConstraints = Readonly<Record<string, RouterPathConstraint>>;
 
 export const DEFAULT_PATH_OPTIONS: Required<RouterPathOptions> = {
   prune: 'all',
@@ -20,6 +35,28 @@ export type PathkitCompileParams = Record<
 const matchers = new Map<string, ReturnType<typeof match>>();
 const compilers = new Map<string, ReturnType<typeof compile>>();
 const tokens = new Map<string, readonly RouteSegment[]>();
+
+export function registerPathConstraints(constraints?: RouterPathConstraints): void {
+  if (!constraints) {
+    return;
+  }
+
+  for (const [name, constraint] of Object.entries(constraints)) {
+    if (!name.trim()) {
+      throw new Error('Router path constraint names must be non-empty strings.');
+    }
+
+    registerConstraint(name, constraint);
+  }
+
+  clearPathkitCaches();
+}
+
+function clearPathkitCaches(): void {
+  matchers.clear();
+  compilers.clear();
+  tokens.clear();
+}
 
 export function validatePathPattern(pattern: string, options?: RouterPathOptions): void {
   (validateRoute as (pattern: string, options?: Required<RouterPathOptions>) => void)(

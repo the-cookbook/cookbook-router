@@ -589,6 +589,38 @@ Redirects are bounded to prevent loops. Use `maxRedirectDepth`; `maxRedirectionD
 createRouter({ routes, maxRedirectDepth: 20 });
 ```
 
+### `pathConstraints`
+
+Custom path constraints are created with `createConstraint()` and registered through `defineRoutes(..., { pathConstraints })` when route definitions use the custom constraint. This is required because `defineRoutes()` validates route patterns immediately.
+
+```ts
+import { createConstraint, createRouter, defineRoutes } from '@cookbook/router';
+
+const slug = createConstraint({
+  parse: (paramName, value) => {
+    if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
+      throw new Error(`Parameter "${paramName}" must be a valid slug.`);
+    }
+  },
+  verify: (_paramName, params) => {
+    if (params) {
+      throw new Error('slug does not accept parameters.');
+    }
+  },
+  toRegExp: () => '[a-z0-9-]+',
+});
+
+const routes = defineRoutes([{ id: 'posts.show', path: '/posts/{slug:slug}' }] as const, {
+  pathConstraints: { slug },
+});
+
+const router = createRouter({
+  routes,
+});
+```
+
+`defineRoutes(..., { pathConstraints })` registers constraints before immediate route validation. Router creation also accepts `pathConstraints` for route arrays that have not already been validated. Register the same constraints on the server and client when using SSR.
+
 ### `pathOptions.prune`
 
 Path options are forwarded to `@cookbook/pathkit` wrappers and router canonicalization.

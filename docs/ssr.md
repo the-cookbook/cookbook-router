@@ -163,4 +163,4 @@ Make sure server HTML includes a stylesheet link for SSR-critical CSS.
 
 ### Hydration mismatch
 
-Check that the server and client use the same `routes`, `basename`, `pathOptions`, and initial URL.
+Check that the server and client use the same `routes`, `basename`, `pathOptions`, custom path-constraint registration, and initial URL.

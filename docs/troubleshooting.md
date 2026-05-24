@@ -76,6 +76,36 @@ This canonicalizes matched paths like `/gallery/` to `/gallery`. If it does not 
 createRouter({ routes, pathOptions: { prune: false } });
 ```
 
+## Unknown custom path constraint
+
+A route such as `/posts/{slug:slug}` only validates after `slug` has been registered.
+
+```ts
+import { createConstraint, createRouter, defineRoutes } from '@cookbook/router';
+
+const slug = createConstraint({
+  parse: (paramName, value) => {
+    if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
+      throw new Error(`Parameter "${paramName}" must be a valid slug.`);
+    }
+  },
+  verify: (_paramName, params) => {
+    if (params) {
+      throw new Error('slug does not accept parameters.');
+    }
+  },
+  toRegExp: () => '[a-z0-9-]+',
+});
+
+const routes = defineRoutes([{ id: 'posts.show', path: '/posts/{slug:slug}' }] as const, {
+  pathConstraints: { slug },
+});
+
+createRouter({ routes });
+```
+
+For SSR, use the same custom-constraint setup in the route module used by both the server and client.
+
 ## Basename routes do not work
 
 Configure basename once on the router:

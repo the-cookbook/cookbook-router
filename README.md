@@ -8,6 +8,7 @@ Cookbook Router is a typed, SSR-ready routing framework built on top of `@cookbo
 - [Requirements](#requirements)
 - [Install](#install)
 - [Quick start](#quick-start)
+- [Custom path constraints](#custom-path-constraints)
 - [Generate contracts](#generate-contracts)
 - [Core concepts](#core-concepts)
 - [Examples](#examples)
@@ -113,6 +114,38 @@ export function UserPage() {
   return <h1>User {params.id}</h1>;
 }
 ```
+
+## Custom path constraints
+
+`@cookbook/router` re-exports `@cookbook/pathkit`'s `createConstraint()`. Register custom constraints in `defineRoutes(..., { pathConstraints })` when route definitions use custom constraint names, because `defineRoutes()` validates immediately.
+
+```ts
+import { createConstraint, createRouter, defineRoutes } from '@cookbook/router';
+
+const slug = createConstraint({
+  parse: (paramName, value) => {
+    if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
+      throw new Error(`Parameter "${paramName}" must be a valid slug.`);
+    }
+  },
+  verify: (_paramName, params) => {
+    if (params) {
+      throw new Error('slug does not accept parameters.');
+    }
+  },
+  toRegExp: () => '[a-z0-9-]+',
+});
+
+const routes = defineRoutes([{ id: 'posts.show', path: '/posts/{slug:slug}' }] as const, {
+  pathConstraints: { slug },
+});
+
+export const router = createRouter({
+  routes,
+});
+```
+
+`defineRoutes(..., { pathConstraints })` registers constraints before immediate route validation. `createRouter({ pathConstraints })` is still supported for route arrays that have not already been validated. For SSR, use the same constraint setup on the server and client.
 
 ## Generate contracts
 

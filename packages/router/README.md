@@ -33,6 +33,7 @@ For React apps, also install `@cookbook/router-react`, `react`, and `react-dom`.
 - SSR serialization helpers
 - slots and intercept resolution
 - generated contract types
+- custom path constraints through `createConstraint()` and `pathConstraints`
 
 ## Quick start
 
@@ -76,7 +77,7 @@ createRouter({
 });
 ```
 
-`pathOptions.prune` defaults to `'all'`. `maxRedirectionDepth` is accepted as an alias for `maxRedirectDepth`.
+`pathOptions.prune` defaults to `'all'`. For custom constraints used inside `defineRoutes()`, pass `pathConstraints` to `defineRoutes()` so validation can see them. `createRouter({ pathConstraints })` is available for unvalidated route arrays. `maxRedirectionDepth` is accepted as an alias for `maxRedirectDepth`.
 
 ## Router instance
 

@@ -1,14 +1,21 @@
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vitest';
+import { resetConstraints } from '@cookbook/pathkit';
 import {
   compilePathPattern,
   getPathParams,
   prunePathname,
   matchPathPattern,
   validatePathPattern,
+  createConstraint,
+  registerPathConstraints,
 } from './pathkit';
 
 const uuidPattern =
   '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}';
+
+afterEach(() => {
+  resetConstraints();
+});
 
 describe('pathkit integration adapter', () => {
   test('delegates validation to @cookbook/pathkit', () => {
@@ -101,5 +108,77 @@ describe('pathkit integration adapter', () => {
   test('accepts the root route pattern', () => {
     expect(matchPathPattern('/', '/')).toEqual({});
     expect(getPathParams('/')).toEqual([]);
+  });
+});
+
+describe('custom path constraints', () => {
+  test('registers constraints created with createConstraint', () => {
+    const slug = createConstraint({
+      parse: (paramName, value) => {
+        if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
+          throw new Error(`Parameter "${paramName}" must be a valid slug`);
+        }
+      },
+      verify: (_paramName, params) => {
+        if (params) {
+          throw new Error('slug does not accept parameters');
+        }
+      },
+      toRegExp: () => '[a-z0-9-]+',
+    });
+
+    registerPathConstraints({ slug });
+
+    expect(() => validatePathPattern('/posts/{slug:slug}')).not.toThrow();
+    expect(matchPathPattern('/posts/{slug:slug}', '/posts/hello-world')).toEqual({
+      slug: 'hello-world',
+    });
+    expect(matchPathPattern('/posts/{slug:slug}', '/posts/HelloWorld')).toBeNull();
+    expect(compilePathPattern('/posts/{slug:slug}', { slug: 'hello-world' })).toBe(
+      '/posts/hello-world',
+    );
+    expect(() => compilePathPattern('/posts/{slug:slug}', { slug: 'HelloWorld' })).toThrow(
+      'valid slug',
+    );
+  });
+
+  test('clears pathkit caches when replacing a registered constraint', () => {
+    const first = createConstraint({
+      parse: (_paramName, value) => {
+        if (value !== 'first') {
+          throw new Error('expected first');
+        }
+      },
+      verify: () => {},
+      toRegExp: () => 'first',
+    });
+    const second = createConstraint({
+      parse: (_paramName, value) => {
+        if (value !== 'second') {
+          throw new Error('expected second');
+        }
+      },
+      verify: () => {},
+      toRegExp: () => 'second',
+    });
+
+    registerPathConstraints({ mode: first });
+    expect(matchPathPattern('/demo/{value:mode}', '/demo/first')).toEqual({ value: 'first' });
+
+    registerPathConstraints({ mode: second });
+    expect(matchPathPattern('/demo/{value:mode}', '/demo/first')).toBeNull();
+    expect(matchPathPattern('/demo/{value:mode}', '/demo/second')).toEqual({ value: 'second' });
+  });
+
+  test('rejects empty custom constraint names', () => {
+    const constraint = createConstraint({
+      parse: () => {},
+      verify: () => {},
+      toRegExp: () => '.+',
+    });
+
+    expect(() => registerPathConstraints({ ' ': constraint })).toThrow(
+      'Router path constraint names must be non-empty strings.',
+    );
   });
 });
