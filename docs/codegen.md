@@ -11,6 +11,8 @@
 - [Manifest only](#manifest-only)
 - [Watch mode](#watch-mode)
 - [Programmatic usage](#programmatic-usage)
+- [Programmatic generation helpers](#programmatic-generation-helpers)
+- [CLI runner helpers](#cli-runner-helpers)
 - [Generated output](#generated-output)
 - [Static extraction rules](#static-extraction-rules)
 - [Safety checks](#safety-checks)
@@ -121,6 +123,64 @@ You can also pass routes directly in programmatic code:
 
 ```ts
 await generateCommand({ routes, outDir: '.cookbook-router' });
+```
+
+## Programmatic generation helpers
+
+Use the generation helpers when embedding Cookbook Router codegen inside another build tool.
+
+```ts
+import {
+  generateContracts,
+  generateManifest,
+  generateRegister,
+  serializeManifest,
+} from '@cookbook/router-cli';
+
+const contractsSource = generateContracts(routes);
+const registerSource = generateRegister();
+const manifest = generateManifest(routes);
+const manifestJson = serializeManifest(manifest);
+```
+
+Signatures:
+
+```ts
+function generateContracts(routes: readonly RouteDefinition[]): string;
+function generateRegister(): string;
+function generateManifest(routes: readonly RouteDefinition[]): RouteManifest;
+function serializeManifest(manifest: RouteManifest): string;
+
+interface RouteManifest {
+  readonly routes: readonly ManifestRoute[];
+}
+```
+
+See the [CLI API reference](api.md#programmatic-command-apis) for command APIs and [contract registration](api.md#contract-registration) for generated type registration.
+
+## CLI runner helpers
+
+`runCli()` and `shouldRunCli()` are public for tests and custom executable wrappers.
+
+```ts
+import { runCli, shouldRunCli } from '@cookbook/router-cli';
+
+if (shouldRunCli()) {
+  process.exitCode = await runCli(process.argv.slice(2));
+}
+```
+
+Signatures:
+
+```ts
+interface CliRunnerOptions {
+  readonly stdout?: (message: string) => void;
+  readonly stderr?: (message: string) => void;
+  readonly version?: string;
+}
+
+function runCli(argv: readonly string[], runnerOptions?: CliRunnerOptions): Promise<number>;
+function shouldRunCli(moduleUrl?: string, argv?: readonly string[]): boolean;
 ```
 
 ## Generated output

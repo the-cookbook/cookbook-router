@@ -2,15 +2,24 @@
 
 Framework-agnostic typed routing runtime for Cookbook Router.
 
+Use this package for route definitions, matching, href generation, navigation, middleware, lifecycle hooks, SSR router state, histories, slots, intercepts, redirects, and generated contract types.
+
 ## Table of contents
 
 - [Install](#install)
-- [What this package provides](#what-this-package-provides)
+- [Requirements](#requirements)
 - [Quick start](#quick-start)
-- [Router options](#router-options)
-- [Router instance](#router-instance)
+- [Public entrypoint](#public-entrypoint)
+- [Route definition API](#route-definition-api)
+- [Router creation API](#router-creation-api)
+- [Router instance API](#router-instance-api)
+- [Navigation and hrefs](#navigation-and-hrefs)
+- [Middleware and lifecycle](#middleware-and-lifecycle)
 - [SSR and histories](#ssr-and-histories)
 - [Generated contracts](#generated-contracts)
+- [Custom path constraints](#custom-path-constraints)
+- [Advanced public helpers](#advanced-public-helpers)
+- [Troubleshooting](#troubleshooting)
 - [Related docs](#related-docs)
 
 ## Install
@@ -19,21 +28,21 @@ Framework-agnostic typed routing runtime for Cookbook Router.
 pnpm add @cookbook/router
 ```
 
-For React apps, also install `@cookbook/router-react`, `react`, and `react-dom`. `@cookbook/pathkit` is installed transitively by `@cookbook/router`.
+For React apps:
 
-## What this package provides
+```sh
+pnpm add @cookbook/router @cookbook/router-react react react-dom
+pnpm add -D @cookbook/router-cli
+```
 
-- route definition with `defineRoutes`
-- validation and normalization
-- deterministic matching and ranking
-- href generation
-- route redirects
-- middleware and lifecycle pipelines
-- browser, memory, and static history integration
-- SSR serialization helpers
-- slots and intercept resolution
-- generated contract types
-- custom path constraints through `createConstraint()` and `pathConstraints`
+`@cookbook/pathkit` is installed transitively by `@cookbook/router`.
+
+## Requirements
+
+- Node.js `>=22.22.1`
+- ESM imports are supported through `exports.import`
+- CommonJS consumers can use the package root through `exports.require`
+- Do not deep import from `dist` or `src`; use the package root only
 
 ## Quick start
 
@@ -49,6 +58,10 @@ const routes = defineRoutes([
   {
     id: 'users.show',
     path: '/users/{id:int}',
+    search: {
+      tab: 'string',
+    },
+    hash: ['profile', 'settings'],
     component: UserPage,
   },
 ] as const);
@@ -56,62 +69,281 @@ const routes = defineRoutes([
 const router = createRouter({ routes });
 await router.resolveCurrent();
 
+const href = router.href({
+  route: 'users.show',
+  params: { id: '42' },
+  search: { tab: 'settings' },
+  hash: 'profile',
+});
+
 await router.navigate.to({
   route: 'users.show',
   params: { id: '42' },
 });
 ```
 
-## Router options
+Expected `href`:
 
-```ts
-createRouter({
-  routes,
-  basename: '/app',
-  middleware: [],
-  lifecycle: {},
-  hydrationData,
-  history,
-  pathOptions: { prune: 'all' },
-  maxRedirectDepth: 10,
-});
+```txt
+/users/42?tab=settings#profile
 ```
 
-`pathOptions.prune` defaults to `'all'`. For custom constraints used inside `defineRoutes()`, pass `pathConstraints` to `defineRoutes()` so validation can see them. `createRouter({ pathConstraints })` is available for unvalidated route arrays. `maxRedirectionDepth` is accepted as an alias for `maxRedirectDepth`.
+## Public entrypoint
 
-## Router instance
+The package exposes only the package root and `./package.json`:
 
-Important methods:
+```ts
+import { createRouter, defineRoutes } from '@cookbook/router';
+import type { RouteId, RouteParams } from '@cookbook/router';
+```
 
-- `router.href(...)`
-- `router.resolve(...)`
-- `router.match(pathname)`
-- `router.navigate.to(...)`
-- `router.navigate.replace(...)`
-- `router.navigate.back()`
-- `router.navigate.forward()`
-- `router.navigate.go(delta)`
-- `router.subscribe(listener)`
-- `router.resolveCurrent()`
-- `router.serialize()`
+Package-root exports are documented in the [API reference](../../docs/api.md#cookbookrouter).
 
-## SSR and histories
+## Route definition API
+
+```ts
+function defineRoutes<const Routes extends readonly RouteDefinition[]>(
+  routes: Routes,
+  options?: DefineRoutesOptions,
+): Routes;
+
+interface DefineRoutesOptions {
+  readonly pathOptions?: RouterPathOptions;
+  readonly pathConstraints?: RouterPathConstraints;
+}
+```
+
+`defineRoutes()` preserves route literals for generated contracts and validates immediately.
+
+Common route fields:
+
+| Field        | Purpose                                      |
+| ------------ | -------------------------------------------- |
+| `id`         | Stable public route ID.                      |
+| `path`       | URL path segment or absolute path.           |
+| `index`      | Default child route for a parent path.       |
+| `component`  | Framework-owned render value.                |
+| `layout`     | Layout component and slot configuration.     |
+| `children`   | Primary child routes.                        |
+| `redirect`   | Internal route redirect or literal href.     |
+| `search`     | Search key schema for generated contracts.   |
+| `hash`       | Allowed hash values for generated contracts. |
+| `middleware` | Route-specific middleware.                   |
+| `lifecycle`  | Route-specific lifecycle hooks.              |
+
+See [Routing](../../docs/routing.md) for the full route shape.
+
+## Router creation API
+
+```ts
+function createRouter(options: CreateRouterOptions): Router;
+function createMemoryRouter(options: CreateMemoryRouterOptions): Router;
+function createStaticRouter(options: CreateStaticRouterOptions): Router;
+```
+
+`createRouter()` options:
+
+```ts
+interface CreateRouterOptions {
+  readonly routes: readonly RouteDefinition[];
+  readonly basename?: string;
+  readonly middleware?: readonly Middleware[];
+  readonly lifecycle?: GlobalLifecycle;
+  readonly hydrationData?: SerializedRouterState;
+  readonly history?: RouterHistory;
+  readonly pathOptions?: RouterPathOptions;
+  readonly pathConstraints?: RouterPathConstraints;
+  readonly maxRedirectDepth?: number;
+  readonly maxRedirectionDepth?: number;
+}
+```
 
 Use:
 
 - `createRouter()` for browser/runtime usage
-- `createMemoryRouter()` for tests and memory navigation
-- `createStaticRouter()` for SSR
-- `serializeRouterState()`, `stringifyRouterState()`, and `deserializeRouterState()` for hydration data
+- `createMemoryRouter()` for tests and memory-only environments
+- `createStaticRouter()` for server rendering
+
+## Router instance API
+
+Important router members:
+
+```ts
+router.href(routeId, options);
+router.href({ route, params, search, hash });
+router.resolve(routeId, options);
+router.resolve({ route, params, search, hash });
+router.match(pathname);
+router.navigate.to(routeId, options);
+router.navigate.to({ route, params, search, hash });
+router.navigate.replace({ route, params, search, hash });
+router.navigate.back();
+router.navigate.forward();
+router.navigate.go(delta);
+router.subscribe(listener);
+router.resolveCurrent();
+router.serialize();
+```
+
+Navigation methods return `Promise<RouterState>` for `to` and `replace`. History movement methods return `void`.
+
+## Navigation and hrefs
+
+Prefer object-form navigation:
+
+```ts
+await router.navigate.to({
+  route: 'articles.show',
+  params: { slug: 'typed-routing' },
+  search: { ref: 'home' },
+  hash: 'comments',
+});
+```
+
+Use `router.href()` when rendering links outside React:
+
+```ts
+const href = router.href({
+  route: 'articles.show',
+  params: { slug: 'typed-routing' },
+});
+```
+
+See [Navigation](../../docs/navigation.md).
+
+## Middleware and lifecycle
+
+Global middleware and lifecycle hooks are passed to `createRouter()`.
+
+```ts
+const router = createRouter({
+  routes,
+  middleware: [authMiddleware],
+  lifecycle: {
+    beforeNavigate({ to }) {
+      return Boolean(to);
+    },
+    afterNavigate({ location }) {
+      analytics.page(location.href);
+    },
+  },
+});
+```
+
+Route-level `middleware` and `lifecycle` are defined on individual route records.
+
+See [Middleware](../../docs/middleware.md) and [Lifecycle](../../docs/lifecycle.md).
+
+## SSR and histories
+
+```ts
+import { createStaticRouter, deserializeRouterState, stringifyRouterState } from '@cookbook/router';
+
+const router = createStaticRouter({ routes, url: '/articles/typed-routing' });
+await router.resolveCurrent();
+
+const hydrationJson = stringifyRouterState(router);
+const hydrationData = deserializeRouterState(hydrationJson);
+```
+
+History helpers are also public:
+
+- `createBrowserHistory()`
+- `createMemoryHistory()`
+- `createStaticHistory()`
+- `parseHref()`
+
+See [SSR](../../docs/ssr.md).
 
 ## Generated contracts
 
-The core package exports contract utility types such as `RouteId`, `RouteParams`, `RouteSearch`, `RouteHash`, `RouteMeta`, and `RouteOutletContext`. They become app-specific after `@cookbook/router-cli` generates and registers contracts.
+The core package exports contract utility types:
+
+- `RouteId`
+- `RouteParams<Route>`
+- `RouteSearch<Route>`
+- `RouteHash<Route>`
+- `RouteHashInput<Route>`
+- `RouteMeta<Route>`
+- `RouteOutletContext<Route>`
+- `RouteUrlOptions<Route>`
+- `RouterContracts`
+- `Register`
+
+They become app-specific after `@cookbook/router-cli` generates `contracts.ts` and `register.d.ts`.
+
+See [Contracts](../../docs/contracts.md) and [Code generation](../../docs/codegen.md).
+
+## Custom path constraints
+
+```ts
+import { createConstraint, defineRoutes } from '@cookbook/router';
+
+const slug = createConstraint({
+  parse(paramName, value) {
+    if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
+      throw new Error(`${paramName} must be a slug.`);
+    }
+  },
+  verify() {},
+  toRegExp() {
+    return '[a-z0-9-]+';
+  },
+});
+
+const routes = defineRoutes([{ id: 'posts.show', path: '/posts/{slug:slug}' }] as const, {
+  pathConstraints: { slug },
+});
+```
+
+Also exported:
+
+- `registerPathConstraints()`
+- `hasConstraint()`
+- `getConstraint()`
+- `unregisterConstraint()`
+
+## Advanced public helpers
+
+The package exports lower-level helpers for tooling and tests:
+
+- `validateRoutes()`
+- `normalizeRoutes()`
+- `rankRoutes()`
+- `flattenRoutes()`
+- `matchRoutes()`
+- `runMiddleware()`
+- `runBeforeNavigate()`
+- `runAfterNavigate()`
+- `runNavigationError()`
+- `runTransition()`
+- `completeTransition()`
+- `resolveSlots()`
+- `getResolvedSlot()`
+- intercept helpers such as `resolveIntercept()` and `createInterceptHistoryState()`
+- diagnostic error factories
+
+Application code should usually prefer `createRouter()` and the router instance API.
+
+## Troubleshooting
+
+- If custom constraints are unknown, pass them to `defineRoutes(..., { pathConstraints })`.
+- If redirects do not run before first render, call `await router.resolveCurrent()` before rendering.
+- If route types are too broad, run `@cookbook/router-cli generate` and include generated files in `tsconfig.json`.
+- If tests need navigation, use `createMemoryRouter()` instead of mocking internals.
+
+See [Troubleshooting](../../docs/troubleshooting.md).
 
 ## Related docs
 
 - [Repository README](../../README.md)
-- [Core API reference](../../docs/api.md)
+- [API reference](../../docs/api.md#cookbookrouter)
+- [Getting started](../../docs/getting-started.md)
 - [Routing](../../docs/routing.md)
 - [Navigation](../../docs/navigation.md)
+- [Search and hash](../../docs/search-and-hash.md)
+- [Middleware](../../docs/middleware.md)
+- [Lifecycle](../../docs/lifecycle.md)
 - [SSR](../../docs/ssr.md)
+- [Testing](../../docs/testing.md)
+- [Troubleshooting](../../docs/troubleshooting.md)

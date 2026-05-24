@@ -16,15 +16,18 @@ Cookbook Router is a typed, SSR-ready routing framework built on top of `@cookbo
 - [Git hooks](#git-hooks)
 - [Release workflow](#release-workflow)
 - [Documentation](#documentation)
+- [Documentation map](#documentation-map)
 - [Development notes](#development-notes)
 
 ## Packages
 
-| Package                  | Purpose                                                                                                                                           |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@cookbook/router`       | Route definitions, validation, normalization, matching, href generation, middleware, lifecycle, SSR, histories, slots, intercepts, and redirects. |
-| `@cookbook/router-react` | React provider, links, outlets, slots, hooks, outlet context, and static rendering integration.                                                   |
-| `@cookbook/router-cli`   | Contract generation, manifest generation, route validation, and watch mode.                                                                       |
+| Package                  | Purpose                                                                                                                                                                     | Package docs                              | API reference                           |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | --------------------------------------- |
+| `@cookbook/router`       | Route definitions, validation, normalization, matching, href generation, middleware, lifecycle, SSR, histories, slots, intercepts, redirects, and generated contract types. | [README](packages/router/README.md)       | [API](docs/api.md#cookbookrouter)       |
+| `@cookbook/router-react` | React provider, links, nav links, outlets, slots, hooks, outlet context, unload blockers, and static rendering integration.                                                 | [README](packages/router-react/README.md) | [API](docs/api.md#cookbookrouter-react) |
+| `@cookbook/router-cli`   | Contract generation, manifest generation, route validation, static route extraction, watch mode, and programmatic generation APIs.                                          | [README](packages/router-cli/README.md)   | [API](docs/api.md#cookbookrouter-cli)   |
+
+The root package does not expose runtime APIs. Use package-root imports from the packages above and avoid deep imports from `src` or `dist`.
 
 ## Requirements
 
@@ -37,7 +40,7 @@ Cookbook Router is a typed, SSR-ready routing framework built on top of `@cookbo
 ```sh
 pnpm add @cookbook/router
 pnpm add @cookbook/router-react react react-dom
-pnpm add -D @cookbook/router-cli typescript
+pnpm add -D @cookbook/router-cli
 ```
 
 For non-React usage, install only `@cookbook/router`. `@cookbook/pathkit` is installed transitively by `@cookbook/router`.
@@ -252,6 +255,16 @@ See [Releasing](docs/releasing.md) for the full maintainer workflow, release gat
 - [Git hooks](docs/git-hooks.md)
 - [Releasing](docs/releasing.md)
 - [Troubleshooting](docs/troubleshooting.md)
+
+## Documentation map
+
+| Need                           | Start here                                 | Then read                                                                                                       |
+| ------------------------------ | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| Build a first React app        | [Getting started](docs/getting-started.md) | [React integration](docs/react-integration.md), [Navigation](docs/navigation.md)                                |
+| Understand route configuration | [Routing](docs/routing.md)                 | [Search and hash](docs/search-and-hash.md), [Middleware](docs/middleware.md), [Lifecycle](docs/lifecycle.md)    |
+| Use generated route types      | [Code generation](docs/codegen.md)         | [Contracts](docs/contracts.md), [API reference](docs/api.md#contract-registration)                              |
+| Render on the server           | [SSR](docs/ssr.md)                         | [React integration](docs/react-integration.md#static-provider), [API reference](docs/api.md#serialization-apis) |
+| Debug a failing route          | [Troubleshooting](docs/troubleshooting.md) | [Testing](docs/testing.md), [API reference](docs/api.md)                                                        |
 
 ## Development notes
 

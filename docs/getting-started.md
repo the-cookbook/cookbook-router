@@ -19,7 +19,7 @@ This guide creates a typed React app with route definitions, generated contracts
 
 ```sh
 pnpm add @cookbook/router @cookbook/router-react react react-dom
-pnpm add -D @cookbook/router-cli typescript vite
+pnpm add -D @cookbook/router-cli
 ```
 
 `@cookbook/router-react` declares React as a peer dependency, so the app must install `react` and `react-dom`. `@cookbook/pathkit` is installed transitively by `@cookbook/router`.
