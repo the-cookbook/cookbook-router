@@ -57,12 +57,12 @@ cookbook-router manifest --routes src/routes.tsx --out-dir .cookbook-router
 cookbook-router watch --routes src/routes.tsx --out-dir .cookbook-router
 ```
 
-| Command    | Purpose                                                        | Writes files |
-| ---------- | -------------------------------------------------------------- | ------------ |
-| `generate` | Generate `contracts.ts`, `register.d.ts`, and `manifest.json`. | Yes          |
-| `validate` | Validate route files without writing output.                   | No           |
-| `manifest` | Generate `manifest.json` only.                                 | Yes          |
-| `watch`    | Generate once, then regenerate on route file changes.          | Yes          |
+| Command    | Purpose                                                                      | Writes files |
+| ---------- | ---------------------------------------------------------------------------- | ------------ |
+| `generate` | Generate `contracts.ts`, `register.d.ts`, and `manifest.json`.               | Yes          |
+| `validate` | Validate route files without writing output.                                 | No           |
+| `manifest` | Generate `manifest.json` only.                                               | Yes          |
+| `watch`    | Generate once, keep the process alive, and regenerate on route file changes. | Yes          |
 
 Options:
 
@@ -151,9 +151,14 @@ function watchCommand(options: WatchCommandOptions): WatchHandle;
 function resolveRoutes(options: CliRouteOptions): Promise<readonly RouteDefinition[]>;
 ```
 
-`watchCommand()` returns:
+`watchCommand()` requires `routeFiles` because in-memory route arrays cannot be watched. It generates once, registers one watcher per route file, debounces rapid file-system events, calls `onChange` for the initial result and every regeneration, and returns:
 
 ```ts
+interface WatchOptions extends CliRouteOptions {
+  readonly debounceMs?: number;
+  readonly onChange?: (result: CommandResult) => void | Promise<void>;
+}
+
 interface WatchHandle {
   readonly initial: Promise<CommandResult>;
   close: () => void;
@@ -253,14 +258,16 @@ With package scripts:
 - Invalid options, unknown commands, route validation errors, and generation errors exit `1`.
 - `validate` writes no files.
 - `generate` and `manifest` print generated files on success.
-- `watch` reports the initial generation status and then handles file changes.
+- `watch` reports the initial generation status, keeps the process alive, and reports each regeneration result.
+- `watch` requires at least one `--routes` file; direct in-memory route arrays are only supported by programmatic one-shot commands.
 
 The package also exports `runCli(argv, runnerOptions?)` and `shouldRunCli(moduleUrl?, argv?)` for custom executable wrappers and tests.
 
 ## Troubleshooting
 
 - If a route file cannot be evaluated, simplify the route declaration into a static array.
-- If contracts are stale, rerun `generate` or use `watch` during development.
+- If contracts are stale, rerun `generate` once to see diagnostics, then use `watch` during development.
+- If `watch` reports that it requires a route file, pass at least one `--routes <file>` argument. Watch mode cannot observe programmatic in-memory routes.
 - If generated types are not visible, include generated files in `tsconfig.json`.
 - If a slot fallback ID is not generated, that is expected; fallbacks are not navigable routes.
 - If a command exits with `--routes requires a file path`, pass at least one route file with `--routes`.

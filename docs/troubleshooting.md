@@ -175,11 +175,13 @@ Regenerate:
 cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router
 ```
 
-In development, use watch mode:
+In development, use watch mode. It generates once, keeps running, and regenerates when the route file changes:
 
 ```sh
 cookbook-router watch --routes src/routes.tsx --out-dir .cookbook-router
 ```
+
+Watch mode requires at least one route file passed with `--routes`; it cannot watch route arrays passed directly through the programmatic API.
 
 ## Type inference does not work
 

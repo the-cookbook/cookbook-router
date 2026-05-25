@@ -46,6 +46,7 @@ export interface CommandResult {
 }
 
 export interface WatchOptions extends CliRouteOptions {
+  readonly debounceMs?: number;
   readonly onChange?: (result: CommandResult) => void | Promise<void>;
 }
 

@@ -79,6 +79,7 @@ describe('CLI integration in isolated workspaces', () => {
 
   test('watch mode regenerates contracts, registration, and manifest after route file changes', async () => {
     const fs = createMemoryFileSystem({ 'routes.json': JSON.stringify({ routes: validRoutes }) });
+    let changeCount = 0;
     let resolveChange!: () => void;
     const changed = new Promise<void>((resolve) => {
       resolveChange = resolve;
@@ -87,7 +88,13 @@ describe('CLI integration in isolated workspaces', () => {
       routeFiles: ['routes.json'],
       fs,
       outDir: 'generated',
-      onChange: () => resolveChange(),
+      debounceMs: 0,
+      onChange: () => {
+        changeCount += 1;
+        if (changeCount === 2) {
+          resolveChange();
+        }
+      },
     });
 
     await expect(watcher.initial).resolves.toMatchObject({ ok: true });

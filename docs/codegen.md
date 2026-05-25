@@ -100,7 +100,7 @@ Writes only `manifest.json`.
 cookbook-router watch --routes src/routes.tsx --out-dir .cookbook-router
 ```
 
-Generates all files once, then regenerates them when route files change.
+Generates all files once, keeps the process alive, and regenerates them when route files change. Watch mode requires at least one `--routes` file because in-memory route arrays cannot be observed for changes. Rapid file-system events are debounced before regeneration.
 
 ## Programmatic usage
 
@@ -113,9 +113,16 @@ await generateCommand({ routeFiles: ['src/routes.tsx'], outDir: '.cookbook-route
 const watcher = watchCommand({
   routeFiles: ['src/routes.tsx'],
   outDir: '.cookbook-router',
+  onChange(result) {
+    if (!result.ok) {
+      console.error(result.errors.join('\n'));
+    }
+  },
 });
 
 await watcher.initial;
+
+// Later, when your integration is shutting down:
 watcher.close();
 ```
 
@@ -267,7 +274,7 @@ Make sure the file contains `defineRoutes([...])` or a static `routes = [...]` a
 
 ### Generated contracts do not update
 
-Run `generate` manually once to check diagnostics, then use `watch` during development.
+Run `generate` manually once to check diagnostics, then use `watch` during development. Watch mode prints the initial generation result and each later regeneration result.
 
 ### Component imports fail during generation
 

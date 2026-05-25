@@ -936,7 +936,8 @@ Exit behavior:
 - Successful commands exit `0`.
 - Invalid command input, validation errors, and generation errors exit `1`.
 - `validate` writes no files.
-- `watch` returns the initial command status and keeps watching when used as a process.
+- `watch` returns the initial command status, keeps the process alive, and regenerates after route file changes.
+- `watch` requires at least one `--routes` file because in-memory route arrays cannot be watched.
 
 ### Programmatic command APIs
 
@@ -979,7 +980,7 @@ interface WatchHandle {
 }
 ```
 
-Generates once, then watches route files when the configured file system supports watching.
+Generates once, watches route files, debounces rapid file-system events, and calls `onChange` for the initial result and each regeneration result. `routeFiles` is required because watch mode cannot observe in-memory route arrays.
 
 ```ts
 import { generateCommand, validateCommand, watchCommand } from '@cookbook/router-cli';
@@ -987,7 +988,16 @@ import { generateCommand, validateCommand, watchCommand } from '@cookbook/router
 await validateCommand({ routeFiles: ['src/routes.tsx'] });
 await generateCommand({ routeFiles: ['src/routes.tsx'], outDir: '.cookbook-router' });
 
-const watcher = watchCommand({ routeFiles: ['src/routes.tsx'], outDir: '.cookbook-router' });
+const watcher = watchCommand({
+  routeFiles: ['src/routes.tsx'],
+  outDir: '.cookbook-router',
+  onChange(result) {
+    if (!result.ok) {
+      console.error(result.errors.join('\n'));
+    }
+  },
+});
+
 await watcher.initial;
 watcher.close();
 ```
@@ -1076,6 +1086,11 @@ interface CommandResult {
   readonly ok: boolean;
   readonly files: readonly string[];
   readonly errors: readonly string[];
+}
+
+interface WatchOptions extends CliRouteOptions {
+  readonly debounceMs?: number;
+  readonly onChange?: (result: CommandResult) => void | Promise<void>;
 }
 ```
 

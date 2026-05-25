@@ -1,45 +1,120 @@
-import { watch as nodeWatch } from 'node:fs';
 import { generateCommand } from './generate';
+import { nodeFileSystem } from '../node-file-system';
 import type { CommandResult, WatchHandle, WatchOptions } from '../contracts';
 
 export interface WatchCommandOptions extends WatchOptions {}
 
+const DEFAULT_DEBOUNCE_MS = 50;
+
 export function watchCommand(options: WatchCommandOptions): WatchHandle {
-  const fs = options.fs;
   const watchers: { close: () => void }[] = [];
+  const fs = options.fs ?? nodeFileSystem;
+  const routeFiles = options.routeFiles ?? [];
+  const debounceMs = options.debounceMs ?? DEFAULT_DEBOUNCE_MS;
   let closed = false;
-  let pending: Promise<CommandResult> = Promise.resolve({ ok: true, files: [], errors: [] });
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let running = false;
+  let rerunRequested = false;
+  let setupError: string | undefined;
 
-  const run = async (notify = true): Promise<CommandResult> => {
+  const notify = async (result: CommandResult): Promise<void> => {
+    await options.onChange?.(result);
+  };
+
+  const run = async (): Promise<CommandResult> => {
     if (closed) {
-      return { ok: false, files: [], errors: ['Watch command is closed.'] };
+      return failure('Watch command is closed.');
     }
 
-    const result = await generateCommand(options);
-    if (notify) {
-      await options.onChange?.(result);
+    if (!routeFiles[0]) {
+      return failure('Watch mode requires at least one route file. Pass --routes <file>.');
     }
+
+    if (setupError) {
+      return failure(setupError);
+    }
+
+    return generateCommand(options);
+  };
+
+  const runAndNotify = async (): Promise<CommandResult> => {
+    const result = await run();
+    await notify(result);
     return result;
   };
 
-  const schedule = (): void => {
-    pending = pending.then(
-      () => run(true),
-      () => run(true),
-    );
+  const flush = (): void => {
+    if (closed) {
+      return;
+    }
+
+    if (running) {
+      rerunRequested = true;
+      return;
+    }
+
+    running = true;
+    void runAndNotify()
+      .catch((error: unknown) =>
+        notify(failure(error instanceof Error ? error.message : String(error))),
+      )
+      .finally(() => {
+        running = false;
+
+        if (rerunRequested && !closed) {
+          rerunRequested = false;
+          schedule();
+        }
+      });
   };
 
-  for (const routeFile of options.routeFiles ?? []) {
-    const watcher = fs?.watch
-      ? fs.watch(routeFile, scheduleWatch(schedule))
-      : nodeWatch(routeFile, scheduleWatch(schedule));
-    watchers.push(watcher);
+  const schedule = (): void => {
+    if (closed) {
+      return;
+    }
+
+    if (timer) {
+      clearTimeout(timer);
+    }
+
+    timer = setTimeout(() => {
+      timer = undefined;
+      flush();
+    }, debounceMs);
+  };
+
+  try {
+    if (!fs.watch) {
+      setupError = 'Watch mode requires a file system with watch support.';
+    } else {
+      for (const routeFile of routeFiles) {
+        watchers.push(fs.watch(routeFile, () => schedule()));
+      }
+    }
+  } catch (error) {
+    setupError = error instanceof Error ? error.message : String(error);
+    for (const watcher of watchers) {
+      watcher.close();
+    }
+    watchers.length = 0;
   }
 
+  const initial = runAndNotify();
+
   return {
-    initial: run(options.outDir === undefined),
+    initial,
     close: () => {
+      if (closed) {
+        return;
+      }
+
       closed = true;
+
+      if (timer) {
+        clearTimeout(timer);
+        timer = undefined;
+      }
+
       for (const watcher of watchers) {
         watcher.close();
       }
@@ -47,8 +122,6 @@ export function watchCommand(options: WatchCommandOptions): WatchHandle {
   };
 }
 
-function scheduleWatch(
-  schedule: () => void,
-): (event: 'rename' | 'change', filename: string | null) => void {
-  return () => schedule();
+function failure(message: string): CommandResult {
+  return { ok: false, files: [], errors: [message] };
 }
