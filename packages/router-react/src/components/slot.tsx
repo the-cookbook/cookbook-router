@@ -7,7 +7,7 @@ import {
   useRouterContext,
   useSlotRenderContext,
 } from '../context/router-context';
-import { asComponent, renderMatches } from './router-provider';
+import { asComponent, renderMatches, renderRouteBoundary } from './router-provider';
 
 export interface SlotProps<T = unknown> {
   readonly name: string;
@@ -57,7 +57,7 @@ function renderInterceptedRoute(
     return null;
   }
 
-  const element = <Component />;
+  const element = renderRouteBoundary(match, <Component />);
 
   return (
     <RouteRenderContext.Provider value={{ match }}>
@@ -89,7 +89,7 @@ function renderResolvedSlot(slot: ResolvedSlot, context: unknown): ReactElement 
   }
 
   const match = createSlotRenderMatch(slot);
-  const element = <Component />;
+  const element = match ? renderRouteBoundary(match, <Component />) : <Component />;
 
   if (!match) {
     return (

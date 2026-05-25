@@ -123,29 +123,31 @@ interface RouteDefinition {
   readonly hash?: readonly string[];
   readonly meta?: RouteMeta;
   readonly notFound?: RouteComponent;
-  readonly errorComponent?: RouteComponent;
+  readonly loading?: RouteComponent;
+  readonly errorFallback?: RouteComponent;
   readonly lifecycle?: RouteLifecycle;
   readonly middleware?: readonly Middleware[];
 }
 ```
 
-| Field            | Purpose                                                                                                                   |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `id`             | Stable public route ID used by links, hrefs, navigation, redirects, generated contracts, and tests.                       |
-| `path`           | Local path segment or absolute path. Index routes must not define `path`.                                                 |
-| `index`          | Marks the route as the default child for its parent path.                                                                 |
-| `component`      | Route component or framework-owned render value. The core package treats it as `unknown`.                                 |
-| `layout`         | Layout component and named slot definitions.                                                                              |
-| `children`       | Primary child routes.                                                                                                     |
-| `intercepts`     | Configured route interception targets for named slots.                                                                    |
-| `redirect`       | Internal route redirect object or literal href string.                                                                    |
-| `search`         | Search key schema used by generated contracts. `type: 'one'` is a single value; `type: 'many'` is a repeated query param. |
-| `hash`           | Allowed hash values used by generated contracts.                                                                          |
-| `meta`           | Arbitrary route metadata.                                                                                                 |
-| `notFound`       | Route-level not-found component.                                                                                          |
-| `errorComponent` | Route-level error component.                                                                                              |
-| `lifecycle`      | Route lifecycle hooks.                                                                                                    |
-| `middleware`     | Route-specific middleware pipeline.                                                                                       |
+| Field           | Purpose                                                                                                                   |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `id`            | Stable public route ID used by links, hrefs, navigation, redirects, generated contracts, and tests.                       |
+| `path`          | Local path segment or absolute path. Index routes must not define `path`.                                                 |
+| `index`         | Marks the route as the default child for its parent path.                                                                 |
+| `component`     | Route component or framework-owned render value. The core package treats it as `unknown`.                                 |
+| `layout`        | Layout component and named slot definitions.                                                                              |
+| `children`      | Primary child routes.                                                                                                     |
+| `intercepts`    | Configured route interception targets for named slots.                                                                    |
+| `redirect`      | Internal route redirect object or literal href string.                                                                    |
+| `search`        | Search key schema used by generated contracts. `type: 'one'` is a single value; `type: 'many'` is a repeated query param. |
+| `hash`          | Allowed hash values used by generated contracts.                                                                          |
+| `meta`          | Arbitrary route metadata.                                                                                                 |
+| `notFound`      | Route-level not-found component.                                                                                          |
+| `loading`       | Route-level React Suspense fallback component for loading route subtrees.                                                 |
+| `errorFallback` | Route-level React error-boundary fallback component for render errors in route subtrees.                                  |
+| `lifecycle`     | Route lifecycle hooks.                                                                                                    |
+| `middleware`    | Route-specific middleware pipeline.                                                                                       |
 
 Related: [Routing](routing.md), [Search and hash](search-and-hash.md), [Middleware](middleware.md), [Lifecycle](lifecycle.md).
 
@@ -673,16 +675,24 @@ interface RouterProviderProps {
   readonly router: Router;
   readonly children?: ReactNode;
   readonly fallback?: ReactNode;
+  readonly loadingFallback?: ReactNode;
+  readonly errorFallback?: ComponentType<RouterErrorFallbackProps>;
   readonly scrollRestoration?: boolean;
 }
 
 function RouterProvider(props: RouterProviderProps): ReactElement;
 ```
 
-Renders the active route branch for a live router. If `children` are provided, they are rendered inside the router context instead of the default route renderer.
+Renders the active route branch for a live router. If `children` are provided, they are rendered inside the router context instead of the default route renderer. `fallback` is not-found UI, `loadingFallback` is the global Suspense fallback, and `errorFallback` is the global React render-error fallback.
 
 ```tsx
-<RouterProvider router={router} fallback={<NotFoundPage />} scrollRestoration />
+<RouterProvider
+  router={router}
+  fallback={<NotFoundPage />}
+  loadingFallback={<AppSkeleton />}
+  errorFallback={AppErrorFallback}
+  scrollRestoration
+/>
 ```
 
 #### `StaticRouterProvider(props)`
@@ -692,6 +702,8 @@ interface StaticRouterProviderProps {
   readonly router: Router;
   readonly children?: ReactNode;
   readonly fallback?: ReactNode;
+  readonly loadingFallback?: ReactNode;
+  readonly errorFallback?: ComponentType<RouterErrorFallbackProps>;
 }
 
 function StaticRouterProvider(props: StaticRouterProviderProps): ReactElement;
@@ -840,7 +852,8 @@ The React package also exports advanced integration helpers:
 
 | API                                                              | Purpose                                                                |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `renderMatches(matches, fallback, slots?)`                       | Render a matched branch manually.                                      |
+| `renderMatches(matches, fallback, slots?, options?)`             | Render a matched branch manually.                                      |
+| `renderRouteBoundary(match, element)`                            | Wrap one matched route element in its route-level Suspense/error UI.   |
 | `useRouterState(router)`                                         | Subscribe to a router and return state.                                |
 | `RouterContext`                                                  | Router/state context.                                                  |
 | `OutletContext`                                                  | Outlet content/context provider.                                       |
@@ -860,6 +873,10 @@ Exported React types include:
 - `NavLinkRenderProps`
 - `OutletProps`
 - `SlotProps`
+- `RenderMatchesOptions`
+- `RouteErrorFallbackProps`
+- `RouteLoadingFallbackProps`
+- `RouterErrorFallbackProps`
 - `RouterProviderProps`
 - `StaticRouterProviderProps`
 - `OutletContextOptions`

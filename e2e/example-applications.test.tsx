@@ -129,7 +129,9 @@ describe('example application integration', () => {
     const direct = createMemoryRouter({ routes: blogRoutes, initialEntries: [hrefAfterModal] });
     await direct.resolveCurrent();
     const directView = render(<BlogApp router={direct} />);
-    expect(directView.getByText(/Full page route for/)).toBeTruthy();
+
+    expect(await directView.findByText(/Full page route for/, {}, { timeout: 3000 })).toBeTruthy();
+
     expect(directView.queryByRole('dialog', { name: 'Blog post modal' })).toBeNull();
   });
 

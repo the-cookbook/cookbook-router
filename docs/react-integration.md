@@ -10,6 +10,7 @@
 - [Links](#links)
 - [Outlets](#outlets)
 - [Slots](#slots)
+- [Suspense and error fallbacks](#suspense-and-error-fallbacks)
 - [Hooks](#hooks)
 - [Outlet and slot context](#outlet-and-slot-context)
 - [Interception in React](#interception-in-react)
@@ -115,6 +116,66 @@ A slot can render:
 - an intercepted destination
 - nothing, when the slot is empty or disabled
 - a slot-level not-found component, when applicable
+
+## Suspense and error fallbacks
+
+`@cookbook/router-react` wraps each matched route segment in React Suspense and, when configured, a React error boundary. This keeps loading and render-error UI colocated with the route that owns it.
+
+Use `loading` for a route-level Suspense fallback:
+
+```tsx
+import { lazy } from 'react';
+
+const ArticlePage = lazy(() => import('./article-page'));
+
+function ArticleLoading() {
+  return <ArticleSkeleton />;
+}
+
+{
+  id: 'blog.articles.show',
+  path: 'articles/{slug}',
+  component: ArticlePage,
+  loading: ArticleLoading,
+}
+```
+
+Use `errorFallback` for route-level render errors. The nearest active route with `errorFallback` handles errors thrown by its component, layout, slot routes, intercepted routes, and descendants.
+
+```tsx
+import type { RouteErrorFallbackProps } from '@cookbook/router-react';
+
+function ArticleErrorFallback(props: RouteErrorFallbackProps) {
+  return (
+    <section role="alert">
+      <h1>Article failed to render</h1>
+      <button type="button" onClick={props.reset}>
+        Try again
+      </button>
+    </section>
+  );
+}
+
+{
+  id: 'blog.articles.show',
+  path: 'articles/{slug}',
+  component: ArticlePage,
+  errorFallback: ArticleErrorFallback,
+}
+```
+
+`RouterProvider` and `StaticRouterProvider` also accept global fallbacks when a route does not provide one:
+
+```tsx
+<RouterProvider
+  router={router}
+  fallback={<NotFoundPage />}
+  loadingFallback={<AppSkeleton />}
+  errorFallback={AppErrorFallback}
+/>
+```
+
+`fallback` is only the not-found UI. Use `loadingFallback` for Suspense and `errorFallback` for React render errors. Middleware and lifecycle errors remain router transition errors and continue to flow through router error handling.
 
 ## Hooks
 

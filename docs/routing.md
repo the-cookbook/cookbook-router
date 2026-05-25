@@ -15,7 +15,7 @@ Routes describe URL matching, route identity, rendering hierarchy, metadata, red
 - [Layouts and outlets](#layouts-and-outlets)
 - [Layout slots](#layout-slots)
 - [Intercepting routes](#intercepting-routes)
-- [Not found and error components](#not-found-and-error-components)
+- [Not found, loading, and error fallbacks](#not-found-loading-and-error-fallbacks)
 - [Middleware and lifecycle on routes](#middleware-and-lifecycle-on-routes)
 - [Router configuration](#router-configuration)
 - [Matching and ranking](#matching-and-ranking)
@@ -40,7 +40,8 @@ interface RouteDefinition {
   readonly hash?: readonly string[];
   readonly meta?: RouteMeta;
   readonly notFound?: RouteComponent;
-  readonly errorComponent?: RouteComponent;
+  readonly loading?: RouteComponent;
+  readonly errorFallback?: RouteComponent;
   readonly lifecycle?: RouteLifecycle;
   readonly middleware?: readonly Middleware[];
 }
@@ -105,7 +106,8 @@ type RouteIntercepts = Readonly<Record<string, RouteInterceptConfig>>;
 | `hash`             | Allowed hash fragment values for generated contracts.                                                       |
 | `meta`             | Arbitrary metadata preserved in generated contracts and runtime route definitions.                          |
 | `notFound`         | Route-level not-found component.                                                                            |
-| `errorComponent`   | Route-level error component placeholder for error rendering flows.                                          |
+| `loading`          | Route-level React Suspense fallback component rendered while the route subtree is loading.                  |
+| `errorFallback`    | Route-level React error fallback component rendered when the route subtree throws during rendering.         |
 | `lifecycle`        | Route-level transition hooks.                                                                               |
 | `middleware`       | Route-level middleware.                                                                                     |
 
@@ -512,7 +514,7 @@ Behavior:
 - Browser back closes the modal by returning to the previous URL.
 - Browser forward can restore the modal during the same app session when intercept state exists in history.
 
-## Not found and error components
+## Not found, loading, and error fallbacks
 
 Provider fallback handles the simplest not-found case:
 
@@ -531,7 +533,36 @@ Routes and slot configs may also declare `notFound` components for localized fal
 }
 ```
 
-`errorComponent` is available on route definitions for route-level error UI integration.
+Route-level `loading` components are used by `@cookbook/router-react` as React Suspense fallbacks. They render while a lazy route component, layout, slot route, or intercepted route suspends.
+
+Route-level `errorFallback` components are used by `@cookbook/router-react` as React error-boundary fallbacks. The nearest matched route with an `errorFallback` owns errors thrown by its route subtree. The fallback receives `error`, `reset`, and `route` props.
+
+```tsx
+function ArticleLoading() {
+  return <ArticleSkeleton />;
+}
+
+function ArticleErrorFallback(props: RouteErrorFallbackProps) {
+  return (
+    <section role="alert">
+      <h1>Article failed to render</h1>
+      <button type="button" onClick={props.reset}>
+        Try again
+      </button>
+    </section>
+  );
+}
+
+{
+  id: 'blog.articles.show',
+  path: 'articles/{slug}',
+  component: ArticlePage,
+  loading: ArticleLoading,
+  errorFallback: ArticleErrorFallback,
+}
+```
+
+`errorFallback` handles React rendering and lazy-import errors. Router transition errors from middleware or lifecycle hooks still flow through router navigation error handling.
 
 ## Middleware and lifecycle on routes
 

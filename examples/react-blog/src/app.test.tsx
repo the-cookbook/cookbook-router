@@ -134,9 +134,13 @@ describe('react-blog example', () => {
   test('direct visit renders the canonical full article page instead of the modal', async () => {
     const router = createTestRouter(['/blog/articles/modal-routes?ref=direct#share']);
     await router.resolveCurrent();
-    const { getByText, queryByText, queryByRole } = render(<App router={router} />);
 
-    expect(getByText('Full page route for modal-routes')).toBeTruthy();
+    const { findByText, getByText, queryByText, queryByRole } = render(<App router={router} />);
+
+    expect(
+      await findByText('Full page route for modal-routes', {}, { timeout: 3000 }),
+    ).toBeTruthy();
+
     expect(getByText('ref: direct')).toBeTruthy();
     expect(queryByText('Modal route for modal-routes')).toBeNull();
     expect(queryByRole('dialog', { name: 'Blog post modal' })).toBeNull();

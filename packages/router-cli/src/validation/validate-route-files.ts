@@ -176,7 +176,8 @@ function sanitizeRoutesLiteral(source: string): string {
     onNavigationError: 'undefined',
     component: '__cookbookRouteComponent',
     element: '__cookbookRouteComponent',
-    errorComponent: '__cookbookRouteComponent',
+    loading: '__cookbookRouteComponent',
+    errorFallback: '__cookbookRouteComponent',
     notFound: '__cookbookRouteComponent',
     middleware: '[]',
   });

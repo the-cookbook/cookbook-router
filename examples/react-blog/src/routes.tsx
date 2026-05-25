@@ -1,9 +1,11 @@
+import { lazy } from 'react';
 import { defineRoutes } from '@cookbook/router';
 import type { Middleware } from '@cookbook/router';
 import { isAuthenticated } from './auth';
 import {
+  ArticleErrorFallback,
+  ArticleLoading,
   ArticleModal,
-  ArticlePage,
   ArticlePreviewPanel,
   ArticlesPage,
   ArchivePage,
@@ -14,6 +16,12 @@ import {
   LoginPage,
   MembersPage,
 } from './pages';
+
+const ArticlePage = lazy(async () => {
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
+  return import('./pages').then(({ ArticlePage }) => ({ default: ArticlePage }));
+});
 
 const requireAuth: Middleware = ({ location, redirect }) => {
   if (isAuthenticated()) {
@@ -107,6 +115,8 @@ export const routes = defineRoutes([
         id: 'blog.articles.show',
         path: 'articles/{slug:regex([a-z0-9-]+)}',
         component: ArticlePage,
+        loading: ArticleLoading,
+        errorFallback: ArticleErrorFallback,
         search: {
           ref: { type: 'one', optional: true },
           filters: { type: 'many', optional: true },

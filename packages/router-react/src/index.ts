@@ -4,8 +4,19 @@ export { NavLink } from './components/nav-link';
 export type { NavLinkProps, NavLinkRenderProps } from './components/nav-link';
 export { Outlet } from './components/outlet';
 export type { OutletProps } from './components/outlet';
-export { RouterProvider, renderMatches, useRouterState } from './components/router-provider';
-export type { RouterProviderProps } from './components/router-provider';
+export {
+  RouterProvider,
+  renderMatches,
+  renderRouteBoundary,
+  useRouterState,
+} from './components/router-provider';
+export type {
+  RenderMatchesOptions,
+  RouteErrorFallbackProps,
+  RouteLoadingFallbackProps,
+  RouterErrorFallbackProps,
+  RouterProviderProps,
+} from './components/router-provider';
 export { StaticRouterProvider } from './components/static-router-provider';
 export type { StaticRouterProviderProps } from './components/static-router-provider';
 export { Slot } from './components/slot';

@@ -11,6 +11,7 @@ import {
   useRouter,
   useSearch,
 } from '@cookbook/router-react';
+import type { RouteErrorFallbackProps } from '@cookbook/router-react';
 import { login, logout } from './auth';
 import {
   archiveYears,
@@ -168,6 +169,33 @@ export function ArchivePage() {
   );
 }
 
+export function ArticleLoading() {
+  return (
+    <article className="article-page panel stack" aria-busy="true">
+      <p className="eyebrow">Loading</p>
+      <h1>Preparing article…</h1>
+      <p className="muted">The article route is loading its React component.</p>
+    </article>
+  );
+}
+
+export function ArticleErrorFallback(props: RouteErrorFallbackProps) {
+  return (
+    <article className="article-page panel stack" role="alert">
+      <p className="eyebrow">Article error</p>
+      <h1>Article failed to render</h1>
+      <p className="muted">The article route caught a React rendering error.</p>
+      <p className="muted">Route: {props.route.id}</p>
+      <p className="muted">
+        Error: {props.error instanceof Error ? JSON.stringify(props.error.message) : 'unknown'}
+      </p>
+      <button className="button" type="button" onClick={props.reset}>
+        Try again
+      </button>
+    </article>
+  );
+}
+
 export function ArticlePage() {
   const params = useParams('blog.articles.show');
   const search = useSearch('blog.articles.show');
@@ -181,6 +209,10 @@ export function ArticlePage() {
         <p>Full page route for {params.slug}</p>
       </article>
     );
+  }
+
+  if (params.slug === 'broken-page') {
+    throw new Error('Demo route error: broken-page');
   }
 
   return (
@@ -229,6 +261,10 @@ export function ArticleModal() {
 
   function handleBack() {
     navigate.back();
+  }
+
+  if (params.slug === 'broken-page') {
+    throw new Error('Demo route error: broken-page');
   }
 
   return (

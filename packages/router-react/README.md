@@ -100,14 +100,22 @@ interface RouterProviderProps {
   readonly router: Router;
   readonly children?: ReactNode;
   readonly fallback?: ReactNode;
+  readonly loadingFallback?: ReactNode;
+  readonly errorFallback?: ComponentType<RouterErrorFallbackProps>;
   readonly scrollRestoration?: boolean;
 }
 ```
 
-Renders the live route branch and subscribes to router state.
+Renders the live route branch and subscribes to router state. `fallback` is not-found UI, `loadingFallback` is the global React Suspense fallback, and `errorFallback` is the global React render-error fallback.
 
 ```tsx
-<RouterProvider router={router} fallback={<NotFoundPage />} scrollRestoration />
+<RouterProvider
+  router={router}
+  fallback={<NotFoundPage />}
+  loadingFallback={<AppSkeleton />}
+  errorFallback={AppErrorFallback}
+  scrollRestoration
+/>
 ```
 
 ### `StaticRouterProvider`
@@ -117,6 +125,8 @@ interface StaticRouterProviderProps {
   readonly router: Router;
   readonly children?: ReactNode;
   readonly fallback?: ReactNode;
+  readonly loadingFallback?: ReactNode;
+  readonly errorFallback?: ComponentType<RouterErrorFallbackProps>;
 }
 ```
 
@@ -312,6 +322,8 @@ See [SSR](../../docs/ssr.md).
 
 - Rendering hooks outside `RouterProvider` throws a missing-provider error.
 - `RouterProvider` renders `fallback` when there is no match.
+- Route `loading` components and provider `loadingFallback` integrate with React Suspense.
+- Route `errorFallback` components and provider `errorFallback` integrate with React error boundaries for render errors.
 - Call `router.resolveCurrent()` before first render when initial redirects, middleware, or lifecycle hooks should complete before UI appears.
 - Outlet context is local to the nearest rendered `Outlet` or `Slot`.
 - URL state should use params, search, and hash rather than outlet context.

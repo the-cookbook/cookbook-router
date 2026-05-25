@@ -64,7 +64,8 @@ export interface RouteDefinition {
   readonly hash?: readonly string[];
   readonly meta?: RouteMeta;
   readonly notFound?: RouteComponent;
-  readonly errorComponent?: RouteComponent;
+  readonly loading?: RouteComponent;
+  readonly errorFallback?: RouteComponent;
   readonly lifecycle?: RouteLifecycle;
   readonly middleware?: readonly Middleware[];
 }

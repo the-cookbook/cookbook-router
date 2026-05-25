@@ -75,6 +75,25 @@ export const articles: readonly Article[] = [
       role: 'Platform Lead',
     },
   },
+  {
+    slug: 'broken-page',
+    title: 'Preview the route error boundary',
+    excerpt:
+      'This demo article intentionally fails when opened so the route error component can be previewed.',
+    body: [
+      'This article is part of the demo dataset and is designed to simulate a broken route render.',
+      'When users open this article, the page should throw a controlled error so the configured route error component is displayed.',
+      'Use this entry to verify that loading, error fallback, and route-level recovery behavior work as expected.',
+    ],
+    category: 'Engineering',
+    tags: ['Error Boundary', 'Fallback UI', 'Routing'],
+    publishedAt: '2025-10-21',
+    readingMinutes: 3,
+    author: {
+      name: 'John Doe',
+      role: 'Test Fixture',
+    },
+  },
 ];
 
 export function findArticle(slug: string): Article | undefined {
