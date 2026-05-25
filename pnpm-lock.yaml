@@ -251,8 +251,8 @@ importers:
   packages/router:
     dependencies:
       '@cookbook/pathkit':
-        specifier: v0.2.0
-        version: 0.2.0
+        specifier: v0.2.1
+        version: 0.2.1
 
   packages/router-cli:
     dependencies:
@@ -442,8 +442,8 @@ packages:
       conventional-commits-parser:
         optional: true
 
-  '@cookbook/pathkit@0.2.0':
-    resolution: {integrity: sha512-sfCXNt2yF8yDGxMTyDZsypWySHwHle3NqlyKjLSQFyePNh0yZXNk8BJFKZm++p0mzJBlY9hrLa41tE5N87wkKg==}
+  '@cookbook/pathkit@0.2.1':
+    resolution: {integrity: sha512-r9f+KzXYp4cE4pY36+oB7t/ySfGXhJwIWYEBlAh+9yXf2Pm60zYngcSu10M9ew3Iqkqo6NK37oIwLz7ec2eGfQ==}
     engines: {node: '>=20.0.0'}
 
   '@csstools/color-helpers@5.1.0':
@@ -2779,7 +2779,7 @@ snapshots:
     optionalDependencies:
       conventional-commits-parser: 6.4.0
 
-  '@cookbook/pathkit@0.2.0': {}
+  '@cookbook/pathkit@0.2.1': {}
 
   '@csstools/color-helpers@5.1.0': {}
 
