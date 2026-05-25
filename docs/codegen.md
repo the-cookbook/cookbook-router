@@ -25,7 +25,7 @@
 cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router
 cookbook-router validate --routes src/routes.tsx
 cookbook-router manifest --routes src/routes.tsx --out-dir .cookbook-router
-cookbook-router watch --routes src/routes.tsx --out-dir .cookbook-router
+cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router --watch
 ```
 
 The shorter `cbr` binary is also available:
@@ -94,13 +94,19 @@ cookbook-router manifest --routes src/routes.tsx --out-dir .cookbook-router
 
 Writes only `manifest.json`.
 
+## Route file limitations
+
+The CLI expects statically extractable route declarations. Keep codegen-relevant fields inline and literal when possible: `id`, `path`, `index`, `search`, `hash`, `meta`, `children`, `layout.slots`, and `redirect`. Imported components are supported because the extractor replaces component-bearing fields with placeholders, but imported constants for route IDs, search schemas, or metadata may not be understood by static extraction.
+
+If generation fails on a complex route file, simplify the route declaration or move codegen-relevant values inline before rerunning `generate`.
+
 ## Watch mode
 
 ```sh
-cookbook-router watch --routes src/routes.tsx --out-dir .cookbook-router
+cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router --watch
 ```
 
-Generates all files once, keeps the process alive, and regenerates them when route files change. Watch mode requires at least one `--routes` file because in-memory route arrays cannot be observed for changes. Rapid file-system events are debounced before regeneration.
+Generates all files once, keeps the process alive, and regenerates them when route files change. Rapid file-system events are debounced before regeneration.
 
 ## Programmatic usage
 
@@ -250,7 +256,7 @@ It also refuses output layouts that would clobber route files.
 {
   "scripts": {
     "routes:generate": "cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router",
-    "routes:watch": "cookbook-router watch --routes src/routes.tsx --out-dir .cookbook-router",
+    "routes:watch": "cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router --watch",
     "routes:validate": "cookbook-router validate --routes src/routes.tsx"
   }
 }
@@ -274,7 +280,7 @@ Make sure the file contains `defineRoutes([...])` or a static `routes = [...]` a
 
 ### Generated contracts do not update
 
-Run `generate` manually once to check diagnostics, then use `watch` during development. Watch mode prints the initial generation result and each later regeneration result.
+Run `generate` manually once to check diagnostics, then use either `watch` or `generate --watch` during development. Watch mode prints the initial generation result and each later regeneration result.
 
 ### Component imports fail during generation
 

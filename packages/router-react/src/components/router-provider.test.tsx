@@ -21,6 +21,10 @@ function HomePage() {
   return <h1>home</h1>;
 }
 
+function AboutPage() {
+  return <h1>about</h1>;
+}
+
 function UserPage() {
   const location = useLocation();
   return <h1>user:{location.href}</h1>;
@@ -147,16 +151,18 @@ describe('RouterProvider', () => {
 
   test('renders global loading fallback when route component suspends without route loading', async () => {
     const LazyPage = lazy(() => new Promise<{ default: typeof HomePage }>(() => undefined));
+
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'article', path: '/', component: LazyPage }] as const),
     });
+
     await router.resolveCurrent();
 
-    const { getByText } = render(
+    const { findByText } = render(
       <RouterProvider router={router} loadingFallback={<p>global loading</p>} />,
     );
 
-    expect(getByText('global loading')).toBeTruthy();
+    expect(await findByText('global loading')).toBeTruthy();
   });
 
   test('renders route errorFallback when route component throws', async () => {
@@ -281,5 +287,134 @@ describe('RouterProvider', () => {
 
     await waitFor(() => expect(getByText('recovered')).toBeTruthy());
     consoleError.mockRestore();
+  });
+});
+
+describe('RouterProvider scroll restoration', () => {
+  test('scrolls to the top on push navigation when enabled', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+    const router = createRouter();
+    await router.resolveCurrent();
+
+    render(<RouterProvider router={router} scrollRestoration />);
+
+    await act(async () => {
+      await router.navigate.to('users.show', { params: { id: 1 } });
+    });
+
+    await waitFor(() =>
+      expect(scrollTo).toHaveBeenCalledWith({
+        left: 0,
+        top: 0,
+        behavior: 'auto',
+      }),
+    );
+
+    scrollTo.mockRestore();
+  });
+
+  test('uses configured scroll behavior when resetting scroll position', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        {
+          id: 'home',
+          path: '/',
+          component: HomePage,
+        },
+      ] as const),
+    });
+
+    await router.resolveCurrent();
+
+    render(<RouterProvider router={router} scrollRestoration scrollBehavior="smooth" />);
+
+    expect(scrollTo).toHaveBeenCalledWith({
+      left: 0,
+      top: 0,
+      behavior: 'smooth',
+    });
+
+    scrollTo.mockRestore();
+  });
+
+  test('uses auto scroll behavior by default', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        {
+          id: 'home',
+          path: '/',
+          component: HomePage,
+        },
+      ] as const),
+    });
+
+    await router.resolveCurrent();
+
+    render(<RouterProvider router={router} scrollRestoration />);
+
+    expect(scrollTo).toHaveBeenCalledWith({
+      left: 0,
+      top: 0,
+      behavior: 'auto',
+    });
+
+    scrollTo.mockRestore();
+  });
+
+  test('uses configured scroll behavior when restoring saved scroll position', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+
+    Object.defineProperty(window, 'scrollX', {
+      configurable: true,
+      value: 20,
+    });
+
+    Object.defineProperty(window, 'scrollY', {
+      configurable: true,
+      value: 300,
+    });
+
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        {
+          id: 'home',
+          path: '/',
+          component: HomePage,
+        },
+        {
+          id: 'about',
+          path: '/about',
+          component: AboutPage,
+        },
+      ] as const),
+    });
+
+    await router.resolveCurrent();
+
+    const view = render(
+      <RouterProvider router={router} scrollRestoration scrollBehavior="smooth" />,
+    );
+
+    await act(async () => {
+      await router.navigate.to('about');
+    });
+
+    await act(async () => {
+      router.navigate.back();
+    });
+
+    view.rerender(<RouterProvider router={router} scrollRestoration scrollBehavior="smooth" />);
+
+    expect(scrollTo).toHaveBeenLastCalledWith({
+      left: 20,
+      top: 300,
+      behavior: 'smooth',
+    });
+
+    scrollTo.mockRestore();
   });
 });

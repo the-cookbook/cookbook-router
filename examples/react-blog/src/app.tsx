@@ -26,6 +26,8 @@ export function App({ router }: { readonly router: Router }) {
           <h1>Not found</h1>
         </main>
       }
+      scrollBehavior="smooth"
+      scrollRestoration
     />
   );
 }

@@ -85,9 +85,6 @@ function resolveSlot(
       ...(matchedSlotRoute.match.route.component === undefined
         ? {}
         : { component: matchedSlotRoute.match.route.component }),
-      ...(matchedSlotRoute.match.route.route.notFound === undefined
-        ? {}
-        : { notFound: matchedSlotRoute.match.route.route.notFound }),
     };
   }
 
@@ -101,20 +98,6 @@ function resolveSlot(
       params: owner.params,
       ...(config.fallback.meta === undefined ? {} : { meta: config.fallback.meta }),
       component: config.fallback.component,
-      ...(config.fallback.notFound === undefined ? {} : { notFound: config.fallback.notFound }),
-    };
-  }
-
-  if (config.routes.length && config.notFound) {
-    return {
-      ownerRouteId: owner.id,
-      name: slotName,
-      status: 'not-found',
-      config,
-      params: owner.params,
-      component: config.notFound,
-      ...(config.meta === undefined ? {} : { meta: config.meta }),
-      notFound: config.notFound,
     };
   }
 
@@ -125,7 +108,6 @@ function resolveSlot(
     config,
     params: owner.params,
     ...(config.meta === undefined ? {} : { meta: config.meta }),
-    ...(config.notFound === undefined ? {} : { notFound: config.notFound }),
   };
 }
 

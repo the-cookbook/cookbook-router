@@ -55,7 +55,7 @@
   },
   "devDependencies": {},
   "engines": {
-    "node": ">=22.22.1"
+    "node": ">=18"
   },
   "publishConfig": {
     "access": "public",

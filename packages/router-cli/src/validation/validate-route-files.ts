@@ -178,7 +178,6 @@ function sanitizeRoutesLiteral(source: string): string {
     element: '__cookbookRouteComponent',
     loading: '__cookbookRouteComponent',
     errorFallback: '__cookbookRouteComponent',
-    notFound: '__cookbookRouteComponent',
     middleware: '[]',
   });
 }

@@ -27,7 +27,9 @@ describe('production release readiness', () => {
         url: 'https://github.com/the-cookbook/cookbook-router.git',
       });
       expect(packageJson.files).toEqual(expect.arrayContaining(['dist', 'README.md', 'LICENSE']));
-      expect(packageJson.engines).toEqual({ node: '>=22.22.1' });
+      expect(packageJson.engines).toEqual({
+        node: '>=18',
+      });
 
       if (packageName === 'router-cli') {
         expect(packageJson.bin).toEqual({

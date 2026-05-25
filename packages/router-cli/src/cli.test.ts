@@ -75,6 +75,19 @@ describe('CLI executable runner', () => {
     }
   });
 
+  test('accepts generate --watch and dispatches to watch validation', async () => {
+    const stderr: string[] = [];
+
+    await expect(
+      runCli(['generate', '--watch'], { stderr: (message) => stderr.push(message) }),
+    ).resolves.toBe(1);
+
+    expect(stderr.join('\n')).toContain(
+      'Watch mode requires at least one route file. Pass --routes <file>.',
+    );
+    expect(stderr.join('\n')).not.toContain('Unknown option "--watch"');
+  });
+
   test('detects when the built file is executed directly', () => {
     expect(
       shouldRunCli('file:///repo/packages/router-cli/dist/index.js', [

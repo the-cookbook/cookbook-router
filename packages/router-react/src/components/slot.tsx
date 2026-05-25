@@ -8,6 +8,7 @@ import {
   useSlotRenderContext,
 } from '../context/router-context';
 import { asComponent, renderMatches, renderRouteBoundary } from './router-provider';
+import type { RenderMatchesOptions } from './router-provider';
 
 export interface SlotProps<T = unknown> {
   readonly name: string;
@@ -29,7 +30,11 @@ export function Slot<T = unknown>(props: SlotProps<T>): ReactElement | null {
   );
 
   if (intercepted) {
-    return renderInterceptedRoute(intercepted, intercepted.context ?? props.context);
+    return renderInterceptedRoute(
+      intercepted,
+      intercepted.context ?? props.context,
+      value.renderOptions ?? {},
+    );
   }
 
   const slot = getResolvedSlot(value.slots, value.ownerRouteId, props.name);
@@ -38,12 +43,13 @@ export function Slot<T = unknown>(props: SlotProps<T>): ReactElement | null {
     return null;
   }
 
-  return renderResolvedSlot(slot, props.context);
+  return renderResolvedSlot(slot, props.context, value.renderOptions ?? {});
 }
 
 function renderInterceptedRoute(
   intercepted: ResolvedInterceptedRoute,
   context: unknown,
+  options: RenderMatchesOptions = {},
 ): ReactElement | null {
   const Component = asComponent(intercepted.component);
 
@@ -57,7 +63,7 @@ function renderInterceptedRoute(
     return null;
   }
 
-  const element = renderRouteBoundary(match, <Component />);
+  const element = renderRouteBoundary(match, <Component />, options);
 
   return (
     <RouteRenderContext.Provider value={{ match }}>
@@ -68,13 +74,17 @@ function renderInterceptedRoute(
   );
 }
 
-function renderResolvedSlot(slot: ResolvedSlot, context: unknown): ReactElement | null {
+function renderResolvedSlot(
+  slot: ResolvedSlot,
+  context: unknown,
+  options: RenderMatchesOptions,
+): ReactElement | null {
   if (slot.status === 'disabled' || slot.status === 'empty') {
     return null;
   }
 
   if (slot.status === 'matched' && slot.branch) {
-    const rendered = renderMatches(slot.branch, null);
+    const rendered = renderMatches(slot.branch, null, {}, options);
     return (
       <OutletContext.Provider value={{ outlet: rendered, context }}>
         {rendered}
@@ -89,7 +99,7 @@ function renderResolvedSlot(slot: ResolvedSlot, context: unknown): ReactElement 
   }
 
   const match = createSlotRenderMatch(slot);
-  const element = match ? renderRouteBoundary(match, <Component />) : <Component />;
+  const element = match ? renderRouteBoundary(match, <Component />, options) : <Component />;
 
   if (!match) {
     return (
@@ -143,7 +153,6 @@ function createSlotRenderMatch(slot: ResolvedSlot): MatchedRoute | null {
         id: slot.fallback.id,
         component: slot.fallback.component,
         ...(slot.fallback.meta === undefined ? {} : { meta: slot.fallback.meta }),
-        ...(slot.fallback.notFound === undefined ? {} : { notFound: slot.fallback.notFound }),
       },
       slotOwnerId: slot.ownerRouteId,
       slotName: slot.name,

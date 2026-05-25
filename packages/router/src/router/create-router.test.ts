@@ -88,3 +88,29 @@ describe('create-router', () => {
     );
   });
 });
+
+describe('router navigation blockers', () => {
+  test('blocks programmatic navigation before history is written', async () => {
+    const history = createMemoryHistory({ initialEntries: ['/'] });
+    const router = createRouter({ routes, history });
+    router.block(() => false);
+
+    await expect(router.navigate.to('about')).resolves.toMatchObject({ navigation: 'blocked' });
+
+    expect(router.state.location.href).toBe('/');
+    expect(history.location.href).toBe('/');
+  });
+
+  test('unregisters navigation blockers', async () => {
+    const router = createRouter({
+      routes,
+      history: createMemoryHistory({ initialEntries: ['/'] }),
+    });
+    const unblock = router.block(() => false);
+
+    unblock();
+    await expect(router.navigate.to('about')).resolves.toMatchObject({ navigation: 'idle' });
+
+    expect(router.state.location.href).toBe('/about');
+  });
+});

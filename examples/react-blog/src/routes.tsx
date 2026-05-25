@@ -18,7 +18,7 @@ import {
 } from './pages';
 
 const ArticlePage = lazy(async () => {
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+  await new Promise((resolve) => setTimeout(resolve, 1_500));
 
   return import('./pages').then(({ ArticlePage }) => ({ default: ArticlePage }));
 });

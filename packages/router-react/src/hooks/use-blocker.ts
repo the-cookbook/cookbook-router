@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useRouterContext } from '../context/router-context';
 
 export interface UseBlockerOptions {
   readonly when: boolean;
@@ -10,6 +11,22 @@ export interface BlockerState {
 }
 
 export function useBlocker(options: UseBlockerOptions): BlockerState {
+  const { router } = useRouterContext();
+
+  useEffect(() => {
+    if (!options.when) {
+      return;
+    }
+
+    return router.block(() => {
+      if (typeof window === 'undefined' || !options.message) {
+        return false;
+      }
+
+      return window.confirm(options.message);
+    });
+  }, [options.message, options.when, router]);
+
   useEffect(() => {
     if (!options.when || typeof window === 'undefined') {
       return;

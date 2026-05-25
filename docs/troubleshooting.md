@@ -178,10 +178,8 @@ cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router
 In development, use watch mode. It generates once, keeps running, and regenerates when the route file changes:
 
 ```sh
-cookbook-router watch --routes src/routes.tsx --out-dir .cookbook-router
+cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router --watch
 ```
-
-Watch mode requires at least one route file passed with `--routes`; it cannot watch route arrays passed directly through the programmatic API.
 
 ## Type inference does not work
 
@@ -222,3 +220,7 @@ pnpm build:packages
 ```
 
 Then restart the example dev server.
+
+## Route file extraction fails on computed values
+
+The CLI route extractor is intentionally static. Keep codegen-relevant route fields inline and literal where possible. If a route file builds IDs, paths, search schemas, hash values, metadata, children, slot configs, or redirects through imported constants or helper functions, move those values inline or use a simpler route file for generation.

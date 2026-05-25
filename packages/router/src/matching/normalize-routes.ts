@@ -151,7 +151,6 @@ function normalizeSlotConfig(
     ...(fallback === undefined ? {} : { fallback }),
     routes,
     ...(slot.meta === undefined ? {} : { meta: slot.meta }),
-    ...(slot.notFound === undefined ? {} : { notFound: slot.notFound }),
     disabled: false,
   };
 }
@@ -181,7 +180,6 @@ function normalizeSlotFallback(
     slotName,
     component: slot.fallback.component,
     ...(slot.fallback.meta === undefined ? {} : { meta: slot.fallback.meta }),
-    ...(slot.fallback.notFound === undefined ? {} : { notFound: slot.fallback.notFound }),
   };
 }
 

@@ -307,9 +307,9 @@ Call-site intercept:
 
 The component rendered in the slot receives the destination route context, so `useParams('blog.articles.show')` reads destination params.
 
-## Blocking unload
+## Blocking navigation
 
-`useBlocker()` attaches a browser `beforeunload` handler.
+`useBlocker()` blocks in-app router navigation while `when` is true and also attaches a browser `beforeunload` handler.
 
 ```tsx
 const blocker = useBlocker({
@@ -320,7 +320,7 @@ const blocker = useBlocker({
 blocker.blocked; // boolean
 ```
 
-This guards page unload/navigation handled by the browser. It is not a full in-app route transition blocker.
+When `message` is provided in the browser, the hook asks for confirmation before allowing router navigation. A cancelled confirmation keeps the current route active and sets router navigation state to `blocked`.
 
 ## Testing React routes
 

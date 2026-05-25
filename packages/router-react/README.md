@@ -31,7 +31,7 @@ pnpm add -D @cookbook/router-cli
 
 ## Requirements
 
-- Node.js `>=22.22.1`
+- Node.js `>=18`
 - `react >=18`
 - `react-dom >=18`
 - A router instance from `@cookbook/router`
@@ -103,10 +103,11 @@ interface RouterProviderProps {
   readonly loadingFallback?: ReactNode;
   readonly errorFallback?: ComponentType<RouterErrorFallbackProps>;
   readonly scrollRestoration?: boolean;
+  readonly scrollBehavior?: ScrollBehavior;
 }
 ```
 
-Renders the live route branch and subscribes to router state. `fallback` is not-found UI, `loadingFallback` is the global React Suspense fallback, and `errorFallback` is the global React render-error fallback.
+Renders the live route branch and subscribes to router state. `fallback` is not-found UI, `loadingFallback` is the global React Suspense fallback, and `errorFallback` is the global React render-error fallback. When `scrollRestoration` is enabled, scroll positions are saved per location key and restored on navigation; new non-hash locations scroll to the top.
 
 ```tsx
 <RouterProvider
@@ -114,9 +115,12 @@ Renders the live route branch and subscribes to router state. `fallback` is not-
   fallback={<NotFoundPage />}
   loadingFallback={<AppSkeleton />}
   errorFallback={AppErrorFallback}
+  scrollBehavior="smooth"
   scrollRestoration
 />
 ```
+
+> `scrollBehavior` defaults to "auto". Use "smooth" only when animated restoration is desired. Hash navigation is not force-scrolled to the top.
 
 ### `StaticRouterProvider`
 
@@ -226,19 +230,19 @@ A slot can render a matched slot route, fallback, intercepted destination, route
 
 ## Hooks
 
-| Hook                                            | Purpose                               |
-| ----------------------------------------------- | ------------------------------------- |
-| `useRouter()`                                   | Return the router instance.           |
-| `useNavigate()`                                 | Return `router.navigate`.             |
-| `useHref(route, options?)` / `useHref(options)` | Generate a route href.                |
-| `useLocation()`                                 | Return the current `RouterLocation`.  |
-| `useMatches()`                                  | Return the current matched branch.    |
-| `useNavigation()`                               | Return the navigation state.          |
-| `useParams(routeId?)`                           | Read route params.                    |
-| `useSearch(routeId?)`                           | Read parsed search params.            |
-| `useHash(routeId?)`                             | Read the hash without `#`, or `null`. |
-| `useOutletContext()`                            | Read nearest outlet or slot context.  |
-| `useBlocker({ when, message? })`                | Add a browser `beforeunload` blocker. |
+| Hook                                            | Purpose                                                   |
+| ----------------------------------------------- | --------------------------------------------------------- |
+| `useRouter()`                                   | Return the router instance.                               |
+| `useNavigate()`                                 | Return `router.navigate`.                                 |
+| `useHref(route, options?)` / `useHref(options)` | Generate a route href.                                    |
+| `useLocation()`                                 | Return the current `RouterLocation`.                      |
+| `useMatches()`                                  | Return the current matched branch.                        |
+| `useNavigation()`                               | Return the navigation state.                              |
+| `useParams(routeId?)`                           | Read route params.                                        |
+| `useSearch(routeId?)`                           | Read parsed search params.                                |
+| `useHash(routeId?)`                             | Read the hash without `#`, or `null`.                     |
+| `useOutletContext()`                            | Read nearest outlet or slot context.                      |
+| `useBlocker({ when, message? })`                | Block in-app navigation and browser unload while enabled. |
 
 ```tsx
 import { useHref, useNavigate, useSearch } from '@cookbook/router-react';
@@ -256,7 +260,7 @@ function ArticleToolbar() {
 }
 ```
 
-`useBlocker()` only handles browser unload. It is not an in-app route transition blocker.
+`useBlocker()` blocks in-app router transitions and browser unload while enabled.
 
 ## Interception and slots
 

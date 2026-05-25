@@ -1,9 +1,10 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes, type Router } from '@cookbook/router';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { Link } from './link';
 import { Outlet } from './outlet';
 import { RouterProvider } from './router-provider';
+import type { RouterErrorFallbackProps } from './router-provider';
 import { Slot } from './slot';
 import { useOutletContext } from '../hooks/use-outlet-context';
 import { useParams } from '../hooks/use-params';
@@ -74,10 +75,6 @@ function NestedSidebar() {
   return <aside>nested-sidebar</aside>;
 }
 
-function SlotNotFound() {
-  return <aside>slot-not-found</aside>;
-}
-
 async function createRouter(initialEntries: readonly string[]): Promise<Router> {
   const router = createMemoryRouter({
     initialEntries,
@@ -103,7 +100,6 @@ async function createRouter(initialEntries: readonly string[]): Promise<Router> 
               routes: [
                 { id: 'dashboard.inspector.details', path: 'inspect', component: ActivitySidebar },
               ],
-              notFound: SlotNotFound,
             },
           },
         },
@@ -163,7 +159,6 @@ describe('Slot', () => {
 
     expect(getByText('fallback:dashboard-slot')).toBeTruthy();
     expect(getByText('dashboard')).toBeTruthy();
-    expect(queryByText('slot-not-found')).toBeTruthy();
   });
 
   test('renders URL-matched slot routes and exposes slot route params', async () => {
@@ -265,5 +260,92 @@ describe('Slot', () => {
 
     expect(getByText('dashboard')).toBeTruthy();
     expect(queryByText('fallback:dashboard-slot')).toBeNull();
+  });
+});
+
+describe('Slot route provider fallbacks', () => {
+  test('uses RouterProvider errorFallback for slot route render errors', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    function BrokenSlot(): never {
+      throw new Error('slot failed');
+    }
+
+    function GlobalError(props: RouterErrorFallbackProps) {
+      return <p>global slot error:{props.route?.id}</p>;
+    }
+
+    const router = createMemoryRouter({
+      initialEntries: ['/dashboard/broken'],
+      routes: defineRoutes([
+        {
+          id: 'dashboard',
+          path: '/dashboard',
+          layout: {
+            component: DashboardLayout,
+            slots: {
+              sidebar: {
+                routes: [{ id: 'dashboard.sidebar.broken', path: 'broken', component: BrokenSlot }],
+              },
+            },
+          },
+          children: [{ id: 'dashboard.broken', path: 'broken', component: DashboardPage }],
+        },
+      ] as const),
+    });
+    await router.resolveCurrent();
+
+    const { getByText } = render(<RouterProvider router={router} errorFallback={GlobalError} />);
+
+    expect(getByText('global slot error:dashboard.sidebar.broken')).toBeTruthy();
+    consoleError.mockRestore();
+  });
+
+  test('uses RouterProvider errorFallback for intercepted route render errors', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    function BrokenModal(): never {
+      throw new Error('modal failed');
+    }
+
+    function GlobalError(props: RouterErrorFallbackProps) {
+      return <p>global modal error:{props.route?.id}</p>;
+    }
+
+    function ModalLayout() {
+      return (
+        <section>
+          <Slot name="modal" />
+          <Outlet />
+        </section>
+      );
+    }
+
+    const router = createMemoryRouter({
+      initialEntries: ['/modal-source'],
+      routes: defineRoutes([
+        {
+          id: 'modal.source',
+          path: '/modal-source',
+          layout: {
+            component: ModalLayout,
+            slots: { modal: { fallback: null } },
+          },
+          intercepts: {
+            modal: { to: ['/modal-target'], component: BrokenModal },
+          },
+          children: [{ id: 'modal.source.index', index: true, component: ModalSourcePage }],
+        },
+        { id: 'modal.target', path: '/modal-target', component: ModalPage },
+      ] as const),
+    });
+    await router.resolveCurrent();
+
+    const view = render(<RouterProvider router={router} errorFallback={GlobalError} />);
+
+    fireEvent.click(view.getByText('open modal'));
+
+    await waitFor(() => expect(view.getByText('global modal error:modal.target')).toBeTruthy());
+    consoleError.mockRestore();
   });
 });
