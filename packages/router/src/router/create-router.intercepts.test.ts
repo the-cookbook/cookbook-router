@@ -49,6 +49,46 @@ describe('createRouter intercepting routes', () => {
     });
   });
 
+  it('automatically applies configured interception during client navigation', async () => {
+    const router = createMemoryRouter({ routes, initialEntries: ['/blog'] });
+
+    const state = await router.navigate.to('blog.posts.show', {
+      params: { slug: 'hello-world' },
+    });
+
+    expect(state.location.href).toBe('/blog/hello-world');
+    expect(state.previousLocation?.href).toBe('/blog');
+    expect(state.match?.route.id).toBe('blog.posts.show');
+    expect(state.match?.intercepted).toMatchObject({
+      slot: 'modal',
+      sourceRouteId: 'blog',
+      targetRouteId: 'blog.posts.show',
+      component: BlogPostModal,
+    });
+  });
+
+  it('keeps automatic configured interception restorable through back and forward', async () => {
+    const router = createMemoryRouter({ routes, initialEntries: ['/blog'] });
+
+    await router.navigate.to('blog.posts.show', {
+      params: { slug: 'hello-world' },
+    });
+
+    router.navigate.back();
+    await flushNavigation();
+    expect(router.state.location.href).toBe('/blog');
+    expect(router.state.match?.intercepted).toBeUndefined();
+
+    router.navigate.forward();
+    await flushNavigation();
+    expect(router.state.location.href).toBe('/blog/hello-world');
+    expect(router.state.previousLocation?.href).toBe('/blog');
+    expect(router.state.match?.intercepted).toMatchObject({
+      slot: 'modal',
+      component: BlogPostModal,
+    });
+  });
+
   it('supports call-site interception with element alias', async () => {
     const router = createMemoryRouter({ routes, initialEntries: ['/blog'] });
 

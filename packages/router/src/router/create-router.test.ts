@@ -62,26 +62,6 @@ describe('create-router', () => {
     expect(() => router.href('post', { params: { slug: 'HelloWorld' } })).toThrow('HelloWorld');
   });
 
-  test('registers custom path constraints from createRouter for unvalidated route arrays', () => {
-    const slug = createConstraint({
-      parse: (paramName, value) => {
-        if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
-          throw new Error(`Parameter "${paramName}" must be a valid slug`);
-        }
-      },
-      verify: () => {},
-      toRegExp: () => '[a-z0-9-]+',
-    });
-
-    const router = createRouter({
-      routes: [{ id: 'post', path: '/posts/{slug:slug}' }],
-      history: createMemoryHistory({ initialEntries: ['/posts/hello-world'] }),
-      pathConstraints: { slug },
-    });
-
-    expect(router.state.match?.route.id).toBe('post');
-  });
-
   test('throws during route definition when an unknown custom constraint is not registered', () => {
     expect(() => defineRoutes([{ id: 'post', path: '/posts/{slug:slug}' }] as const)).toThrow(
       'Unknown constraint type: "slug"',

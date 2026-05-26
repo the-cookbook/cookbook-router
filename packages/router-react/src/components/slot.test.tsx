@@ -67,6 +67,14 @@ function ModalSourcePage() {
   );
 }
 
+function AutoModalSourcePage() {
+  return (
+    <Link to="modal.target" context={{ source: 'automatic-navigation-context' }}>
+      open modal automatically
+    </Link>
+  );
+}
+
 function SettingsSidebar() {
   return <aside>settings-sidebar</aside>;
 }
@@ -229,6 +237,46 @@ describe('Slot', () => {
 
     await waitFor(() => expect(view.getByText('modal:navigation-context')).toBeTruthy());
     expect(view.queryByText('modal:slot-context')).toBeNull();
+  });
+
+  test('automatically renders configured intercepts from Link navigation', async () => {
+    function ModalLayout() {
+      return (
+        <section>
+          <Slot name="modal" context={{ source: 'slot-context' }} />
+          <Outlet />
+        </section>
+      );
+    }
+
+    const router = createMemoryRouter({
+      initialEntries: ['/modal-source'],
+      routes: defineRoutes([
+        {
+          id: 'modal.source',
+          path: '/modal-source',
+          layout: {
+            component: ModalLayout,
+            slots: { modal: { fallback: null } },
+          },
+          intercepts: {
+            modal: { to: ['/modal-target'], component: ModalPage },
+          },
+          children: [{ id: 'modal.source.index', index: true, component: AutoModalSourcePage }],
+        },
+        { id: 'modal.target', path: '/modal-target', component: ModalPage },
+      ] as const),
+    });
+    await router.resolveCurrent();
+
+    const view = render(<RouterProvider router={router} />);
+
+    fireEvent.click(view.getByText('open modal automatically'));
+
+    await waitFor(() => expect(view.getByText('modal:automatic-navigation-context')).toBeTruthy());
+    expect(view.getByText('open modal automatically')).toBeTruthy();
+    expect(router.state.location.href).toBe('/modal-target');
+    expect(router.state.previousLocation?.href).toBe('/modal-source');
   });
 
   test('missing slot references render null instead of throwing', async () => {

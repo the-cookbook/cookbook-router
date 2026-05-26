@@ -15,7 +15,6 @@ import {
   prunePathname,
   registerPathConstraints,
   type PathkitCompileParams,
-  type RouterPathConstraints,
   type RouterPathOptions,
 } from '../pathkit/pathkit';
 import { validateRoutes } from '../validation/validate-routes';
@@ -66,7 +65,6 @@ export interface CreateRouterOptions {
   readonly hydrationData?: SerializedRouterState;
   readonly history?: RouterHistory;
   readonly pathOptions?: RouterPathOptions;
-  readonly pathConstraints?: RouterPathConstraints;
   readonly maxRedirectDepth?: number;
   readonly maxRedirectionDepth?: number;
 }
@@ -151,7 +149,6 @@ export function createRouterRuntime(
 ): Router {
   const definedRouteOptions = getDefineRoutesOptions(options.routes);
   registerPathConstraints(definedRouteOptions?.pathConstraints);
-  registerPathConstraints(options.pathConstraints);
   const pathOptions = normalizePathOptions(options.pathOptions ?? definedRouteOptions?.pathOptions);
   const maxRedirectDepth = normalizeMaxRedirectDepth(options);
   validateRoutes(options.routes, pathOptions);

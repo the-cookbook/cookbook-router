@@ -102,7 +102,7 @@ export function normalizeCallSiteIntercept(
 }
 
 export function resolveIntercept(options: ResolveInterceptOptions): ResolvedIntercept | null {
-  if (!options.intercept || !options.source || !options.destination) {
+  if (!options.source || !options.destination) {
     return null;
   }
 
@@ -130,28 +130,30 @@ export function resolveIntercept(options: ResolveInterceptOptions): ResolvedInte
     };
   }
 
-  const slot = typeof options.intercept === 'string' ? options.intercept : '';
-  const slotOwnerRouteId = resolveSlotOwner(options.source, slot, options.production === true);
-
-  if (!slotOwnerRouteId) {
-    return null;
-  }
-
+  const explicitSlot = typeof options.intercept === 'string' ? options.intercept : undefined;
   const configured = findConfiguredIntercept(
     options.source.branch,
-    slot,
+    explicitSlot,
     options.destinationPathname,
     options.pathOptions,
   );
 
   if (!configured) {
-    throw new Error(
-      `Route "${options.source.route.id}" does not configure interception for slot "${slot}" to "${options.destination.route.id}".`,
-    );
+    return null;
+  }
+
+  const slotOwnerRouteId = resolveSlotOwner(
+    options.source,
+    configured.slot,
+    options.production === true,
+  );
+
+  if (!slotOwnerRouteId) {
+    return null;
   }
 
   return {
-    slot,
+    slot: configured.slot,
     sourceRouteId: slotOwnerRouteId,
     targetRouteId: options.destination.route.id,
     component: configured.component,
@@ -277,14 +279,16 @@ function patternSkeleton(pattern: string): string {
 
 function findConfiguredIntercept(
   branch: readonly MatchedRoute[],
-  slot: string,
+  slot: string | undefined,
   pathname: string,
   pathOptions: RouterPathOptions = {},
 ): NormalizedIntercept | null {
   for (let index = branch.length - 1; index >= 0; index--) {
     const route = branch[index]?.route;
     const intercept = route?.intercepts.find(
-      (entry) => entry.slot === slot && Boolean(matchPathPattern(entry.to, pathname, pathOptions)),
+      (entry) =>
+        (slot === undefined || entry.slot === slot) &&
+        Boolean(matchPathPattern(entry.to, pathname, pathOptions)),
     );
 
     if (intercept) {

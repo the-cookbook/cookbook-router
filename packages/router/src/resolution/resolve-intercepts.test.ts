@@ -70,6 +70,39 @@ describe('resolveIntercept', () => {
     });
   });
 
+  it('automatically resolves configured interception without a call-site intercept option', () => {
+    const source = matchRoutes(routes, '/blog');
+    const destination = matchRoutes(routes, '/blog/hello-world');
+
+    expect(
+      resolveIntercept({
+        source,
+        destination,
+        destinationPathname: '/blog/hello-world',
+      }),
+    ).toMatchObject({
+      slot: 'modal',
+      sourceRouteId: 'blog',
+      targetRouteId: 'blog.posts.show',
+      component: BlogPostModal,
+      configured: true,
+    });
+  });
+
+  it('uses a string intercept option only as configured slot disambiguation', () => {
+    const source = matchRoutes(routes, '/blog');
+    const destination = matchRoutes(routes, '/blog/hello-world');
+
+    expect(
+      resolveIntercept({
+        source,
+        destination,
+        destinationPathname: '/blog/hello-world',
+        intercept: 'drawer',
+      }),
+    ).toBeNull();
+  });
+
   it('resolves call-site interception with component or element', () => {
     expect(normalizeCallSiteIntercept({ slot: 'modal', element: BlogPostModal })).toEqual({
       slot: 'modal',
@@ -107,6 +140,54 @@ describe('resolveIntercept', () => {
         destination,
         destinationPathname: '/blog/hello-world',
         intercept: { slot: 'drawer', component: BlogPostModal },
+        production: true,
+      }),
+    ).toBeNull();
+  });
+
+  it('throws when an automatic configured intercept matches but its slot is unavailable', () => {
+    const NoSlotModal = BlogPostModal;
+    const noSlotRoutes = normalizeRoutes([
+      {
+        id: 'dashboard',
+        path: '/dashboard',
+        intercepts: {
+          modal: { to: ['/create'], component: NoSlotModal },
+        },
+      },
+      { id: 'create', path: '/create', component: BlogPostPage },
+    ] as const);
+    const source = matchRoutes(noSlotRoutes, '/dashboard');
+    const destination = matchRoutes(noSlotRoutes, '/create');
+
+    expect(() =>
+      resolveIntercept({
+        source,
+        destination,
+        destinationPathname: '/create',
+      }),
+    ).toThrow(/does not define or render that slot/);
+  });
+
+  it('falls back when an automatic configured intercept matches an unavailable slot in production', () => {
+    const noSlotRoutes = normalizeRoutes([
+      {
+        id: 'dashboard',
+        path: '/dashboard',
+        intercepts: {
+          modal: { to: ['/create'], component: BlogPostModal },
+        },
+      },
+      { id: 'create', path: '/create', component: BlogPostPage },
+    ] as const);
+    const source = matchRoutes(noSlotRoutes, '/dashboard');
+    const destination = matchRoutes(noSlotRoutes, '/create');
+
+    expect(
+      resolveIntercept({
+        source,
+        destination,
+        destinationPathname: '/create',
         production: true,
       }),
     ).toBeNull();
