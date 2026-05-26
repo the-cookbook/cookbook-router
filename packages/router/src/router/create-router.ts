@@ -80,6 +80,16 @@ export interface NavigateOptions<Route extends string> extends HrefOptions<Route
   readonly route: Route;
 }
 
+export interface RouterBlockerContext {
+  readonly from: RouteMatch | null;
+  readonly to: RouteMatch | null;
+  readonly location: RouterLocation;
+}
+
+export type RouterBlocker = (
+  context: RouterBlockerContext,
+) => boolean | void | Promise<boolean | void>;
+
 export interface RouterState {
   readonly location: RouterLocation;
   readonly match: RouteMatch | null;
@@ -126,6 +136,7 @@ export interface Router {
     go: (delta: number) => void;
   };
   subscribe(listener: (state: RouterState) => void): () => void;
+  block(blocker: RouterBlocker): () => void;
   resolveCurrent(): Promise<RouterState>;
   serialize(): SerializedRouterState;
 }
@@ -150,6 +161,7 @@ export function createRouterRuntime(
   const routeLookup = createRouteLookup(normalizedRoutes);
   const compileCachedRoutePath = createRoutePathCompiler(pathOptions);
   const listeners = new Set<(state: RouterState) => void>();
+  const blockers = new Set<RouterBlocker>();
   let transitionVersion = 0;
   let state: RouterState = createState(options.history.location, 'idle');
 
@@ -221,6 +233,10 @@ export function createRouterRuntime(
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);
+    },
+    block(blocker) {
+      blockers.add(blocker);
+      return () => blockers.delete(blocker);
     },
     resolveCurrent() {
       return transitionTo(options.history.location, 'replace', false);
@@ -413,6 +429,20 @@ export function createRouterRuntime(
     const previousLocation = navigationIntercept
       ? parseHref(navigationIntercept.previousLocation)
       : undefined;
+
+    try {
+      if (await isBlocked(fromMatch, nextMatch, transitionLocation)) {
+        if (!writeHistory && options.history.mode !== 'static') {
+          ignoreNextHistoryEvent = true;
+          options.history.replace(state.location.href, state.location.state);
+        }
+
+        return setState({ ...state, navigation: 'blocked' });
+      }
+    } catch (error) {
+      return setState(createState(transitionLocation, 'error', error));
+    }
+
     setState({ ...state, navigation: 'pending' });
 
     const result = await runTransition({
@@ -496,6 +526,22 @@ export function createRouterRuntime(
     }
 
     return committed;
+  }
+
+  async function isBlocked(
+    from: RouteMatch | null,
+    to: RouteMatch | null,
+    location: RouterLocation,
+  ): Promise<boolean> {
+    for (const blocker of blockers) {
+      const result = await blocker({ from, to, location });
+
+      if (result === false) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   function canonicalizeLocation(location: RouterLocation): {

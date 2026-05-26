@@ -209,7 +209,7 @@ The simplest fallback is provider-level:
 <RouterProvider router={router} fallback={<h1>Not found</h1>} />
 ```
 
-You can also define route-level `notFound` components on route definitions and slot configurations. Use route-level not-found components when nested layouts need their own fallback UI.
+For section-specific not-found UI, define an explicit catch-all child route inside that section. This preserves the section layout while keeping not-found behavior inside normal route matching.
 
 ## Run locally
 

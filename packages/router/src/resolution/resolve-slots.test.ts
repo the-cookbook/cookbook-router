@@ -7,7 +7,6 @@ const DashboardLayout = () => null;
 const DashboardSidebar = () => null;
 const ActivitySidebar = () => null;
 const SettingsSidebar = () => null;
-const SlotNotFound = () => null;
 
 function createDashboardRoutes() {
   return normalizeRoutes([
@@ -37,7 +36,6 @@ function createDashboardRoutes() {
             routes: [
               { id: 'dashboard.inspector.details', path: 'inspector', component: ActivitySidebar },
             ],
-            notFound: SlotNotFound,
           },
         },
       },
@@ -137,16 +135,6 @@ describe('resolveSlots', () => {
     expect(getResolvedSlot(nestedMatch.slots, 'dashboard.nested', 'sidebar')).toMatchObject({
       status: 'fallback',
       fallback: { id: 'dashboard.nested.sidebar.fallback' },
-    });
-  });
-
-  test('returns slot notFound when a configured slot route misses and no fallback exists', () => {
-    const match = expectMatch('/dashboard/settings');
-
-    expect(getResolvedSlot(match.slots, 'dashboard', 'inspector')).toMatchObject({
-      status: 'not-found',
-      component: SlotNotFound,
-      notFound: SlotNotFound,
     });
   });
 

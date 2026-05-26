@@ -74,7 +74,7 @@ export function ArticlesPage() {
 }
 ```
 
-`useSearch()` parses the current query string. When generated contracts are registered, the returned object is typed for the route ID.
+`useSearch()` parses the current query string. When generated contracts are registered, the returned object is typed for the route ID. Parsing is URL-faithful: a key that appears once is returned as a string, and a key that appears multiple times is returned as `readonly string[]`. The route schema does not coerce `type: 'many'` into an array-only runtime value and does not reject repeated values for `type: 'one'`.
 
 ## Declare hash values
 

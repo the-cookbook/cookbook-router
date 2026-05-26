@@ -43,6 +43,7 @@ export interface CliRunnerOptions {
 interface ParsedCliArguments {
   readonly command?: string;
   readonly options: CliRouteOptions;
+  readonly watch: boolean;
   readonly help: boolean;
   readonly version: boolean;
   readonly errors: readonly string[];
@@ -54,11 +55,11 @@ Commands:
   generate   Generate contracts.ts, register.d.ts, and manifest.json
   manifest   Generate manifest.json only
   validate   Validate route files without writing artifacts
-  watch      Generate artifacts and watch route files for changes
 
 Options:
   --routes <file>       Route source file. May be repeated.
   --out-dir <dir>       Generated output directory. Defaults to .cookbook-router
+  --watch               Watch for files changes when used with generate
   -h, --help            Show help
   -v, --version         Show version`;
 
@@ -94,6 +95,17 @@ export async function runCli(
   }
 
   if (parsed.command === 'generate') {
+    if (parsed.watch) {
+      const handle = watchCommand({
+        ...parsed.options,
+        onChange(result) {
+          reportCommandResult(result, writeStdout, writeStderr);
+        },
+      });
+      const initial = await handle.initial;
+      return initial.ok ? 0 : 1;
+    }
+
     return reportCommandResult(await generateCommand(parsed.options), writeStdout, writeStderr);
   }
 
@@ -103,17 +115,6 @@ export async function runCli(
 
   if (parsed.command === 'validate') {
     return reportCommandResult(await validateCommand(parsed.options), writeStdout, writeStderr);
-  }
-
-  if (parsed.command === 'watch') {
-    const handle = watchCommand({
-      ...parsed.options,
-      onChange(result) {
-        reportCommandResult(result, writeStdout, writeStderr);
-      },
-    });
-    const initial = await handle.initial;
-    return initial.ok ? 0 : 1;
   }
 
   writeStderr(`Unknown command "${parsed.command}".\n\n${HELP_TEXT}`);
@@ -162,6 +163,7 @@ function parseCliArguments(argv: readonly string[]): ParsedCliArguments {
   let command: string | undefined;
   let help = false;
   let version = false;
+  let watch = false;
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -173,6 +175,11 @@ function parseCliArguments(argv: readonly string[]): ParsedCliArguments {
 
     if (arg === '-v' || arg === '--version') {
       version = true;
+      continue;
+    }
+
+    if (arg === '--watch') {
+      watch = true;
       continue;
     }
 
@@ -237,6 +244,7 @@ function parseCliArguments(argv: readonly string[]): ParsedCliArguments {
       ...(routeFiles[0] ? { routeFiles } : {}),
       ...(outDir === undefined ? {} : { outDir }),
     },
+    watch,
     help,
     version,
     errors,

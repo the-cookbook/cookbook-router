@@ -39,7 +39,7 @@ pnpm add -D @cookbook/router-cli
 
 ## Requirements
 
-- Node.js `>=22.22.1`
+- Node.js `>=18`
 - ESM imports are supported through `exports.import`
 - CommonJS consumers can use the package root through `exports.require`
 - Do not deep import from `dist` or `src`; use the package root only
@@ -305,25 +305,16 @@ Also exported:
 
 ## Advanced public helpers
 
-The package exports lower-level helpers for tooling and tests:
+The package root intentionally keeps the public v1 surface small. Advanced helpers are available for validation, code generation, and framework integrations:
 
 - `validateRoutes()`
 - `normalizeRoutes()`
-- `rankRoutes()`
-- `flattenRoutes()`
 - `matchRoutes()`
-- `runMiddleware()`
-- `runBeforeNavigate()`
-- `runAfterNavigate()`
-- `runNavigationError()`
-- `runTransition()`
-- `completeTransition()`
-- `resolveSlots()`
 - `getResolvedSlot()`
-- intercept helpers such as `resolveIntercept()` and `createInterceptHistoryState()`
+- history factories such as `createMemoryHistory()`
 - diagnostic error factories
 
-Application code should usually prefer `createRouter()` and the router instance API.
+Internal middleware runners, transition runners, slot resolvers, and intercept resolvers are not exported from the package root. Application code should usually prefer `createRouter()` and the router instance API.
 
 ## Troubleshooting
 

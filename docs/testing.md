@@ -137,13 +137,13 @@ Use temporary directories or in-memory file systems for CLI tests. Cover:
 
 ## Coverage expectations
 
-The shared Vitest configuration targets strict coverage thresholds:
+Vitest coverage thresholds are set to:
 
 ```txt
-statements: 100
-branches: 100
-functions: 100
-lines: 100
+statements: 80,
+branches: 75,
+functions: 80,
+lines: 80,
 ```
 
 Coverage exclusions should explain why a branch is impossible or defensive.

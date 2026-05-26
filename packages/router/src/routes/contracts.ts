@@ -33,14 +33,12 @@ export interface RouteSlotFallback {
   readonly id?: string;
   readonly component: RouteComponent;
   readonly meta?: RouteMeta;
-  readonly notFound?: RouteComponent;
 }
 
 export interface RouteSlotConfig {
   readonly fallback?: RouteSlotFallback | null;
   readonly routes?: readonly RouteDefinition[];
   readonly meta?: RouteMeta;
-  readonly notFound?: RouteComponent;
 }
 
 export type RouteSlotDefinition = RouteSlotConfig | false;
@@ -63,7 +61,6 @@ export interface RouteDefinition {
   readonly search?: RouteSearchSchema;
   readonly hash?: readonly string[];
   readonly meta?: RouteMeta;
-  readonly notFound?: RouteComponent;
   readonly loading?: RouteComponent;
   readonly errorFallback?: RouteComponent;
   readonly lifecycle?: RouteLifecycle;
@@ -84,7 +81,6 @@ export interface NormalizedRouteSlotFallback {
   readonly slotName: string;
   readonly component: RouteComponent;
   readonly meta?: RouteMeta;
-  readonly notFound?: RouteComponent;
 }
 
 export interface NormalizedRouteSlotConfig {
@@ -93,7 +89,6 @@ export interface NormalizedRouteSlotConfig {
   readonly fallback?: NormalizedRouteSlotFallback | null;
   readonly routes: readonly NormalizedRoute[];
   readonly meta?: RouteMeta;
-  readonly notFound?: RouteComponent;
   readonly disabled: boolean;
 }
 
@@ -156,7 +151,6 @@ export interface ResolvedSlot {
   readonly params: Record<string, string>;
   readonly meta?: RouteMeta;
   readonly component?: RouteComponent;
-  readonly notFound?: RouteComponent;
 }
 
 export type ResolvedSlots = Readonly<Record<string, Readonly<Record<string, ResolvedSlot>>>>;

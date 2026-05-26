@@ -52,7 +52,7 @@ pnpm add @cookbook/router
 
 Requirements:
 
-- Node.js `>=22.22.1`
+- Node.js `>=18`
 - ESM package with CommonJS build output available through package exports
 - `@cookbook/pathkit` is installed transitively
 
@@ -122,7 +122,6 @@ interface RouteDefinition {
   readonly search?: RouteSearchSchema;
   readonly hash?: readonly string[];
   readonly meta?: RouteMeta;
-  readonly notFound?: RouteComponent;
   readonly loading?: RouteComponent;
   readonly errorFallback?: RouteComponent;
   readonly lifecycle?: RouteLifecycle;
@@ -143,7 +142,6 @@ interface RouteDefinition {
 | `search`        | Search key schema used by generated contracts. `type: 'one'` is a single value; `type: 'many'` is a repeated query param. |
 | `hash`          | Allowed hash values used by generated contracts.                                                                          |
 | `meta`          | Arbitrary route metadata.                                                                                                 |
-| `notFound`      | Route-level not-found component.                                                                                          |
 | `loading`       | Route-level React Suspense fallback component for loading route subtrees.                                                 |
 | `errorFallback` | Route-level React error-boundary fallback component for render errors in route subtrees.                                  |
 | `lifecycle`     | Route lifecycle hooks.                                                                                                    |
@@ -296,6 +294,7 @@ interface Router {
   };
 
   subscribe(listener: (state: RouterState) => void): () => void;
+  block(blocker: RouterBlocker): () => void;
   resolveCurrent(): Promise<RouterState>;
   serialize(): SerializedRouterState;
 }
@@ -311,6 +310,20 @@ await router.navigate.to({
   hash: 'profile',
 });
 ```
+
+#### Navigation blockers
+
+```ts
+interface RouterBlockerContext {
+  readonly from: RouteMatch | null;
+  readonly to: RouteMatch | null;
+  readonly location: RouterLocation;
+}
+
+type RouterBlocker = (context: RouterBlockerContext) => boolean | void | Promise<boolean | void>;
+```
+
+Register a blocker with `router.block()`. Returning `false` blocks the transition and sets navigation state to `blocked`; returning `true` or `undefined` allows it. The unregister function removes the blocker. React apps usually use `useBlocker()` instead of calling this directly.
 
 #### `HrefOptions` and `NavigateOptions`
 
@@ -348,8 +361,6 @@ These lower-level helpers are public for tests, tooling, and advanced integratio
 | ----------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
 | `validateRoutes`  | `(routes: readonly RouteDefinition[], pathOptions?: RouterPathOptions) => void`                                 | Validate route tree shape and throw on invalid config.   |
 | `normalizeRoutes` | `(routes: readonly RouteDefinition[], pathOptions?: RouterPathOptions) => readonly NormalizedRoute[]`           | Convert route definitions into normalized route records. |
-| `rankRoutes`      | `(routes: readonly NormalizedRoute[]) => readonly RankedRoute[]`                                                | Rank normalized routes for deterministic matching.       |
-| `flattenRoutes`   | `(routes: readonly NormalizedRoute[]) => readonly NormalizedRoute[]`                                            | Flatten a normalized tree.                               |
 | `matchRoutes`     | `(routes: readonly NormalizedRoute[], pathname: string, pathOptions?: RouterPathOptions) => RouteMatch \| null` | Match a pathname against normalized routes.              |
 
 ```ts
@@ -437,79 +448,13 @@ Rules:
 
 ### Middleware and lifecycle APIs
 
-#### `runMiddleware(options)`
+Middleware and lifecycle hooks are configured through `createRouter()` and route definitions. The package root does not expose the internal middleware, lifecycle, or transition runner functions as public v1 APIs.
 
-```ts
-interface RunMiddlewareOptions {
-  readonly middleware?: readonly Middleware[];
-  readonly match: RouteMatch;
-  readonly location: RouterLocation;
-}
-
-type RunMiddlewareResult =
-  | undefined
-  | { readonly type: 'redirect'; readonly to: string }
-  | { readonly type: 'cancel' }
-  | Response;
-
-function runMiddleware(options: RunMiddlewareOptions): Promise<RunMiddlewareResult>;
-```
-
-Middleware receives a `MiddlewareContext`:
-
-```ts
-interface MiddlewareContext {
-  readonly route: MatchedRoute;
-  readonly location: RouterLocation;
-  readonly params: Record<string, string>;
-  redirect: (to: string) => MiddlewareResult;
-  cancel: () => MiddlewareResult;
-}
-
-type Middleware = (context: MiddlewareContext) => MiddlewareResult | Promise<MiddlewareResult>;
-```
-
-Related: [Middleware](middleware.md).
-
-#### Lifecycle runners
-
-```ts
-interface RunLifecycleOptions {
-  readonly lifecycle?: GlobalLifecycle;
-  readonly from: RouteMatch | null;
-  readonly to: RouteMatch | null;
-  readonly location: RouterLocation;
-}
-
-function runBeforeNavigate(options: RunLifecycleOptions): Promise<boolean>;
-function runAfterNavigate(options: RunLifecycleOptions): Promise<void>;
-function runNavigationError(error: unknown, options: RunLifecycleOptions): Promise<void>;
-```
-
-Related: [Lifecycle](lifecycle.md).
-
-#### Transition helpers
-
-```ts
-function runTransition(options: RunTransitionOptions): Promise<RouterState>;
-function completeTransition(options: CompleteTransitionOptions): RouterState;
-```
-
-Use these only when building a custom router runtime or tests around transition behavior.
+Related: [Middleware](middleware.md), [Lifecycle](lifecycle.md).
 
 ### Slots and intercept APIs
 
-#### `resolveSlots(branch, pathname, pathOptions?)`
-
-```ts
-function resolveSlots(
-  branch: readonly MatchedRoute[],
-  pathname: string,
-  pathOptions?: RouterPathOptions,
-): ResolvedSlots;
-```
-
-#### `getResolvedSlot(slots, ownerRouteId, slotName)`
+`@cookbook/router-react` uses `getResolvedSlot()` internally to render layout slots. Application code should usually use `<Slot name="..." />` instead.
 
 ```ts
 function getResolvedSlot(
@@ -519,40 +464,7 @@ function getResolvedSlot(
 ): ResolvedSlot | undefined;
 ```
 
-#### Intercept helpers
-
-```ts
-type InterceptInput = string | CallSiteInterceptInput;
-
-interface CallSiteInterceptInput {
-  readonly slot: string;
-  readonly component?: RouteComponent;
-  readonly element?: RouteComponent;
-}
-
-function normalizeCallSiteIntercept(
-  intercept: InterceptInput | undefined,
-): CallSiteInterceptInput | null;
-function normalizeConfiguredIntercepts(
-  route: NormalizedRoute,
-  pathOptions?: RouterPathOptions,
-): readonly NormalizedIntercept[];
-function resolveIntercept(options: ResolveInterceptOptions): ResolvedIntercept | null;
-function restoreInterceptFromState(
-  state: unknown,
-  source: RouteMatch | null,
-  destination: RouteMatch | null,
-  pathOptions?: RouterPathOptions,
-): ResolvedIntercept | null;
-function createInterceptHistoryState(
-  intercept: ResolvedIntercept,
-  previousHref: string,
-): InterceptHistoryState;
-function validateInterceptTargets(
-  routes: readonly NormalizedRoute[],
-  pathOptions?: RouterPathOptions,
-): void;
-```
+Intercept configuration is part of route definitions and navigation options. The package root exposes the intercept input types, but not the internal intercept resolver helpers as public v1 APIs.
 
 Related: [Routing slots](routing.md#layout-slots), [Navigation interception](navigation.md#interception), [React slots](react-integration.md#slots).
 
@@ -659,7 +571,7 @@ pnpm add @cookbook/router @cookbook/router-react react react-dom
 
 Requirements:
 
-- Node.js `>=22.22.1`
+- Node.js `>=18`
 - `react >=18`
 - `react-dom >=18`
 - A router instance from `@cookbook/router`
@@ -678,12 +590,13 @@ interface RouterProviderProps {
   readonly loadingFallback?: ReactNode;
   readonly errorFallback?: ComponentType<RouterErrorFallbackProps>;
   readonly scrollRestoration?: boolean;
+  readonly scrollBehavior?: ScrollBehavior;
 }
 
 function RouterProvider(props: RouterProviderProps): ReactElement;
 ```
 
-Renders the active route branch for a live router. If `children` are provided, they are rendered inside the router context instead of the default route renderer. `fallback` is not-found UI, `loadingFallback` is the global Suspense fallback, and `errorFallback` is the global React render-error fallback.
+Renders the active route branch for a live router. If `children` are provided, they are rendered inside the router context instead of the default route renderer. `fallback` is not-found UI, `loadingFallback` is the global Suspense fallback, and `errorFallback` is the global React render-error fallback. When `scrollRestoration` is enabled, the provider stores scroll positions by router location key and restores them on navigation; new non-hash locations scroll to the top.
 
 ```tsx
 <RouterProvider
@@ -691,9 +604,12 @@ Renders the active route branch for a live router. If `children` are provided, t
   fallback={<NotFoundPage />}
   loadingFallback={<AppSkeleton />}
   errorFallback={AppErrorFallback}
+  scrollBehavior="smooth"
   scrollRestoration
 />
 ```
+
+> `scrollBehavior` defaults to "auto". Use "smooth" only when animated restoration is desired. Hash navigation is not force-scrolled to the top.
 
 #### `StaticRouterProvider(props)`
 
@@ -803,19 +719,19 @@ Renders a named layout slot. A slot can render a matched slot route, fallback, i
 
 ### React hooks
 
-| Hook               | Signature                                                                                                       | Purpose                                  |
-| ------------------ | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| `useRouter`        | `() => Router`                                                                                                  | Read the current router instance.        |
-| `useNavigate`      | `() => Router['navigate']`                                                                                      | Read navigation methods.                 |
-| `useHref`          | `(routeId, options?) => string` or `(options) => string`                                                        | Generate a route href.                   |
-| `useLocation`      | `() => RouterLocation`                                                                                          | Read the current location.               |
-| `useMatches`       | `() => readonly MatchedRoute[]`                                                                                 | Read the active matched branch.          |
-| `useNavigation`    | `() => RouterNavigationState`                                                                                   | Read transition state.                   |
-| `useParams`        | `(routeId?) => RouteParams<Route>`                                                                              | Read current or route-specific params.   |
-| `useSearch`        | `(routeId?) => RouteSearch<Route>`                                                                              | Read parsed search params.               |
-| `useHash`          | `(routeId?) => RouteHash<Route> \| null`                                                                        | Read hash without `#`.                   |
-| `useOutletContext` | `() => unknown`, `<Route>(routeId, options?) => RouteOutletContext<Route>`, or `<Context>(options?) => Context` | Read nearest outlet/slot context.        |
-| `useBlocker`       | `(options: UseBlockerOptions) => BlockerState`                                                                  | Attach a browser `beforeunload` blocker. |
+| Hook               | Signature                                                                                                       | Purpose                                                   |
+| ------------------ | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `useRouter`        | `() => Router`                                                                                                  | Read the current router instance.                         |
+| `useNavigate`      | `() => Router['navigate']`                                                                                      | Read navigation methods.                                  |
+| `useHref`          | `(routeId, options?) => string` or `(options) => string`                                                        | Generate a route href.                                    |
+| `useLocation`      | `() => RouterLocation`                                                                                          | Read the current location.                                |
+| `useMatches`       | `() => readonly MatchedRoute[]`                                                                                 | Read the active matched branch.                           |
+| `useNavigation`    | `() => RouterNavigationState`                                                                                   | Read transition state.                                    |
+| `useParams`        | `(routeId?) => RouteParams<Route>`                                                                              | Read current or route-specific params.                    |
+| `useSearch`        | `(routeId?) => RouteSearch<Route>`                                                                              | Read parsed search params.                                |
+| `useHash`          | `(routeId?) => RouteHash<Route> \| null`                                                                        | Read hash without `#`.                                    |
+| `useOutletContext` | `() => unknown`, `<Route>(routeId, options?) => RouteOutletContext<Route>`, or `<Context>(options?) => Context` | Read nearest outlet/slot context.                         |
+| `useBlocker`       | `(options: UseBlockerOptions) => BlockerState`                                                                  | Block in-app navigation and browser unload while enabled. |
 
 ```tsx
 function UserPage() {
@@ -844,7 +760,7 @@ interface BlockerState {
 }
 ```
 
-This guards browser unload. It is not a full in-app route transition blocker.
+When enabled, this registers a router navigation blocker and a browser unload blocker. Returning/cancelling the confirmation keeps the current route active and sets navigation state to `blocked`.
 
 ### React contexts and render helpers
 
@@ -917,7 +833,7 @@ cbr --help
 cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router
 cookbook-router validate --routes src/routes.tsx
 cookbook-router manifest --routes src/routes.tsx --out-dir .cookbook-router
-cookbook-router watch --routes src/routes.tsx --out-dir .cookbook-router
+cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router --watch
 ```
 
 Options:
@@ -928,6 +844,7 @@ Options:
 | `--routes=<file>` | All commands                    | Equals-form route source file. May be repeated.   |
 | `--out-dir <dir>` | `generate`, `manifest`, `watch` | Output directory. Defaults to `.cookbook-router`. |
 | `--out-dir=<dir>` | `generate`, `manifest`, `watch` | Equals-form output directory.                     |
+| `--watch`         | `generate`                      | Generate once and keep watching route files.      |
 | `-h`, `--help`    | CLI                             | Print help.                                       |
 | `-v`, `--version` | CLI                             | Print version.                                    |
 
@@ -936,8 +853,7 @@ Exit behavior:
 - Successful commands exit `0`.
 - Invalid command input, validation errors, and generation errors exit `1`.
 - `validate` writes no files.
-- `watch` returns the initial command status, keeps the process alive, and regenerates after route file changes.
-- `watch` requires at least one `--routes` file because in-memory route arrays cannot be watched.
+- `generate --watch` return the initial command status, keep the process alive, and regenerate after route file changes.
 
 ### Programmatic command APIs
 
@@ -999,6 +915,7 @@ const watcher = watchCommand({
 });
 
 await watcher.initial;
+
 watcher.close();
 ```
 

@@ -39,7 +39,6 @@ interface RouteDefinition {
   readonly search?: RouteSearchSchema;
   readonly hash?: readonly string[];
   readonly meta?: RouteMeta;
-  readonly notFound?: RouteComponent;
   readonly loading?: RouteComponent;
   readonly errorFallback?: RouteComponent;
   readonly lifecycle?: RouteLifecycle;
@@ -62,14 +61,12 @@ interface RouteSlotConfig {
   readonly fallback?: RouteSlotFallback | null;
   readonly routes?: readonly RouteDefinition[];
   readonly meta?: RouteMeta;
-  readonly notFound?: RouteComponent;
 }
 
 interface RouteSlotFallback {
   readonly id?: string;
   readonly component: RouteComponent;
   readonly meta?: RouteMeta;
-  readonly notFound?: RouteComponent;
 }
 
 type RouteRedirect =
@@ -105,7 +102,6 @@ type RouteIntercepts = Readonly<Record<string, RouteInterceptConfig>>;
 | `search`           | Search contract source. Use `{ type: 'one' }` for single values and `{ type: 'many' }` for repeated values. |
 | `hash`             | Allowed hash fragment values for generated contracts.                                                       |
 | `meta`             | Arbitrary metadata preserved in generated contracts and runtime route definitions.                          |
-| `notFound`         | Route-level not-found component.                                                                            |
 | `loading`          | Route-level React Suspense fallback component rendered while the route subtree is loading.                  |
 | `errorFallback`    | Route-level React error fallback component rendered when the route subtree throws during rendering.         |
 | `lifecycle`        | Route-level transition hooks.                                                                               |
@@ -230,6 +226,8 @@ Generated params are currently typed as strings, including constrained params:
 | `{*path}`                  | `string`             | Captures wildcard path data.       |
 
 Duplicate param names in the same parent-to-child branch fail validation.
+
+Custom path constraints let you define reusable validation rules for route params beyond the built-in constraints such as `int`, `string`, and `regex`. Register them with [`pathConstraints`](#pathconstraints) before using them in route paths.
 
 ## Search, hash, and metadata
 
@@ -522,14 +520,20 @@ Provider fallback handles the simplest not-found case:
 <RouterProvider router={router} fallback={<NotFoundPage />} />
 ```
 
-Routes and slot configs may also declare `notFound` components for localized fallback UI.
+Use `RouterProvider fallback` for global 404 UI. For section-specific 404 UI, define an explicit catch-all child route inside that section so the section layout stays active.
 
 ```tsx
 {
   id: 'admin',
   path: '/admin',
   layout: { component: AdminLayout },
-  notFound: AdminNotFound,
+  children: [
+    {
+      id: 'admin.not-found',
+      path: '{*path}',
+      component: AdminNotFound,
+    },
+  ],
 }
 ```
 
@@ -624,7 +628,9 @@ createRouter({ routes, maxRedirectDepth: 20 });
 
 ### `pathConstraints`
 
-Custom path constraints are created with `createConstraint()` and registered through `defineRoutes(..., { pathConstraints })` when route definitions use the custom constraint. This is required because `defineRoutes()` validates route patterns immediately.
+Custom path constraints let route params use reusable validation rules beyond the built-in constraints such as `int`, `string`, and `regex`. Create custom constraints with `createConstraint()` and register them through `defineRoutes(..., { pathConstraints })` before using them in route paths.
+
+`defineRoutes()` validates route patterns immediately, so any custom constraint referenced by a route path must already be registered. For the full constraint API, see the `@cookbook/pathkit` documentation for `createConstraint`.
 
 ```ts
 import { createConstraint, createRouter, defineRoutes } from '@cookbook/router';

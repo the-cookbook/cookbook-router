@@ -80,13 +80,13 @@ Do not add central package-level behavior tests for source coverage. Repository-
 
 ## Coverage
 
-Vitest coverage thresholds are intentionally strict:
+Vitest coverage thresholds are set to:
 
 ```txt
-statements: 100
-branches: 100
-functions: 100
-lines: 100
+statements: 80,
+branches: 75,
+functions: 80,
+lines: 80,
 ```
 
 Do not exclude implementation files from coverage silently. Any ignored branch must include a local explanation describing why it is unreachable or defensive.

@@ -31,7 +31,7 @@ The root package does not expose runtime APIs. Use package-root imports from the
 
 ## Requirements
 
-- Node.js `>=22.22.1`
+- Node.js `>=18`
 - pnpm `>=9.0.0`
 - React apps must provide `react` and `react-dom` `>=18`
 
@@ -179,7 +179,7 @@ Include the generated files in your TypeScript program:
 
 - **Route IDs are the public navigation API.** Paths declare URL matching; route IDs drive links, programmatic navigation, href generation, redirects, and type inference.
 - **Path params are strings.** Constraints such as `{id:int}` validate URL shape but generated param values are typed as `string`.
-- **Search schemas drive generated optional string fields.** Runtime search values are serialized into the query string; descriptors are not runtime validators.
+- **Search schemas drive generated optional fields.** Runtime parsing is URL-faithful: one query key occurrence becomes a string, repeated occurrences become `readonly string[]`. Descriptors are not runtime validators.
 - **Layouts render child routes through `<Outlet />`.** Layout slots render parallel UI regions through `<Slot name="..." />`.
 - **Intercepts preserve the current branch while rendering a destination into a slot.** Direct visits to the same destination URL render the canonical full page.
 - **Route redirects are first-class.** Use `redirect: { route: 'target' }` for internal route redirects and `redirect: 'https://example.com'` for external redirects.

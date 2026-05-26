@@ -34,7 +34,7 @@ pnpm add @cookbook/router
 
 ## Requirements
 
-- Node.js `>=22.22.1`
+- Node.js `>=18`
 - TypeScript project for generated contracts
 - Static route declarations for best extraction results
 - Package binaries available as `cookbook-router` and `cbr`
@@ -52,17 +52,16 @@ cbr --help
 
 ```sh
 cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router
+cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router --watch
 cookbook-router validate --routes src/routes.tsx
 cookbook-router manifest --routes src/routes.tsx --out-dir .cookbook-router
-cookbook-router watch --routes src/routes.tsx --out-dir .cookbook-router
 ```
 
-| Command    | Purpose                                                                      | Writes files |
-| ---------- | ---------------------------------------------------------------------------- | ------------ |
-| `generate` | Generate `contracts.ts`, `register.d.ts`, and `manifest.json`.               | Yes          |
-| `validate` | Validate route files without writing output.                                 | No           |
-| `manifest` | Generate `manifest.json` only.                                               | Yes          |
-| `watch`    | Generate once, keep the process alive, and regenerate on route file changes. | Yes          |
+| Command    | Purpose                                                        | Writes files |
+| ---------- | -------------------------------------------------------------- | ------------ |
+| `generate` | Generate `contracts.ts`, `register.d.ts`, and `manifest.json`. | Yes          |
+| `validate` | Validate route files without writing output.                   | No           |
+| `manifest` | Generate `manifest.json` only.                                 | Yes          |
 
 Options:
 
@@ -72,6 +71,7 @@ Options:
 | `--routes=<file>` | Equals-form route source file. May be repeated.             |
 | `--out-dir <dir>` | Generated output directory. Defaults to `.cookbook-router`. |
 | `--out-dir=<dir>` | Equals-form output directory.                               |
+| `--watch`         | Watch for files changes when used with generate             |
 | `-h`, `--help`    | Show help.                                                  |
 | `-v`, `--version` | Show version.                                               |
 
@@ -258,8 +258,6 @@ With package scripts:
 - Invalid options, unknown commands, route validation errors, and generation errors exit `1`.
 - `validate` writes no files.
 - `generate` and `manifest` print generated files on success.
-- `watch` reports the initial generation status, keeps the process alive, and reports each regeneration result.
-- `watch` requires at least one `--routes` file; direct in-memory route arrays are only supported by programmatic one-shot commands.
 
 The package also exports `runCli(argv, runnerOptions?)` and `shouldRunCli(moduleUrl?, argv?)` for custom executable wrappers and tests.
 
@@ -267,7 +265,6 @@ The package also exports `runCli(argv, runnerOptions?)` and `shouldRunCli(module
 
 - If a route file cannot be evaluated, simplify the route declaration into a static array.
 - If contracts are stale, rerun `generate` once to see diagnostics, then use `watch` during development.
-- If `watch` reports that it requires a route file, pass at least one `--routes <file>` argument. Watch mode cannot observe programmatic in-memory routes.
 - If generated types are not visible, include generated files in `tsconfig.json`.
 - If a slot fallback ID is not generated, that is expected; fallbacks are not navigable routes.
 - If a command exits with `--routes requires a file path`, pass at least one route file with `--routes`.

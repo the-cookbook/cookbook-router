@@ -1,7 +1,8 @@
 import { createContext, useContext } from 'react';
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type { MatchedRoute, ResolvedSlots, Router, RouterState } from '@cookbook/router';
 import { createMissingProviderError } from '@cookbook/router';
+import type { RenderMatchesOptions } from '../components/router-provider';
 
 export interface RouterContextValue {
   readonly router: Router;
@@ -17,9 +18,21 @@ export interface RouteRenderContextValue {
   readonly match: MatchedRoute;
 }
 
+export interface RouterErrorFallbackProps {
+  readonly error: unknown;
+  readonly reset: () => void;
+  readonly route?: MatchedRoute;
+}
+
+export interface RenderBoundaryOptions {
+  readonly loadingFallback?: ReactNode;
+  readonly errorFallback?: ComponentType<RouterErrorFallbackProps>;
+}
+
 export interface SlotRenderContextValue {
   readonly ownerRouteId: string;
   readonly slots: ResolvedSlots;
+  readonly renderOptions?: RenderMatchesOptions;
 }
 
 export const RouterContext = createContext<RouterContextValue | null>(null);
