@@ -1,5 +1,6 @@
+import { registerPathConstraints } from '@cookbook/router';
 import { generateManifest, serializeManifest } from '../generation/generate-manifest';
-import { resolveRoutes } from './generate';
+import { resolveRouteInput } from './generate';
 import type { CliFileSystem, CliRouteOptions, CommandResult } from '../contracts';
 import {
   assertGeneratedOutputDoesNotClobberRouteFiles,
@@ -16,11 +17,15 @@ export async function manifestCommand(options: ManifestOptions): Promise<Command
     const fs = options.fs ?? defaultFs;
     const output = resolveGeneratedOutputPaths(options.outDir);
     assertGeneratedOutputDoesNotClobberRouteFiles(output, options.routeFiles);
-    const routes = await resolveRoutes(options);
+    const routeFile = await resolveRouteInput(options);
     const { outDir, manifestPath } = output;
 
+    registerPathConstraints(routeFile.routeOptions?.pathConstraints);
     await fs.mkdir(outDir, { recursive: true });
-    await fs.writeFile(manifestPath, serializeManifest(generateManifest(routes)));
+    await fs.writeFile(
+      manifestPath,
+      serializeManifest(generateManifest(routeFile.routes, routeFile.routeOptions ?? {})),
+    );
 
     return { ok: true, files: [manifestPath], errors: [] };
   } catch (error) {

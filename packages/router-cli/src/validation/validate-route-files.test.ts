@@ -208,4 +208,155 @@ export const routes = defineRoutes([
       title: 'Article [preview] with "quotes"',
     });
   });
+
+  test('loads defineRoutes options with referenced custom path constraints', async () => {
+    const fs = createMemoryFileSystem({
+      'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
+
+const constraints = {
+  slug: createConstraint({
+    parse: () => undefined,
+    verify: () => undefined,
+    toRegExp: () => '[a-z0-9-]+',
+  }),
+};
+
+function PostPage() { return null; }
+
+export const routes = defineRoutes([
+  { id: 'post.show', path: '/posts/{slug:slug}', component: PostPage },
+] as const, {
+  pathConstraints: constraints,
+});
+`,
+    });
+
+    const sources = await loadRouteFiles({ routeFiles: ['routes.tsx'], fs });
+
+    expect(sources[0]?.routes[0]?.path).toBe('/posts/{slug:slug}');
+    expect(sources[0]?.routeOptions?.pathConstraints).toHaveProperty('slug');
+  });
+
+  test('loads defineRoutes options with inline custom path constraints', async () => {
+    const fs = createMemoryFileSystem({
+      'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
+
+function PostPage() { return null; }
+
+export const routes = defineRoutes([
+  { id: 'post.show', path: '/posts/{slug:slug}', component: PostPage },
+] as const, {
+  pathConstraints: {
+    slug: createConstraint({
+      parse: () => undefined,
+      verify: () => undefined,
+      toRegExp: () => '[a-z0-9-]+',
+    }),
+  },
+});
+`,
+    });
+
+    await expect(loadRouteFiles({ routeFiles: ['routes.tsx'], fs })).resolves.toHaveLength(1);
+  });
+
+  test('keeps unknown custom constraint validation errors when options do not declare it', async () => {
+    const fs = createMemoryFileSystem({
+      'routes.tsx': `import { defineRoutes } from '@cookbook/router';
+
+export const routes = defineRoutes([
+  { id: 'post.show', path: '/posts/{slug:missingCliConstraint}' },
+] as const);
+`,
+    });
+
+    await expect(loadRouteFiles({ routeFiles: ['routes.tsx'], fs })).rejects.toThrow(
+      'missingCliConstraint',
+    );
+  });
+
+  test('extracts options while skipping comments and escaped quoted text', async () => {
+    const fs = createMemoryFileSystem({
+      'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
+
+const constraints = {
+  // ignored: { bad: createConstraint() }
+  slug: createConstraint({
+    parse: () => undefined,
+    verify: () => undefined,
+    toRegExp: () => '[a-z0-9-]+',
+  }),
+  /* ignoredBlock: createConstraint({}) */
+};
+
+export const routes = defineRoutes([
+  {
+    id: 'post.show',
+    path: '/posts/{slug:slug}',
+    meta: { title: 'It\\'s quoted' },
+  },
+] as const, {
+  // pathConstraints: shouldNotWin,
+  note: 'pathConstraints: fake',
+  pathConstraints: constraints,
+});
+`,
+    });
+
+    const sources = await loadRouteFiles({ routeFiles: ['routes.tsx'], fs });
+
+    expect(sources[0]?.routeOptions?.pathConstraints).toHaveProperty('slug');
+    expect(sources[0]?.routes[0]?.meta).toEqual({ title: "It's quoted" });
+  });
+
+  test('reports unsupported non-object defineRoutes options clearly', async () => {
+    const fs = createMemoryFileSystem({
+      'routes.tsx': `import { defineRoutes } from '@cookbook/router';
+
+export const routes = defineRoutes([
+  { id: 'home', path: '/' },
+] as const, getRouteOptions());
+`,
+    });
+
+    await expect(loadRouteFiles({ routeFiles: ['routes.tsx'], fs })).rejects.toThrow(
+      'could not statically evaluate defineRoutes options',
+    );
+  });
+
+  test('reports invalid static pathOptions clearly', async () => {
+    const fs = createMemoryFileSystem({
+      'routes.tsx': `import { defineRoutes } from '@cookbook/router';
+
+export const routes = defineRoutes([
+  { id: 'home', path: '/' },
+] as const, {
+  pathOptions: { trailingSlash: missingValue },
+});
+`,
+    });
+
+    await expect(loadRouteFiles({ routeFiles: ['routes.tsx'], fs })).rejects.toThrow(
+      'pathOptions that the CLI cannot statically evaluate',
+    );
+  });
+
+  test('reports unsupported dynamic pathConstraints declarations clearly', async () => {
+    const fs = createMemoryFileSystem({
+      'routes.tsx': `import { defineRoutes } from '@cookbook/router';
+
+const constraints = createConstraintsSomewhereElse();
+
+export const routes = defineRoutes([
+  { id: 'post.show', path: '/posts/{slug:slug}' },
+] as const, {
+  pathConstraints: constraints,
+});
+`,
+    });
+
+    await expect(loadRouteFiles({ routeFiles: ['routes.tsx'], fs })).rejects.toThrow(
+      'pathConstraints that the CLI cannot statically evaluate',
+    );
+  });
 });

@@ -98,6 +98,26 @@ Writes only `manifest.json`.
 
 The CLI expects statically extractable route declarations. Keep codegen-relevant fields inline and literal when possible: `id`, `path`, `index`, `search`, `hash`, `meta`, `children`, `layout.slots`, and `redirect`. Imported components are supported because the extractor replaces component-bearing fields with placeholders, but imported constants for route IDs, search schemas, or metadata may not be understood by static extraction.
 
+The CLI also reads `pathConstraints` from the second `defineRoutes` argument. No extra CLI flag is required. Custom-constrained params generate as `string` because the CLI only needs the constraint name for validation and parameter extraction; runtime parsing remains owned by the router and `@cookbook/pathkit`.
+
+Supported custom-constraint forms are:
+
+```ts
+const constraints = {
+  slug: createConstraint(...),
+};
+
+defineRoutes(routes, { pathConstraints: constraints });
+```
+
+```ts
+defineRoutes(routes, {
+  pathConstraints: {
+    slug: createConstraint(...),
+  },
+});
+```
+
 If generation fails on a complex route file, simplify the route declaration or move codegen-relevant values inline before rerunning `generate`.
 
 ## Watch mode
@@ -231,6 +251,7 @@ Keep route files codegen-friendly:
 - avoid route arrays assembled through runtime loops
 - keep route config serializable where possible
 - keep complex runtime logic outside route declarations
+- declare custom `pathConstraints` as a static object literal or a reference to a static object literal
 
 ## Safety checks
 
@@ -245,6 +266,7 @@ The CLI validates:
 - invalid slot definitions
 - malformed redirects
 - invalid configured intercept targets
+- custom constraint names declared through `defineRoutes(..., { pathConstraints })`
 
 It also refuses output layouts that would clobber route files.
 

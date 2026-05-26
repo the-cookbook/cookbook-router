@@ -1,6 +1,7 @@
 import { extname } from 'node:path';
-import { validateRoutes } from '@cookbook/router';
+import { createConstraint, registerPathConstraints, validateRoutes } from '@cookbook/router';
 import type { CliFileSystem, CliRouteSource, LoadRouteFilesOptions, RouteFile } from '../contracts';
+import type { DefineRoutesOptions, RouterPathConstraints } from '@cookbook/router';
 import { assertSafeRouteFilePaths } from '../security/safe-paths';
 import { nodeFileSystem } from '../node-file-system';
 
@@ -15,8 +16,13 @@ export async function loadRouteFiles(
 
   for (const path of options.routeFiles) {
     const parsed = await loadRouteFile(path, fs);
-    validateRoutes(parsed.routes);
-    sources.push({ path, routes: parsed.routes });
+    registerPathConstraints(parsed.routeOptions?.pathConstraints);
+    validateRoutes(parsed.routes, parsed.routeOptions?.pathOptions);
+    sources.push({
+      path,
+      routes: parsed.routes,
+      ...(parsed.routeOptions === undefined ? {} : { routeOptions: parsed.routeOptions }),
+    });
   }
 
   return sources;
@@ -70,22 +76,33 @@ function parseJsonRouteFile(path: string, contents: string): RouteFile {
 }
 
 function parseStaticRouteModule(path: string, contents: string): RouteFile {
-  const routesLiteral = extractRoutesLiteral(path, contents);
-  const sanitized = sanitizeRoutesLiteral(routesLiteral);
+  const literals = extractRouteModuleLiterals(path, contents);
+  const sanitized = sanitizeRoutesLiteral(literals.routesLiteral);
+  let routes: unknown;
 
   try {
-    const routes = new Function(
+    routes = new Function(
       `"use strict"; const __cookbookRouteComponent = () => null; return (${sanitized});`,
     )() as unknown;
-    return assertRouteFile(path, { routes });
   } catch (error) {
     throw new Error(`Route file "${path}" could not be evaluated as a static route declaration.`, {
       cause: error,
     });
   }
+
+  const routeOptions = extractRouteOptions(path, contents, literals.optionsLiteral);
+  return assertRouteFile(path, {
+    routes,
+    ...(routeOptions === undefined ? {} : { routeOptions }),
+  });
 }
 
-function extractRoutesLiteral(path: string, contents: string): string {
+interface ExtractedRouteModuleLiterals {
+  readonly routesLiteral: string;
+  readonly optionsLiteral?: string;
+}
+
+function extractRouteModuleLiterals(path: string, contents: string): ExtractedRouteModuleLiterals {
   const defineRoutesCall = /\bdefineRoutes\s*\(/g;
   let defineRoutesMatch: RegExpExecArray | null;
 
@@ -94,7 +111,15 @@ function extractRoutesLiteral(path: string, contents: string): string {
     const arrayStart = contents.indexOf('[', callStart);
 
     if (arrayStart >= 0) {
-      return extractBalancedArray(path, contents, arrayStart);
+      const routesLiteral = extractBalancedArray(path, contents, arrayStart);
+      const optionsLiteral = extractDefineRoutesOptionsLiteral(
+        contents,
+        arrayStart + routesLiteral.length,
+      );
+      return {
+        routesLiteral,
+        ...(optionsLiteral === undefined ? {} : { optionsLiteral }),
+      };
     }
   }
 
@@ -104,13 +129,359 @@ function extractRoutesLiteral(path: string, contents: string): string {
     const arrayStart = contents.indexOf('[', routesAssignment.index);
 
     if (arrayStart >= 0) {
-      return extractBalancedArray(path, contents, arrayStart);
+      return { routesLiteral: extractBalancedArray(path, contents, arrayStart) };
     }
   }
 
   throw new Error(
     `Route file "${path}" must export routes from defineRoutes([...]) or a static routes array.`,
   );
+}
+
+function extractDefineRoutesOptionsLiteral(
+  contents: string,
+  routesLiteralEnd: number,
+): string | undefined {
+  let index = skipWhitespace(contents, routesLiteralEnd);
+
+  if (contents.slice(index, index + 8) === 'as const') {
+    index = skipWhitespace(contents, index + 8);
+  }
+
+  if (contents[index] !== ',') {
+    return undefined;
+  }
+
+  index = skipWhitespace(contents, index + 1);
+
+  if (contents[index] === '{') {
+    return extractBalancedObject('defineRoutes options', contents, index);
+  }
+
+  const identifierEnd = readIdentifierExpression(contents, index);
+
+  if (identifierEnd > index) {
+    const identifier = contents.slice(index, identifierEnd);
+    const declaration = findStaticObjectDeclaration(contents, identifier);
+
+    if (declaration !== undefined) {
+      return declaration;
+    }
+  }
+
+  throw new Error(
+    [
+      'The CLI could not statically evaluate defineRoutes options.',
+      'Supported forms are defineRoutes(routes, { pathConstraints: constraints })',
+      'and defineRoutes(routes, { pathConstraints: { slug: createConstraint(...) } }).',
+    ].join(' '),
+  );
+}
+
+function extractRouteOptions(
+  path: string,
+  contents: string,
+  optionsLiteral: string | undefined,
+): DefineRoutesOptions | undefined {
+  if (optionsLiteral === undefined) {
+    return undefined;
+  }
+
+  const pathOptions = extractPathOptions(path, optionsLiteral);
+  const pathConstraints = extractPathConstraints(path, contents, optionsLiteral);
+
+  if (pathOptions === undefined && pathConstraints === undefined) {
+    return undefined;
+  }
+
+  return {
+    ...(pathOptions === undefined ? {} : { pathOptions }),
+    ...(pathConstraints === undefined ? {} : { pathConstraints }),
+  };
+}
+
+function extractPathOptions(
+  path: string,
+  optionsLiteral: string,
+): DefineRoutesOptions['pathOptions'] {
+  const pathOptionsLiteral = extractObjectPropertyValue(optionsLiteral, 'pathOptions');
+
+  if (pathOptionsLiteral === undefined) {
+    return undefined;
+  }
+
+  try {
+    return new Function(
+      `"use strict"; return (${pathOptionsLiteral});`,
+    )() as DefineRoutesOptions['pathOptions'];
+  } catch (error) {
+    throw new Error(
+      [
+        `Route file "${path}" uses pathOptions that the CLI cannot statically evaluate.`,
+        'Use a static object literal for defineRoutes pathOptions.',
+      ].join(' '),
+      { cause: error },
+    );
+  }
+}
+
+function extractPathConstraints(
+  path: string,
+  contents: string,
+  optionsLiteral: string,
+): RouterPathConstraints | undefined {
+  const pathConstraintsLiteral = extractObjectPropertyValue(optionsLiteral, 'pathConstraints');
+
+  if (pathConstraintsLiteral === undefined) {
+    return undefined;
+  }
+
+  const trimmed = pathConstraintsLiteral.trim();
+  const constraintsObject = trimmed.startsWith('{')
+    ? trimmed
+    : findStaticObjectDeclaration(contents, trimmed);
+
+  if (constraintsObject === undefined) {
+    throw new Error(
+      [
+        `Route file "${path}" uses pathConstraints that the CLI cannot statically evaluate.`,
+        'Supported forms are defineRoutes(routes, { pathConstraints: constraints })',
+        'with a static object declaration and',
+        'defineRoutes(routes, { pathConstraints: { slug: createConstraint(...) } }).',
+      ].join(' '),
+    );
+  }
+
+  return createCliPathConstraints(extractConstraintNames(path, constraintsObject));
+}
+
+function createCliPathConstraints(names: readonly string[]): RouterPathConstraints {
+  const constraints: Record<string, ReturnType<typeof createConstraint>> = {};
+
+  for (const name of names) {
+    constraints[name] = createConstraint({
+      parse: (paramName: string, value: unknown) => {
+        if (typeof value !== 'string') {
+          throw new Error(`Parameter "${paramName}" must be a string.`);
+        }
+      },
+      verify: () => undefined,
+      toRegExp: () => '[^/]+',
+    });
+  }
+
+  return constraints;
+}
+
+function extractConstraintNames(path: string, objectLiteral: string): readonly string[] {
+  const names: string[] = [];
+  let index = skipTrivia(objectLiteral, 1);
+
+  while (index < objectLiteral.length) {
+    index = skipTrivia(objectLiteral, index);
+
+    if (objectLiteral[index] === '}') {
+      return names;
+    }
+
+    const key = readObjectPropertyKey(objectLiteral, index);
+
+    if (!key) {
+      throw new Error(
+        [
+          `Route file "${path}" has a pathConstraints object the CLI cannot statically evaluate.`,
+          'Constraint entries must use static property names.',
+        ].join(' '),
+      );
+    }
+
+    names.push(key.name);
+    index = skipTrivia(objectLiteral, key.end);
+
+    if (objectLiteral[index] === ':') {
+      index = readPropertyValue(objectLiteral, skipTrivia(objectLiteral, index + 1));
+    }
+
+    index = skipTrivia(objectLiteral, index);
+
+    if (objectLiteral[index] === ',') {
+      index += 1;
+      continue;
+    }
+
+    if (objectLiteral[index] === '}') {
+      return names;
+    }
+  }
+
+  throw new Error(`Route file "${path}" contains an unterminated pathConstraints object.`);
+}
+
+function extractObjectPropertyValue(source: string, propertyName: string): string | undefined {
+  let index = 0;
+
+  while (index < source.length) {
+    const char = source[index];
+
+    if (!char) {
+      return undefined;
+    }
+
+    if (isQuote(char)) {
+      index = readQuoted(source, index);
+      continue;
+    }
+
+    if (startsLineComment(source, index)) {
+      index = readLineComment(source, index);
+      continue;
+    }
+
+    if (startsBlockComment(source, index)) {
+      index = readBlockComment(source, index);
+      continue;
+    }
+
+    const key = readObjectPropertyKey(source, index);
+
+    if (!key) {
+      index += 1;
+      continue;
+    }
+
+    const colonIndex = skipWhitespace(source, key.end);
+
+    if (key.name === propertyName && source[colonIndex] === ':') {
+      const valueStart = skipWhitespace(source, colonIndex + 1);
+      const valueEnd = readPropertyValue(source, valueStart);
+      return source.slice(valueStart, valueEnd);
+    }
+
+    index = key.end;
+  }
+
+  return undefined;
+}
+
+function readObjectPropertyKey(
+  source: string,
+  start: number,
+): { readonly name: string; readonly end: number } | undefined {
+  const char = source[start];
+
+  if (!char) {
+    return undefined;
+  }
+
+  if (isIdentifierStart(char)) {
+    const end = readIdentifier(source, start);
+    return { name: source.slice(start, end), end };
+  }
+
+  if (char === '"' || char === "'") {
+    const end = readQuoted(source, start);
+    return { name: source.slice(start + 1, end - 1), end };
+  }
+
+  return undefined;
+}
+
+function findStaticObjectDeclaration(contents: string, identifier: string): string | undefined {
+  if (!/^[A-Za-z_$][\w$]*$/.test(identifier)) {
+    return undefined;
+  }
+
+  const declaration = new RegExp(
+    `(?:export\\s+)?(?:const|let|var)\\s+${escapeRegExp(identifier)}\\s*=`,
+  ).exec(contents);
+
+  if (declaration?.index === undefined) {
+    return undefined;
+  }
+
+  const objectStart = skipWhitespace(contents, declaration.index + declaration[0].length);
+
+  if (contents[objectStart] !== '{') {
+    return undefined;
+  }
+
+  return extractBalancedObject(identifier, contents, objectStart);
+}
+
+function extractBalancedObject(label: string, contents: string, start: number): string {
+  return extractBalancedDelimited(label, contents, start, '{', '}');
+}
+
+function readIdentifierExpression(source: string, start: number): number {
+  const char = source[start];
+
+  if (!char || !isIdentifierStart(char)) {
+    return start;
+  }
+
+  return readIdentifier(source, start);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function extractBalancedDelimited(
+  label: string,
+  contents: string,
+  start: number,
+  open: string,
+  close: string,
+): string {
+  let depth = 0;
+  let quote: '"' | "'" | '`' | undefined;
+  let escaped = false;
+
+  for (let index = start; index < contents.length; index++) {
+    const char = contents[index];
+
+    if (!char) {
+      continue;
+    }
+
+    if (quote) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+
+      if (char === '\\') {
+        escaped = true;
+        continue;
+      }
+
+      if (char === quote) {
+        quote = undefined;
+      }
+
+      continue;
+    }
+
+    if (char === '"' || char === "'" || char === '`') {
+      quote = char;
+      continue;
+    }
+
+    if (char === open) {
+      depth += 1;
+      continue;
+    }
+
+    if (char === close) {
+      depth -= 1;
+
+      if (!depth) {
+        return contents.slice(start, index + 1);
+      }
+    }
+  }
+
+  throw new Error(`Route file "${label}" contains an unterminated static object.`);
 }
 
 function extractBalancedArray(path: string, contents: string, start: number): string {
@@ -386,6 +757,26 @@ function skipWhitespace(source: string, start: number): number {
 
   while (index < source.length && /\s/.test(source[index] ?? '')) {
     index += 1;
+  }
+
+  return index;
+}
+
+function skipTrivia(source: string, start: number): number {
+  let index = skipWhitespace(source, start);
+
+  while (index < source.length) {
+    if (startsLineComment(source, index)) {
+      index = skipWhitespace(source, readLineComment(source, index));
+      continue;
+    }
+
+    if (startsBlockComment(source, index)) {
+      index = skipWhitespace(source, readBlockComment(source, index));
+      continue;
+    }
+
+    return index;
   }
 
   return index;

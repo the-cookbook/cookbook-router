@@ -90,6 +90,27 @@ export const routes = defineRoutes([
 
 The extractor expects a static `defineRoutes([...])` call or a static `routes = [...]` array. Avoid runtime-generated route trees in files consumed by the CLI.
 
+When route paths use custom path constraints, declare them in the second `defineRoutes` argument. The CLI reads `pathConstraints` from the route file, so no `--constraints` flag is needed. Custom-constrained params are emitted as `string` in generated contracts.
+
+```tsx
+import { createConstraint, defineRoutes } from '@cookbook/router';
+
+const constraints = {
+  slug: createConstraint({
+    parse: () => undefined,
+    verify: () => undefined,
+    toRegExp: () => '[a-z0-9-]+',
+  }),
+};
+
+export const routes = defineRoutes(
+  [{ id: 'posts.show', path: '/posts/{slug:slug}', component: PostPage }] as const,
+  { pathConstraints: constraints },
+);
+```
+
+Inline static constraint objects are also supported. Dynamic constraint declarations that cannot be statically evaluated fail with a clear error.
+
 ## Generated files
 
 ```txt
@@ -136,6 +157,7 @@ interface CliRouteOptions {
   readonly routeFiles?: readonly string[];
   readonly outDir?: string;
   readonly fs?: CliFileSystem;
+  readonly routeOptions?: DefineRoutesOptions;
 }
 
 interface CommandResult {
@@ -184,9 +206,15 @@ const manifestJson = serializeManifest(manifest);
 Signatures:
 
 ```ts
-function generateContracts(routes: readonly RouteDefinition[]): string;
+function generateContracts(
+  routes: readonly RouteDefinition[],
+  options?: DefineRoutesOptions | RouterPathOptions,
+): string;
 function generateRegister(): string;
-function generateManifest(routes: readonly RouteDefinition[]): RouteManifest;
+function generateManifest(
+  routes: readonly RouteDefinition[],
+  options?: DefineRoutesOptions | RouterPathOptions,
+): RouteManifest;
 function serializeManifest(manifest: RouteManifest): string;
 ```
 

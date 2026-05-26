@@ -1,4 +1,4 @@
-import type { RouteDefinition } from '@cookbook/router';
+import type { DefineRoutesOptions, RouteDefinition } from '@cookbook/router';
 
 export interface Register {}
 
@@ -17,11 +17,13 @@ export interface CliFileSystem {
 
 export interface RouteFile {
   readonly routes: readonly RouteDefinition[];
+  readonly routeOptions?: DefineRoutesOptions;
 }
 
 export interface CliRouteSource {
   readonly path: string;
   readonly routes: readonly RouteDefinition[];
+  readonly routeOptions?: DefineRoutesOptions;
 }
 
 export interface LoadRouteFilesOptions {
@@ -37,6 +39,7 @@ export interface CliOutputOptions {
 export interface CliRouteOptions extends CliOutputOptions {
   readonly routes?: readonly RouteDefinition[];
   readonly routeFiles?: readonly string[];
+  readonly routeOptions?: DefineRoutesOptions;
 }
 
 export interface CommandResult {

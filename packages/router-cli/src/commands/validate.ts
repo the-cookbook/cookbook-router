@@ -1,13 +1,14 @@
-import { validateRoutes } from '@cookbook/router';
-import { resolveRoutes } from './generate';
+import { registerPathConstraints, validateRoutes } from '@cookbook/router';
+import { resolveRouteInput } from './generate';
 import type { CliRouteOptions, CommandResult } from '../contracts';
 
 export interface ValidateOptions extends CliRouteOptions {}
 
 export async function validateCommand(options: ValidateOptions): Promise<CommandResult> {
   try {
-    const routes = await resolveRoutes(options);
-    validateRoutes(routes);
+    const routeFile = await resolveRouteInput(options);
+    registerPathConstraints(routeFile.routeOptions?.pathConstraints);
+    validateRoutes(routeFile.routes, routeFile.routeOptions?.pathOptions);
 
     return { ok: true, files: [], errors: [] };
   } catch (error) {

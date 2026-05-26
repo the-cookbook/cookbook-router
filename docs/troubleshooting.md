@@ -106,6 +106,8 @@ createRouter({ routes });
 
 For SSR, use the same custom-constraint setup in the route module used by both the server and client.
 
+For CLI generation, keep the custom constraints in `defineRoutes(..., { pathConstraints })`. The CLI reads that option automatically; no separate flag is needed. The supported static forms are a referenced object literal (`pathConstraints: constraints`) and an inline object literal (`pathConstraints: { slug: createConstraint(...) }`). Generated contract params for custom constraints are `string`. If `pathConstraints` is built dynamically, the CLI reports that it cannot statically evaluate the declaration.
+
 ## Basename routes do not work
 
 Configure basename once on the router:

@@ -145,6 +145,62 @@ describe('watchCommand', () => {
     handle.close();
   });
 
+  test('reports missing file system watch support', async () => {
+    const fs = createMemoryFileSystem({ 'routes.json': JSON.stringify({ routes: sampleRoutes }) });
+    fs.watch = undefined as never;
+    const results: string[] = [];
+
+    const handle = watchCommand({
+      routeFiles: ['routes.json'],
+      fs,
+      onChange: (result) => {
+        results.push(result.errors[0] ?? '');
+      },
+    });
+
+    await expect(handle.initial).resolves.toEqual({
+      ok: false,
+      files: [],
+      errors: ['Watch mode requires a file system with watch support.'],
+    });
+    expect(results).toEqual(['Watch mode requires a file system with watch support.']);
+    handle.close();
+  });
+
+  test('closes previously opened watchers when setup later fails', async () => {
+    const fs = createMemoryFileSystem({
+      'routes-a.json': JSON.stringify({ routes: [{ id: 'a', path: '/a' }] }),
+      'routes-b.json': JSON.stringify({ routes: [{ id: 'b', path: '/b' }] }),
+    });
+    const originalWatch = fs.watch;
+
+    if (!originalWatch) {
+      throw new Error('Expected memory file system to support watch.');
+    }
+
+    fs.watch = (path, listener) => {
+      if (path === 'routes-b.json') {
+        throw new Error('second watcher failed');
+      }
+
+      return originalWatch.call(fs, path, listener);
+    };
+
+    const handle = watchCommand({
+      routeFiles: ['routes-a.json', 'routes-b.json'],
+      fs,
+      debounceMs: 0,
+    });
+
+    await expect(handle.initial).resolves.toEqual({
+      ok: false,
+      files: [],
+      errors: ['second watcher failed'],
+    });
+    expect(fs.watchers.get('routes-a.json')).toEqual([]);
+    handle.close();
+  });
+
   test('coalesces rapid change events into one regeneration', async () => {
     const fs = createMemoryFileSystem({
       'routes.json': JSON.stringify({ routes: [{ id: 'home', path: '/' }] }),
@@ -195,5 +251,43 @@ describe('watchCommand', () => {
 
     expect(results).toEqual([true]);
     expect(fs.files.get('.cookbook-router/manifest.json')).not.toContain('later');
+  });
+
+  test('generates in watch mode with custom path constraints from defineRoutes options', async () => {
+    const fs = createMemoryFileSystem({
+      'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
+
+const constraints = {
+  slug: createConstraint({
+    parse: () => undefined,
+    verify: () => undefined,
+    toRegExp: () => '[a-z0-9-]+',
+  }),
+};
+
+export const routes = defineRoutes([
+  { id: 'post.show', path: '/posts/{slug:slug}' },
+] as const, {
+  pathConstraints: constraints,
+});
+`,
+    });
+    const results: boolean[] = [];
+    const handle = watchCommand({
+      routeFiles: ['routes.tsx'],
+      fs,
+      debounceMs: 0,
+      onChange: (result) => {
+        results.push(result.ok);
+      },
+    });
+
+    await expect(handle.initial).resolves.toMatchObject({ ok: true });
+
+    expect(results).toEqual([true]);
+    expect(fs.files.get('.cookbook-router/contracts.ts')).toContain(
+      "'post.show': { slug: string };",
+    );
+    handle.close();
   });
 });

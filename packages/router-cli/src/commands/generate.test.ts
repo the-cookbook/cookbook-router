@@ -129,4 +129,79 @@ export const routes = defineRoutes([
       await rm(dir, { recursive: true, force: true });
     }
   });
+
+  test('generates contracts from route files with custom path constraints', async () => {
+    const fs = createMemoryFileSystem({
+      'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
+
+const constraints = {
+  slug: createConstraint({
+    parse: () => undefined,
+    verify: () => undefined,
+    toRegExp: () => '[a-z0-9-]+',
+  }),
+};
+
+function PostPage() { return null; }
+
+export const routes = defineRoutes([
+  { id: 'post.show', path: '/posts/{slug:slug}', component: PostPage },
+] as const, {
+  pathConstraints: constraints,
+});
+`,
+    });
+
+    const result = await generateCommand({ routeFiles: ['routes.tsx'], fs });
+
+    expect(result.ok).toBe(true);
+    expect(fs.files.get('.cookbook-router/contracts.ts')).toContain(
+      "'post.show': { slug: string };",
+    );
+    expect(fs.files.get('.cookbook-router/manifest.json')).toContain('/posts/{slug:slug}');
+  });
+
+  test('generates contracts from route files with inline custom path constraints', async () => {
+    const fs = createMemoryFileSystem({
+      'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
+
+export const routes = defineRoutes([
+  { id: 'post.show', path: '/posts/{slug:inlineCliSlug}' },
+] as const, {
+  pathConstraints: {
+    inlineCliSlug: createConstraint({
+      parse: () => undefined,
+      verify: () => undefined,
+      toRegExp: () => '[a-z0-9-]+',
+    }),
+  },
+});
+`,
+    });
+
+    const result = await generateCommand({ routeFiles: ['routes.tsx'], fs });
+
+    expect(result.ok).toBe(true);
+    expect(fs.files.get('.cookbook-router/contracts.ts')).toContain(
+      "'post.show': { slug: string };",
+    );
+  });
+
+  test('keeps built-in constraint generation unchanged', async () => {
+    const fs = createMemoryFileSystem({
+      'routes.tsx': `import { defineRoutes } from '@cookbook/router';
+
+export const routes = defineRoutes([
+  { id: 'users.show', path: '/users/{id:int}' },
+] as const);
+`,
+    });
+
+    const result = await generateCommand({ routeFiles: ['routes.tsx'], fs });
+
+    expect(result.ok).toBe(true);
+    expect(fs.files.get('.cookbook-router/contracts.ts')).toContain(
+      "'users.show': { id: string };",
+    );
+  });
 });

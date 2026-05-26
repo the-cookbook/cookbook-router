@@ -40,6 +40,28 @@ describe('generateContracts', () => {
     expect(output).toContain('slug: string');
   });
 
+  test('generates contracts for slot routes and disabled slot fallbacks', () => {
+    const output = generateContracts([
+      {
+        id: 'dashboard',
+        path: '/dashboard',
+        layout: {
+          slots: {
+            sidebar: {
+              fallback: { id: 'dashboard.sidebar.fallback', component: () => null },
+              routes: [{ id: 'dashboard.sidebar.activity', path: 'activity/{itemId:int}' }],
+            },
+            modal: false,
+          },
+        },
+        children: [{ id: 'dashboard.home', index: true }],
+      },
+    ] as never);
+
+    expect(output).toContain("'dashboard.sidebar.activity': { itemId: string };");
+    expect(output).toContain("'dashboard.sidebar.activity': '/dashboard/activity/{itemId:int}';");
+  });
+
   test('throws for invalid route configuration', () => {
     expect(() => generateContracts([{ id: 'bad', index: true, path: '/bad' }])).toThrow('index');
     expect(() =>

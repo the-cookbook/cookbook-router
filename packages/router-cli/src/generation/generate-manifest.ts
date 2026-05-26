@@ -1,5 +1,10 @@
-import { normalizeRoutes, validateRoutes } from '@cookbook/router';
-import type { NormalizedRoute, RouteDefinition } from '@cookbook/router';
+import { normalizeRoutes, registerPathConstraints, validateRoutes } from '@cookbook/router';
+import type {
+  DefineRoutesOptions,
+  NormalizedRoute,
+  RouteDefinition,
+  RouterPathOptions,
+} from '@cookbook/router';
 
 export interface ManifestRoute {
   readonly id: string;
@@ -12,9 +17,13 @@ export interface RouteManifest {
   readonly routes: readonly ManifestRoute[];
 }
 
-export function generateManifest(routes: readonly RouteDefinition[]): RouteManifest {
-  validateRoutes(routes);
-  const normalized = normalizeRoutes(routes);
+export function generateManifest(
+  routes: readonly RouteDefinition[],
+  options: DefineRoutesOptions | RouterPathOptions = {},
+): RouteManifest {
+  const pathOptions = resolveGenerationPathOptions(options);
+  validateRoutes(routes, pathOptions);
+  const normalized = normalizeRoutes(routes, pathOptions);
 
   return {
     routes: flattenNormalizedRoutes(normalized).map((route) => ({
@@ -39,4 +48,21 @@ function flattenNormalizedRoutes(routes: readonly NormalizedRoute[]): readonly N
   }
 
   return flattened;
+}
+
+function resolveGenerationPathOptions(
+  options: DefineRoutesOptions | RouterPathOptions,
+): RouterPathOptions {
+  if (isDefineRoutesOptions(options)) {
+    registerPathConstraints(options.pathConstraints);
+    return options.pathOptions ?? {};
+  }
+
+  return options;
+}
+
+function isDefineRoutesOptions(
+  options: DefineRoutesOptions | RouterPathOptions,
+): options is DefineRoutesOptions {
+  return 'pathOptions' in options || 'pathConstraints' in options;
 }

@@ -32,4 +32,31 @@ describe('validateCommand', () => {
     expect(result.ok).toBe(false);
     expect(result.errors[0]).toContain('Duplicate route id');
   });
+
+  test('validates route files with custom path constraints from defineRoutes options', async () => {
+    const fs = createMemoryFileSystem({
+      'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
+
+const constraints = {
+  slug: createConstraint({
+    parse: () => undefined,
+    verify: () => undefined,
+    toRegExp: () => '[a-z0-9-]+',
+  }),
+};
+
+export const routes = defineRoutes([
+  { id: 'post.show', path: '/posts/{slug:slug}' },
+] as const, {
+  pathConstraints: constraints,
+});
+`,
+    });
+
+    await expect(validateCommand({ routeFiles: ['routes.tsx'], fs })).resolves.toEqual({
+      ok: true,
+      files: [],
+      errors: [],
+    });
+  });
 });
