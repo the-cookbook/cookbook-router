@@ -59,7 +59,10 @@ export function ReviewerWorkloadCard({ reviewers }: ReviewerWorkloadCardProps) {
                   </span>
                 </div>
 
-                <Progress value={percentage} />
+                <Progress
+                  value={percentage}
+                  className="*:data-[slot=progress-indicator]:bg-indigo-600"
+                />
               </div>
 
               <div className="mt-4 grid grid-cols-3 gap-2 text-sm">

@@ -1,19 +1,112 @@
+import React from 'react';
 import { defineRoutes, createConstraint } from '@cookbook/router';
 
 import { LayoutPage } from './pages/layout';
-import {
-  OverviewLayoutHeader,
-  OverviewPage,
-  OverviewCreateModal,
-} from './pages/overview/page';
-import { UsersLayoutHeader, UsersPage } from './pages/users/page';
-import { CreateLayoutHeader, CreatePage } from './pages/create/page';
-import {
-  UserDetailsLayoutHeader,
-  UserDetailPage,
-} from './pages/users/details/page';
 import { NotFound } from './pages/not-found/page';
-import { ReportsLayoutHeader, ReportsPage } from './pages/reports/page';
+import { ErrorPage } from './pages/error';
+import { LoadingSkeleton } from './pages/loading';
+
+const LAZY_PAGE_DELAY_MS = 1_500;
+
+/************* OVERVIEW *************/
+const AsyncOverviewPage = React.lazy(() =>
+  import('./pages/overview/page').then(async ({ OverviewPage }) => {
+    await new Promise((resolve) => setTimeout(resolve, LAZY_PAGE_DELAY_MS));
+
+    return {
+      default: OverviewPage,
+    };
+  })
+);
+
+const AsyncOverviewLayoutHeader = React.lazy(() =>
+  import('./pages/overview/page').then(async ({ OverviewLayoutHeader }) => ({
+    default: OverviewLayoutHeader,
+  }))
+);
+
+const AsyncOverviewCreateModal = React.lazy(() =>
+  import('./pages/overview/page').then(async ({ OverviewCreateModal }) => ({
+    default: OverviewCreateModal,
+  }))
+);
+
+/************* CREATE *************/
+const AsyncCreatePage = React.lazy(() =>
+  import('./pages/create/page').then(async ({ CreatePage }) => {
+    await new Promise((resolve) => setTimeout(resolve, LAZY_PAGE_DELAY_MS));
+
+    return {
+      default: CreatePage,
+    };
+  })
+);
+
+const AsyncCreateLayoutHeader = React.lazy(() =>
+  import('./pages/create/page').then(async ({ CreateLayoutHeader }) => ({
+    default: CreateLayoutHeader,
+  }))
+);
+
+/************* USERS *************/
+const AsyncUsersPage = React.lazy(() =>
+  import('./pages/users/page').then(async ({ UsersPage }) => {
+    await new Promise((resolve) => setTimeout(resolve, LAZY_PAGE_DELAY_MS));
+
+    return {
+      default: UsersPage,
+    };
+  })
+);
+
+const AsyncUsersLayoutHeader = React.lazy(() =>
+  import('./pages/users/page').then(async ({ UsersLayoutHeader }) => ({
+    default: UsersLayoutHeader,
+  }))
+);
+
+/************* USER DETAILS *************/
+const AsyncUserDetailPage = React.lazy(() =>
+  import('./pages/users/details/page').then(async ({ UserDetailPage }) => {
+    await new Promise((resolve) => setTimeout(resolve, LAZY_PAGE_DELAY_MS));
+
+    return {
+      default: UserDetailPage,
+    };
+  })
+);
+
+const AsyncUserDetailsLayoutHeader = React.lazy(() =>
+  import('./pages/users/details/page').then(
+    async ({ UserDetailsLayoutHeader }) => ({
+      default: UserDetailsLayoutHeader,
+    })
+  )
+);
+
+/************* REPORTS *************/
+const AsyncReportsPage = React.lazy(() =>
+  import('./pages/reports/page').then(async ({ ReportsPage }) => {
+    await new Promise((resolve) => setTimeout(resolve, LAZY_PAGE_DELAY_MS));
+
+    return {
+      default: ReportsPage,
+    };
+  })
+);
+
+const AsyncReportsLayoutHeader = React.lazy(() =>
+  import('./pages/reports/page').then(async ({ ReportsLayoutHeader }) => ({
+    default: ReportsLayoutHeader,
+  }))
+);
+
+/************* BROKEN PAGE *************/
+const AsyncBrokenPage = React.lazy(() =>
+  import('./pages/broken-page/page').then(async ({ BrokenPage }) => ({
+    default: BrokenPage,
+  }))
+);
 
 export const constraints = {
   slug: createConstraint({
@@ -54,28 +147,30 @@ export const routes = defineRoutes(
       path: '/create',
       layout: {
         component: LayoutPage,
+        loading: LoadingSkeleton,
         slots: {
           header: {
             fallback: {
               id: 'create.header.fallback',
-              component: CreateLayoutHeader,
+              component: AsyncCreateLayoutHeader,
             },
           },
         },
       },
-      component: CreatePage,
+      component: AsyncCreatePage,
     },
     {
       id: 'overview',
       path: '/overview',
-      component: OverviewPage,
+      component: AsyncOverviewPage,
       layout: {
         component: LayoutPage,
+        loading: LoadingSkeleton,
         slots: {
           header: {
             fallback: {
-              id: 'dashboard.header.fallback',
-              component: OverviewLayoutHeader,
+              id: 'overview.header.fallback',
+              component: AsyncOverviewLayoutHeader,
             },
           },
           modal: {
@@ -86,7 +181,7 @@ export const routes = defineRoutes(
       intercepts: {
         modal: {
           to: ['/create'],
-          component: OverviewCreateModal,
+          component: AsyncOverviewCreateModal,
         },
       },
       search: {
@@ -95,14 +190,15 @@ export const routes = defineRoutes(
     },
     {
       id: 'users',
-      path: 'users',
+      path: '/users',
       layout: {
         component: LayoutPage,
+        loading: LoadingSkeleton,
         slots: {
           header: {
             fallback: {
               id: 'users.header.fallback',
-              component: UsersLayoutHeader,
+              component: AsyncUsersLayoutHeader,
             },
           },
         },
@@ -111,18 +207,18 @@ export const routes = defineRoutes(
         {
           id: 'users.index',
           index: true,
-          component: UsersPage,
+          component: AsyncUsersPage,
         },
         {
           id: 'users.details',
           path: '{slug:slug}',
-          component: UserDetailPage,
+          component: AsyncUserDetailPage,
           layout: {
             slots: {
               header: {
                 fallback: {
-                  id: 'dashboard.users.details.header.fallback',
-                  component: UserDetailsLayoutHeader,
+                  id: 'users.details.header.fallback',
+                  component: AsyncUserDetailsLayoutHeader,
                 },
               },
             },
@@ -132,23 +228,34 @@ export const routes = defineRoutes(
     },
     {
       id: 'reports',
-      path: 'reports',
-      component: ReportsPage,
+      path: '/reports',
+      component: AsyncReportsPage,
       layout: {
         component: LayoutPage,
+        loading: LoadingSkeleton,
         slots: {
           header: {
             fallback: {
               id: 'reports.header.fallback',
-              component: ReportsLayoutHeader,
+              component: AsyncReportsLayoutHeader,
             },
           },
         },
       },
     },
     {
+      id: 'broken-page',
+      path: '/broken-page',
+      component: AsyncBrokenPage,
+      layout: {
+        component: LayoutPage,
+        loading: LoadingSkeleton,
+        errorFallback: ErrorPage,
+      },
+    },
+    {
       id: 'not-found',
-      path: 'not-found',
+      path: '/not-found',
       component: NotFound,
     },
   ] as const,

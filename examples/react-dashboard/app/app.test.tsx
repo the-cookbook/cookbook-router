@@ -2,6 +2,10 @@ import { fireEvent, render, waitFor } from '@testing-library/react';
 import { describe, expect, test } from 'vitest';
 import { App, createTestRouter } from './app';
 
+const lazyPageTimeout = {
+  timeout: 3_000,
+};
+
 describe('react-dashboard example', () => {
   test('redirects the entry route to the overview dashboard', async () => {
     const router = createTestRouter(['/']);
@@ -10,8 +14,12 @@ describe('react-dashboard example', () => {
     const view = render(<App router={router} />);
 
     expect(router.state.location.href).toBe('/overview');
-    expect(view.getByRole('heading', { name: 'Overview' })).toBeTruthy();
-    expect(view.getByText('Total Revenue')).toBeTruthy();
+    expect(
+      await view.findByRole('heading', { name: 'Overview' }, lazyPageTimeout)
+    ).toBeTruthy();
+    expect(
+      await view.findByText('Total Revenue', {}, lazyPageTimeout)
+    ).toBeTruthy();
   });
 
   test('keeps overview navigation active when search params are present', async () => {
@@ -19,6 +27,9 @@ describe('react-dashboard example', () => {
     await router.resolveCurrent();
 
     const view = render(<App router={router} />);
+
+    await view.findByText('Total Revenue', {}, lazyPageTimeout);
+
     const overviewNavigationItem = view
       .getAllByText('Overview')
       .map((element) => element.closest('[data-sidebar="menu-button"]'))
@@ -34,19 +45,27 @@ describe('react-dashboard example', () => {
 
     const view = render(<App router={router} />);
 
+    await view.findByText('Total Revenue', {}, lazyPageTimeout);
+
     fireEvent.click(view.getByText('Quick Create'));
 
-    await waitFor(() =>
-      expect(view.getByRole('dialog', { name: 'Add section' })).toBeTruthy()
+    await waitFor(
+      () =>
+        expect(view.getByRole('dialog', { name: 'Add section' })).toBeTruthy(),
+      lazyPageTimeout
     );
+
     expect(router.state.location.href).toBe('/create');
     expect(view.getByText('Total Revenue')).toBeTruthy();
 
     router.navigate.back();
 
-    await waitFor(() =>
-      expect(view.queryByRole('dialog', { name: 'Add section' })).toBeNull()
+    await waitFor(
+      () =>
+        expect(view.queryByRole('dialog', { name: 'Add section' })).toBeNull(),
+      lazyPageTimeout
     );
+
     expect(router.state.location.href).toBe('/overview');
   });
 
@@ -57,8 +76,14 @@ describe('react-dashboard example', () => {
     const view = render(<App router={router} />);
 
     expect(view.queryByRole('dialog', { name: 'Add section' })).toBeNull();
-    expect(view.getByRole('heading', { name: 'Create' })).toBeTruthy();
-    expect(view.getByRole('heading', { name: 'Add section' })).toBeTruthy();
+
+    expect(
+      await view.findByRole('heading', { name: 'Create' }, lazyPageTimeout)
+    ).toBeTruthy();
+
+    expect(
+      await view.findByRole('heading', { name: 'Add section' }, lazyPageTimeout)
+    ).toBeTruthy();
   });
 
   test('renders user details through the custom slug constraint', async () => {
@@ -68,10 +93,34 @@ describe('react-dashboard example', () => {
     const view = render(<App router={router} />);
 
     expect(
-      view.getByRole('heading', { name: 'Eddie Lake', level: 1 })
+      await view.findByRole(
+        'heading',
+        { name: 'Eddie Lake', level: 1 },
+        lazyPageTimeout
+      )
     ).toBeTruthy();
-    expect(view.getByText('eddie.lake@example.com')).toBeTruthy();
+
+    expect(
+      await view.findByText('eddie.lake@example.com', {}, lazyPageTimeout)
+    ).toBeTruthy();
     expect(view.getByText('Workspace Owner')).toBeTruthy();
+  });
+
+  test('renders the broken page through the layout error fallback', async () => {
+    const router = createTestRouter(['/broken-page']);
+    await router.resolveCurrent();
+
+    const view = render(<App router={router} />);
+
+    expect(
+      await view.findByRole(
+        'heading',
+        { name: 'Something went wrong' },
+        lazyPageTimeout
+      )
+    ).toBeTruthy();
+
+    expect(view.getByText('Broken Page')).toBeTruthy();
   });
 
   test('redirects missing user detail records to not found without freezing', async () => {
@@ -80,8 +129,14 @@ describe('react-dashboard example', () => {
 
     const view = render(<App router={router} />);
 
-    await waitFor(() => expect(router.state.location.href).toBe('/not-found'));
-    expect(view.getByRole('heading', { name: 'Not found' })).toBeTruthy();
+    await waitFor(
+      () => expect(router.state.location.href).toBe('/not-found'),
+      lazyPageTimeout
+    );
+
+    expect(
+      await view.findByRole('heading', { name: 'Not found' }, lazyPageTimeout)
+    ).toBeTruthy();
   });
 
   test('renders reports from the sidebar navigation', async () => {
@@ -90,10 +145,18 @@ describe('react-dashboard example', () => {
 
     const view = render(<App router={router} />);
 
+    await view.findByText('Total Revenue', {}, lazyPageTimeout);
+
     fireEvent.click(view.getByText('Reports'));
 
-    await waitFor(() => expect(router.state.location.href).toBe('/reports'));
-    expect(view.getByText('Progress Overview')).toBeTruthy();
+    await waitFor(
+      () => expect(router.state.location.href).toBe('/reports'),
+      lazyPageTimeout
+    );
+
+    expect(
+      await view.findByText('Progress Overview', {}, lazyPageTimeout)
+    ).toBeTruthy();
     expect(
       view.getAllByRole('heading', { name: 'Reports', level: 1 })
     ).toHaveLength(2);

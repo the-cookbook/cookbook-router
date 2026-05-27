@@ -97,6 +97,8 @@ This is the best example for content-heavy app-level architecture.
 Shows a production-style dashboard app:
 
 - shadcn-style dashboard shell
+- async pages rendered through persistent layout loading states
+- layout-level error fallback rendering through `/broken-page`
 - route-specific header slots
 - overview search params
 - `NavLink` matching that ignores search params
@@ -105,8 +107,9 @@ Shows a production-style dashboard app:
 - custom `slug` path constraints for user detail routes
 - missing-record redirects to `/not-found`
 - generated contracts committed and covered by type tests
+- testing patterns for delayed lazy routes and error boundaries
 
-Use this example when validating dashboard-style layouts with persistent chrome, route-owned headers, modal create flows, and constrained detail routes.
+Use this example when validating dashboard-style layouts with persistent chrome, route-owned headers, layout loading/error states, modal create flows, and constrained detail routes.
 
 ## `react-ssr`
 

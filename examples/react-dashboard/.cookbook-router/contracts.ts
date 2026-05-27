@@ -9,6 +9,7 @@ export interface RouteParams {
   'users.index': {};
   'users.details': { slug: string };
   reports: {};
+  'broken-page': {};
   'not-found': {};
 }
 
@@ -20,6 +21,7 @@ export interface RouteSearch {
   'users.index': {};
   'users.details': {};
   reports: {};
+  'broken-page': {};
   'not-found': {};
 }
 
@@ -31,6 +33,7 @@ export interface RouteHash {
   'users.index': never;
   'users.details': never;
   reports: never;
+  'broken-page': never;
   'not-found': never;
 }
 
@@ -42,6 +45,7 @@ export interface RouteMeta {
   'users.index': {};
   'users.details': {};
   reports: {};
+  'broken-page': {};
   'not-found': {};
 }
 
@@ -53,6 +57,7 @@ export interface RoutePaths {
   'users.index': '/users';
   'users.details': '/users/{slug:slug}';
   reports: '/reports';
+  'broken-page': '/broken-page';
   'not-found': '/not-found';
 }
 
@@ -64,10 +69,11 @@ export interface RouteOutletContext {
   'users.index': {};
   'users.details': {};
   reports: {};
+  'broken-page': {};
   'not-found': {};
 }
 
-export const routeIds = ['entry', 'create', 'overview', 'users', 'users.index', 'users.details', 'reports', 'not-found'] as const;
+export const routeIds = ['entry', 'create', 'overview', 'users', 'users.index', 'users.details', 'reports', 'broken-page', 'not-found'] as const;
 export const routePaths = {
   entry: '/',
   create: '/create',
@@ -76,6 +82,7 @@ export const routePaths = {
   'users.index': '/users',
   'users.details': '/users/{slug:slug}',
   reports: '/reports',
+  'broken-page': '/broken-page',
   'not-found': '/not-found',
 } as const;
 

@@ -28,7 +28,10 @@ export function ReportProgressCard({ items }: ReportProgressCardProps) {
                 </span>
               </div>
 
-              <Progress value={percentage} />
+              <Progress
+                value={percentage}
+                className="*:data-[slot=progress-indicator]:bg-emerald-600"
+              />
             </div>
           );
         })}

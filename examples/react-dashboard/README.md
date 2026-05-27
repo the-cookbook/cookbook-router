@@ -1,10 +1,13 @@
 # React dashboard example
 
-`examples/react-dashboard` is a production-style dashboard app that uses Cookbook Router with React, generated route contracts, layout slots, custom path constraints, search params, and configured route interception.
+`examples/react-dashboard` is a production-style dashboard app that uses Cookbook Router with React, generated route contracts, async route components, layout-level loading and error fallbacks, layout slots, custom path constraints, search params, and configured route interception.
 
 ## What it demonstrates
 
-- A shell layout shared by overview, users, reports, and create pages.
+- A shell layout shared by overview, users, reports, create, and broken-page routes.
+- Async page components that suspend during navigation so layout-level loading states can be previewed.
+- `layout.loading` fallbacks rendered inside the shared layout outlet.
+- `layout.errorFallback` on `/broken-page`, rendered inside the shared layout when the route throws.
 - Layout slots for route-specific headers and modal rendering.
 - Automatic configured interception from `/overview` to `/create` through the `modal` slot.
 - Canonical direct rendering of `/create` as a full page.
@@ -13,6 +16,7 @@
 - Search params on `/overview?visitors=...`.
 - `NavLink` matching that keeps the overview item active while ignoring search params.
 - A not-found redirect for missing user detail records.
+- Route error handling with a broken-page demo route.
 
 ## Run it
 
@@ -41,7 +45,30 @@ pnpm --filter react-dashboard typecheck
 pnpm --filter react-dashboard build
 ```
 
-The unit tests cover entry redirects, search-preserving active navigation, automatic modal interception, canonical full-page rendering, custom slug params, missing-record redirects, and generated contract inference.
+The unit tests cover entry redirects, async layout loading behavior, search-preserving active navigation, automatic modal interception, canonical full-page rendering, custom slug params, missing-record redirects, broken-page error fallback rendering, and generated contract inference.
+
+## Async loading and route errors
+
+Dashboard pages are loaded with `React.lazy()` and an intentional delay so route-level async rendering is easy to see during development and tests. Each shell-backed route uses `layout.loading: LoadingSkeleton`, so the sidebar, header area, and layout chrome stay mounted while the route outlet shows the skeleton.
+
+The `/broken-page` route intentionally throws from its page component:
+
+```ts
+{
+  id: 'broken-page',
+  path: '/broken-page',
+  component: AsyncBrokenPage,
+  layout: {
+    component: LayoutPage,
+    loading: LoadingSkeleton,
+    errorFallback: ErrorPage,
+  },
+}
+```
+
+This demonstrates `layout.errorFallback`: the fallback is owned by the route layout and renders inside the same layout shell instead of replacing the whole application.
+
+Because the example uses a delayed lazy import, tests that assert page body content use a timeout longer than `LAZY_PAGE_DELAY_MS`.
 
 ## Route model
 
@@ -52,6 +79,7 @@ The unit tests cover entry redirects, search-preserving active navigation, autom
 /users             -> users index
 /users/{slug:slug} -> user details
 /reports           -> reports dashboard
+/broken-page       -> intentionally throwing route rendered through layout.errorFallback
 /not-found         -> not found page
 ```
 

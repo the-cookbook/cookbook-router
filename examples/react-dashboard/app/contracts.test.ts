@@ -18,6 +18,7 @@ describe('react-dashboard generated contracts', () => {
     expectTypeOf<
       RoutePaths['users.details']
     >().toEqualTypeOf<'/users/{slug:slug}'>();
+    expectTypeOf<RoutePaths['broken-page']>().toEqualTypeOf<'/broken-page'>();
     expectTypeOf<RouterContracts['paths']>().toExtend<RoutePaths>();
   });
 

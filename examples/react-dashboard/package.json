@@ -6,6 +6,7 @@
     "build": "tsc --noEmit && vite build",
     "dev": "vite --host 0.0.0.0",
     "test": "vitest run --config vitest.config.ts",
+    "test:watch": "vitest --config vitest.config.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint app --ext .ts,.tsx",
     "routes:generate": "node ../../packages/router-cli/dist/index.js generate --routes app/routes.ts --out-dir .cookbook-router",

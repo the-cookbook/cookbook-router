@@ -23,6 +23,10 @@ import { App as SsrApp } from '../examples/react-ssr/src/app';
 import { renderRequest } from '../examples/react-ssr/src/server';
 import { routes as ssrRoutes, ssrEvents } from '../examples/react-ssr/src/routes';
 
+const dashboardLazyPageTimeout = {
+  timeout: 3_000,
+};
+
 class DashboardResizeObserver implements ResizeObserver {
   observe() {}
   unobserve() {}
@@ -199,22 +203,63 @@ describe('example application integration', () => {
       initialEntries: ['/overview'],
     });
     await router.resolveCurrent();
+
     const view = render(<DashboardApp router={router} />);
 
-    expect(view.getByRole('heading', { name: 'Overview' })).toBeTruthy();
+    expect(
+      await view.findByRole('heading', { name: 'Overview' }, dashboardLazyPageTimeout),
+    ).toBeTruthy();
+
+    expect(await view.findByText('Total Revenue', {}, dashboardLazyPageTimeout)).toBeTruthy();
+
     fireEvent.click(view.getByText('Quick Create'));
 
-    await waitFor(() => expect(view.getByRole('dialog', { name: 'Add section' })).toBeTruthy());
-    expect(router.state.location.href).toBe('/create');
+    await waitFor(
+      () => expect(router.state.location.href).toBe('/create'),
+      dashboardLazyPageTimeout,
+    );
+
+    expect(
+      await view.findByRole('dialog', { name: 'Add section' }, dashboardLazyPageTimeout),
+    ).toBeTruthy();
+
     expect(view.getByText('Total Revenue')).toBeTruthy();
 
     router.navigate.back();
-    await waitFor(() => expect(view.queryByRole('dialog', { name: 'Add section' })).toBeNull());
 
-    await router.navigate.to('users.details', { params: { slug: 'eddie-lake' } });
-    await waitFor(() =>
-      expect(view.getByRole('heading', { name: 'Eddie Lake', level: 1 })).toBeTruthy(),
+    await waitFor(
+      () => expect(router.state.location.href).toBe('/overview'),
+      dashboardLazyPageTimeout,
     );
+
+    await waitFor(
+      () => expect(view.queryByRole('dialog', { name: 'Add section' })).toBeNull(),
+      dashboardLazyPageTimeout,
+    );
+
+    fireEvent.click(view.getByText('Users'));
+
+    await waitFor(
+      () => expect(router.state.location.href).toBe('/users'),
+      dashboardLazyPageTimeout,
+    );
+
+    expect(
+      await view.findByRole('heading', { name: 'Users' }, dashboardLazyPageTimeout),
+    ).toBeTruthy();
+
+    fireEvent.click(await view.findByText('Eddie Lake', {}, dashboardLazyPageTimeout));
+
+    await waitFor(
+      () => expect(router.state.location.href).toBe('/users/eddie-lake'),
+      dashboardLazyPageTimeout,
+    );
+
+    expect(
+      await view.findByRole('heading', { name: 'Eddie Lake', level: 1 }, dashboardLazyPageTimeout),
+    ).toBeTruthy();
+
+    expect(view.getByText('eddie.lake@example.com')).toBeTruthy();
   });
 
   test('react-ssr renders, serializes, and hydrates consistently', async () => {

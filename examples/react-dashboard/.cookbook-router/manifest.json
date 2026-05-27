@@ -38,6 +38,11 @@
       "index": false
     },
     {
+      "id": "broken-page",
+      "path": "/broken-page",
+      "index": false
+    },
+    {
       "id": "not-found",
       "path": "/not-found",
       "index": false
