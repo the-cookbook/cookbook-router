@@ -1,0 +1,79 @@
+import * as React from 'react';
+import { LayoutDashboard, ChefHat, Users, Book } from 'lucide-react';
+import { Link } from '@cookbook/router-react';
+import { Navigation, type NavigationItem } from '@/components/navigation';
+import { NavigationUser, type User } from '@/components/navigation-user';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar';
+
+const data = {
+  user: {
+    name: 'cookbook',
+    email: 'cookbook@example.com',
+    avatar:
+      'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Cookbook&eyes=shades&backgroundType=solid',
+  } satisfies User,
+  navigation: [
+    {
+      title: 'Overview',
+      icon: <LayoutDashboard />,
+      link: {
+        route: 'overview',
+        end: true,
+      },
+    },
+    {
+      title: 'Users',
+      icon: <Users />,
+      link: {
+        route: 'users',
+      },
+    },
+    {
+      title: 'Reports',
+      icon: <Book />,
+      link: {
+        route: 'reports',
+      },
+    },
+  ] satisfies NavigationItem[],
+};
+
+export function AppSidebar({
+  children,
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
+  return (
+    <Sidebar collapsible="offcanvas" {...props}>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              className="data-[slot=sidebar-menu-button]:p-1.5!"
+              asChild
+            >
+              <Link route="overview">
+                <ChefHat className="size-5!" />
+                <span className="text-base font-semibold">Cookbook</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
+        <Navigation items={data.navigation} />
+      </SidebarContent>
+      <SidebarFooter>
+        <NavigationUser user={data.user} />
+        {children}
+      </SidebarFooter>
+    </Sidebar>
+  );
+}

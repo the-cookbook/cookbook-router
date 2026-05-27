@@ -1,0 +1,46 @@
+{
+  "routes": [
+    {
+      "id": "entry",
+      "path": "/",
+      "index": false
+    },
+    {
+      "id": "create",
+      "path": "/create",
+      "index": false
+    },
+    {
+      "id": "overview",
+      "path": "/overview",
+      "index": false
+    },
+    {
+      "id": "users",
+      "path": "/users",
+      "index": false
+    },
+    {
+      "id": "users.index",
+      "path": "/users",
+      "parentId": "users",
+      "index": true
+    },
+    {
+      "id": "users.details",
+      "path": "/users/{slug:slug}",
+      "parentId": "users",
+      "index": false
+    },
+    {
+      "id": "reports",
+      "path": "/reports",
+      "index": false
+    },
+    {
+      "id": "not-found",
+      "path": "/not-found",
+      "index": false
+    }
+  ]
+}

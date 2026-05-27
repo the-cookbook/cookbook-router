@@ -28,7 +28,7 @@ corepack enable
 pnpm install --frozen-lockfile
 ```
 
-The root workspace uses Node `>=22.22.1` for tooling. The published runtime packages may support a lower Node engine, but local development follows the root engine.
+The root workspace uses Node `>=22.22.2` for tooling. The published runtime packages may support a lower Node engine, but local development follows the root engine.
 
 ## Repository layout
 

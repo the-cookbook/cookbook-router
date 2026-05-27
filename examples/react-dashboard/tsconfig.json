@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@cookbook/router": ["../../packages/router/src/index.ts"],
+      "@cookbook/router/*": ["../../packages/router/src/*"],
+      "@cookbook/router-react": ["../../packages/router-react/src/index.ts"],
+      "@cookbook/router-react/*": ["../../packages/router-react/src/*"],
+      "@/*": ["app/*"]
+    }
+  },
+  "include": [
+    "app",
+    ".cookbook-router/contracts.ts",
+    ".cookbook-router/register.d.ts"
+  ]
+}
