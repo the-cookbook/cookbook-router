@@ -41,6 +41,7 @@ import {
   watchCommand,
 } from '@cookbook/router-cli';
 import type { RouterContracts as BlogContracts } from '../examples/react-blog/.cookbook-router/contracts';
+import type { RouterContracts as DashboardContracts } from '../examples/react-dashboard/.cookbook-router/contracts';
 
 const exportedFunctions = [
   createMemoryRouter,
@@ -100,6 +101,28 @@ describe('package exports and generated contract types', () => {
       readonly search?: { ref?: string };
       readonly hash?: 'comments' | 'share' | '#comments' | '#share' | null;
     }>();
+  });
+
+  test('generated dashboard contracts expose custom constraints, search params, and paths', () => {
+    expectTypeOf<keyof DashboardContracts['params']>().toEqualTypeOf<
+      | 'entry'
+      | 'create'
+      | 'overview'
+      | 'users'
+      | 'users.index'
+      | 'users.details'
+      | 'reports'
+      | 'not-found'
+    >();
+    expectTypeOf<DashboardContracts['params']['users.details']>().toEqualTypeOf<{
+      slug: string;
+    }>();
+    expectTypeOf<DashboardContracts['search']['overview']>().toEqualTypeOf<{
+      visitors?: string;
+    }>();
+    expectTypeOf<
+      DashboardContracts['paths']['users.details']
+    >().toEqualTypeOf<'/users/{slug:slug}'>();
   });
 
   test('workspace router package returns the runtime contract from public API', () => {

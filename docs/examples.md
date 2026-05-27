@@ -9,6 +9,7 @@ The examples are executable documentation for common routing patterns. Each exam
 - [`react-slots`](#react-slots)
 - [`react-intercepts`](#react-intercepts)
 - [`react-blog`](#react-blog)
+- [`react-dashboard`](#react-dashboard)
 - [`react-ssr`](#react-ssr)
 - [When examples look stale](#when-examples-look-stale)
 
@@ -20,6 +21,7 @@ From the repository root:
 pnpm install
 pnpm build:packages
 pnpm --filter react-blog dev
+pnpm --filter react-dashboard dev
 ```
 
 Build every example:
@@ -88,7 +90,23 @@ Shows a fuller real-world app:
 - canonical direct article pages
 - styled responsive UI
 
-This is the best example for app-level architecture.
+This is the best example for content-heavy app-level architecture.
+
+## `react-dashboard`
+
+Shows a production-style dashboard app:
+
+- shadcn-style dashboard shell
+- route-specific header slots
+- overview search params
+- `NavLink` matching that ignores search params
+- automatic configured modal interception from `/overview` to `/create`
+- canonical direct `/create` page rendering
+- custom `slug` path constraints for user detail routes
+- missing-record redirects to `/not-found`
+- generated contracts committed and covered by type tests
+
+Use this example when validating dashboard-style layouts with persistent chrome, route-owned headers, modal create flows, and constrained detail routes.
 
 ## `react-ssr`
 

@@ -44,6 +44,9 @@ Each example also supports:
 pnpm --filter react-blog test
 pnpm --filter react-blog typecheck
 pnpm --filter react-blog build
+pnpm --filter react-dashboard test
+pnpm --filter react-dashboard typecheck
+pnpm --filter react-dashboard build
 ```
 
 ## E2E tests

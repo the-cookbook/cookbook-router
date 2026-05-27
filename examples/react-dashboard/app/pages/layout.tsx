@@ -19,7 +19,7 @@ export function LayoutPage() {
     const result = { height: 12 };
 
     for (let i = 0; i < filtered.length; i++) {
-      const entry = filtered[0]!;
+      const entry = filtered[i]!;
 
       result.height =
         (entry.route.meta?.headerHeight as number | undefined) ?? result.height;

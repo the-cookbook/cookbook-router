@@ -2,7 +2,6 @@ import { Mail, UserRoundCheck, UserRoundX, Users } from 'lucide-react';
 import { UsersDataTable } from './data-table';
 import { StatCard } from './stat-card';
 import data from './data.json';
-import { Outlet } from '@cookbook/router-react';
 
 export function UsersLayoutHeader() {
   return <h1 className="text-base font-medium">Users</h1>;

@@ -17,9 +17,65 @@ import { App as InterceptsApp } from '../examples/react-intercepts/src/app';
 import { routes as interceptRoutes } from '../examples/react-intercepts/src/routes';
 import { App as BlogApp } from '../examples/react-blog/src/app';
 import { routes as blogRoutes } from '../examples/react-blog/src/routes';
+import { App as DashboardApp } from '../examples/react-dashboard/app/app';
+import { routes as dashboardRoutes } from '../examples/react-dashboard/app/routes';
 import { App as SsrApp } from '../examples/react-ssr/src/app';
 import { renderRequest } from '../examples/react-ssr/src/server';
 import { routes as ssrRoutes, ssrEvents } from '../examples/react-ssr/src/routes';
+
+class DashboardResizeObserver implements ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+function installDashboardBrowserMocks() {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+
+  Object.defineProperty(window, 'ResizeObserver', {
+    configurable: true,
+    writable: true,
+    value: DashboardResizeObserver,
+  });
+
+  Object.defineProperty(globalThis, 'ResizeObserver', {
+    configurable: true,
+    writable: true,
+    value: DashboardResizeObserver,
+  });
+
+  if (!globalThis.PointerEvent) {
+    Object.defineProperty(globalThis, 'PointerEvent', {
+      configurable: true,
+      writable: true,
+      value: MouseEvent,
+    });
+  }
+
+  Object.defineProperty(window, 'scrollTo', {
+    configurable: true,
+    writable: true,
+    value: vi.fn(),
+  });
+
+  Element.prototype.scrollIntoView = vi.fn();
+  HTMLElement.prototype.hasPointerCapture = vi.fn(() => false);
+  HTMLElement.prototype.setPointerCapture = vi.fn();
+  HTMLElement.prototype.releasePointerCapture = vi.fn();
+}
 
 describe('example application integration', () => {
   test('react-basic exercises generated contracts, typed params, search, hash, middleware, and lifecycle', async () => {
@@ -133,6 +189,32 @@ describe('example application integration', () => {
     expect(await directView.findByText(/Full page route for/, {}, { timeout: 3000 })).toBeTruthy();
 
     expect(directView.queryByRole('dialog', { name: 'Blog post modal' })).toBeNull();
+  });
+
+  test('react-dashboard proves dashboard slots, configured create interception, and custom slug details', async () => {
+    installDashboardBrowserMocks();
+
+    const router = createMemoryRouter({
+      routes: dashboardRoutes,
+      initialEntries: ['/overview'],
+    });
+    await router.resolveCurrent();
+    const view = render(<DashboardApp router={router} />);
+
+    expect(view.getByRole('heading', { name: 'Overview' })).toBeTruthy();
+    fireEvent.click(view.getByText('Quick Create'));
+
+    await waitFor(() => expect(view.getByRole('dialog', { name: 'Add section' })).toBeTruthy());
+    expect(router.state.location.href).toBe('/create');
+    expect(view.getByText('Total Revenue')).toBeTruthy();
+
+    router.navigate.back();
+    await waitFor(() => expect(view.queryByRole('dialog', { name: 'Add section' })).toBeNull());
+
+    await router.navigate.to('users.details', { params: { slug: 'eddie-lake' } });
+    await waitFor(() =>
+      expect(view.getByRole('heading', { name: 'Eddie Lake', level: 1 })).toBeTruthy(),
+    );
   });
 
   test('react-ssr renders, serializes, and hydrates consistently', async () => {

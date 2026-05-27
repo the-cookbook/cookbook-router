@@ -1,27 +1,14 @@
 import { createRoot } from 'react-dom/client';
 import { StrictMode } from 'react';
-import { createRouter } from '@cookbook/router';
-import { RouterProvider } from '@cookbook/router-react';
-import { NotFound } from './pages/not-found/page';
-import { routes, constraints } from './routes';
-
-import './app.css';
+import { App, createAppRouter } from './app';
 
 const rootElement = document.getElementById('root')!;
-
-const router = createRouter({
-  routes,
-});
+const router = createAppRouter();
 
 router.resolveCurrent().then(() =>
   createRoot(rootElement).render(
     <StrictMode>
-      <RouterProvider
-        router={router}
-        fallback={<NotFound />}
-        scrollBehavior="smooth"
-        scrollRestoration
-      />
+      <App router={router} />
     </StrictMode>
   )
 );

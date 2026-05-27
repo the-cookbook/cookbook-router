@@ -187,13 +187,14 @@ Include the generated files in your TypeScript program:
 
 ## Examples
 
-| Example                     | Shows                                                                                                        |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `examples/react-basic`      | Typed params, search, hash, middleware, lifecycle, and generated contracts.                                  |
-| `examples/react-slots`      | Layout slots, slot fallbacks, slot routes, disabled slots, and outlet context.                               |
-| `examples/react-intercepts` | Configured and call-site route interception.                                                                 |
-| `examples/react-blog`       | Real-world blog routing, protected area, login redirect, slots, search, archive, and modal article previews. |
-| `examples/react-ssr`        | Static router SSR, hydration data, and Vite dev SSR.                                                         |
+| Example                     | Shows                                                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `examples/react-basic`      | Typed params, search, hash, middleware, lifecycle, and generated contracts.                                   |
+| `examples/react-slots`      | Layout slots, slot fallbacks, slot routes, disabled slots, and outlet context.                                |
+| `examples/react-intercepts` | Configured and call-site route interception.                                                                  |
+| `examples/react-blog`       | Real-world blog routing, protected area, login redirect, slots, search, archive, and modal article previews.  |
+| `examples/react-dashboard`  | Dashboard shell, header slots, search-driven nav matching, custom constraints, and create modal interception. |
+| `examples/react-ssr`        | Static router SSR, hydration data, and Vite dev SSR.                                                          |
 
 Run an example:
 
@@ -201,6 +202,7 @@ Run an example:
 pnpm install
 pnpm build:packages
 pnpm --filter react-blog dev
+pnpm --filter react-dashboard dev
 ```
 
 ## Repository scripts

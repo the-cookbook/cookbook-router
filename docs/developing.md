@@ -45,6 +45,7 @@ examples/
   react-slots/
   react-intercepts/
   react-blog/
+  react-dashboard/
 e2e/
 docs/
 ```

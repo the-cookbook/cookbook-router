@@ -13,6 +13,8 @@ export default defineConfig({
       '@cookbook/router': resolve(rootDir, 'packages/router/src/index.ts'),
       '@cookbook/router-react': resolve(rootDir, 'packages/router-react/src/index.ts'),
       '@cookbook/router-cli': resolve(rootDir, 'packages/router-cli/src/index.ts'),
+      '@/': `${resolve(rootDir, 'examples/react-dashboard/app')}/`,
+      '@': resolve(rootDir, 'examples/react-dashboard/app'),
     },
   },
   test: {

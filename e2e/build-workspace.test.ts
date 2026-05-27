@@ -27,11 +27,16 @@ describe('workspace build and resolution', () => {
     const reactBlog = JSON.parse(
       await readFile(join(rootDir, 'examples/react-blog/package.json'), 'utf8'),
     ) as { dependencies: Record<string, string> };
+    const reactDashboard = JSON.parse(
+      await readFile(join(rootDir, 'examples/react-dashboard/package.json'), 'utf8'),
+    ) as { dependencies: Record<string, string> };
 
     expect(routerReact.dependencies['@cookbook/router']).toBe('workspace:*');
     expect(routerCli.dependencies['@cookbook/router']).toBe('workspace:*');
     expect(reactBlog.dependencies['@cookbook/router']).toBe('workspace:*');
     expect(reactBlog.dependencies['@cookbook/router-react']).toBe('workspace:*');
+    expect(reactDashboard.dependencies['@cookbook/router']).toBe('workspace:*');
+    expect(reactDashboard.dependencies['@cookbook/router-react']).toBe('workspace:*');
   });
 
   test('package export maps point to build outputs for every package', async () => {

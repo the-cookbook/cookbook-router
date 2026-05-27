@@ -5,6 +5,7 @@
   "scripts": {
     "build": "tsc --noEmit && vite build",
     "dev": "vite --host 0.0.0.0",
+    "test": "vitest run --config vitest.config.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint app --ext .ts,.tsx",
     "routes:generate": "node ../../packages/router-cli/dist/index.js generate --routes app/routes.ts --out-dir .cookbook-router",
@@ -45,6 +46,8 @@
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^5.1.4",
+    "@testing-library/react": "^16.2.0",
+    "vitest": "^4.1.7"
   }
 }
