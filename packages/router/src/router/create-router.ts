@@ -72,6 +72,7 @@ export interface CreateRouterOptions {
 export interface HrefOptions<Route extends string> extends RouteUrlOptions<Route> {
   readonly intercept?: InterceptInput;
   readonly context?: unknown;
+  readonly preventScrollReset?: boolean;
 }
 
 export interface NavigateOptions<Route extends string> extends HrefOptions<Route> {
@@ -101,11 +102,18 @@ export interface SerializedRouterState {
   readonly navigation: RouterNavigationState;
 }
 
+interface ScrollHistoryState {
+  readonly __cookbookRouterScroll?: {
+    readonly preventReset?: boolean;
+  };
+}
+
 interface ActiveNavigation {
   readonly href: string;
   readonly mode: 'push' | 'replace';
   readonly intercept?: InterceptInput;
   readonly context?: unknown;
+  readonly preventScrollReset?: boolean;
   readonly promise: Promise<RouterState>;
 }
 
@@ -212,6 +220,7 @@ export function createRouterRuntime(
           'push',
           target.options?.intercept,
           target.options?.context,
+          target.options?.preventScrollReset,
         );
       },
       replace(routeOrOptions: string | NavigateOptions<string>, hrefOptions?: HrefOptions<string>) {
@@ -224,6 +233,7 @@ export function createRouterRuntime(
           'replace',
           target.options?.intercept,
           target.options?.context,
+          target.options?.preventScrollReset,
         );
       },
       back() {
@@ -325,27 +335,33 @@ export function createRouterRuntime(
     mode: 'push' | 'replace',
     intercept?: InterceptInput,
     context?: unknown,
+    preventScrollReset?: boolean,
   ): Promise<RouterState> {
     if (
       activeNavigation &&
       activeNavigation.href === href &&
       activeNavigation.mode === mode &&
       activeNavigation.intercept === intercept &&
-      activeNavigation.context === context
+      activeNavigation.context === context &&
+      activeNavigation.preventScrollReset === preventScrollReset
     ) {
       return activeNavigation.promise;
     }
 
-    const location = parseHref(href);
-    const promise = transitionTo(location, mode, true, 0, intercept, context);
+    const navigationState = createScrollHistoryState(undefined, preventScrollReset);
+    const location = parseHref(
+      href,
+      navigationState === undefined ? {} : { state: navigationState },
+    );
+    const promise = transitionTo(location, mode, true, 0, intercept, context, preventScrollReset);
     const navigation: ActiveNavigation = {
       href,
       mode,
       promise,
       ...(intercept === undefined ? {} : { intercept }),
       ...(context === undefined ? {} : { context }),
+      ...(preventScrollReset === undefined ? {} : { preventScrollReset }),
     };
-
     activeNavigation = navigation;
 
     void promise.finally(() => {
@@ -364,6 +380,7 @@ export function createRouterRuntime(
     redirectDepth = 0,
     interceptInput?: InterceptInput,
     context?: unknown,
+    preventScrollReset?: boolean,
   ): Promise<RouterState> {
     const currentTransitionVersion = ++transitionVersion;
 
@@ -419,6 +436,9 @@ export function createRouterRuntime(
         'replace',
         shouldWriteRedirectHistory,
         redirectDepth + 1,
+        undefined,
+        undefined,
+        preventScrollReset,
       );
     }
 
@@ -517,7 +537,15 @@ export function createRouterRuntime(
       }
 
       const redirectLocation = parseHref(result.to);
-      return transitionTo(redirectLocation, 'replace', writeHistory, redirectDepth + 1);
+      return transitionTo(
+        redirectLocation,
+        'replace',
+        writeHistory,
+        redirectDepth + 1,
+        undefined,
+        undefined,
+        preventScrollReset,
+      );
     }
 
     if (result.type === 'error') {
@@ -528,8 +556,11 @@ export function createRouterRuntime(
       ignoreNextHistoryEvent = true;
 
       const historyState = navigationIntercept
-        ? createInterceptHistoryState(navigationIntercept, navigationIntercept.previousLocation)
-        : transitionLocation.state;
+        ? createScrollHistoryState(
+            createInterceptHistoryState(navigationIntercept, navigationIntercept.previousLocation),
+            preventScrollReset,
+          )
+        : createScrollHistoryState(transitionLocation.state, preventScrollReset);
 
       if (mode === 'replace') {
         options.history.replace(transitionLocation.href, historyState);
@@ -629,6 +660,26 @@ export function createRouterRuntime(
   }
 
   return router;
+}
+
+function createScrollHistoryState(
+  state: unknown,
+  preventScrollReset: boolean | undefined,
+): unknown {
+  if (preventScrollReset !== true) {
+    return state;
+  }
+
+  const scrollState: ScrollHistoryState['__cookbookRouterScroll'] = { preventReset: true };
+
+  if (!state || typeof state !== 'object') {
+    return { __cookbookRouterScroll: scrollState };
+  }
+
+  return {
+    ...state,
+    __cookbookRouterScroll: scrollState,
+  };
 }
 
 function normalizeMaxRedirectDepth(options: CreateRouterOptions): number {

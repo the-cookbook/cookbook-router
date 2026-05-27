@@ -151,6 +151,7 @@ interface LinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly hash?: HrefOptions<Route>['hash'];
   readonly intercept?: InterceptInput;
   readonly context?: HrefOptions<Route>['context'];
+  readonly preventScrollReset?: boolean;
   readonly replace?: boolean;
   readonly children?: ReactNode;
 }
@@ -164,7 +165,7 @@ Use `to` for typed internal routes and `href` for literal anchor URLs.
 </Link>
 ```
 
-`Link` preserves browser behavior for modified clicks, non-left clicks, external links, downloads, and `target="_blank"`.
+`Link` preserves browser behavior for modified clicks, non-left clicks, external links, downloads, and `target="_blank"`. Set `preventScrollReset` to prevent `RouterProvider` scroll restoration from scrolling to the top for that navigation.
 
 ### `NavLink`
 
@@ -185,7 +186,8 @@ interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly replace?: boolean;
   readonly intercept?: InterceptInput;
   readonly context?: HrefOptions<Route>['context'];
-  readonly end?: boolean;
+  readonly preventScrollReset?: boolean;
+  readonly end?: boolean | { readonly search?: 'all' | 'ignore' };
   readonly children?: ReactNode | ((props: NavLinkRenderProps) => ReactNode);
 }
 ```
@@ -194,7 +196,13 @@ interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
 <NavLink to="articles.index" end>
   {({ isActive }) => <span data-active={isActive}>Articles</span>}
 </NavLink>
+
+<NavLink to="articles.index" end={{ search: 'ignore' }}>
+  Articles, regardless of query string
+</NavLink>
 ```
+
+`end={true}` requires the full generated href to match, including search params. Use `end={{ search: 'ignore' }}` to match the route path while ignoring query-string differences.
 
 ### `Outlet`
 
@@ -253,7 +261,15 @@ function ArticleToolbar() {
   const search = useSearch('articles.index');
 
   return (
-    <button onClick={() => void navigate.to({ route: 'articles.index', search })}>
+    <button
+      onClick={() =>
+        void navigate.to({
+          route: 'articles.index',
+          search,
+          preventScrollReset: true,
+        })
+      }
+    >
       Open {href}
     </button>
   );

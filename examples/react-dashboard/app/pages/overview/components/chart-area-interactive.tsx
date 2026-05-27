@@ -165,6 +165,7 @@ export function ChartAreaInteractive(props: { timeRange: string | undefined }) {
         search: {
           visitors: value,
         },
+        preventScrollReset: true,
       });
     },
     [navigate]

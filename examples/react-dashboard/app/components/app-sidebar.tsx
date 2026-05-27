@@ -26,7 +26,7 @@ const data = {
       icon: <LayoutDashboard />,
       link: {
         route: 'overview',
-        end: true,
+        end: { search: 'ignore' },
       },
     },
     {

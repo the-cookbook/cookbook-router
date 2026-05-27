@@ -1,7 +1,12 @@
 export { Link, shouldPreserveBrowserBehavior } from './components/link';
 export type { LinkProps } from './components/link';
 export { NavLink } from './components/nav-link';
-export type { NavLinkProps, NavLinkRenderProps } from './components/nav-link';
+export type {
+  NavLinkEnd,
+  NavLinkEndOptions,
+  NavLinkProps,
+  NavLinkRenderProps,
+} from './components/nav-link';
 export { Outlet } from './components/outlet';
 export type { OutletProps } from './components/outlet';
 export {

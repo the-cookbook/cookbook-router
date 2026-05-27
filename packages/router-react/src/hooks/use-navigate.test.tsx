@@ -8,14 +8,18 @@ function Page() {
   return null;
 }
 
+function createTestRouter() {
+  return createMemoryRouter({
+    routes: defineRoutes([
+      { id: 'home', path: '/', component: Page },
+      { id: 'user', path: '/users/{id:int}', component: Page },
+    ] as const),
+  });
+}
+
 describe('useNavigate', () => {
   test('navigates through the router API', async () => {
-    const router = createMemoryRouter({
-      routes: defineRoutes([
-        { id: 'home', path: '/', component: Page },
-        { id: 'user', path: '/users/{id:int}', component: Page },
-      ] as const),
-    });
+    const router = createTestRouter();
     await router.resolveCurrent();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
@@ -28,5 +32,23 @@ describe('useNavigate', () => {
     });
 
     expect(router.state.location.href).toBe('/users/22');
+  });
+
+  test('passes preventScrollReset through navigate options', async () => {
+    const router = createTestRouter();
+    await router.resolveCurrent();
+    const wrapper = ({ children }: { children: import('react').ReactNode }) => (
+      <RouterProvider router={router}>{children}</RouterProvider>
+    );
+
+    const { result } = renderHook(() => useNavigate(), { wrapper });
+
+    await act(async () => {
+      await result.current.to('user', { params: { id: 22 }, preventScrollReset: true });
+    });
+
+    expect(router.state.location.state).toEqual({
+      __cookbookRouterScroll: { preventReset: true },
+    });
   });
 });

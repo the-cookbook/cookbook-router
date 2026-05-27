@@ -91,6 +91,29 @@ describe('Link', () => {
     );
   });
 
+  test('passes preventScrollReset to navigation options', async () => {
+    const router = createRouter();
+    await router.resolveCurrent();
+    const navigate = vi.spyOn(router.navigate, 'to');
+
+    const { getByText } = render(
+      <RouterProvider router={router}>
+        <Link route="user" params={{ id: 2 }} preventScrollReset>
+          no scroll reset
+        </Link>
+      </RouterProvider>,
+    );
+
+    fireEvent.click(getByText('no scroll reset'));
+
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith('user', {
+        params: { id: 2 },
+        preventScrollReset: true,
+      }),
+    );
+  });
+
   test('modifier and external clicks preserve browser behavior', async () => {
     const router = createRouter();
     await router.resolveCurrent();

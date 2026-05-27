@@ -8,6 +8,12 @@ export interface NavLinkRenderProps {
   readonly isActive: boolean;
 }
 
+export interface NavLinkEndOptions {
+  readonly search?: 'all' | 'ignore';
+}
+
+export type NavLinkEnd = boolean | NavLinkEndOptions;
+
 export interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
   AnchorHTMLAttributes<HTMLAnchorElement>,
   'children' | 'href'
@@ -20,13 +26,25 @@ export interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly replace?: boolean;
   readonly intercept?: InterceptInput;
   readonly context?: HrefOptions<Route>['context'];
-  readonly end?: boolean;
+  readonly preventScrollReset?: boolean;
+  readonly end?: NavLinkEnd;
   readonly children?: ReactNode | ((props: NavLinkRenderProps) => ReactNode);
 }
 
 export function NavLink<Route extends RouteId = RouteId>(props: NavLinkProps<Route>) {
-  const { route, to, params, search, hash, end, children, intercept, context, ...linkProps } =
-    props;
+  const {
+    route,
+    to,
+    params,
+    search,
+    hash,
+    end,
+    children,
+    intercept,
+    context,
+    preventScrollReset,
+    ...linkProps
+  } = props;
   const routeId = route ?? to;
 
   if (!routeId) {
@@ -35,16 +53,14 @@ export function NavLink<Route extends RouteId = RouteId>(props: NavLinkProps<Rou
 
   const href = useHref(routeId, createHrefOptions<Route>(params, search, hash));
   const location = useLocation();
-  const isActive = end
-    ? location.href === href
-    : location.href === href || location.pathname.startsWith(withoutSearchOrHash(href));
+  const isActive = isNavLinkActive(location.href, location.pathname, href, end);
   const renderedChildren = typeof children === 'function' ? children({ isActive }) : children;
 
   return (
     <Link
       {...linkProps}
       route={routeId}
-      {...createLinkOptions<Route>(params, search, hash, intercept, context)}
+      {...createLinkOptions<Route>(params, search, hash, intercept, context, preventScrollReset)}
       aria-current={isActive ? 'page' : linkProps['aria-current']}
     >
       {renderedChildren}
@@ -64,8 +80,36 @@ function createHrefOptions<Route extends RouteId>(
   } as HrefOptions<Route>;
 }
 
+function isNavLinkActive(
+  currentHref: string,
+  currentPathname: string,
+  targetHref: string,
+  end: NavLinkEnd | undefined,
+): boolean {
+  if (!end) {
+    return (
+      currentHref === targetHref || currentPathname.startsWith(withoutSearchOrHash(targetHref))
+    );
+  }
+
+  if (typeof end === 'object' && end.search === 'ignore') {
+    return stripSearch(currentHref) === stripSearch(targetHref);
+  }
+
+  return currentHref === targetHref;
+}
+
 function withoutSearchOrHash(href: string): string {
   return href.split(/[?#]/, 1)[0] || '/';
+}
+
+function stripSearch(href: string): string {
+  const hashIndex = href.indexOf('#');
+  const pathAndSearch = hashIndex === -1 ? href : href.slice(0, hashIndex);
+  const hash = hashIndex === -1 ? '' : href.slice(hashIndex);
+  const searchIndex = pathAndSearch.indexOf('?');
+
+  return `${searchIndex === -1 ? pathAndSearch : pathAndSearch.slice(0, searchIndex)}${hash}`;
 }
 
 function createLinkOptions<Route extends RouteId>(
@@ -74,12 +118,20 @@ function createLinkOptions<Route extends RouteId>(
   hash: HrefOptions<Route>['hash'] | undefined,
   intercept: InterceptInput | undefined,
   context: HrefOptions<Route>['context'] | undefined,
-): Pick<NavLinkProps<Route>, 'params' | 'search' | 'hash' | 'intercept' | 'context'> {
+  preventScrollReset: boolean | undefined,
+): Pick<
+  NavLinkProps<Route>,
+  'params' | 'search' | 'hash' | 'intercept' | 'context' | 'preventScrollReset'
+> {
   return {
     ...(params === undefined ? {} : { params }),
     ...(search === undefined ? {} : { search }),
     ...(hash === undefined ? {} : { hash }),
     ...(intercept === undefined ? {} : { intercept }),
     ...(context === undefined ? {} : { context }),
-  } as Pick<NavLinkProps<Route>, 'params' | 'search' | 'hash' | 'intercept' | 'context'>;
+    ...(preventScrollReset === undefined ? {} : { preventScrollReset }),
+  } as Pick<
+    NavLinkProps<Route>,
+    'params' | 'search' | 'hash' | 'intercept' | 'context' | 'preventScrollReset'
+  >;
 }

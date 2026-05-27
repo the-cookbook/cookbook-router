@@ -277,6 +277,16 @@ function useScrollRestoration(
 
     const currentPositions = positions.current;
     const position = currentPositions.get(locationKey);
+    const preventScrollReset = shouldPreventScrollReset(location.state);
+
+    if (preventScrollReset) {
+      return () => {
+        currentPositions.set(locationKey, {
+          x: window.scrollX,
+          y: window.scrollY,
+        });
+      };
+    }
 
     if (position) {
       window.scrollTo({
@@ -298,7 +308,21 @@ function useScrollRestoration(
         y: window.scrollY,
       });
     };
-  }, [behavior, enabled, location.hash, locationKey]);
+  }, [behavior, enabled, location.hash, location.state, locationKey]);
+}
+
+function shouldPreventScrollReset(state: unknown): boolean {
+  if (!state || typeof state !== 'object') {
+    return false;
+  }
+
+  const scrollState = (
+    state as {
+      readonly __cookbookRouterScroll?: { readonly preventReset?: boolean };
+    }
+  ).__cookbookRouterScroll;
+
+  return scrollState?.preventReset === true;
 }
 
 export function asComponent<Props = Record<string, never>>(

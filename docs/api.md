@@ -642,6 +642,7 @@ interface LinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly hash?: HrefOptions<Route>['hash'];
   readonly intercept?: InterceptInput;
   readonly context?: HrefOptions<Route>['context'];
+  readonly preventScrollReset?: boolean;
   readonly replace?: boolean;
   readonly children?: ReactNode;
 }
@@ -657,7 +658,7 @@ Use `to` for internal typed navigation and `href` for literal links.
 </Link>
 ```
 
-`Link` preserves native browser behavior for modified clicks, non-left clicks, external links, `target="_blank"`, and downloads.
+`Link` preserves native browser behavior for modified clicks, non-left clicks, external links, `target="_blank"`, and downloads. Set `preventScrollReset` to prevent `RouterProvider` scroll restoration from scrolling to the top for that navigation.
 
 #### `NavLink(props)`
 
@@ -678,7 +679,8 @@ interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly replace?: boolean;
   readonly intercept?: InterceptInput;
   readonly context?: HrefOptions<Route>['context'];
-  readonly end?: boolean;
+  readonly preventScrollReset?: boolean;
+  readonly end?: boolean | { readonly search?: 'all' | 'ignore' };
   readonly children?: ReactNode | ((props: NavLinkRenderProps) => ReactNode);
 }
 
@@ -689,7 +691,13 @@ function NavLink<Route extends RouteId = RouteId>(props: NavLinkProps<Route>): J
 <NavLink to="users.show" params={{ id: '42' }} end>
   {({ isActive }) => <span data-active={isActive}>User</span>}
 </NavLink>
+
+<NavLink to="users.show" params={{ id: '42' }} end={{ search: 'ignore' }}>
+  User, regardless of query string
+</NavLink>
 ```
+
+`end={true}` requires the full generated href to match, including search params. `end={{ search: 'ignore' }}` requires the pathname and hash to match while ignoring search params.
 
 #### `Outlet(props)`
 
@@ -740,7 +748,15 @@ function UserPage() {
   const navigate = useNavigate();
 
   return (
-    <button onClick={() => void navigate.replace({ route: 'users.show', params })}>
+    <button
+      onClick={() =>
+        void navigate.replace({
+          route: 'users.show',
+          params,
+          preventScrollReset: true,
+        })
+      }
+    >
       Refresh {search.tab ?? 'details'}
     </button>
   );
@@ -785,6 +801,8 @@ Most applications should not need these APIs directly.
 Exported React types include:
 
 - `LinkProps`
+- `NavLinkEnd`
+- `NavLinkEndOptions`
 - `NavLinkProps`
 - `NavLinkRenderProps`
 - `OutletProps`

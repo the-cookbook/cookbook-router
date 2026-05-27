@@ -103,6 +103,20 @@ describe('router navigation blockers', () => {
     expect(router.state.location.href).toBe('/about');
   });
 
+  test('stores preventScrollReset metadata for navigation consumers', async () => {
+    const history = createMemoryHistory({ initialEntries: ['/'] });
+    const router = createRouter({ routes, history });
+
+    await router.navigate.to('about', { preventScrollReset: true });
+
+    expect(router.state.location.state).toEqual({
+      __cookbookRouterScroll: { preventReset: true },
+    });
+    expect(history.location.state).toEqual({
+      __cookbookRouterScroll: { preventReset: true },
+    });
+  });
+
   test('unregisters navigation blockers', async () => {
     const router = createRouter({
       routes,

@@ -340,6 +340,30 @@ describe('RouterProvider scroll restoration', () => {
     scrollTo.mockRestore();
   });
 
+  test('does not reset scroll when navigation opts out', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+    const router = createRouter();
+    await router.resolveCurrent();
+
+    render(<RouterProvider router={router} scrollRestoration />);
+
+    scrollTo.mockClear();
+
+    await act(async () => {
+      await router.navigate.to('users.show', {
+        params: { id: 1 },
+        preventScrollReset: true,
+      });
+    });
+
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(router.state.location.state).toEqual({
+      __cookbookRouterScroll: { preventReset: true },
+    });
+
+    scrollTo.mockRestore();
+  });
+
   test('uses configured scroll behavior when resetting scroll position', async () => {
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
 

@@ -14,6 +14,7 @@ export interface LinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly hash?: HrefOptions<Route>['hash'];
   readonly intercept?: InterceptInput;
   readonly context?: HrefOptions<Route>['context'];
+  readonly preventScrollReset?: boolean;
   readonly replace?: boolean;
   readonly children?: ReactNode;
 }
@@ -28,13 +29,21 @@ export function Link<Route extends RouteId = RouteId>(props: LinkProps<Route>) {
     hash,
     intercept,
     context,
+    preventScrollReset,
     replace,
     onClick,
     children,
     ...anchorProps
   } = props;
   const routeId = route ?? to;
-  const hrefOptions = createHrefOptions<Route>(params, search, hash, intercept, context);
+  const hrefOptions = createHrefOptions<Route>(
+    params,
+    search,
+    hash,
+    intercept,
+    context,
+    preventScrollReset,
+  );
   const router = useRouter();
   const routeHref = routeId ? router.href(routeId, hrefOptions) : undefined;
   const href = explicitHref ?? routeHref ?? '';
@@ -122,6 +131,7 @@ function createHrefOptions<Route extends RouteId>(
   hash: HrefOptions<Route>['hash'] | undefined,
   intercept: InterceptInput | undefined,
   context: HrefOptions<Route>['context'] | undefined,
+  preventScrollReset: boolean | undefined,
 ): HrefOptions<Route> {
   return {
     ...(params === undefined ? {} : { params }),
@@ -129,5 +139,6 @@ function createHrefOptions<Route extends RouteId>(
     ...(hash === undefined ? {} : { hash }),
     ...(intercept === undefined ? {} : { intercept }),
     ...(context === undefined ? {} : { context }),
+    ...(preventScrollReset === undefined ? {} : { preventScrollReset }),
   } as HrefOptions<Route>;
 }
