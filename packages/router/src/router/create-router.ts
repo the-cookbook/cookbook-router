@@ -391,13 +391,13 @@ export function createRouterRuntime(
       options.history.replace(transitionLocation.href, transitionLocation.state);
     }
 
-    const activeSource = fromMatch?.intercepted
-      ? matchRoutes(
-          normalizedRoutes,
-          stripBasename(fromMatch.intercepted.previousHref, options.basename),
-          pathOptions,
-        )
-      : fromMatch;
+    const activeSource = resolveActiveInterceptSource(
+      fromMatch,
+      interceptInput,
+      normalizedRoutes,
+      options.basename,
+      pathOptions,
+    );
     const restoredSource = restorePreviousSource(
       transitionLocation.state,
       normalizedRoutes,
@@ -965,6 +965,28 @@ function createInterceptedRoute(
     component: intercept.component,
     ...(intercept.context === undefined ? {} : { context: intercept.context }),
   };
+}
+
+function resolveActiveInterceptSource(
+  fromMatch: RouteMatch | null,
+  interceptInput: InterceptInput | undefined,
+  routes: readonly NormalizedRoute[],
+  basename: string | undefined,
+  pathOptions: RouterPathOptions,
+): RouteMatch | null {
+  if (!fromMatch?.intercepted) {
+    return fromMatch;
+  }
+
+  if (interceptInput === undefined) {
+    return null;
+  }
+
+  return matchRoutes(
+    routes,
+    stripBasename(fromMatch.intercepted.previousHref, basename),
+    pathOptions,
+  );
 }
 
 function restorePreviousSource(

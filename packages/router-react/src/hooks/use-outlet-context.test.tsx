@@ -6,7 +6,7 @@ import { useOutletContext } from './use-outlet-context';
 describe('useOutletContext', () => {
   test('returns nearest outlet context', () => {
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
-      <OutletContext.Provider value={{ outlet: null, context: { user: 'Ada' } }}>
+      <OutletContext.Provider value={{ context: { user: 'Ada' } }}>
         {children}
       </OutletContext.Provider>
     );
@@ -24,7 +24,7 @@ describe('useOutletContext', () => {
 
   test('supports route-id inference from contracts', () => {
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
-      <OutletContext.Provider value={{ outlet: null, context: { user: 'Ada' } }}>
+      <OutletContext.Provider value={{ context: { user: 'Ada' } }}>
         {children}
       </OutletContext.Provider>
     );

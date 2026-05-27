@@ -14,6 +14,8 @@ declare module '@cookbook/router' {
         'modal.source': '/modal-source';
         'modal.source.index': '/modal-source';
         'modal.target': '/modal-target';
+        'blog.articles': '/blog/articles';
+        'blog.articles.show': '/blog/articles/{slug:regex([a-z0-9-]+)}';
       };
       params: {
         home: Record<string, never>;
@@ -25,6 +27,8 @@ declare module '@cookbook/router' {
         'modal.source': Record<string, never>;
         'modal.source.index': Record<string, never>;
         'modal.target': Record<string, never>;
+        'blog.articles': Record<string, never>;
+        'blog.articles.show': { slug: string };
       };
       search: {
         home: Record<string, never>;
@@ -36,6 +40,8 @@ declare module '@cookbook/router' {
         'modal.source': Record<string, never>;
         'modal.source.index': Record<string, never>;
         'modal.target': Record<string, never>;
+        'blog.articles': Record<string, never>;
+        'blog.articles.show': { ref?: string };
       };
       hash: {
         home: never;
@@ -47,6 +53,8 @@ declare module '@cookbook/router' {
         'modal.source': never;
         'modal.source.index': never;
         'modal.target': never;
+        'blog.articles': never;
+        'blog.articles.show': never;
       };
       outletContext: {
         'dashboard.home': { user: string };
@@ -68,7 +76,11 @@ describe('router-react contracts', () => {
       | 'modal.source'
       | 'modal.source.index'
       | 'modal.target'
+      | 'blog.articles'
+      | 'blog.articles.show'
     >();
+    expectTypeOf<RouteParams<'blog.articles.show'>>().toEqualTypeOf<{ slug: string }>();
+    expectTypeOf<RouteSearch<'blog.articles.show'>>().toEqualTypeOf<{ ref?: string }>();
     expectTypeOf<RouteParams<'user'>>().toEqualTypeOf<{ id: number }>();
     expectTypeOf<RouteSearch<'user'>>().toEqualTypeOf<{ tab?: string; empty?: string }>();
     expectTypeOf<RouteHash<'user'>>().toEqualTypeOf<'profile' | 'settings' | 'bio' | 'top'>();

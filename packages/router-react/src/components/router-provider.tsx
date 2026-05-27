@@ -16,7 +16,7 @@ import type {
   RouterState,
 } from '@cookbook/router';
 import {
-  OutletContext,
+  OutletRenderContext,
   RouteRenderContext,
   RouterContext,
   SlotRenderContext,
@@ -160,7 +160,16 @@ function renderMatchAt(
 
 function renderRouteElement(match: MatchedRoute, child: ReactNode): ReactNode {
   const Component = asComponent(match.route.component);
-  return Component ? <Component /> : child;
+
+  if (!Component) {
+    return child;
+  }
+
+  return (
+    <OutletRenderContext.Provider value={{ outlet: child }}>
+      <Component />
+    </OutletRenderContext.Provider>
+  );
 }
 
 function renderLayoutElement(
@@ -184,9 +193,9 @@ function renderLayoutElement(
           renderOptions: options,
         }}
       >
-        <OutletContext.Provider value={{ outlet }}>
+        <OutletRenderContext.Provider value={{ outlet }}>
           <Layout />
-        </OutletContext.Provider>
+        </OutletRenderContext.Provider>
       </SlotRenderContext.Provider>
     </RouteRenderContext.Provider>
   );

@@ -24,6 +24,15 @@ function StrictMissingPage() {
   return null;
 }
 
+function LeafPageWithOutlet() {
+  return (
+    <section>
+      <p>leaf page</p>
+      <Outlet />
+    </section>
+  );
+}
+
 describe('Outlet', () => {
   test('renders the matched child route', async () => {
     const router = createMemoryRouter({
@@ -63,5 +72,17 @@ describe('Outlet', () => {
     expect(() => render(<RouterProvider router={router} />)).toThrow(
       'Outlet context for route "dashboard.home" was requested in strict mode',
     );
+  });
+
+  test('renders nothing for a leaf route outlet instead of recursively rendering the page', async () => {
+    const router = createMemoryRouter({
+      routes: defineRoutes([{ id: 'page', path: '/', component: LeafPageWithOutlet }] as const),
+    });
+    await router.resolveCurrent();
+
+    const { getByText, queryAllByText } = render(<RouterProvider router={router} />);
+
+    expect(getByText('leaf page')).toBeTruthy();
+    expect(queryAllByText('leaf page')).toHaveLength(1);
   });
 });

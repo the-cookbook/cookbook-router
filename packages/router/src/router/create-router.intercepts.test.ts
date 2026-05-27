@@ -28,6 +28,33 @@ const routes = [
   { id: 'blog.posts.show', path: '/blog/{slug:regex([a-z0-9-]+)}', component: BlogPostPage },
 ] as const;
 
+const nestedArticleRoutes = [
+  {
+    id: 'blog',
+    path: '/blog',
+    layout: {
+      component: BlogLayout,
+      slots: {
+        modal: { fallback: null },
+      },
+    },
+    intercepts: {
+      modal: {
+        to: ['articles/{slug:regex([a-z0-9-]+)}'],
+        component: BlogPostModal,
+      },
+    },
+    children: [
+      { id: 'blog.articles', path: 'articles', component: BlogIndex },
+      {
+        id: 'blog.articles.show',
+        path: 'articles/{slug:regex([a-z0-9-]+)}',
+        component: BlogPostPage,
+      },
+    ],
+  },
+] as const;
+
 describe('createRouter intercepting routes', () => {
   it('renders client navigation into an intercepted slot and preserves previous location', async () => {
     const router = createMemoryRouter({ routes, initialEntries: ['/blog'] });
@@ -87,6 +114,50 @@ describe('createRouter intercepting routes', () => {
       slot: 'modal',
       component: BlogPostModal,
     });
+  });
+
+  it('does not automatically reapply a configured intercept from an active intercepted route', async () => {
+    const router = createMemoryRouter({ routes, initialEntries: ['/blog'] });
+
+    await router.navigate.to('blog.posts.show', {
+      params: { slug: 'hello-world' },
+    });
+
+    expect(router.state.match?.intercepted).toBeDefined();
+
+    const state = await router.navigate.to('blog.posts.show', {
+      params: { slug: 'hello-world' },
+      search: { ref: 'modal-full-page' },
+    });
+
+    expect(state.location.href).toBe('/blog/hello-world?ref=modal-full-page');
+    expect(state.previousLocation).toBeUndefined();
+    expect(state.match?.route.id).toBe('blog.posts.show');
+    expect(state.match?.intercepted).toBeUndefined();
+  });
+
+  it('does not automatically reapply a nested configured intercept from an active intercepted route', async () => {
+    const router = createMemoryRouter({
+      routes: nestedArticleRoutes,
+      initialEntries: ['/blog/articles'],
+    });
+
+    await router.navigate.to('blog.articles.show', {
+      params: { slug: 'hello-world' },
+    });
+
+    expect(router.state.location.href).toBe('/blog/articles/hello-world');
+    expect(router.state.match?.intercepted).toBeDefined();
+
+    const state = await router.navigate.to('blog.articles.show', {
+      params: { slug: 'hello-world' },
+      search: { ref: 'modal-full-page' },
+    });
+
+    expect(state.location.href).toBe('/blog/articles/hello-world?ref=modal-full-page');
+    expect(state.previousLocation).toBeUndefined();
+    expect(state.match?.route.id).toBe('blog.articles.show');
+    expect(state.match?.intercepted).toBeUndefined();
   });
 
   it('supports call-site interception with element alias', async () => {

@@ -279,6 +279,89 @@ describe('Slot', () => {
     expect(router.state.previousLocation?.href).toBe('/modal-source');
   });
 
+  test('opens the nested canonical route from inside an active configured intercept without reintercepting', async () => {
+    function BlogLayout() {
+      return (
+        <section>
+          <Slot name="modal" />
+          <Outlet />
+        </section>
+      );
+    }
+
+    function ArticlesPage() {
+      return (
+        <main>
+          <p>articles list</p>
+          <Link to="blog.articles.show" params={{ slug: 'hello-world' }}>
+            open article modal
+          </Link>
+        </main>
+      );
+    }
+
+    function ArticleModal() {
+      const params = useParams('blog.articles.show');
+
+      return (
+        <aside>
+          <p>article modal:{params.slug}</p>
+          <Link
+            to="blog.articles.show"
+            params={{ slug: params.slug }}
+            search={{ ref: 'modal-full-page' }}
+          >
+            open full page
+          </Link>
+        </aside>
+      );
+    }
+
+    function ArticlePage() {
+      return <h1>canonical article page</h1>;
+    }
+
+    const router = createMemoryRouter({
+      initialEntries: ['/blog/articles'],
+      routes: defineRoutes([
+        {
+          id: 'blog',
+          path: '/blog',
+          layout: {
+            component: BlogLayout,
+            slots: { modal: { fallback: null } },
+          },
+          intercepts: {
+            modal: { to: ['articles/{slug:regex([a-z0-9-]+)}'], component: ArticleModal },
+          },
+          children: [
+            { id: 'blog.articles', path: 'articles', component: ArticlesPage },
+            {
+              id: 'blog.articles.show',
+              path: 'articles/{slug:regex([a-z0-9-]+)}',
+              component: ArticlePage,
+              search: { ref: { type: 'one', optional: true } },
+            },
+          ],
+        },
+      ] as const),
+    });
+    await router.resolveCurrent();
+
+    const view = render(<RouterProvider router={router} />);
+
+    fireEvent.click(view.getByText('open article modal'));
+    await waitFor(() => expect(view.getByText('article modal:hello-world')).toBeTruthy());
+
+    fireEvent.click(view.getByText('open full page'));
+
+    await waitFor(() => expect(view.getByText('canonical article page')).toBeTruthy());
+    expect(view.queryByText('article modal:hello-world')).toBeNull();
+    expect(view.queryByText('articles list')).toBeNull();
+    expect(router.state.location.href).toBe('/blog/articles/hello-world?ref=modal-full-page');
+    expect(router.state.match?.intercepted).toBeUndefined();
+  });
+
   test('missing slot references render null instead of throwing', async () => {
     function MissingSlotLayout() {
       return (

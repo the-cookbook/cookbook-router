@@ -3,6 +3,7 @@ import { getResolvedSlot } from '@cookbook/router';
 import type { MatchedRoute, ResolvedSlot, ResolvedInterceptedRoute } from '@cookbook/router';
 import {
   OutletContext,
+  OutletRenderContext,
   RouteRenderContext,
   useRouterContext,
   useSlotRenderContext,
@@ -67,8 +68,10 @@ function renderInterceptedRoute(
 
   return (
     <RouteRenderContext.Provider value={{ match }}>
-      <OutletContext.Provider value={{ outlet: element, context }}>
-        {element}
+      <OutletContext.Provider value={{ context }}>
+        <OutletRenderContext.Provider value={{ outlet: null }}>
+          {element}
+        </OutletRenderContext.Provider>
       </OutletContext.Provider>
     </RouteRenderContext.Provider>
   );
@@ -85,11 +88,7 @@ function renderResolvedSlot(
 
   if (slot.status === 'matched' && slot.branch) {
     const rendered = renderMatches(slot.branch, null, {}, options);
-    return (
-      <OutletContext.Provider value={{ outlet: rendered, context }}>
-        {rendered}
-      </OutletContext.Provider>
-    );
+    return <OutletContext.Provider value={{ context }}>{rendered}</OutletContext.Provider>;
   }
 
   const Component = asComponent(slot.component);
@@ -103,16 +102,20 @@ function renderResolvedSlot(
 
   if (!match) {
     return (
-      <OutletContext.Provider value={{ outlet: element, context }}>
-        {element}
+      <OutletContext.Provider value={{ context }}>
+        <OutletRenderContext.Provider value={{ outlet: null }}>
+          {element}
+        </OutletRenderContext.Provider>
       </OutletContext.Provider>
     );
   }
 
   return (
     <RouteRenderContext.Provider value={{ match }}>
-      <OutletContext.Provider value={{ outlet: element, context }}>
-        {element}
+      <OutletContext.Provider value={{ context }}>
+        <OutletRenderContext.Provider value={{ outlet: null }}>
+          {element}
+        </OutletRenderContext.Provider>
       </OutletContext.Provider>
     </RouteRenderContext.Provider>
   );

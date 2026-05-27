@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from 'react';
-import { OutletContext, useOutletContextValue } from '../context/router-context';
+import { OutletContext, useOutletRenderContextValue } from '../context/router-context';
 
 export interface OutletProps<T = unknown> {
   readonly context?: T;
@@ -7,7 +7,7 @@ export interface OutletProps<T = unknown> {
 }
 
 export function Outlet<T = unknown>(props: OutletProps<T>): ReactElement | null {
-  const value = useOutletContextValue();
+  const value = useOutletRenderContextValue();
   const outlet = props.children ?? value?.outlet ?? null;
 
   if (outlet === null || outlet === undefined || outlet === false) {
@@ -15,8 +15,6 @@ export function Outlet<T = unknown>(props: OutletProps<T>): ReactElement | null 
   }
 
   return (
-    <OutletContext.Provider value={{ outlet, context: props.context }}>
-      {outlet}
-    </OutletContext.Provider>
+    <OutletContext.Provider value={{ context: props.context }}>{outlet}</OutletContext.Provider>
   );
 }

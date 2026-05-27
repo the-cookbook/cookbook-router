@@ -10,8 +10,11 @@ export interface RouterContextValue {
 }
 
 export interface OutletContextValue {
-  readonly outlet: ReactNode;
   readonly context?: unknown;
+}
+
+export interface OutletRenderContextValue {
+  readonly outlet: ReactNode;
 }
 
 export interface RouteRenderContextValue {
@@ -37,6 +40,7 @@ export interface SlotRenderContextValue {
 
 export const RouterContext = createContext<RouterContextValue | null>(null);
 export const OutletContext = createContext<OutletContextValue | null>(null);
+export const OutletRenderContext = createContext<OutletRenderContextValue | null>(null);
 export const RouteRenderContext = createContext<RouteRenderContextValue | null>(null);
 export const SlotRenderContext = createContext<SlotRenderContextValue | null>(null);
 
@@ -52,6 +56,10 @@ export function useRouterContext(): RouterContextValue {
 
 export function useOutletContextValue(): OutletContextValue | null {
   return useContext(OutletContext);
+}
+
+export function useOutletRenderContextValue(): OutletRenderContextValue | null {
+  return useContext(OutletRenderContext);
 }
 
 export function useRouteRenderContext(): RouteRenderContextValue | null {
