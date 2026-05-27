@@ -7,6 +7,7 @@ import { Outlet } from './outlet';
 import { RouterProvider } from './router-provider';
 import type { RouteErrorFallbackProps, RouterErrorFallbackProps } from './router-provider';
 import { useLocation } from '../hooks/use-location';
+import { useNavigate } from '../hooks/use-navigate';
 
 function Layout() {
   return (
@@ -100,6 +101,32 @@ describe('RouterProvider', () => {
     expect(queryByText('not found')).toBeNull();
     await waitFor(() => expect(getByText('home')).toBeTruthy());
     expect(router.state.location.href).toBe('/dashboard');
+  });
+
+  test('does not freeze when replace navigation is requested during render', async () => {
+    function MissingUserPage() {
+      const navigate = useNavigate();
+      void navigate.replace('not-found');
+      return null;
+    }
+
+    function NotFoundPage() {
+      return <h1>not found</h1>;
+    }
+
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        { id: 'users.show', path: '/users/{slug}', component: MissingUserPage },
+        { id: 'not-found', path: '/not-found', component: NotFoundPage },
+      ] as const),
+      initialEntries: ['/users/missing'],
+    });
+    await router.resolveCurrent();
+
+    const { getByText } = render(<RouterProvider router={router} />);
+
+    await waitFor(() => expect(getByText('not found')).toBeTruthy());
+    expect(router.state.location.href).toBe('/not-found');
   });
 
   test('renders fallback when no route matches', async () => {

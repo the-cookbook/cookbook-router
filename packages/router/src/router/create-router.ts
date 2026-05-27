@@ -101,6 +101,14 @@ export interface SerializedRouterState {
   readonly navigation: RouterNavigationState;
 }
 
+interface ActiveNavigation {
+  readonly href: string;
+  readonly mode: 'push' | 'replace';
+  readonly intercept?: InterceptInput;
+  readonly context?: unknown;
+  readonly promise: Promise<RouterState>;
+}
+
 export interface Router {
   readonly routes: readonly NormalizedRoute[];
   readonly rankedRoutes: readonly RankedRoute[];
@@ -160,6 +168,7 @@ export function createRouterRuntime(
   const listeners = new Set<(state: RouterState) => void>();
   const blockers = new Set<RouterBlocker>();
   let transitionVersion = 0;
+  let activeNavigation: ActiveNavigation | undefined;
   let state: RouterState = createState(options.history.location, 'idle');
 
   const router: Router = {
@@ -311,14 +320,41 @@ export function createRouterRuntime(
     return state;
   }
 
-  async function navigateTo(
+  function navigateTo(
     href: string,
     mode: 'push' | 'replace',
     intercept?: InterceptInput,
     context?: unknown,
   ): Promise<RouterState> {
+    if (
+      activeNavigation &&
+      activeNavigation.href === href &&
+      activeNavigation.mode === mode &&
+      activeNavigation.intercept === intercept &&
+      activeNavigation.context === context
+    ) {
+      return activeNavigation.promise;
+    }
+
     const location = parseHref(href);
-    return transitionTo(location, mode, true, 0, intercept, context);
+    const promise = transitionTo(location, mode, true, 0, intercept, context);
+    const navigation: ActiveNavigation = {
+      href,
+      mode,
+      promise,
+      ...(intercept === undefined ? {} : { intercept }),
+      ...(context === undefined ? {} : { context }),
+    };
+
+    activeNavigation = navigation;
+
+    void promise.finally(() => {
+      if (activeNavigation === navigation) {
+        activeNavigation = undefined;
+      }
+    });
+
+    return promise;
   }
 
   async function transitionTo(

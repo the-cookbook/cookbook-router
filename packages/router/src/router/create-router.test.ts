@@ -81,6 +81,28 @@ describe('router navigation blockers', () => {
     expect(history.location.href).toBe('/');
   });
 
+  test('deduplicates repeated replace navigation to the same target while pending', async () => {
+    const history = createMemoryHistory({ initialEntries: ['/'] });
+    let releaseMiddleware: (() => void) | undefined;
+    const release = new Promise<void>((resolve) => {
+      releaseMiddleware = resolve;
+    });
+    const router = createRouter({
+      routes,
+      history,
+      middleware: [async () => release],
+    });
+
+    const first = router.navigate.replace('about');
+    const second = router.navigate.replace('about');
+
+    expect(second).toBe(first);
+    releaseMiddleware?.();
+
+    await expect(first).resolves.toMatchObject({ navigation: 'idle' });
+    expect(router.state.location.href).toBe('/about');
+  });
+
   test('unregisters navigation blockers', async () => {
     const router = createRouter({
       routes,
