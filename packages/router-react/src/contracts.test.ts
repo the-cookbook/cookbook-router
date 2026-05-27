@@ -9,6 +9,7 @@ declare module '@cookbook/router' {
         user: '/users/{id:int}';
         'dashboard.home': '/dashboard';
         'dashboard.sidebar.activity': '/dashboard/activity/{id:int}';
+        'dashboard.reports': '/dashboard/reports';
         settings: '/settings';
         'users.show': '/users/{id:int}';
         'modal.source': '/modal-source';
@@ -22,6 +23,7 @@ declare module '@cookbook/router' {
         user: { id: number };
         'dashboard.home': Record<string, never>;
         'dashboard.sidebar.activity': { id: number };
+        'dashboard.reports': Record<string, never>;
         settings: Record<string, never>;
         'users.show': { id: number };
         'modal.source': Record<string, never>;
@@ -35,6 +37,7 @@ declare module '@cookbook/router' {
         user: { tab?: string; empty?: string };
         'dashboard.home': Record<string, never>;
         'dashboard.sidebar.activity': Record<string, never>;
+        'dashboard.reports': Record<string, never>;
         settings: Record<string, never>;
         'users.show': Record<string, never>;
         'modal.source': Record<string, never>;
@@ -48,6 +51,7 @@ declare module '@cookbook/router' {
         user: 'profile' | 'settings' | 'bio' | 'top';
         'dashboard.home': never;
         'dashboard.sidebar.activity': never;
+        'dashboard.reports': never;
         settings: never;
         'users.show': never;
         'modal.source': never;
@@ -71,6 +75,7 @@ describe('router-react contracts', () => {
       | 'user'
       | 'dashboard.home'
       | 'dashboard.sidebar.activity'
+      | 'dashboard.reports'
       | 'settings'
       | 'users.show'
       | 'modal.source'

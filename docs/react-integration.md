@@ -121,7 +121,7 @@ A slot can render:
 
 `@cookbook/router-react` wraps each matched route segment in React Suspense and, when configured, a React error boundary. This keeps loading and render-error UI colocated with the route that owns it.
 
-Use `loading` for a route-level Suspense fallback:
+Use `loading` for a route-local Suspense fallback. Route-level loading is not inherited by child routes. Loading UI is rendered at the same outlet position as the pending route, so parent layouts and their styles stay active:
 
 ```tsx
 import { lazy } from 'react';
@@ -140,7 +140,46 @@ function ArticleLoading() {
 }
 ```
 
-Use `errorFallback` for route-level render errors. The nearest active route with `errorFallback` handles errors thrown by its component, layout, slot routes, intercepted routes, and descendants.
+Layouts can define shared loading and error fallbacks. They render inside that layout's `<Outlet />` when the same route component suspends or fails, and they are inherited by child routes that do not define their own local fallback:
+
+```tsx
+function DashboardLayout() {
+  return (
+    <DashboardShell>
+      <Outlet />
+    </DashboardShell>
+  );
+}
+
+function DashboardLoading() {
+  return <DashboardPageSkeleton />;
+}
+
+function DashboardErrorFallback() {
+  return <DashboardErrorState />;
+}
+
+{
+  id: 'dashboard',
+  path: '/dashboard',
+  layout: {
+    component: DashboardLayout,
+    loading: DashboardLoading,
+    errorFallback: DashboardErrorFallback,
+  },
+  children: [
+    {
+      id: 'dashboard.overview',
+      index: true,
+      component: lazy(() => import('./overview')),
+    },
+  ],
+}
+```
+
+A route-level `loading` or `errorFallback` declared on the pending route takes precedence for that route only. It does not become shared fallback state for descendants. Put shared UI under `layout.loading` or `layout.errorFallback`. The provider keeps Suspense and error-boundary wrappers stable around route content, so navigating between routes that reuse the same layout updates the outlet content without remounting the unchanged layout shell.
+
+Use route-level `errorFallback` for errors thrown by that route component. Use `layout.errorFallback` when the layout should provide shared error UI for the route component and its descendant outlet tree.
 
 ```tsx
 import type { RouteErrorFallbackProps } from '@cookbook/router-react';

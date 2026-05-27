@@ -135,17 +135,37 @@ interface RouteDefinition {
 | `path`          | Local path segment or absolute path. Index routes must not define `path`.                                                 |
 | `index`         | Marks the route as the default child for its parent path.                                                                 |
 | `component`     | Route component or framework-owned render value. The core package treats it as `unknown`.                                 |
-| `layout`        | Layout component and named slot definitions.                                                                              |
+| `layout`        | Layout component, layout-level loading/error fallbacks, and named slot definitions.                                       |
 | `children`      | Primary child routes.                                                                                                     |
 | `intercepts`    | Configured route interception targets for named slots.                                                                    |
 | `redirect`      | Internal route redirect object or literal href string.                                                                    |
 | `search`        | Search key schema used by generated contracts. `type: 'one'` is a single value; `type: 'many'` is a repeated query param. |
 | `hash`          | Allowed hash values used by generated contracts.                                                                          |
 | `meta`          | Arbitrary route metadata.                                                                                                 |
-| `loading`       | Route-level React Suspense fallback component for loading route subtrees.                                                 |
-| `errorFallback` | Route-level React error-boundary fallback component for render errors in route subtrees.                                  |
+| `loading`       | Route-local React Suspense fallback component. It is not inherited by child routes.                                       |
+| `errorFallback` | Route-local React error-boundary fallback component. It is not inherited by child routes.                                 |
 | `lifecycle`     | Route lifecycle hooks.                                                                                                    |
 | `middleware`    | Route-specific middleware pipeline.                                                                                       |
+
+#### `RouteLayoutDefinition`
+
+```ts
+interface RouteLayoutDefinition {
+  readonly component?: RouteComponent;
+  readonly loading?: RouteComponent;
+  readonly errorFallback?: RouteComponent;
+  readonly slots?: RouteSlotDefinitions;
+}
+```
+
+| Field           | Purpose                                                                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `component`     | Layout component that renders the route outlet and any layout slots.                                                                  |
+| `loading`       | Layout-level React Suspense fallback shared with the route component and descendant routes that do not define their own `loading`.    |
+| `errorFallback` | Layout-level React error fallback shared with the route component and descendant routes that do not define their own `errorFallback`. |
+| `slots`         | Named layout slot definitions for fallback, slot route, and disabled slot behavior.                                                   |
+
+Layout loading and error fallback components render at the layout outlet position, so the layout shell remains mounted while child content is loading or has failed. Route-level fallbacks are local to that route and are not shared with child routes.
 
 Related: [Routing](routing.md), [Search and hash](search-and-hash.md), [Middleware](middleware.md), [Lifecycle](lifecycle.md).
 
@@ -785,7 +805,7 @@ The React package also exports advanced integration helpers:
 | API                                                              | Purpose                                                                |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | `renderMatches(matches, fallback, slots?, options?)`             | Render a matched branch manually.                                      |
-| `renderRouteBoundary(match, element)`                            | Wrap one matched route element in its route-level Suspense/error UI.   |
+| `renderRouteBoundary(match, element)`                            | Wrap one matched route element in its local Suspense/error UI.         |
 | `useRouterState(router)`                                         | Subscribe to a router and return state.                                |
 | `RouterContext`                                                  | Router/state context.                                                  |
 | `OutletContext`                                                  | Outlet content/context provider.                                       |

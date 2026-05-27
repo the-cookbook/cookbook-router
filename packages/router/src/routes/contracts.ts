@@ -46,6 +46,8 @@ export type RouteSlotDefinitions = Readonly<Record<string, RouteSlotDefinition>>
 
 export interface RouteLayoutDefinition {
   readonly component?: RouteComponent;
+  readonly loading?: RouteComponent;
+  readonly errorFallback?: RouteComponent;
   readonly slots?: RouteSlotDefinitions;
 }
 

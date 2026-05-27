@@ -1,6 +1,7 @@
 import {
   Component,
   Suspense,
+  memo,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -52,6 +53,21 @@ export interface RouterProviderProps {
 }
 
 export interface RenderMatchesOptions extends RenderBoundaryOptions {}
+
+export interface ResolvedLoadingFallback {
+  readonly component: RouteComponent;
+  readonly match: MatchedRoute;
+}
+
+export interface ResolvedErrorFallback {
+  readonly component: RouteComponent;
+  readonly match: MatchedRoute;
+}
+
+export interface InheritedRouteFallbacks {
+  readonly loading?: ResolvedLoadingFallback;
+  readonly error?: ResolvedErrorFallback;
+}
 
 interface RouteErrorBoundaryProps {
   readonly match: MatchedRoute;
@@ -121,18 +137,9 @@ export function renderMatches(
     return fallback;
   }
 
-  const rendered = renderMatchAt(matches, 0, fallback, slots, options);
-  const lastMatch = matches[matches.length - 1];
-  const errorBoundary =
-    options.errorFallback && lastMatch ? (
-      <RouteErrorBoundary match={lastMatch} globalFallback={options.errorFallback}>
-        {rendered}
-      </RouteErrorBoundary>
-    ) : (
-      rendered
-    );
+  const rendered = renderMatchAt(matches, 0, fallback, slots, options, {});
 
-  return <Suspense fallback={options.loadingFallback ?? null}>{errorBoundary}</Suspense>;
+  return <Suspense fallback={options.loadingFallback ?? null}>{rendered}</Suspense>;
 }
 
 function renderMatchAt(
@@ -141,6 +148,7 @@ function renderMatchAt(
   fallback: ReactNode,
   slots: ResolvedSlots,
   options: RenderMatchesOptions,
+  inheritedFallbacks: InheritedRouteFallbacks,
 ): ReactNode {
   const match = matches[index];
 
@@ -148,14 +156,24 @@ function renderMatchAt(
     return fallback;
   }
 
-  const child = renderMatchAt(matches, index + 1, fallback, slots, options);
+  const layoutFallbacks = resolveLayoutFallbacks(match, inheritedFallbacks);
+  const child = renderMatchAt(matches, index + 1, fallback, slots, options, layoutFallbacks);
+  const isLeafMatch = index === matches.length - 1;
   const routeElement = renderRouteElement(match, child);
-  const layoutElement = renderLayoutElement(match, routeElement, slots, options);
-  const rendered = (
+  const boundaryFallbacks = resolveBoundaryFallbacks(match, layoutFallbacks, isLeafMatch);
+  const boundaryOptions =
+    isLeafMatch || boundaryFallbacks.error ? options : omitGlobalErrorFallback(options);
+  const boundaryElement = renderRouteBoundary(
+    match,
+    routeElement,
+    boundaryOptions,
+    boundaryFallbacks,
+  );
+  const layoutElement = renderLayoutElement(match, boundaryElement, slots, options);
+
+  return (
     <RouteRenderContext.Provider value={{ match }}>{layoutElement}</RouteRenderContext.Provider>
   );
-
-  return renderRouteBoundary(match, rendered, options);
 }
 
 function renderRouteElement(match: MatchedRoute, child: ReactNode): ReactNode {
@@ -205,28 +223,149 @@ export function renderRouteBoundary(
   match: MatchedRoute,
   element: ReactNode,
   options: RenderMatchesOptions = {},
+  fallbacks?: InheritedRouteFallbacks,
 ): ReactNode {
-  const ErrorFallback = asComponent<RouteErrorFallbackProps>(match.route.route.errorFallback);
-  const Loading = asComponent<RouteLoadingFallbackProps>(match.route.route.loading);
-
-  const suspenseElement = Loading ? (
-    <Suspense fallback={<Loading route={match} />}>{element}</Suspense>
-  ) : (
-    element
-  );
-
-  if (!ErrorFallback && !options.errorFallback) {
-    return suspenseElement;
-  }
+  const resolvedFallbacks = fallbacks ?? resolveBoundaryFallbacks(match, {}, true);
+  const ErrorFallback = asComponent<RouteErrorFallbackProps>(resolvedFallbacks.error?.component);
 
   return (
     <RouteErrorBoundary
-      match={match}
+      match={resolvedFallbacks.error?.match ?? match}
       {...(ErrorFallback ? { fallback: ErrorFallback } : {})}
       {...(options.errorFallback ? { globalFallback: options.errorFallback } : {})}
     >
-      {suspenseElement}
+      <Suspense
+        fallback={
+          <MemoizedRouteLoadingFallback
+            fallback={resolvedFallbacks.loading}
+            {...(options.loadingFallback === undefined
+              ? {}
+              : { globalFallback: options.loadingFallback })}
+          />
+        }
+      >
+        {element}
+      </Suspense>
     </RouteErrorBoundary>
+  );
+}
+
+function omitGlobalErrorFallback(options: RenderMatchesOptions): RenderMatchesOptions {
+  if (options.errorFallback === undefined) {
+    return options;
+  }
+
+  return {
+    ...(options.loadingFallback === undefined ? {} : { loadingFallback: options.loadingFallback }),
+  };
+}
+
+function resolveLayoutFallbacks(
+  match: MatchedRoute,
+  inheritedFallbacks: InheritedRouteFallbacks,
+): InheritedRouteFallbacks {
+  const loading = resolveLayoutLoading(match) ?? inheritedFallbacks.loading;
+  const error = resolveLayoutErrorFallback(match) ?? inheritedFallbacks.error;
+
+  return {
+    ...(loading === undefined ? {} : { loading }),
+    ...(error === undefined ? {} : { error }),
+  };
+}
+
+function resolveBoundaryFallbacks(
+  match: MatchedRoute,
+  layoutFallbacks: InheritedRouteFallbacks,
+  isLeafMatch: boolean,
+): InheritedRouteFallbacks {
+  const routeLoading = isLeafMatch ? resolveRouteLoading(match) : undefined;
+  const routeError = isLeafMatch ? resolveRouteErrorFallback(match) : undefined;
+  const loading = routeLoading ?? layoutFallbacks.loading;
+  const error = routeError ?? layoutFallbacks.error;
+
+  return {
+    ...(loading === undefined ? {} : { loading }),
+    ...(error === undefined ? {} : { error }),
+  };
+}
+
+function resolveRouteLoading(match: MatchedRoute): ResolvedLoadingFallback | undefined {
+  const component = match.route.route.loading;
+
+  if (component === undefined) {
+    return undefined;
+  }
+
+  return { component, match };
+}
+
+function resolveLayoutLoading(match: MatchedRoute): ResolvedLoadingFallback | undefined {
+  const component = match.route.route.layout?.loading;
+
+  if (component === undefined) {
+    return undefined;
+  }
+
+  return { component, match };
+}
+
+function resolveRouteErrorFallback(match: MatchedRoute): ResolvedErrorFallback | undefined {
+  const component = match.route.route.errorFallback;
+
+  if (component === undefined) {
+    return undefined;
+  }
+
+  return { component, match };
+}
+
+function resolveLayoutErrorFallback(match: MatchedRoute): ResolvedErrorFallback | undefined {
+  const component = match.route.route.layout?.errorFallback;
+
+  if (component === undefined) {
+    return undefined;
+  }
+
+  return { component, match };
+}
+
+interface MemoizedRouteLoadingFallbackProps {
+  readonly fallback?: ResolvedLoadingFallback | undefined;
+  readonly globalFallback?: ReactNode | undefined;
+}
+
+const MemoizedRouteLoadingFallback = memo(
+  function MemoizedRouteLoadingFallback(
+    props: MemoizedRouteLoadingFallbackProps,
+  ): ReactElement | null {
+    return renderLoadingFallback(props.fallback, props.globalFallback) as ReactElement | null;
+  },
+  (previousProps, nextProps) =>
+    previousProps.fallback?.component === nextProps.fallback?.component &&
+    previousProps.fallback?.match.id === nextProps.fallback?.match.id &&
+    previousProps.globalFallback === nextProps.globalFallback,
+);
+
+function renderLoadingFallback(
+  loadingFallback: ResolvedLoadingFallback | undefined,
+  globalFallback: ReactNode | undefined,
+): ReactNode {
+  if (!loadingFallback) {
+    return globalFallback === undefined ? null : <>{globalFallback}</>;
+  }
+
+  const Loading = asComponent<RouteLoadingFallbackProps>(loadingFallback.component);
+
+  if (!Loading) {
+    return null;
+  }
+
+  return (
+    <RouteRenderContext.Provider value={{ match: loadingFallback.match }}>
+      <OutletRenderContext.Provider value={{ outlet: null }}>
+        <Loading route={loadingFallback.match} />
+      </OutletRenderContext.Provider>
+    </RouteRenderContext.Provider>
   );
 }
 

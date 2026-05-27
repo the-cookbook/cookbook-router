@@ -51,6 +51,7 @@ Supporting shapes:
 ```ts
 interface RouteLayoutDefinition {
   readonly component?: RouteComponent;
+  readonly loading?: RouteComponent;
   readonly slots?: RouteSlotDefinitions;
 }
 
@@ -537,9 +538,9 @@ Use `RouterProvider fallback` for global 404 UI. For section-specific 404 UI, de
 }
 ```
 
-Route-level `loading` components are used by `@cookbook/router-react` as React Suspense fallbacks. They render while a lazy route component, layout, slot route, or intercepted route suspends.
+Route-level `loading` components are used by `@cookbook/router-react` as React Suspense fallbacks for that route component. They are local to the route that declares them and are not inherited by child routes. Loading components render at the same outlet position as the pending route, so parent layouts and their styling remain active during loading.
 
-Route-level `errorFallback` components are used by `@cookbook/router-react` as React error-boundary fallbacks. The nearest matched route with an `errorFallback` owns errors thrown by its route subtree. The fallback receives `error`, `reset`, and `route` props.
+Route-level `errorFallback` components are used by `@cookbook/router-react` as React error-boundary fallbacks for that route component. They are local to the route that declares them and are not inherited by child routes. The fallback receives `error`, `reset`, and `route` props.
 
 ```tsx
 function ArticleLoading() {
@@ -565,6 +566,45 @@ function ArticleErrorFallback(props: RouteErrorFallbackProps) {
   errorFallback: ArticleErrorFallback,
 }
 ```
+
+Layouts may also define `layout.loading` and `layout.errorFallback`. Values under `layout` are shared by that layout tree: they apply to the route component rendered by the layout and are inherited by descendant routes that do not define their own local fallback. Both fallbacks render inside that layout's `<Outlet />` position, so the layout shell remains mounted and is not recreated while child content is loading or has failed. The React provider keeps the boundary shape stable and memoizes fallback elements by fallback component and owner route, which prevents unchanged layouts from blinking during navigation.
+
+```tsx
+function DashboardLayout() {
+  return (
+    <DashboardShell>
+      <Outlet />
+    </DashboardShell>
+  );
+}
+
+function DashboardLoading() {
+  return <DashboardPageSkeleton />;
+}
+
+function DashboardErrorFallback() {
+  return <DashboardErrorState />;
+}
+
+{
+  id: 'dashboard',
+  path: '/dashboard',
+  layout: {
+    component: DashboardLayout,
+    loading: DashboardLoading,
+    errorFallback: DashboardErrorFallback,
+  },
+  children: [
+    {
+      id: 'dashboard.overview',
+      index: true,
+      component: lazy(() => import('./overview')),
+    },
+  ],
+}
+```
+
+If a child route declares its own `loading` or `errorFallback`, that route-level fallback wins for that route only. It does not become the fallback for grandchildren. Put shared pending/error UI under `layout.loading` or `layout.errorFallback`.
 
 `errorFallback` handles React rendering and lazy-import errors. Router transition errors from middleware or lifecycle hooks still flow through router navigation error handling.
 
