@@ -30,8 +30,11 @@ describe('react-blog generated contracts', () => {
       const hash = useHash('blog.articles.show');
 
       expectTypeOf(params).toEqualTypeOf<{ slug: string }>();
-      expectTypeOf(search).toEqualTypeOf<{ ref?: string; filters?: string | readonly string[] }>();
-      expectTypeOf(loginSearch).toEqualTypeOf<{ redirect?: string }>();
+      expectTypeOf(search).toEqualTypeOf<{
+        ref?: string | readonly string[];
+        filters?: string | readonly string[];
+      }>();
+      expectTypeOf(loginSearch).toEqualTypeOf<{ redirect?: string | readonly string[] }>();
       expectTypeOf(hash).toEqualTypeOf<'comments' | 'share' | null>();
     }
 

@@ -4,7 +4,12 @@ import {
   validatePathPattern,
   type RouterPathOptions,
 } from '../pathkit/pathkit';
-import type { RouteDefinition, RouteMeta, RouteSlotConfig } from '../routes/contracts';
+import type {
+  RouteDefinition,
+  RouteMeta,
+  RouteSlotConfig,
+  RouteSlotDefinition,
+} from '../routes/contracts';
 
 interface ValidationContext {
   readonly pathOptions: RouterPathOptions;
@@ -12,6 +17,8 @@ interface ValidationContext {
   readonly paths: Map<string, string>;
   readonly slotFallbackIds: Set<string>;
   readonly parentPath?: string;
+  readonly activeLayoutRouteId?: string;
+  readonly declaredSlots: ReadonlySet<string>;
   readonly inheritedParams: readonly string[];
   readonly pathScope: string;
 }
@@ -29,6 +36,7 @@ export function validateRoutes(
     paths: new Map<string, string>(),
     slotFallbackIds: new Set<string>(),
     inheritedParams: [],
+    declaredSlots: new Set<string>(),
     pathScope: 'primary',
     pathOptions,
   };
@@ -53,9 +61,16 @@ function validateRoute(route: RouteDefinition, context: ValidationContext): void
     context.inheritedParams,
     getOwnParamNames(route, context.pathOptions),
   );
-  const childContext = createChildValidationContext(context, fullPath, params);
-  validateLayoutSlots(route, childContext);
-  validateIntercepts(route, context.pathOptions);
+  validateLayoutScope(route, context);
+  const layoutContext = {
+    ...context,
+    ...(fullPath === undefined ? {} : { parentPath: fullPath }),
+  };
+
+  validateLayoutSlots(route, layoutContext);
+  validateIntercepts(route, context, route);
+
+  const childContext = createChildValidationContext(context, route, fullPath, params);
 
   for (const child of route.children ?? []) {
     validateRoute(child, childContext);
@@ -64,10 +79,19 @@ function validateRoute(route: RouteDefinition, context: ValidationContext): void
 
 function createChildValidationContext(
   context: ValidationContext,
+  route: RouteDefinition,
   fullPath: string | undefined,
   inheritedParams: readonly string[],
 ): ValidationContext {
   const parentPath = fullPath ?? context.parentPath;
+  const declaredSlots = new Set(context.declaredSlots);
+
+  for (const slotName of Object.keys(route.layout?.slots ?? {})) {
+    declaredSlots.add(slotName);
+  }
+
+  const activeLayoutRouteId =
+    route.layout?.component === undefined ? context.activeLayoutRouteId : route.id;
 
   return {
     ids: context.ids,
@@ -76,6 +100,8 @@ function createChildValidationContext(
     inheritedParams,
     pathScope: context.pathScope,
     pathOptions: context.pathOptions,
+    declaredSlots,
+    ...(activeLayoutRouteId === undefined ? {} : { activeLayoutRouteId }),
     ...(parentPath === undefined ? {} : { parentPath }),
   };
 }
@@ -111,6 +137,12 @@ function validateRouteShape(route: RouteDefinition): void {
 
   if (route.children !== undefined && !Array.isArray(route.children)) {
     throw new Error(`Route "${route.id}" children must be an array.`);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(route, 'errorFallback')) {
+    throw new Error(
+      `Route "${route.id}" declares errorFallback, but route errorFallback is no longer supported. Use error instead.`,
+    );
   }
 
   if (
@@ -291,6 +323,35 @@ function resolveFullPath(route: RouteDefinition, parentPath?: string): string | 
   return route.path.startsWith('/') ? route.path : joinPaths(parentPath ?? '/', route.path);
 }
 
+function validateLayoutScope(route: RouteDefinition, context: ValidationContext): void {
+  const layout = route.layout;
+
+  if (!layout) {
+    return;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(layout, 'errorFallback')) {
+    throw new Error(
+      `Route "${route.id}" declares layout.errorFallback, but layout errorFallback is no longer supported. Use layout.error instead.`,
+    );
+  }
+
+  const hasLayoutComponentInScope =
+    layout.component !== undefined || context.activeLayoutRouteId !== undefined;
+
+  if ((layout.loading !== undefined || layout.error !== undefined) && !hasLayoutComponentInScope) {
+    throw new Error(
+      `Route "${route.id}" declares layout.loading/layout.error, but no active layout component exists. Use route.loading/route.error for route-local fallbacks, or declare layout.component.`,
+    );
+  }
+
+  if (layout.slots !== undefined && !hasLayoutComponentInScope) {
+    throw new Error(
+      `Route "${route.id}" declares layout.slots, but no active layout component exists in its ancestor tree. Slot declarations require layout.component on the same route or an ancestor route.`,
+    );
+  }
+}
+
 function validateLayoutSlots(route: RouteDefinition, context: ValidationContext): void {
   const slots = route.layout?.slots;
 
@@ -302,17 +363,44 @@ function validateLayoutSlots(route: RouteDefinition, context: ValidationContext)
     throw new Error(`Route "${route.id}" layout.slots must be an object.`);
   }
 
+  const ownsLayoutComponent = route.layout?.component !== undefined;
+
   for (const [slotName, slot] of Object.entries(slots)) {
     if (!slotName) {
       throw new Error(`Route "${route.id}" defines a slot with an empty name.`);
     }
 
-    if (slot === false) {
-      continue;
+    if (!ownsLayoutComponent && !context.declaredSlots.has(slotName)) {
+      throw new Error(
+        `Route "${route.id}" declares slot "${slotName}", but no active layout declares that slot. Declare layout.slots.${slotName} on an ancestor layout or remove the child slot declaration.`,
+      );
     }
 
-    validateSlotConfig(route.id, slotName, slot, context);
+    validateSlotDefinition(route.id, slotName, slot, context);
   }
+}
+
+function validateSlotDefinition(
+  routeId: string,
+  slotName: string,
+  slot: RouteSlotDefinition,
+  context: ValidationContext,
+): void {
+  if (slot === true) {
+    return;
+  }
+
+  if (slot === false || slot === null || slot === undefined) {
+    throw new Error(
+      `Route "${routeId}" declares invalid configuration for slot "${slotName}". Use a component, { component?, meta?, routes? }, or true.`,
+    );
+  }
+
+  if (!isSlotConfigObject(slot)) {
+    return;
+  }
+
+  validateSlotConfig(routeId, slotName, slot, context);
 }
 
 function validateSlotConfig(
@@ -325,26 +413,27 @@ function validateSlotConfig(
     throw new Error(`Route "${routeId}" defines invalid configuration for slot "${slotName}".`);
   }
 
-  validateRouteMetadata(`${routeId}.${slotName}`, slot.meta);
-
-  if (
-    Object.prototype.hasOwnProperty.call(slot, 'fallback') &&
-    slot.fallback !== null &&
-    slot.fallback !== undefined
-  ) {
-    if (!slot.fallback.component) {
-      throw new Error(`Route "${routeId}" slot "${slotName}" fallback must define component.`);
-    }
-
-    const fallbackId = slot.fallback.id ?? `${routeId}.${slotName}.fallback`;
-
-    if (context.slotFallbackIds.has(fallbackId) || context.ids.has(fallbackId)) {
-      throw new Error(`Duplicate route id "${fallbackId}".`);
-    }
-
-    validateRouteMetadata(fallbackId, slot.fallback.meta);
-    context.slotFallbackIds.add(fallbackId);
+  if (Object.prototype.hasOwnProperty.call(slot, 'id')) {
+    throw new Error(
+      `Route "${routeId}" declares layout.slots.${slotName}.id, but slot ids are no longer supported. Use the slot key as the slot identity.`,
+    );
   }
+
+  if (Object.prototype.hasOwnProperty.call(slot, 'fallback')) {
+    throw new Error(
+      `Route "${routeId}" declares layout.slots.${slotName}.fallback, but slot fallbacks are no longer supported. Use layout.slots.${slotName} instead.`,
+    );
+  }
+
+  for (const key of Object.keys(slot)) {
+    if (key !== 'component' && key !== 'meta' && key !== 'routes') {
+      throw new Error(
+        `Route "${routeId}" declares unsupported layout.slots.${slotName}.${key}. Supported keys are component, meta, and routes.`,
+      );
+    }
+  }
+
+  validateRouteMetadata(`${routeId}.${slotName}`, slot.meta);
 
   if (slot.routes !== undefined && !Array.isArray(slot.routes)) {
     throw new Error(`Route "${routeId}" slot "${slotName}" routes must be an array.`);
@@ -361,7 +450,25 @@ function validateSlotConfig(
   }
 }
 
-function validateIntercepts(route: RouteDefinition, pathOptions: RouterPathOptions): void {
+function isSlotConfigObject(slot: RouteSlotDefinition): slot is RouteSlotConfig {
+  if (!slot || typeof slot !== 'object' || Array.isArray(slot)) {
+    return false;
+  }
+
+  return (
+    Object.prototype.hasOwnProperty.call(slot, 'component') ||
+    Object.prototype.hasOwnProperty.call(slot, 'meta') ||
+    Object.prototype.hasOwnProperty.call(slot, 'routes') ||
+    Object.prototype.hasOwnProperty.call(slot, 'fallback') ||
+    Object.prototype.hasOwnProperty.call(slot, 'id')
+  );
+}
+
+function validateIntercepts(
+  route: RouteDefinition,
+  context: ValidationContext,
+  sourceRoute: RouteDefinition,
+): void {
   const intercepts = route.intercepts;
 
   if (!intercepts) {
@@ -381,6 +488,16 @@ function validateIntercepts(route: RouteDefinition, pathOptions: RouterPathOptio
       throw new Error(`Route "${route.id}" intercept for slot "${slotName}" must be an object.`);
     }
 
+    const localSlots = sourceRoute.layout?.slots;
+    const declaresSlotLocally = Boolean(
+      localSlots && Object.prototype.hasOwnProperty.call(localSlots, slotName),
+    );
+
+    if (!declaresSlotLocally && !context.declaredSlots.has(slotName)) {
+      throw new Error(
+        `Route "${route.id}" configures intercept slot "${slotName}", but no active layout declares a "${slotName}" slot. Declare layout.slots.${slotName} on this route or an ancestor layout.`,
+      );
+    }
     if (!config.component) {
       throw new Error(
         `Route "${route.id}" intercept for slot "${slotName}" must define component.`,
@@ -400,7 +517,7 @@ function validateIntercepts(route: RouteDefinition, pathOptions: RouterPathOptio
         );
       }
 
-      validatePathPattern(pattern.startsWith('/') ? pattern : `/${pattern}`, pathOptions);
+      validatePathPattern(pattern.startsWith('/') ? pattern : `/${pattern}`, context.pathOptions);
     }
   }
 }

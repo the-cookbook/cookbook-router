@@ -22,7 +22,7 @@ const routes = normalizeRoutes([
     layout: {
       component: BlogLayout,
       slots: {
-        modal: { fallback: null },
+        modal: true,
       },
     },
     intercepts: {
@@ -256,7 +256,7 @@ describe('resolveIntercept', () => {
       {
         id: 'blog',
         path: '/blog',
-        layout: { slots: { modal: { fallback: null } } },
+        layout: { component: BlogLayout, slots: { modal: true } },
         intercepts: {
           modal: { to: ['/missing/{slug:regex([a-z0-9-]+)}'], component: BlogPostModal },
         },

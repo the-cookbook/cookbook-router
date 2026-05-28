@@ -10,7 +10,7 @@ Use this guide when routing behavior, generated contracts, examples, SSR, or tes
 - [Basename routes do not work](#basename-routes-do-not-work)
 - [Intercept throws missing configuration](#intercept-throws-missing-configuration)
 - [Call-site intercept throws `DataCloneError`](#call-site-intercept-throws-datacloneerror)
-- [Slot fallback IDs are missing from contracts](#slot-fallback-ids-are-missing-from-contracts)
+- [Slot default IDs are missing from contracts](#slot-default-ids-are-missing-from-contracts)
 - [Generated contracts are stale](#generated-contracts-are-stale)
 - [Type inference does not work](#type-inference-does-not-work)
 - [SSR returns an empty root](#ssr-returns-an-empty-root)
@@ -157,11 +157,11 @@ pnpm build:packages
 
 Also avoid putting function values in custom `history.state`.
 
-## Slot fallback IDs are missing from contracts
+## Slot default IDs are missing from contracts
 
-That is expected. Slot fallbacks are render defaults, not navigable routes.
+That is expected. Slot defaults are render defaults, not navigable routes.
 
-Use generic outlet context typing in fallback components:
+Use generic outlet context typing in slot default components:
 
 ```tsx
 const context = useOutletContext<{ user: string }>();

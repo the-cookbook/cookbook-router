@@ -7,7 +7,7 @@
 - A shell layout shared by overview, users, reports, create, and broken-page routes.
 - Async page components that suspend during navigation so layout-level loading states can be previewed.
 - `layout.loading` fallbacks rendered inside the shared layout outlet.
-- `layout.errorFallback` on `/broken-page`, rendered inside the shared layout when the route throws.
+- `layout.error` on `/broken-page`, rendered inside the shared layout when the route throws.
 - Layout slots for route-specific headers and modal rendering.
 - Automatic configured interception from `/overview` to `/create` through the `modal` slot.
 - Canonical direct rendering of `/create` as a full page.
@@ -61,12 +61,12 @@ The `/broken-page` route intentionally throws from its page component:
   layout: {
     component: LayoutPage,
     loading: LoadingSkeleton,
-    errorFallback: ErrorPage,
+    error: ErrorPage,
   },
 }
 ```
 
-This demonstrates `layout.errorFallback`: the fallback is owned by the route layout and renders inside the same layout shell instead of replacing the whole application.
+This demonstrates `layout.error`: the fallback is owned by the route layout and renders inside the same layout shell instead of replacing the whole application.
 
 Because the example uses a delayed lazy import, tests that assert page body content use a timeout longer than `LAZY_PAGE_DELAY_MS`.
 
@@ -79,7 +79,7 @@ Because the example uses a delayed lazy import, tests that assert page body cont
 /users             -> users index
 /users/{slug:slug} -> user details
 /reports           -> reports dashboard
-/broken-page       -> intentionally throwing route rendered through layout.errorFallback
+/broken-page       -> intentionally throwing route rendered through layout.error
 /not-found         -> not found page
 ```
 

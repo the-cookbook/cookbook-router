@@ -130,7 +130,8 @@ test('normalizes layout-scoped slot fallbacks and slot routes', () => {
         component: () => null,
         slots: {
           sidebar: {
-            fallback: { component: Sidebar, meta: { chrome: true } },
+            component: Sidebar,
+            meta: { chrome: true },
             routes: [
               {
                 id: 'dashboard.sidebar.activity',
@@ -140,7 +141,7 @@ test('normalizes layout-scoped slot fallbacks and slot routes', () => {
               },
             ],
           },
-          modal: { fallback: null },
+          modal: true,
         },
       },
     },
@@ -151,7 +152,6 @@ test('normalizes layout-scoped slot fallbacks and slot routes', () => {
 
   expect(sidebar).toMatchObject({ ownerRouteId: 'dashboard', name: 'sidebar', disabled: false });
   expect(sidebar?.fallback).toMatchObject({
-    id: 'dashboard.sidebar.fallback',
     ownerRouteId: 'dashboard',
     slotName: 'sidebar',
   });
@@ -162,10 +162,10 @@ test('normalizes layout-scoped slot fallbacks and slot routes', () => {
     slotName: 'sidebar',
     slotRoute: true,
   });
-  expect(modal?.fallback).toBeNull();
+  expect(modal?.fallback).toBeUndefined();
 });
 
-test('normalizes child slot overrides and disabled inherited slots', () => {
+test('normalizes child slot overrides and declaration-only inherited slots', () => {
   const [dashboard] = normalizeRoutes([
     {
       id: 'dashboard',
@@ -173,7 +173,7 @@ test('normalizes child slot overrides and disabled inherited slots', () => {
       layout: {
         component: () => null,
         slots: {
-          sidebar: { fallback: { id: 'dashboard.sidebar.fallback', component: () => null } },
+          sidebar: () => null,
         },
       },
       children: [
@@ -182,9 +182,7 @@ test('normalizes child slot overrides and disabled inherited slots', () => {
           path: 'settings',
           layout: {
             slots: {
-              sidebar: {
-                fallback: { id: 'dashboard.settings.sidebar.fallback', component: () => null },
-              },
+              sidebar: () => null,
             },
           },
         },
@@ -193,7 +191,7 @@ test('normalizes child slot overrides and disabled inherited slots', () => {
           path: 'fullscreen',
           layout: {
             slots: {
-              sidebar: false,
+              sidebar: true,
             },
           },
         },
@@ -201,11 +199,9 @@ test('normalizes child slot overrides and disabled inherited slots', () => {
     },
   ]);
 
-  expect(dashboard?.children[0]?.layout?.slots?.sidebar?.fallback).toMatchObject({
-    id: 'dashboard.settings.sidebar.fallback',
-  });
+  expect(dashboard?.children[0]?.layout?.slots?.sidebar?.fallback).toBeTruthy();
   expect(dashboard?.children[1]?.layout?.slots?.sidebar).toMatchObject({
-    disabled: true,
+    disabled: false,
     routes: [],
   });
 });

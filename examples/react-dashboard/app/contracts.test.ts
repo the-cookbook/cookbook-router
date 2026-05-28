@@ -13,7 +13,7 @@ describe('react-dashboard generated contracts', () => {
       slug: string;
     }>();
     expectTypeOf<RouteSearch['overview']>().toEqualTypeOf<{
-      visitors?: string;
+      visitors?: string | readonly string[];
     }>();
     expectTypeOf<
       RoutePaths['users.details']
@@ -28,7 +28,9 @@ describe('react-dashboard generated contracts', () => {
       const search = useSearch('overview');
 
       expectTypeOf(params).toEqualTypeOf<{ slug: string }>();
-      expectTypeOf(search).toEqualTypeOf<{ visitors?: string }>();
+      expectTypeOf(search).toEqualTypeOf<{
+        visitors?: string | readonly string[];
+      }>();
     }
 
     expectTypeOf(assertHookInference).toEqualTypeOf<() => void>();

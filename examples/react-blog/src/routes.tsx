@@ -46,26 +46,18 @@ export const routes = defineRoutes([
       component: BlogLayout,
       slots: {
         sidebar: {
-          fallback: {
-            id: 'blog.sidebar.fallback',
-            component: BlogSidebar,
-            meta: {
-              title: 'Reader sidebar',
-            },
+          component: BlogSidebar,
+          meta: {
+            title: 'Reader sidebar',
           },
         },
         preview: {
-          fallback: {
-            id: 'blog.preview.fallback',
-            component: ArticlePreviewPanel,
-            meta: {
-              title: 'Article preview',
-            },
+          component: ArticlePreviewPanel,
+          meta: {
+            title: 'Article preview',
           },
         },
-        modal: {
-          fallback: null,
-        },
+        modal: true,
       },
     },
     intercepts: {
@@ -98,13 +90,8 @@ export const routes = defineRoutes([
         },
         layout: {
           slots: {
-            sidebar: {
-              fallback: {
-                id: 'articles.sidebar.fallback',
-                component: ArticleSidebar,
-              },
-            },
-            preview: false,
+            sidebar: ArticleSidebar,
+            preview: true,
           },
         },
         meta: {
@@ -116,7 +103,7 @@ export const routes = defineRoutes([
         path: 'articles/{slug:regex([a-z0-9-]+)}',
         component: ArticlePage,
         loading: ArticleLoading,
-        errorFallback: ArticleErrorFallback,
+        error: ArticleErrorFallback,
         search: {
           ref: { type: 'one', optional: true },
           filters: { type: 'many', optional: true },

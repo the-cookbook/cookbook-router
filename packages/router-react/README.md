@@ -344,7 +344,7 @@ See [SSR](../../docs/ssr.md).
 - `RouterProvider` renders `fallback` when there is no match.
 - Route `loading`, `layout.loading`, and provider `loadingFallback` integrate with React Suspense. Layout loading fallbacks render inside that layout's outlet position so the same layout instance stays mounted while its route component or child routes load. The provider keeps the boundary shape stable around route content so unchanged layouts are reconciled instead of being remounted during navigation.
 - Suspense and error fallbacks are memoized by fallback component and owner route. Changing URL state or navigating between routes that reuse the same layout does not recreate fallback elements unless the active fallback actually changes.
-- Route `errorFallback`, `layout.errorFallback`, and provider `errorFallback` integrate with React error boundaries. Route-level fallbacks are local to that route; layout fallbacks are shared by the layout tree.
+- Route `error`, `layout.error`, and provider `errorFallback` integrate with React error boundaries. Route-level fallbacks are local to that route; layout fallbacks are shared by the layout tree.
 - Call `router.resolveCurrent()` before first render when initial redirects, middleware, or lifecycle hooks should complete before UI appears.
 - Outlet context is local to the nearest rendered `Outlet` or `Slot`.
 - URL state should use params, search, and hash rather than outlet context.

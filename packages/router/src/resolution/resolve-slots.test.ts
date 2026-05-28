@@ -17,11 +17,8 @@ function createDashboardRoutes() {
         component: DashboardLayout,
         slots: {
           sidebar: {
-            fallback: {
-              id: 'dashboard.sidebar.fallback',
-              component: DashboardSidebar,
-              meta: { section: 'root' },
-            },
+            component: DashboardSidebar,
+            meta: { section: 'root' },
             routes: [
               {
                 id: 'dashboard.sidebar.activity',
@@ -31,7 +28,7 @@ function createDashboardRoutes() {
               },
             ],
           },
-          modal: { fallback: null },
+          modal: true,
           inspector: {
             routes: [
               { id: 'dashboard.inspector.details', path: 'inspector', component: ActivitySidebar },
@@ -50,9 +47,7 @@ function createDashboardRoutes() {
           path: 'settings',
           layout: {
             slots: {
-              sidebar: {
-                fallback: { id: 'dashboard.settings.sidebar.fallback', component: SettingsSidebar },
-              },
+              sidebar: SettingsSidebar,
             },
           },
         },
@@ -61,7 +56,7 @@ function createDashboardRoutes() {
           path: 'fullscreen',
           layout: {
             slots: {
-              sidebar: false,
+              sidebar: true,
             },
           },
         },
@@ -71,9 +66,7 @@ function createDashboardRoutes() {
           layout: {
             component: DashboardLayout,
             slots: {
-              sidebar: {
-                fallback: { id: 'dashboard.nested.sidebar.fallback', component: SettingsSidebar },
-              },
+              sidebar: SettingsSidebar,
             },
           },
         },
@@ -99,7 +92,7 @@ describe('resolveSlots', () => {
 
     expect(getResolvedSlot(indexMatch.slots, 'dashboard', 'sidebar')).toMatchObject({
       status: 'fallback',
-      fallback: { id: 'dashboard.sidebar.fallback' },
+      fallback: { ownerRouteId: 'dashboard' },
       meta: { section: 'root' },
     });
     expect(getResolvedSlot(indexMatch.slots, 'dashboard', 'modal')).toMatchObject({
@@ -112,16 +105,16 @@ describe('resolveSlots', () => {
     });
   });
 
-  test('supports child fallback overrides and child disabling with false', () => {
+  test('supports child fallback overrides and declaration-only child slots', () => {
     const settingsMatch = expectMatch('/dashboard/settings');
     const fullscreenMatch = expectMatch('/dashboard/fullscreen');
 
     expect(getResolvedSlot(settingsMatch.slots, 'dashboard', 'sidebar')).toMatchObject({
       status: 'fallback',
-      fallback: { id: 'dashboard.settings.sidebar.fallback' },
+      fallback: { ownerRouteId: 'dashboard.settings' },
     });
     expect(getResolvedSlot(fullscreenMatch.slots, 'dashboard', 'sidebar')).toMatchObject({
-      status: 'disabled',
+      status: 'empty',
     });
   });
 
@@ -130,11 +123,11 @@ describe('resolveSlots', () => {
 
     expect(getResolvedSlot(nestedMatch.slots, 'dashboard', 'sidebar')).toMatchObject({
       status: 'fallback',
-      fallback: { id: 'dashboard.sidebar.fallback' },
+      fallback: { ownerRouteId: 'dashboard' },
     });
     expect(getResolvedSlot(nestedMatch.slots, 'dashboard.nested', 'sidebar')).toMatchObject({
       status: 'fallback',
-      fallback: { id: 'dashboard.nested.sidebar.fallback' },
+      fallback: { ownerRouteId: 'dashboard.nested' },
     });
   });
 

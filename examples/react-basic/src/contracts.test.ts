@@ -22,7 +22,7 @@ describe('react-basic generated contracts', () => {
       const hash = useHash('users.show');
 
       expectTypeOf(params).toEqualTypeOf<{ id: string }>();
-      expectTypeOf(search).toEqualTypeOf<{ tab?: string }>();
+      expectTypeOf(search).toEqualTypeOf<{ tab?: string | readonly string[] }>();
       expectTypeOf(hash).toEqualTypeOf<'profile' | 'settings' | 'security' | null>();
     }
 

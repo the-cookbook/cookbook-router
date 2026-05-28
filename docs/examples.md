@@ -54,9 +54,9 @@ Use this example when learning the minimal app setup.
 Shows:
 
 - layout slots
-- slot fallbacks
+- slot defaults
 - matched slot routes
-- disabled inherited slots
+- declaration-only slots
 - outlet and slot context
 - entry redirect from `/` to `/dashboard`
 

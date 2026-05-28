@@ -29,25 +29,19 @@ export type RouteRedirect =
       readonly hash?: string | null;
     };
 
-export interface RouteSlotFallback {
-  readonly id?: string;
-  readonly component: RouteComponent;
-  readonly meta?: RouteMeta;
-}
-
 export interface RouteSlotConfig {
-  readonly fallback?: RouteSlotFallback | null;
+  readonly component?: RouteComponent;
   readonly routes?: readonly RouteDefinition[];
   readonly meta?: RouteMeta;
 }
 
-export type RouteSlotDefinition = RouteSlotConfig | false;
+export type RouteSlotDefinition = RouteComponent | RouteSlotConfig | true;
 export type RouteSlotDefinitions = Readonly<Record<string, RouteSlotDefinition>>;
 
 export interface RouteLayoutDefinition {
   readonly component?: RouteComponent;
   readonly loading?: RouteComponent;
-  readonly errorFallback?: RouteComponent;
+  readonly error?: RouteComponent;
   readonly slots?: RouteSlotDefinitions;
 }
 
@@ -64,7 +58,7 @@ export interface RouteDefinition {
   readonly hash?: readonly string[];
   readonly meta?: RouteMeta;
   readonly loading?: RouteComponent;
-  readonly errorFallback?: RouteComponent;
+  readonly error?: RouteComponent;
   readonly lifecycle?: RouteLifecycle;
   readonly middleware?: readonly Middleware[];
 }
@@ -78,7 +72,6 @@ export interface RouteParamDefinition {
 }
 
 export interface NormalizedRouteSlotFallback {
-  readonly id: string;
   readonly ownerRouteId: string;
   readonly slotName: string;
   readonly component: RouteComponent;

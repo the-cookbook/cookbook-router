@@ -123,29 +123,29 @@ interface RouteDefinition {
   readonly hash?: readonly string[];
   readonly meta?: RouteMeta;
   readonly loading?: RouteComponent;
-  readonly errorFallback?: RouteComponent;
+  readonly error?: RouteComponent;
   readonly lifecycle?: RouteLifecycle;
   readonly middleware?: readonly Middleware[];
 }
 ```
 
-| Field           | Purpose                                                                                                                   |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `id`            | Stable public route ID used by links, hrefs, navigation, redirects, generated contracts, and tests.                       |
-| `path`          | Local path segment or absolute path. Index routes must not define `path`.                                                 |
-| `index`         | Marks the route as the default child for its parent path.                                                                 |
-| `component`     | Route component or framework-owned render value. The core package treats it as `unknown`.                                 |
-| `layout`        | Layout component, layout-level loading/error fallbacks, and named slot definitions.                                       |
-| `children`      | Primary child routes.                                                                                                     |
-| `intercepts`    | Configured route interception targets for named slots.                                                                    |
-| `redirect`      | Internal route redirect object or literal href string.                                                                    |
-| `search`        | Search key schema used by generated contracts. `type: 'one'` is a single value; `type: 'many'` is a repeated query param. |
-| `hash`          | Allowed hash values used by generated contracts.                                                                          |
-| `meta`          | Arbitrary route metadata.                                                                                                 |
-| `loading`       | Route-local React Suspense fallback component. It is not inherited by child routes.                                       |
-| `errorFallback` | Route-local React error-boundary fallback component. It is not inherited by child routes.                                 |
-| `lifecycle`     | Route lifecycle hooks.                                                                                                    |
-| `middleware`    | Route-specific middleware pipeline.                                                                                       |
+| Field        | Purpose                                                                                                                   |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `id`         | Stable public route ID used by links, hrefs, navigation, redirects, generated contracts, and tests.                       |
+| `path`       | Local path segment or absolute path. Index routes must not define `path`.                                                 |
+| `index`      | Marks the route as the default child for its parent path.                                                                 |
+| `component`  | Route component or framework-owned render value. The core package treats it as `unknown`.                                 |
+| `layout`     | Layout component, layout-level loading/error fallbacks, and named slot definitions.                                       |
+| `children`   | Primary child routes.                                                                                                     |
+| `intercepts` | Configured route interception targets for named slots.                                                                    |
+| `redirect`   | Internal route redirect object or literal href string.                                                                    |
+| `search`     | Search key schema used by generated contracts. `type: 'one'` is a single value; `type: 'many'` is a repeated query param. |
+| `hash`       | Allowed hash values used by generated contracts.                                                                          |
+| `meta`       | Arbitrary route metadata.                                                                                                 |
+| `loading`    | Route-local React Suspense fallback component. It is not inherited by child routes.                                       |
+| `error`      | Route-local React error-boundary fallback component. It is not inherited by child routes.                                 |
+| `lifecycle`  | Route lifecycle hooks.                                                                                                    |
+| `middleware` | Route-specific middleware pipeline.                                                                                       |
 
 #### `RouteLayoutDefinition`
 
@@ -153,17 +153,17 @@ interface RouteDefinition {
 interface RouteLayoutDefinition {
   readonly component?: RouteComponent;
   readonly loading?: RouteComponent;
-  readonly errorFallback?: RouteComponent;
+  readonly error?: RouteComponent;
   readonly slots?: RouteSlotDefinitions;
 }
 ```
 
-| Field           | Purpose                                                                                                                               |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `component`     | Layout component that renders the route outlet and any layout slots.                                                                  |
-| `loading`       | Layout-level React Suspense fallback shared with the route component and descendant routes that do not define their own `loading`.    |
-| `errorFallback` | Layout-level React error fallback shared with the route component and descendant routes that do not define their own `errorFallback`. |
-| `slots`         | Named layout slot definitions for fallback, slot route, and disabled slot behavior.                                                   |
+| Field       | Purpose                                                                                                                            |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------- | --- |
+| `component` | Layout component that renders the route outlet and any layout slots.                                                               |
+| `loading`   | Layout-level React Suspense fallback shared with the route component and descendant routes that do not define their own `loading`. |
+| `error`     | Layout-level React error fallback shared with the route component and descendant routes that do not define their own `error`.      |
+| `slots`     | Named layout slot definitions. Values may be a component, `{ component?, meta?, routes? }`, or `true` for declaration-only slots.  |     |
 
 Layout loading and error fallback components render at the layout outlet position, so the layout shell remains mounted while child content is loading or has failed. Route-level fallbacks are local to that route and are not shared with child routes.
 
@@ -743,7 +743,7 @@ interface SlotProps<T = unknown> {
 function Slot<T = unknown>(props: SlotProps<T>): ReactElement | null;
 ```
 
-Renders a named layout slot. A slot can render a matched slot route, fallback, intercepted destination, not-found component, or nothing.
+Renders a named layout slot. A slot can render a matched slot route, default slot component, intercepted destination, not-found component, or nothing.
 
 ### React hooks
 

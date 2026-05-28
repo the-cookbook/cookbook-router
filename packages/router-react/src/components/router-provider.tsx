@@ -310,7 +310,7 @@ function resolveLayoutLoading(match: MatchedRoute): ResolvedLoadingFallback | un
 }
 
 function resolveRouteErrorFallback(match: MatchedRoute): ResolvedErrorFallback | undefined {
-  const component = match.route.route.errorFallback;
+  const component = match.route.route.error;
 
   if (component === undefined) {
     return undefined;
@@ -320,7 +320,7 @@ function resolveRouteErrorFallback(match: MatchedRoute): ResolvedErrorFallback |
 }
 
 function resolveLayoutErrorFallback(match: MatchedRoute): ResolvedErrorFallback | undefined {
-  const component = match.route.route.layout?.errorFallback;
+  const component = match.route.route.layout?.error;
 
   if (component === undefined) {
     return undefined;

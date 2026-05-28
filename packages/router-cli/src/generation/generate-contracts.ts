@@ -6,7 +6,6 @@ import type {
   RouteDefinition,
   RouterPathOptions,
   RouteParamDefinition,
-  RouteSearchValueSchema,
 } from '@cookbook/router';
 
 interface GeneratedRouteContract {
@@ -116,14 +115,14 @@ function renderSearch(search: RouteDefinition['search']): string {
 
   const entries = Object.entries(search).map(([key, value]) => {
     const optional = value.optional ? '?' : '';
-    return `${quoteProperty(key)}${optional}: ${renderSearchValue(value)}`;
+    return `${quoteProperty(key)}${optional}: ${renderSearchValue()}`;
   });
 
   return renderObject(entries);
 }
 
-function renderSearchValue(value: RouteSearchValueSchema): string {
-  return value.type === 'many' ? 'string | readonly string[]' : 'string';
+function renderSearchValue(): string {
+  return 'string | readonly string[]';
 }
 
 function renderHash(hash: RouteDefinition['hash']): string {

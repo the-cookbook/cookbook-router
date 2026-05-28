@@ -16,7 +16,7 @@ export interface RouteParams {
 export interface RouteSearch {
   entry: {};
   create: {};
-  overview: { visitors?: string };
+  overview: { visitors?: string | readonly string[] };
   users: {};
   'users.index': {};
   'users.details': {};
@@ -73,7 +73,17 @@ export interface RouteOutletContext {
   'not-found': {};
 }
 
-export const routeIds = ['entry', 'create', 'overview', 'users', 'users.index', 'users.details', 'reports', 'broken-page', 'not-found'] as const;
+export const routeIds = [
+  'entry',
+  'create',
+  'overview',
+  'users',
+  'users.index',
+  'users.details',
+  'reports',
+  'broken-page',
+  'not-found',
+] as const;
 export const routePaths = {
   entry: '/',
   create: '/create',

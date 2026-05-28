@@ -12,7 +12,7 @@ export interface RouteSearch {
   entry: {};
   gallery: {};
   'gallery.index': {};
-  'photos.show': { source?: string };
+  'photos.show': { source?: string | readonly string[] };
 }
 
 export interface RouteHash {

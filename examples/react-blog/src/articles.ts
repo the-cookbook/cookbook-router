@@ -83,7 +83,7 @@ export const articles: readonly Article[] = [
     body: [
       'This article is part of the demo dataset and is designed to simulate a broken route render.',
       'When users open this article, the page should throw a controlled error so the configured route error component is displayed.',
-      'Use this entry to verify that loading, error fallback, and route-level recovery behavior work as expected.',
+      'Use this entry to verify that loading, route error UI, and route-level recovery behavior work as expected.',
     ],
     category: 'Engineering',
     tags: ['Error Boundary', 'Fallback UI', 'Routing'],

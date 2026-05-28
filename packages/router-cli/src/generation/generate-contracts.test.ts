@@ -40,18 +40,19 @@ describe('generateContracts', () => {
     expect(output).toContain('slug: string');
   });
 
-  test('generates contracts for slot routes and disabled slot fallbacks', () => {
+  test('generates contracts for slot routes and declaration-only slots', () => {
     const output = generateContracts([
       {
         id: 'dashboard',
         path: '/dashboard',
         layout: {
+          component: () => null,
           slots: {
             sidebar: {
-              fallback: { id: 'dashboard.sidebar.fallback', component: () => null },
+              component: () => null,
               routes: [{ id: 'dashboard.sidebar.activity', path: 'activity/{itemId:int}' }],
             },
-            modal: false,
+            modal: true,
           },
         },
         children: [{ id: 'dashboard.home', index: true }],

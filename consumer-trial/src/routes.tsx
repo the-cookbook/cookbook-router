@@ -23,12 +23,9 @@ export const routes = defineRoutes([
       component: RootLayout,
       slots: {
         sidebar: {
-          fallback: {
-            id: 'root.sidebar.fallback',
-            component: RootSidebarFallback,
-            meta: {
-              title: 'Sidebar',
-            },
+          component: RootSidebarFallback,
+          meta: {
+            title: 'Sidebar',
           },
           routes: [
             {
@@ -41,9 +38,7 @@ export const routes = defineRoutes([
             },
           ],
         },
-        modal: {
-          fallback: null,
-        },
+        modal: true,
       },
     },
     children: [
@@ -100,9 +95,7 @@ export const routes = defineRoutes([
         layout: {
           component: BlogLayout,
           slots: {
-            modal: {
-              fallback: null,
-            },
+            modal: true,
           },
         },
         intercepts: {

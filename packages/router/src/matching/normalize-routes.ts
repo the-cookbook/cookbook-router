@@ -9,11 +9,11 @@ import { normalizeConfiguredIntercepts } from '../resolution/resolve-intercepts'
 import type {
   NormalizedRoute,
   NormalizedRouteSlotConfig,
-  NormalizedRouteSlotFallback,
   NormalizedRouteSlots,
   RouteDefinition,
   RouteParamDefinition,
   RouteSlotConfig,
+  RouteSlotDefinition,
 } from '../routes/contracts';
 
 interface NormalizeContext {
@@ -110,16 +110,6 @@ function normalizeLayoutSlots(
   const normalized: Record<string, NormalizedRouteSlotConfig> = {};
 
   for (const [slotName, slot] of Object.entries(slots)) {
-    if (slot === false) {
-      normalized[slotName] = {
-        ownerRouteId: route.id,
-        name: slotName,
-        routes: [],
-        disabled: true,
-      };
-      continue;
-    }
-
     normalized[slotName] = normalizeSlotConfig(route.id, slotName, slot, context);
   }
 
@@ -129,11 +119,11 @@ function normalizeLayoutSlots(
 function normalizeSlotConfig(
   ownerRouteId: string,
   slotName: string,
-  slot: RouteSlotConfig,
+  slot: RouteSlotDefinition,
   context: Omit<NormalizeContext, 'parentId' | 'slotOwnerId' | 'slotName'>,
 ): NormalizedRouteSlotConfig {
-  const fallback = normalizeSlotFallback(ownerRouteId, slotName, slot);
-  const routes = (slot.routes ?? []).map((slotRoute) =>
+  const config = normalizeSlotDefinition(slot);
+  const routes = (config.routes ?? []).map((slotRoute) =>
     normalizeRoute(slotRoute, {
       parentId: ownerRouteId,
       ...(context.parentPath === undefined ? {} : { parentPath: context.parentPath }),
@@ -148,39 +138,46 @@ function normalizeSlotConfig(
   return {
     ownerRouteId,
     name: slotName,
-    ...(fallback === undefined ? {} : { fallback }),
+    ...(config.component === undefined
+      ? {}
+      : {
+          fallback: {
+            ownerRouteId,
+            slotName,
+            component: config.component,
+            ...(config.meta === undefined ? {} : { meta: config.meta }),
+          },
+        }),
     routes,
-    ...(slot.meta === undefined ? {} : { meta: slot.meta }),
+    ...(config.meta === undefined ? {} : { meta: config.meta }),
     disabled: false,
   };
 }
 
-function normalizeSlotFallback(
-  ownerRouteId: string,
-  slotName: string,
-  slot: RouteSlotConfig,
-): NormalizedRouteSlotFallback | null | undefined {
-  if (!Object.prototype.hasOwnProperty.call(slot, 'fallback')) {
-    return undefined;
+function normalizeSlotDefinition(slot: RouteSlotDefinition): RouteSlotConfig {
+  if (slot === true) {
+    return {};
   }
 
-  if (slot.fallback === null) {
-    return null;
+  if (isSlotConfigObject(slot)) {
+    return slot;
   }
 
-  if (!slot.fallback) {
-    return undefined;
+  return { component: slot };
+}
+
+function isSlotConfigObject(slot: RouteSlotDefinition): slot is RouteSlotConfig {
+  if (!slot || typeof slot !== 'object' || Array.isArray(slot)) {
+    return false;
   }
 
-  const id = slot.fallback.id ?? `${ownerRouteId}.${slotName}.fallback`;
-
-  return {
-    id,
-    ownerRouteId,
-    slotName,
-    component: slot.fallback.component,
-    ...(slot.fallback.meta === undefined ? {} : { meta: slot.fallback.meta }),
-  };
+  return (
+    Object.prototype.hasOwnProperty.call(slot, 'component') ||
+    Object.prototype.hasOwnProperty.call(slot, 'meta') ||
+    Object.prototype.hasOwnProperty.call(slot, 'routes') ||
+    Object.prototype.hasOwnProperty.call(slot, 'fallback') ||
+    Object.prototype.hasOwnProperty.call(slot, 'id')
+  );
 }
 
 function getOwnRouteParams(route: RouteDefinition): readonly RouteParamDefinition[] {

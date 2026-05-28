@@ -353,7 +353,7 @@ describe('RouterProvider', () => {
           id: 'reports',
           path: '/reports',
           component: AboutPage,
-          layout: { component: PersistentLayout, errorFallback: ErrorFallback },
+          layout: { component: PersistentLayout, error: ErrorFallback },
         },
       ] as const),
       initialEntries: ['/overview'],
@@ -567,7 +567,7 @@ describe('RouterProvider', () => {
     expect(await findByText('global loading')).toBeTruthy();
   });
 
-  test('renders route errorFallback when route component throws', async () => {
+  test('renders route error when route component throws', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     function BrokenPage(): never {
@@ -584,7 +584,7 @@ describe('RouterProvider', () => {
           id: 'article',
           path: '/',
           component: BrokenPage,
-          errorFallback: ArticleErrorFallback,
+          error: ArticleErrorFallback,
         },
       ] as const),
     });
@@ -596,7 +596,7 @@ describe('RouterProvider', () => {
     consoleError.mockRestore();
   });
 
-  test('renders nearest layout errorFallback for child route errors', async () => {
+  test('renders nearest layout error for child route errors', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     function BrokenPage(): never {
@@ -612,7 +612,7 @@ describe('RouterProvider', () => {
         {
           id: 'root',
           path: '/',
-          layout: { component: Layout, errorFallback: LayoutErrorFallback },
+          layout: { component: Layout, error: LayoutErrorFallback },
           children: [{ id: 'broken', index: true, component: BrokenPage }],
         },
       ] as const),
@@ -625,7 +625,7 @@ describe('RouterProvider', () => {
     consoleError.mockRestore();
   });
 
-  test('renders same-route layout errorFallback inside that route layout outlet', async () => {
+  test('renders same-route layout error inside that route layout outlet', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     function BrokenPage(): never {
@@ -653,7 +653,7 @@ describe('RouterProvider', () => {
           id: 'dashboard',
           path: '/',
           component: BrokenPage,
-          layout: { component: ErrorLayout, errorFallback: LayoutErrorFallback },
+          layout: { component: ErrorLayout, error: LayoutErrorFallback },
         },
       ] as const),
     });
@@ -666,7 +666,7 @@ describe('RouterProvider', () => {
     consoleError.mockRestore();
   });
 
-  test('does not share route-level errorFallback with child routes', async () => {
+  test('does not share route-level error with child routes', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     function BrokenPage(): never {
@@ -687,7 +687,7 @@ describe('RouterProvider', () => {
           id: 'parent',
           path: '/',
           component: Layout,
-          errorFallback: ParentRouteErrorFallback,
+          error: ParentRouteErrorFallback,
           children: [{ id: 'child', index: true, component: BrokenPage }],
         },
       ] as const),
@@ -703,7 +703,7 @@ describe('RouterProvider', () => {
     consoleError.mockRestore();
   });
 
-  test('renders global errorFallback when no route errorFallback exists', async () => {
+  test('renders global error when no route error exists', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     function BrokenPage(): never {
@@ -727,7 +727,7 @@ describe('RouterProvider', () => {
     consoleError.mockRestore();
   });
 
-  test('allows route errorFallback to reset after the thrown error is fixed', async () => {
+  test('allows route error to reset after the thrown error is fixed', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     let shouldThrow = true;
 
@@ -753,7 +753,7 @@ describe('RouterProvider', () => {
           id: 'article',
           path: '/',
           component: MaybeBrokenPage,
-          errorFallback: ArticleErrorFallback,
+          error: ArticleErrorFallback,
         },
       ] as const),
     });

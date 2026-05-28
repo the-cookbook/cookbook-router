@@ -24,7 +24,7 @@ describe('react-slots example', () => {
     expectTypeOf<{ user: string }>().toEqualTypeOf<{ user: string }>();
   });
 
-  test('renders slot route, child fallback override, and disabled slot behavior', async () => {
+  test('renders slot route, child slot override, and declaration-only empty slot behavior', async () => {
     const router = createTestRouter(['/dashboard/activity']);
     await router.resolveCurrent();
     const activity = render(<App router={router} />);

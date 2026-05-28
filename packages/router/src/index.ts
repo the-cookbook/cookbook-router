@@ -30,7 +30,6 @@ export type {
   RouteSlotConfig,
   RouteSlotDefinition,
   RouteSlotDefinitions,
-  RouteSlotFallback,
 } from './routes/contracts';
 export type {
   RouterPathConstraint,

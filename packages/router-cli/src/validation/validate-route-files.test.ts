@@ -103,6 +103,82 @@ export const routes = defineRoutes([
     }
   });
 
+  test('loads static route modules with slot component shorthand and declaration-only slots', async () => {
+    const fs = createMemoryFileSystem({
+      'src/routes.tsx': `import { defineRoutes } from '@cookbook/router';
+import { LayoutPage, HeaderPage, ModalPage, HomePage } from './pages';
+
+export const routes = defineRoutes([
+  {
+    id: 'root',
+    path: '/',
+    layout: {
+      component: LayoutPage,
+      slots: {
+        header: HeaderPage,
+        modal: true,
+      },
+    },
+    intercepts: {
+      modal: {
+        to: ['/modal'],
+        component: ModalPage,
+      },
+    },
+    children: [
+      { id: 'home', index: true, component: HomePage },
+    ],
+  },
+  { id: 'modal', path: '/modal', component: ModalPage },
+] as const);
+`,
+    });
+
+    const sources = await loadRouteFiles({ routeFiles: ['src/routes.tsx'], fs });
+
+    expect(sources[0]?.routes[0]?.id).toBe('root');
+    expect(sources[0]?.routes[0]?.layout?.slots).toEqual({
+      header: expect.any(Function),
+      modal: true,
+    });
+  });
+
+  test('loads static route modules with slot object component definitions', async () => {
+    const fs = createMemoryFileSystem({
+      'src/routes.tsx': `import { defineRoutes } from '@cookbook/router';
+import { LayoutPage, HeaderPage, HomePage } from './pages';
+
+export const routes = defineRoutes([
+  {
+    id: 'root',
+    path: '/',
+    layout: {
+      component: LayoutPage,
+      slots: {
+        header: {
+          component: HeaderPage,
+          meta: { title: 'Header' },
+        },
+      },
+    },
+    children: [
+      { id: 'home', index: true, component: HomePage },
+    ],
+  },
+] as const);
+`,
+    });
+
+    const sources = await loadRouteFiles({ routeFiles: ['src/routes.tsx'], fs });
+
+    expect(sources[0]?.routes[0]?.layout?.slots).toEqual({
+      header: {
+        component: expect.any(Function),
+        meta: { title: 'Header' },
+      },
+    });
+  });
+
   test('loads defineRoutes call after imports and typed declarations', async () => {
     const fs = createMemoryFileSystem({
       'src/routes.tsx': `import { defineRoutes } from '@cookbook/router';

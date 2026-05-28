@@ -2,19 +2,18 @@ import { describe, expect, test } from 'vitest';
 import { validateRoutes } from './validate-routes';
 
 describe('validateRoutes', () => {
-  test('accepts valid route trees, slot fallbacks, and slot routes', () => {
+  test('accepts valid route trees, slot defaults, declaration-only slots, and slot routes', () => {
     expect(() =>
       validateRoutes([
         {
           id: 'dashboard',
           path: '/dashboard',
           layout: {
+            component: {},
             slots: {
               sidebar: {
-                fallback: {
-                  id: 'dashboard.sidebar.fallback',
-                  component: {},
-                },
+                component: {},
+                meta: { chrome: true },
                 routes: [
                   {
                     id: 'dashboard.sidebar.activity',
@@ -22,10 +21,7 @@ describe('validateRoutes', () => {
                   },
                 ],
               },
-              modal: {
-                fallback: null,
-              },
-              disabled: false,
+              modal: true,
             },
           },
           children: [
@@ -83,17 +79,16 @@ describe('validateRoutes', () => {
     );
   });
 
-  test('rejects invalid slot names and duplicate fallback ids', () => {
+  test('rejects invalid slot names and removed slot forms', () => {
     expect(() =>
       validateRoutes([
         {
           id: 'root',
           path: '/',
           layout: {
+            component: {},
             slots: {
-              '': {
-                fallback: null,
-              },
+              '': true,
             },
           },
         },
@@ -106,37 +101,52 @@ describe('validateRoutes', () => {
           id: 'root',
           path: '/',
           layout: {
+            component: {},
             slots: {
               sidebar: {
-                fallback: {
-                  id: 'root',
-                  component: {},
-                },
-              },
+                id: 'root.sidebar',
+                component: {},
+              } as never,
             },
           },
         },
       ]),
-    ).toThrow('Duplicate route id "root"');
+    ).toThrow('slot ids are no longer supported');
+
+    expect(() =>
+      validateRoutes([
+        {
+          id: 'root',
+          path: '/',
+          layout: {
+            component: {},
+            slots: {
+              sidebar: {
+                fallback: { component: {} },
+              } as never,
+            },
+          },
+        },
+      ]),
+    ).toThrow('slot fallbacks are no longer supported');
   });
 });
 
-test('rejects invalid slot fallback and routes configuration', () => {
+test('rejects invalid slot object and routes configuration', () => {
   expect(() =>
     validateRoutes([
       {
         id: 'root',
         path: '/',
         layout: {
+          component: {},
           slots: {
-            sidebar: {
-              fallback: {} as never,
-            },
+            sidebar: false as never,
           },
         },
       },
     ]),
-  ).toThrow('fallback must define component');
+  ).toThrow('invalid configuration for slot');
 
   expect(() =>
     validateRoutes([
@@ -144,6 +154,7 @@ test('rejects invalid slot fallback and routes configuration', () => {
         id: 'root',
         path: '/',
         layout: {
+          component: {},
           slots: {
             sidebar: {
               routes: {} as never,
@@ -160,6 +171,7 @@ test('rejects invalid slot fallback and routes configuration', () => {
         id: 'root',
         path: '/',
         layout: {
+          component: {},
           slots: {
             sidebar: {
               routes: [{ id: 'bad.slot', path: '/bad/{id:number}' }],
@@ -178,6 +190,7 @@ test('allows a slot route to share the primary branch URL it decorates', () => {
         id: 'dashboard',
         path: '/dashboard',
         layout: {
+          component: {},
           slots: {
             sidebar: {
               routes: [{ id: 'dashboard.sidebar.activity', path: 'activity/{id:int}' }],
@@ -197,6 +210,7 @@ test('allows the same path in different layout slot scopes', () => {
         id: 'dashboard',
         path: '/dashboard',
         layout: {
+          component: {},
           slots: {
             sidebar: {
               routes: [{ id: 'dashboard.sidebar.activity', path: 'activity/{id:int}' }],
@@ -218,6 +232,7 @@ test('rejects duplicate route paths inside the same layout slot scope', () => {
         id: 'dashboard',
         path: '/dashboard',
         layout: {
+          component: {},
           slots: {
             sidebar: {
               routes: [
@@ -274,4 +289,113 @@ test('validates search param cardinality descriptors', () => {
       { id: 'bad', path: '/', search: { query: { type: 'one', optional: 'yes' } } } as never,
     ]),
   ).toThrow('optional must be a boolean');
+});
+
+test('rejects layout fallbacks and slots when no layout component is in scope', () => {
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'standalone',
+        path: '/standalone',
+        component: {},
+        layout: { loading: {}, error: {} },
+      },
+    ]),
+  ).toThrow('no active layout component exists');
+
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'standalone',
+        path: '/standalone',
+        component: {},
+        layout: { slots: { modal: true } },
+      },
+    ]),
+  ).toThrow('declares layout.slots');
+});
+
+test('rejects child slot declarations that do not target an active declared slot', () => {
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'users',
+        path: '/users',
+        layout: { component: {} },
+        children: [
+          {
+            id: 'users.details',
+            path: '{slug}',
+            layout: { slots: { header: {} } },
+          },
+        ],
+      },
+    ]),
+  ).toThrow('declares slot "header"');
+});
+
+test('allows child slot declarations when an ancestor layout declares the slot', () => {
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'users',
+        path: '/users',
+        layout: { component: {}, slots: { header: true } },
+        children: [
+          {
+            id: 'users.details',
+            path: '{slug}',
+            layout: { slots: { header: {} } },
+          },
+        ],
+      },
+    ]),
+  ).not.toThrow();
+});
+
+test('rejects intercepts targeting undeclared slots', () => {
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'overview',
+        path: '/overview',
+        layout: { component: {}, slots: { header: true } },
+        intercepts: { modal: { to: ['/create'], component: {} } },
+      },
+      { id: 'create', path: '/create', component: {} },
+    ]),
+  ).toThrow('configures intercept slot "modal"');
+});
+
+test('allows intercepts targeting declared slots', () => {
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'overview',
+        path: '/overview',
+        layout: { component: {}, slots: { modal: true } },
+        intercepts: { modal: { to: ['/create'], component: {} } },
+      },
+      { id: 'create', path: '/create', component: {} },
+    ]),
+  ).not.toThrow();
+});
+
+test('rejects removed route and layout errorFallback properties', () => {
+  expect(() =>
+    validateRoutes([
+      { id: 'article', path: '/article', component: {}, errorFallback: {} } as never,
+    ]),
+  ).toThrow('route errorFallback is no longer supported');
+
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'article',
+        path: '/article',
+        component: {},
+        layout: { component: {}, errorFallback: {} },
+      } as never,
+    ]),
+  ).toThrow('layout errorFallback is no longer supported');
 });

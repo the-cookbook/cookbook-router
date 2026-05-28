@@ -537,20 +537,168 @@ function extractBalancedArray(path: string, contents: string, start: number): st
 }
 
 function sanitizeRoutesLiteral(source: string): string {
-  return replaceStaticRouteProperties(source, {
-    beforeEnter: 'undefined',
-    afterEnter: 'undefined',
-    beforeLeave: 'undefined',
-    onError: 'undefined',
-    beforeNavigate: 'undefined',
-    afterNavigate: 'undefined',
-    onNavigationError: 'undefined',
-    component: '__cookbookRouteComponent',
-    element: '__cookbookRouteComponent',
-    loading: '__cookbookRouteComponent',
-    errorFallback: '__cookbookRouteComponent',
-    middleware: '[]',
-  });
+  return sanitizeRouteSlotShorthand(
+    replaceStaticRouteProperties(source, {
+      beforeEnter: 'undefined',
+      afterEnter: 'undefined',
+      beforeLeave: 'undefined',
+      onError: 'undefined',
+      beforeNavigate: 'undefined',
+      afterNavigate: 'undefined',
+      onNavigationError: 'undefined',
+      component: '__cookbookRouteComponent',
+      element: '__cookbookRouteComponent',
+      loading: '__cookbookRouteComponent',
+      error: '__cookbookRouteComponent',
+      middleware: '[]',
+    }),
+  );
+}
+
+function sanitizeRouteSlotShorthand(source: string): string {
+  let output = '';
+  let index = 0;
+
+  while (index < source.length) {
+    const char = source[index];
+
+    if (!char) {
+      break;
+    }
+
+    if (isQuote(char)) {
+      const end = readQuoted(source, index);
+      output += source.slice(index, end);
+      index = end;
+      continue;
+    }
+
+    if (startsLineComment(source, index)) {
+      const end = readLineComment(source, index);
+      output += source.slice(index, end);
+      index = end;
+      continue;
+    }
+
+    if (startsBlockComment(source, index)) {
+      const end = readBlockComment(source, index);
+      output += source.slice(index, end);
+      index = end;
+      continue;
+    }
+
+    const key = readObjectPropertyKey(source, index);
+
+    if (!key || key.name !== 'slots') {
+      output += char;
+      index += 1;
+      continue;
+    }
+
+    const colonIndex = skipWhitespace(source, key.end);
+
+    if (source[colonIndex] !== ':') {
+      output += source.slice(index, key.end);
+      index = key.end;
+      continue;
+    }
+
+    const valueStart = skipWhitespace(source, colonIndex + 1);
+
+    if (source[valueStart] !== '{') {
+      output += source.slice(index, valueStart);
+      output += '{}';
+      index = readPropertyValue(source, valueStart);
+      continue;
+    }
+
+    const valueEnd = readPropertyValue(source, valueStart);
+    output += source.slice(index, valueStart);
+    output += sanitizeSlotDefinitionsObject(source.slice(valueStart, valueEnd));
+    index = valueEnd;
+  }
+
+  return output;
+}
+
+function sanitizeSlotDefinitionsObject(source: string): string {
+  let output = source[0] ?? '';
+  let index = 1;
+
+  while (index < source.length) {
+    const char = source[index];
+
+    if (!char) {
+      break;
+    }
+
+    if (isQuote(char)) {
+      const end = readQuoted(source, index);
+      output += source.slice(index, end);
+      index = end;
+      continue;
+    }
+
+    if (startsLineComment(source, index)) {
+      const end = readLineComment(source, index);
+      output += source.slice(index, end);
+      index = end;
+      continue;
+    }
+
+    if (startsBlockComment(source, index)) {
+      const end = readBlockComment(source, index);
+      output += source.slice(index, end);
+      index = end;
+      continue;
+    }
+
+    if (char === '}') {
+      output += char;
+      index += 1;
+      continue;
+    }
+
+    const key = readObjectPropertyKey(source, index);
+
+    if (!key) {
+      output += char;
+      index += 1;
+      continue;
+    }
+
+    const colonIndex = skipWhitespace(source, key.end);
+
+    if (source[colonIndex] !== ':') {
+      output += source.slice(index, key.end);
+      index = key.end;
+      continue;
+    }
+
+    const valueStart = skipWhitespace(source, colonIndex + 1);
+    const valueEnd = readPropertyValue(source, valueStart);
+    const rawValue = source.slice(valueStart, valueEnd);
+    const trimmedValue = rawValue.trim();
+
+    output += source.slice(index, valueStart);
+    output += shouldPreserveStaticSlotValue(trimmedValue) ? rawValue : '__cookbookRouteComponent';
+    index = valueEnd;
+  }
+
+  return output;
+}
+
+function shouldPreserveStaticSlotValue(value: string): boolean {
+  return (
+    value === 'true' ||
+    value === 'false' ||
+    value === 'null' ||
+    value.startsWith('{') ||
+    value.startsWith('[') ||
+    value.startsWith('"') ||
+    value.startsWith("'") ||
+    value.startsWith('`')
+  );
 }
 
 function replaceStaticRouteProperties(

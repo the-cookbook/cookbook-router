@@ -112,7 +112,7 @@ export function DashboardLayout() {
 A slot can render:
 
 - a matched slot route
-- a slot fallback
+- a slot default
 - an intercepted destination
 - nothing, when the slot is empty or disabled
 - a slot-level not-found component, when applicable
@@ -165,7 +165,7 @@ function DashboardErrorFallback() {
   layout: {
     component: DashboardLayout,
     loading: DashboardLoading,
-    errorFallback: DashboardErrorFallback,
+    error: DashboardErrorFallback,
   },
   children: [
     {
@@ -177,9 +177,9 @@ function DashboardErrorFallback() {
 }
 ```
 
-A route-level `loading` or `errorFallback` declared on the pending route takes precedence for that route only. It does not become shared fallback state for descendants. Put shared UI under `layout.loading` or `layout.errorFallback`. The provider keeps Suspense and error-boundary wrappers stable around route content, so navigating between routes that reuse the same layout updates the outlet content without remounting the unchanged layout shell.
+A route-level `loading` or `error` declared on the pending route takes precedence for that route only. It does not become shared fallback state for descendants. Put shared UI under `layout.loading` or `layout.error`. The provider keeps Suspense and error-boundary wrappers stable around route content, so navigating between routes that reuse the same layout updates the outlet content without remounting the unchanged layout shell.
 
-Use route-level `errorFallback` for errors thrown by that route component. Use `layout.errorFallback` when the layout should provide shared error UI for the route component and its descendant outlet tree.
+Use route-level `error` for errors thrown by that route component. Use `layout.error` when the layout should provide shared error UI for the route component and its descendant outlet tree.
 
 ```tsx
 import type { RouteErrorFallbackProps } from '@cookbook/router-react';
@@ -199,7 +199,7 @@ function ArticleErrorFallback(props: RouteErrorFallbackProps) {
   id: 'blog.articles.show',
   path: 'articles/{slug}',
   component: ArticlePage,
-  errorFallback: ArticleErrorFallback,
+  error: ArticleErrorFallback,
 }
 ```
 
@@ -214,7 +214,7 @@ function ArticleErrorFallback(props: RouteErrorFallbackProps) {
 />
 ```
 
-`fallback` is only the not-found UI. Use `loadingFallback` for Suspense and `errorFallback` for React render errors. Middleware and lifecycle errors remain router transition errors and continue to flow through router error handling.
+`fallback` is only the not-found UI. Use `loadingFallback` for Suspense and `errorFallback` for global React render errors. Middleware and lifecycle errors remain router transition errors and continue to flow through router error handling.
 
 ## Hooks
 

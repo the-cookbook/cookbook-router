@@ -149,12 +149,7 @@ export const routes = defineRoutes(
         component: LayoutPage,
         loading: LoadingSkeleton,
         slots: {
-          header: {
-            fallback: {
-              id: 'create.header.fallback',
-              component: AsyncCreateLayoutHeader,
-            },
-          },
+          header: AsyncCreateLayoutHeader,
         },
       },
       component: AsyncCreatePage,
@@ -167,15 +162,8 @@ export const routes = defineRoutes(
         component: LayoutPage,
         loading: LoadingSkeleton,
         slots: {
-          header: {
-            fallback: {
-              id: 'overview.header.fallback',
-              component: AsyncOverviewLayoutHeader,
-            },
-          },
-          modal: {
-            fallback: null,
-          },
+          header: AsyncOverviewLayoutHeader,
+          modal: true,
         },
       },
       intercepts: {
@@ -195,12 +183,7 @@ export const routes = defineRoutes(
         component: LayoutPage,
         loading: LoadingSkeleton,
         slots: {
-          header: {
-            fallback: {
-              id: 'users.header.fallback',
-              component: AsyncUsersLayoutHeader,
-            },
-          },
+          header: AsyncUsersLayoutHeader,
         },
       },
       children: [
@@ -215,12 +198,7 @@ export const routes = defineRoutes(
           component: AsyncUserDetailPage,
           layout: {
             slots: {
-              header: {
-                fallback: {
-                  id: 'users.details.header.fallback',
-                  component: AsyncUserDetailsLayoutHeader,
-                },
-              },
+              header: AsyncUserDetailsLayoutHeader,
             },
           },
         },
@@ -234,12 +212,7 @@ export const routes = defineRoutes(
         component: LayoutPage,
         loading: LoadingSkeleton,
         slots: {
-          header: {
-            fallback: {
-              id: 'reports.header.fallback',
-              component: AsyncReportsLayoutHeader,
-            },
-          },
+          header: AsyncReportsLayoutHeader,
         },
       },
     },
@@ -250,7 +223,7 @@ export const routes = defineRoutes(
       layout: {
         component: LayoutPage,
         loading: LoadingSkeleton,
-        errorFallback: ErrorPage,
+        error: ErrorPage,
       },
     },
     {

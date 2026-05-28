@@ -211,7 +211,7 @@ Generated contracts improve TypeScript inference. They do not replace runtime va
 - Params are still validated by path matching/compilation.
 - Search descriptors generate TypeScript contracts; they do not coerce runtime values.
 - Metadata shapes come from declared literal values.
-- Slot fallback IDs are not generated as route contracts.
+- Slot default IDs are not generated as route contracts.
 - Slot route IDs are generated when they are declared under `layout.slots.<name>.routes`.
 
 ## Troubleshooting contracts
@@ -228,9 +228,9 @@ Regenerate contracts:
 cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router
 ```
 
-### A slot fallback route ID disappeared
+### A slot default route ID disappeared
 
-That is expected. Slot fallbacks are fallback render definitions, not navigable routes. Use generics for fallback context:
+That is expected. Slot defaults are default render definitions, not navigable routes. Use generics for slot default context:
 
 ```tsx
 const context = useOutletContext<{ user: string }>();

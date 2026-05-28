@@ -11,7 +11,7 @@ export interface RouteParams {
 export interface RouteSearch {
   root: {};
   home: {};
-  'users.show': { tab?: string };
+  'users.show': { tab?: string | readonly string[] };
   blocked: {};
 }
 

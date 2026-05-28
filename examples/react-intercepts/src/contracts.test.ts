@@ -22,7 +22,7 @@ describe('react-intercepts generated contracts', () => {
       const hash = useHash('photos.show');
 
       expectTypeOf(params).toEqualTypeOf<{ id: string }>();
-      expectTypeOf(search).toEqualTypeOf<{ source?: string }>();
+      expectTypeOf(search).toEqualTypeOf<{ source?: string | readonly string[] }>();
       expectTypeOf(hash).toEqualTypeOf<'details' | 'comments' | null>();
     }
 

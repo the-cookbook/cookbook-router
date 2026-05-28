@@ -94,7 +94,7 @@ async function createRouter(initialEntries: readonly string[]): Promise<Router> 
           component: DashboardLayout,
           slots: {
             sidebar: {
-              fallback: { id: 'dashboard.sidebar.fallback', component: SidebarFallback },
+              component: SidebarFallback,
               routes: [
                 {
                   id: 'dashboard.sidebar.activity',
@@ -103,7 +103,7 @@ async function createRouter(initialEntries: readonly string[]): Promise<Router> 
                 },
               ],
             },
-            modal: { fallback: null },
+            modal: true,
             inspector: {
               routes: [
                 { id: 'dashboard.inspector.details', path: 'inspect', component: ActivitySidebar },
@@ -120,12 +120,7 @@ async function createRouter(initialEntries: readonly string[]): Promise<Router> 
             component: DashboardPage,
             layout: {
               slots: {
-                sidebar: {
-                  fallback: {
-                    id: 'dashboard.settings.sidebar.fallback',
-                    component: SettingsSidebar,
-                  },
-                },
+                sidebar: SettingsSidebar,
               },
             },
           },
@@ -135,7 +130,7 @@ async function createRouter(initialEntries: readonly string[]): Promise<Router> 
             component: DashboardPage,
             layout: {
               slots: {
-                sidebar: false,
+                sidebar: true,
               },
             },
           },
@@ -145,9 +140,7 @@ async function createRouter(initialEntries: readonly string[]): Promise<Router> 
             layout: {
               component: NestedLayout,
               slots: {
-                sidebar: {
-                  fallback: { id: 'dashboard.nested.sidebar.fallback', component: NestedSidebar },
-                },
+                sidebar: NestedSidebar,
               },
             },
             children: [{ id: 'dashboard.nested.index', index: true, component: DashboardPage }],
@@ -219,7 +212,7 @@ describe('Slot', () => {
           path: '/modal-source',
           layout: {
             component: ModalLayout,
-            slots: { modal: { fallback: null } },
+            slots: { modal: true },
           },
           intercepts: {
             modal: { to: ['/modal-target'], component: ModalPage },
@@ -257,7 +250,7 @@ describe('Slot', () => {
           path: '/modal-source',
           layout: {
             component: ModalLayout,
-            slots: { modal: { fallback: null } },
+            slots: { modal: true },
           },
           intercepts: {
             modal: { to: ['/modal-target'], component: ModalPage },
@@ -329,7 +322,7 @@ describe('Slot', () => {
           path: '/blog',
           layout: {
             component: BlogLayout,
-            slots: { modal: { fallback: null } },
+            slots: { modal: true },
           },
           intercepts: {
             modal: { to: ['articles/{slug:regex([a-z0-9-]+)}'], component: ArticleModal },
@@ -379,7 +372,7 @@ describe('Slot', () => {
           path: '/',
           layout: {
             component: MissingSlotLayout,
-            slots: { sidebar: { fallback: { component: SidebarFallback } } },
+            slots: { sidebar: SidebarFallback },
           },
           children: [{ id: 'home', index: true, component: DashboardPage }],
         },
@@ -395,7 +388,7 @@ describe('Slot', () => {
 });
 
 describe('Slot route provider fallbacks', () => {
-  test('uses RouterProvider errorFallback for slot route render errors', async () => {
+  test('uses RouterProvider error for slot route render errors', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     function BrokenSlot(): never {
@@ -432,7 +425,7 @@ describe('Slot route provider fallbacks', () => {
     consoleError.mockRestore();
   });
 
-  test('uses RouterProvider errorFallback for intercepted route render errors', async () => {
+  test('uses RouterProvider error for intercepted route render errors', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     function BrokenModal(): never {
@@ -460,7 +453,7 @@ describe('Slot route provider fallbacks', () => {
           path: '/modal-source',
           layout: {
             component: ModalLayout,
-            slots: { modal: { fallback: null } },
+            slots: { modal: true },
           },
           intercepts: {
             modal: { to: ['/modal-target'], component: BrokenModal },

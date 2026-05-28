@@ -15,9 +15,7 @@ export const routes = defineRoutes([
     layout: {
       component: GalleryLayout,
       slots: {
-        modal: {
-          fallback: null,
-        },
+        modal: true,
       },
     },
     intercepts: {

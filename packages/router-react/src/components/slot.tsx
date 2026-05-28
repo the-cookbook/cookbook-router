@@ -142,10 +142,12 @@ function createSlotRenderMatch(slot: ResolvedSlot): MatchedRoute | null {
     return null;
   }
 
+  const fallbackId = `${slot.ownerRouteId}.${slot.name}`;
+
   return {
-    id: slot.fallback.id,
+    id: fallbackId,
     route: {
-      id: slot.fallback.id,
+      id: fallbackId,
       children: [],
       component: slot.fallback.component,
       params: [],
@@ -153,7 +155,7 @@ function createSlotRenderMatch(slot: ResolvedSlot): MatchedRoute | null {
       score: 0,
       order: -1,
       route: {
-        id: slot.fallback.id,
+        id: fallbackId,
         component: slot.fallback.component,
         ...(slot.fallback.meta === undefined ? {} : { meta: slot.fallback.meta }),
       },

@@ -16,6 +16,7 @@ import { ChartAreaInteractive } from './components/chart-area-interactive';
 import { DataTable } from './components/data-table';
 import { SectionCards } from './components/section-cards';
 import data from './data.json';
+import { toArray } from '@/lib/utils';
 
 export function OverviewLayoutHeader() {
   return <h1 className="text-base font-medium">Overview</h1>;
@@ -60,7 +61,7 @@ export function OverviewPage() {
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
           <SectionCards />
           <div className="px-4 lg:px-6">
-            <ChartAreaInteractive timeRange={search.visitors} />
+            <ChartAreaInteractive timeRange={toArray(search.visitors)[0]} />
           </div>
           <DataTable data={data} />
         </div>

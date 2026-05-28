@@ -25,12 +25,9 @@ export const routes = defineRoutes([
       component: DashboardLayout,
       slots: {
         sidebar: {
-          fallback: {
-            id: 'dashboard.sidebar.fallback',
-            component: DashboardSidebar,
-            meta: {
-              title: 'Default sidebar',
-            },
+          component: DashboardSidebar,
+          meta: {
+            title: 'Default sidebar',
           },
           routes: [
             {
@@ -43,9 +40,7 @@ export const routes = defineRoutes([
             },
           ],
         },
-        modal: {
-          fallback: null,
-        },
+        modal: true,
       },
     },
     meta: {
@@ -75,12 +70,9 @@ export const routes = defineRoutes([
         layout: {
           slots: {
             sidebar: {
-              fallback: {
-                id: 'dashboard.settings.sidebar.fallback',
-                component: SettingsSidebar,
-                meta: {
-                  title: 'Settings sidebar',
-                },
+              component: SettingsSidebar,
+              meta: {
+                title: 'Settings sidebar',
               },
             },
           },
@@ -95,7 +87,7 @@ export const routes = defineRoutes([
         component: FullscreenPage,
         layout: {
           slots: {
-            sidebar: false,
+            sidebar: true,
           },
         },
       },
