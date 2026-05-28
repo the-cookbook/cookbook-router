@@ -14,7 +14,7 @@ export interface DefineRoutesOptions {
 const definedRouteOptions = new WeakMap<readonly RouteDefinition[], DefineRoutesOptions>();
 
 export function defineRoutes<const Routes extends readonly RouteDefinition[]>(
-  routes: Routes,
+  routes: Routes & readonly RouteDefinition[],
   options?: DefineRoutesOptions,
 ): Routes {
   registerPathConstraints(options?.pathConstraints);

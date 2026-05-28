@@ -46,6 +46,7 @@ function validateRoute(route: RouteDefinition, context: ValidationContext): void
   validateRouteIdentity(route, context);
   validateRouteShape(route);
   validateRouteMetadata(route.id, route.meta);
+
   const fullPath = validateRoutePath(route, context);
   const params = mergeParamNames(
     route.id,
