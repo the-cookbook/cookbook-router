@@ -62,7 +62,7 @@ export const routes = defineRoutes([
     },
     intercepts: {
       modal: {
-        to: ['blog.articles.show'],
+        to: 'blog.articles.show',
         component: ArticleModal,
       },
     },
