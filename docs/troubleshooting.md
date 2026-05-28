@@ -118,16 +118,16 @@ createRouter({ routes, basename: '/foo' });
 
 Do not include the basename in route paths. Use `/blog`, not `/foo/blog`.
 
-Links should generate `/foo/...`, while route config and intercept patterns remain app-relative.
+Links should generate `/foo/...`, while route config remains app-relative and configured intercepts target route ids.
 
 ## Intercept throws missing configuration
 
-For configured intercepts, the source route must declare the slot and destination pattern.
+For configured intercepts, the source route must declare the slot and target route id.
 
 ```tsx
 intercepts: {
   modal: {
-    to: ['articles/{slug}'],
+    to: 'blog.articles.show',
     component: ArticleModal,
   },
 }

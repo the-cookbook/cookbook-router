@@ -1,14 +1,40 @@
 {
   "routes": [
-    { "id": "root", "path": "/" },
-    { "id": "root.sidebar.fallback" },
-    { "id": "root.sidebar.user", "path": "/users/{id:int}" },
-    { "id": "home", "path": "/" },
-    { "id": "users.show", "path": "/users/{id:int}" },
-    { "id": "login", "path": "/login" },
-    { "id": "private.dashboard", "path": "/private" },
-    { "id": "blog", "path": "/blog" },
-    { "id": "blog.index", "path": "/blog" },
-    { "id": "blog.posts.show", "path": "/blog/{slug:regex([a-z0-9-]+)}" }
+    {
+      "id": "root",
+      "path": "/"
+    },
+    {
+      "id": "root.sidebar.user",
+      "path": "/users/{id:int}"
+    },
+    {
+      "id": "home",
+      "path": "/"
+    },
+    {
+      "id": "users.show",
+      "path": "/users/{id:int}"
+    },
+    {
+      "id": "login",
+      "path": "/login"
+    },
+    {
+      "id": "private.dashboard",
+      "path": "/private"
+    },
+    {
+      "id": "blog",
+      "path": "/blog"
+    },
+    {
+      "id": "blog.index",
+      "path": "/blog"
+    },
+    {
+      "id": "blog.posts.show",
+      "path": "/blog/{slug:regex([a-z0-9-]+)}"
+    }
   ]
 }

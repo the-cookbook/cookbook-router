@@ -62,7 +62,7 @@ export const routes = defineRoutes([
     },
     intercepts: {
       modal: {
-        to: ['articles/{slug:regex([a-z0-9-]+)}'],
+        to: ['blog.articles.show'],
         component: ArticleModal,
       },
     },

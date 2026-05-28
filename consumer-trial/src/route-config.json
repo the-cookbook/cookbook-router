@@ -6,12 +6,9 @@
       "layout": {
         "slots": {
           "sidebar": {
-            "fallback": {
-              "id": "root.sidebar.fallback",
-              "component": "TrialSidebarFallback",
-              "meta": {
-                "title": "Sidebar"
-              }
+            "component": "TrialSidebarFallback",
+            "meta": {
+              "title": "Sidebar"
             },
             "routes": [
               {
@@ -24,9 +21,7 @@
               }
             ]
           },
-          "modal": {
-            "fallback": null
-          }
+          "modal": true
         }
       },
       "children": [
@@ -76,14 +71,12 @@
           "path": "blog",
           "layout": {
             "slots": {
-              "modal": {
-                "fallback": null
-              }
+              "modal": true
             }
           },
           "intercepts": {
             "modal": {
-              "to": ["{slug:regex([a-z0-9-]+)}"],
+              "to": "blog.posts.show",
               "component": "BlogPostModal"
             }
           },

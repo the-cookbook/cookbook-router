@@ -215,7 +215,7 @@ describe('Slot', () => {
             slots: { modal: true },
           },
           intercepts: {
-            modal: { to: ['/modal-target'], component: ModalPage },
+            modal: { to: ['modal.target'], component: ModalPage },
           },
           children: [{ id: 'modal.source.index', index: true, component: ModalSourcePage }],
         },
@@ -253,7 +253,7 @@ describe('Slot', () => {
             slots: { modal: true },
           },
           intercepts: {
-            modal: { to: ['/modal-target'], component: ModalPage },
+            modal: { to: ['modal.target'], component: ModalPage },
           },
           children: [{ id: 'modal.source.index', index: true, component: AutoModalSourcePage }],
         },
@@ -325,7 +325,7 @@ describe('Slot', () => {
             slots: { modal: true },
           },
           intercepts: {
-            modal: { to: ['articles/{slug:regex([a-z0-9-]+)}'], component: ArticleModal },
+            modal: { to: 'blog.articles.show', component: ArticleModal },
           },
           children: [
             { id: 'blog.articles', path: 'articles', component: ArticlesPage },
@@ -456,7 +456,7 @@ describe('Slot route provider fallbacks', () => {
             slots: { modal: true },
           },
           intercepts: {
-            modal: { to: ['/modal-target'], component: BrokenModal },
+            modal: { to: ['modal.target'], component: BrokenModal },
           },
           children: [{ id: 'modal.source.index', index: true, component: ModalSourcePage }],
         },

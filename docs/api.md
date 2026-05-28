@@ -147,6 +147,30 @@ interface RouteDefinition {
 | `lifecycle`  | Route lifecycle hooks.                                                                                                    |
 | `middleware` | Route-specific middleware pipeline.                                                                                       |
 
+#### `RouteIntercepts`
+
+```ts
+type RouteInterceptTarget = string | readonly string[];
+
+interface RouteInterceptConfig {
+  readonly to: RouteInterceptTarget;
+  readonly component: RouteComponent;
+}
+
+type RouteIntercepts = Readonly<Record<string, RouteInterceptConfig>>;
+```
+
+`to` targets route IDs, not path patterns. Use a string for one target route or an array for multiple canonical target routes:
+
+```ts
+intercepts: {
+  modal: {
+    to: 'create',
+    component: CreateModal,
+  },
+}
+```
+
 #### `RouteLayoutDefinition`
 
 ```ts
@@ -159,11 +183,11 @@ interface RouteLayoutDefinition {
 ```
 
 | Field       | Purpose                                                                                                                            |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------- | --- |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `component` | Layout component that renders the route outlet and any layout slots.                                                               |
 | `loading`   | Layout-level React Suspense fallback shared with the route component and descendant routes that do not define their own `loading`. |
 | `error`     | Layout-level React error fallback shared with the route component and descendant routes that do not define their own `error`.      |
-| `slots`     | Named layout slot definitions. Values may be a component, `{ component?, meta?, routes? }`, or `true` for declaration-only slots.  |     |
+| `slots`     | Named layout slot definitions. Values may be a component, `{ component?, meta?, routes? }`, or `true` for declaration-only slots.  |
 
 Layout loading and error fallback components render at the layout outlet position, so the layout shell remains mounted while child content is loading or has failed. Route-level fallbacks are local to that route and are not shared with child routes.
 

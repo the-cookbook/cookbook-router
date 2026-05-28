@@ -19,7 +19,7 @@ const routes = [
     },
     intercepts: {
       modal: {
-        to: ['{slug:regex([a-z0-9-]+)}'],
+        to: 'blog.posts.show',
         component: BlogPostModal,
       },
     },
@@ -40,7 +40,7 @@ const nestedArticleRoutes = [
     },
     intercepts: {
       modal: {
-        to: ['articles/{slug:regex([a-z0-9-]+)}'],
+        to: 'blog.articles.show',
         component: BlogPostModal,
       },
     },
@@ -252,12 +252,12 @@ describe('createRouter intercepting routes', () => {
             path: '/blog',
             layout: { component: BlogLayout, slots: { modal: true } },
             intercepts: {
-              modal: { to: ['/missing/{slug:regex([a-z0-9-]+)}'], component: BlogPostModal },
+              modal: { to: ['missing.show'], component: BlogPostModal },
             },
           },
         ],
       }),
-    ).toThrow(/targets unknown pattern/);
+    ).toThrow(/targets unknown route id/);
   });
 });
 

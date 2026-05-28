@@ -111,7 +111,9 @@ describe('validateRoutes', () => {
           },
         },
       ]),
-    ).toThrow('slot ids are no longer supported');
+    ).toThrow(
+      'Route "root" declares "layout.slots.sidebar.id", but slot IDs are no longer supported. Use the slot key as the slot identity.',
+    );
 
     expect(() =>
       validateRoutes([
@@ -331,7 +333,9 @@ test('rejects child slot declarations that do not target an active declared slot
         ],
       },
     ]),
-  ).toThrow('declares slot "header"');
+  ).toThrow(
+    'Missing slot "header" for route "users.details". Declare "layout.slots.header" on an active ancestor layout or remove the child slot declaration.',
+  );
 });
 
 test('allows child slot declarations when an ancestor layout declares the slot', () => {
@@ -360,11 +364,13 @@ test('rejects intercepts targeting undeclared slots', () => {
         id: 'overview',
         path: '/overview',
         layout: { component: {}, slots: { header: true } },
-        intercepts: { modal: { to: ['/create'], component: {} } },
+        intercepts: { modal: { to: 'create', component: {} } },
       },
       { id: 'create', path: '/create', component: {} },
     ]),
-  ).toThrow('configures intercept slot "modal"');
+  ).toThrow(
+    'Invalid intercept slot "modal" on route "overview". The route configures this intercept slot, but neither this route nor an active ancestor layout declares "layout.slots.modal". Declare the slot or remove the intercept slot configuration.',
+  );
 });
 
 test('allows intercepts targeting declared slots', () => {
@@ -374,7 +380,7 @@ test('allows intercepts targeting declared slots', () => {
         id: 'overview',
         path: '/overview',
         layout: { component: {}, slots: { modal: true } },
-        intercepts: { modal: { to: ['/create'], component: {} } },
+        intercepts: { modal: { to: 'create', component: {} } },
       },
       { id: 'create', path: '/create', component: {} },
     ]),

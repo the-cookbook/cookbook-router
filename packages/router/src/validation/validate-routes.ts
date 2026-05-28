@@ -372,7 +372,7 @@ function validateLayoutSlots(route: RouteDefinition, context: ValidationContext)
 
     if (!ownsLayoutComponent && !context.declaredSlots.has(slotName)) {
       throw new Error(
-        `Route "${route.id}" declares slot "${slotName}", but no active layout declares that slot. Declare layout.slots.${slotName} on an ancestor layout or remove the child slot declaration.`,
+        `Missing slot "${slotName}" for route "${route.id}". Declare "layout.slots.${slotName}" on an active ancestor layout or remove the child slot declaration.`,
       );
     }
 
@@ -415,20 +415,20 @@ function validateSlotConfig(
 
   if (Object.prototype.hasOwnProperty.call(slot, 'id')) {
     throw new Error(
-      `Route "${routeId}" declares layout.slots.${slotName}.id, but slot ids are no longer supported. Use the slot key as the slot identity.`,
+      `Route "${routeId}" declares "layout.slots.${slotName}.id", but slot IDs are no longer supported. Use the slot key as the slot identity.`,
     );
   }
 
   if (Object.prototype.hasOwnProperty.call(slot, 'fallback')) {
     throw new Error(
-      `Route "${routeId}" declares layout.slots.${slotName}.fallback, but slot fallbacks are no longer supported. Use layout.slots.${slotName} instead.`,
+      `Unsupported slot fallback: slot fallbacks are no longer supported on route "${routeId}". Remove "layout.slots.${slotName}.fallback"; use "layout.slots.${slotName}" instead.`,
     );
   }
 
   for (const key of Object.keys(slot)) {
     if (key !== 'component' && key !== 'meta' && key !== 'routes') {
       throw new Error(
-        `Route "${routeId}" declares unsupported layout.slots.${slotName}.${key}. Supported keys are component, meta, and routes.`,
+        `Unsupported slot key "${key}" on route "${routeId}". Remove "layout.slots.${slotName}.${key}". Supported slot keys are "component", "meta", and "routes".`,
       );
     }
   }
@@ -495,7 +495,7 @@ function validateIntercepts(
 
     if (!declaresSlotLocally && !context.declaredSlots.has(slotName)) {
       throw new Error(
-        `Route "${route.id}" configures intercept slot "${slotName}", but no active layout declares a "${slotName}" slot. Declare layout.slots.${slotName} on this route or an ancestor layout.`,
+        `Invalid intercept slot "${slotName}" on route "${route.id}". The route configures this intercept slot, but neither this route nor an active ancestor layout declares "layout.slots.${slotName}". Declare the slot or remove the intercept slot configuration.`,
       );
     }
     if (!config.component) {
@@ -504,22 +504,34 @@ function validateIntercepts(
       );
     }
 
-    if (!Array.isArray(config.to) || !config.to.length) {
+    const targets = normalizeInterceptTargetIds(config.to);
+
+    if (!targets.length) {
       throw new Error(
-        `Route "${route.id}" intercept for slot "${slotName}" must define at least one target pattern.`,
+        `Route "${route.id}" intercept for slot "${slotName}" must define at least one target route id.`,
       );
     }
 
-    for (const pattern of config.to) {
-      if (!pattern) {
+    for (const targetRouteId of targets) {
+      if (!targetRouteId) {
         throw new Error(
-          `Route "${route.id}" intercept for slot "${slotName}" defines an empty target pattern.`,
+          `Route "${route.id}" intercept for slot "${slotName}" defines an empty target route id.`,
         );
       }
-
-      validatePathPattern(pattern.startsWith('/') ? pattern : `/${pattern}`, context.pathOptions);
     }
   }
+}
+
+function normalizeInterceptTargetIds(targets: unknown): readonly string[] {
+  if (typeof targets === 'string') {
+    return [targets];
+  }
+
+  if (Array.isArray(targets)) {
+    return targets;
+  }
+
+  return [];
 }
 
 function mergeParamNames(

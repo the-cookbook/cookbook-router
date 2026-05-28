@@ -20,7 +20,7 @@ export const routes = defineRoutes([
     },
     intercepts: {
       modal: {
-        to: ['/photos/{id:int}'],
+        to: ['photos.show'],
         component: PhotoModal,
       },
     },

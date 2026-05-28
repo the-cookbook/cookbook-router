@@ -88,7 +88,7 @@ The `/overview` route owns this configured intercept:
 ```ts
 intercepts: {
   modal: {
-    to: ['/create'],
+    to: 'create',
     component: OverviewCreateModal,
   },
 }

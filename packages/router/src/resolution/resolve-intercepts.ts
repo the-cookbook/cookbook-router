@@ -1,9 +1,4 @@
-import {
-  getPathTokens,
-  matchPathPattern,
-  validatePathPattern,
-  type RouterPathOptions,
-} from '../pathkit/pathkit';
+import { type RouterPathOptions } from '../pathkit/pathkit';
 import type {
   MatchedRoute,
   NormalizedIntercept,
@@ -54,7 +49,7 @@ export interface ResolveInterceptOptions {
 
 export function normalizeConfiguredIntercepts(
   route: NormalizedRoute,
-  pathOptions: RouterPathOptions = {},
+  _pathOptions: RouterPathOptions = {},
 ): readonly NormalizedIntercept[] {
   const intercepts = route.route.intercepts;
 
@@ -63,17 +58,17 @@ export function normalizeConfiguredIntercepts(
   }
 
   return Object.entries(intercepts).flatMap(([slot, config]) =>
-    config.to.map((pattern) => {
-      const resolvedPattern = resolveInterceptPattern(route.fullPath ?? '/', pattern);
-      validatePathPattern(resolvedPattern, pathOptions);
-      return {
-        sourceRouteId: route.id,
-        slot,
-        to: resolvedPattern,
-        component: config.component,
-      };
-    }),
+    normalizeInterceptTargets(config.to).map((targetRouteId) => ({
+      sourceRouteId: route.id,
+      slot,
+      targetRouteId,
+      component: config.component,
+    })),
   );
+}
+
+function normalizeInterceptTargets(target: string | readonly string[]): readonly string[] {
+  return typeof target === 'string' ? [target] : target;
 }
 
 export function normalizeCallSiteIntercept(
@@ -134,8 +129,7 @@ export function resolveIntercept(options: ResolveInterceptOptions): ResolvedInte
   const configured = findConfiguredIntercept(
     options.source.branch,
     explicitSlot,
-    options.destinationPathname,
-    options.pathOptions,
+    options.destination.route.id,
   );
 
   if (!configured) {
@@ -167,7 +161,7 @@ export function restoreInterceptFromState(
   state: unknown,
   source: RouteMatch | null,
   destination: RouteMatch | null,
-  pathOptions: RouterPathOptions = {},
+  _pathOptions: RouterPathOptions = {},
 ): ResolvedIntercept | null {
   if (!isInterceptHistoryState(state) || !source || !destination) {
     return null;
@@ -179,12 +173,7 @@ export function restoreInterceptFromState(
     return null;
   }
 
-  const configured = findConfiguredIntercept(
-    source.branch,
-    intercept.slot,
-    destination.pathname,
-    pathOptions,
-  );
+  const configured = findConfiguredIntercept(source.branch, intercept.slot, destination.route.id);
   const component = intercept.componentKey
     ? readCallSiteInterceptComponent(intercept.componentKey)
     : configured?.component;
@@ -228,22 +217,15 @@ export function createInterceptHistoryState(
   return { __cookbookRouterIntercept: state };
 }
 
-export function validateInterceptTargets(
-  routes: readonly NormalizedRoute[],
-  pathOptions: RouterPathOptions = {},
-): void {
+export function validateInterceptTargets(routes: readonly NormalizedRoute[]): void {
   const flat = flattenRoutes(routes);
+  const routeIds = new Set(flat.map((route) => route.id));
 
   for (const route of flat) {
     for (const intercept of route.intercepts) {
-      const hasTarget = flat.some(
-        (candidate) =>
-          candidate.fullPath && patternsCouldMatch(intercept.to, candidate.fullPath, pathOptions),
-      );
-
-      if (!hasTarget) {
+      if (!routeIds.has(intercept.targetRouteId)) {
         throw new Error(
-          `Route "${route.id}" intercept for slot "${intercept.slot}" targets unknown pattern "${intercept.to}".`,
+          `Route "${route.id}" intercept for slot "${intercept.slot}" targets unknown route id "${intercept.targetRouteId}".`,
         );
       }
     }
@@ -264,31 +246,16 @@ function readCallSiteInterceptComponent(key: string): RouteComponent | undefined
   return callSiteInterceptComponents.get(key);
 }
 
-function patternsCouldMatch(left: string, right: string, pathOptions: RouterPathOptions): boolean {
-  return (
-    patternSkeleton(left) === patternSkeleton(right) ||
-    Boolean(matchPathPattern(left, right, pathOptions))
-  );
-}
-
-function patternSkeleton(pattern: string): string {
-  return getPathTokens(pattern)
-    .map((segment) => (segment.type === 'parameter' ? '{}' : segment.value))
-    .join('');
-}
-
 function findConfiguredIntercept(
   branch: readonly MatchedRoute[],
   slot: string | undefined,
-  pathname: string,
-  pathOptions: RouterPathOptions = {},
+  targetRouteId: string,
 ): NormalizedIntercept | null {
   for (let index = branch.length - 1; index >= 0; index--) {
     const route = branch[index]?.route;
     const intercept = route?.intercepts.find(
       (entry) =>
-        (slot === undefined || entry.slot === slot) &&
-        Boolean(matchPathPattern(entry.to, pathname, pathOptions)),
+        (slot === undefined || entry.slot === slot) && entry.targetRouteId === targetRouteId,
     );
 
     if (intercept) {
@@ -326,15 +293,6 @@ function isInterceptHistoryState(value: unknown): value is InterceptHistoryState
   );
 }
 
-function resolveInterceptPattern(sourcePath: string, pattern: string): string {
-  if (pattern.startsWith('/')) {
-    return pattern;
-  }
-
-  const base = sourcePath === '/' ? '' : sourcePath.replace(/\/$/, '');
-  return `${base}/${pattern.replace(/^\//, '')}` || '/';
-}
-
 function flattenRoutes(routes: readonly NormalizedRoute[]): readonly NormalizedRoute[] {
   return routes.flatMap((route) => [
     route,
@@ -345,14 +303,14 @@ function flattenRoutes(routes: readonly NormalizedRoute[]): readonly NormalizedR
 
 export interface ResolveInterceptsOptions {
   readonly intercepts?: Readonly<
-    Record<string, { readonly to: readonly string[]; readonly component: RouteComponent }>
+    Record<string, { readonly to: string | readonly string[]; readonly component: RouteComponent }>
   >;
   readonly slot?: string;
 }
 
 export function resolveIntercepts(options: ResolveInterceptsOptions = {}): readonly {
   readonly slot: string;
-  readonly config: { readonly to: readonly string[]; readonly component: RouteComponent };
+  readonly config: { readonly to: string | readonly string[]; readonly component: RouteComponent };
 }[] {
   const intercepts = options.intercepts;
 

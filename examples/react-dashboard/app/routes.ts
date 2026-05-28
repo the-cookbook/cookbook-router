@@ -168,7 +168,7 @@ export const routes = defineRoutes(
       },
       intercepts: {
         modal: {
-          to: ['/create'],
+          to: ['create'],
           component: AsyncOverviewCreateModal,
         },
       },

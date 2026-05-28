@@ -13,8 +13,10 @@ export interface RouteSearchValueSchema {
 export type RouteSearchSchema = Readonly<Record<string, RouteSearchValueSchema>>;
 export type { RouterPathOptions };
 
+export type RouteInterceptTarget = string | readonly string[];
+
 export interface RouteInterceptConfig {
-  readonly to: readonly string[];
+  readonly to: RouteInterceptTarget;
   readonly component: RouteComponent;
 }
 
@@ -97,7 +99,7 @@ export interface NormalizedRouteLayout {
 export interface NormalizedIntercept {
   readonly sourceRouteId: string;
   readonly slot: string;
-  readonly to: string;
+  readonly targetRouteId: string;
   readonly component: RouteComponent;
 }
 

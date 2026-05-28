@@ -169,7 +169,7 @@ export function createRouterRuntime(
   const maxRedirectDepth = normalizeMaxRedirectDepth(options);
   validateRoutes(options.routes, pathOptions);
   const normalizedRoutes = normalizeRoutes(options.routes, pathOptions);
-  validateInterceptTargets(normalizedRoutes, pathOptions);
+  validateInterceptTargets(normalizedRoutes);
   const rankedRoutes = rankRoutes(normalizedRoutes);
   const routeLookup = createRouteLookup(normalizedRoutes);
   const compileCachedRoutePath = createRoutePathCompiler(pathOptions);

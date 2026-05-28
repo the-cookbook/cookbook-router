@@ -27,7 +27,7 @@ const routes = normalizeRoutes([
     },
     intercepts: {
       modal: {
-        to: ['{slug:regex([a-z0-9-]+)}'],
+        to: 'blog.posts.show',
         component: BlogPostModal,
       },
     },
@@ -37,14 +37,35 @@ const routes = normalizeRoutes([
 ] as const);
 
 describe('resolveIntercept', () => {
-  it('normalizes configured intercepts to absolute path patterns', () => {
+  it('normalizes configured intercepts to target route ids', () => {
     const blog = routes[0];
 
     expect(blog && normalizeConfiguredIntercepts(blog)).toEqual([
       {
         sourceRouteId: 'blog',
         slot: 'modal',
-        to: '/blog/{slug:regex([a-z0-9-]+)}',
+        targetRouteId: 'blog.posts.show',
+        component: BlogPostModal,
+      },
+    ]);
+  });
+
+  it('normalizes configured intercepts from a single target route id', () => {
+    const singleTargetRoutes = normalizeRoutes([
+      {
+        id: 'dashboard',
+        path: '/dashboard',
+        layout: { component: BlogLayout, slots: { modal: true } },
+        intercepts: { modal: { to: 'create', component: BlogPostModal } },
+      },
+      { id: 'create', path: '/create', component: BlogPostPage },
+    ] as const);
+
+    expect(singleTargetRoutes[0]?.intercepts).toEqual([
+      {
+        sourceRouteId: 'dashboard',
+        slot: 'modal',
+        targetRouteId: 'create',
         component: BlogPostModal,
       },
     ]);
@@ -152,7 +173,7 @@ describe('resolveIntercept', () => {
         id: 'dashboard',
         path: '/dashboard',
         intercepts: {
-          modal: { to: ['/create'], component: NoSlotModal },
+          modal: { to: 'create', component: NoSlotModal },
         },
       },
       { id: 'create', path: '/create', component: BlogPostPage },
@@ -175,7 +196,7 @@ describe('resolveIntercept', () => {
         id: 'dashboard',
         path: '/dashboard',
         intercepts: {
-          modal: { to: ['/create'], component: BlogPostModal },
+          modal: { to: 'create', component: BlogPostModal },
         },
       },
       { id: 'create', path: '/create', component: BlogPostPage },
@@ -258,11 +279,11 @@ describe('resolveIntercept', () => {
         path: '/blog',
         layout: { component: BlogLayout, slots: { modal: true } },
         intercepts: {
-          modal: { to: ['/missing/{slug:regex([a-z0-9-]+)}'], component: BlogPostModal },
+          modal: { to: ['missing.show'], component: BlogPostModal },
         },
       },
     ] as const);
 
-    expect(() => validateInterceptTargets(invalid)).toThrow(/targets unknown pattern/);
+    expect(() => validateInterceptTargets(invalid)).toThrow(/targets unknown route id/);
   });
 });

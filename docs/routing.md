@@ -427,7 +427,7 @@ Use the primary route for navigation and the slot route for the slot-specific UI
 
 Interception lets a source route preserve its current UI while rendering a destination route into a slot. The browser URL still updates to the canonical destination URL.
 
-Configured intercepts are declared on the source route.
+Configured intercepts are declared on the source route. `to` targets canonical route IDs, not path patterns. Use a string for a single target route or an array for multiple target route IDs.
 
 ```tsx
 {
@@ -441,7 +441,7 @@ Configured intercepts are declared on the source route.
   },
   intercepts: {
     modal: {
-      to: ['articles/{slug:regex([a-z0-9-]+)}'],
+      to: 'blog.articles.show',
       component: ArticleModal,
     },
   },

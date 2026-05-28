@@ -121,7 +121,7 @@ export const routes = defineRoutes([
     },
     intercepts: {
       modal: {
-        to: ['/modal'],
+        to: ['modal'],
         component: ModalPage,
       },
     },

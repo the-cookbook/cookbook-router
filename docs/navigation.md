@@ -197,7 +197,7 @@ router.href({ route: 'blog.index' }); // /foo/blog
 router.match('/foo/blog'); // matches blog.index
 ```
 
-Configured intercepts compare against app paths after basename stripping, so route config should not include the basename.
+Configured intercepts target route ids, so basename handling is automatic and route config should not include the basename.
 
 ## Interception
 

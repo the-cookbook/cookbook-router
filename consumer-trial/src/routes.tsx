@@ -100,7 +100,7 @@ export const routes = defineRoutes([
         },
         intercepts: {
           modal: {
-            to: ['{slug:regex([a-z0-9-]+)}'],
+            to: 'blog.posts.show',
             component: BlogPostModal,
           },
         },
