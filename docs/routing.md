@@ -131,24 +131,23 @@ Resolved path:
 /users/{id:int}
 ```
 
-A child path starting with `/` is absolute for URL matching but still belongs to the rendering hierarchy where it is declared.
+Child paths may include a leading `/`, but they are still composed relative to the parent route. This lets route files use either `terms-of-service` or `/terms-of-service` for the same nested URL segment.
 
 ```tsx
 {
-  id: 'dashboard',
-  path: '/dashboard',
-  layout: { component: DashboardLayout },
+  id: 'policies',
+  path: '/policies',
   children: [
     {
-      id: 'pricing',
-      path: '/pricing',
-      component: PricingPage,
+      id: 'terms-of-service',
+      path: '/terms-of-service',
+      component: TermsOfServicePage,
     },
   ],
 }
 ```
 
-`pricing` matches `/pricing`. If that route is reached through the active branch, it still renders through the dashboard layout hierarchy.
+`terms-of-service` matches `/policies/terms-of-service`, not `/terms-of-service`. Top-level routes can still use leading `/` normally.
 
 ## Index routes
 

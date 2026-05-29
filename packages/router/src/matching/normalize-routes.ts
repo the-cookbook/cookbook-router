@@ -201,12 +201,18 @@ function resolveFullPath(
     return parentPath;
   }
 
-  const fullPath = route.path.startsWith('/')
-    ? route.path
-    : joinPaths(parentPath ?? '/', route.path);
+  const fullPath = resolveRoutePath(parentPath, route.path);
   validatePathPattern(fullPath, pathOptions);
 
   return prunePathname(fullPath, pathOptions);
+}
+
+function resolveRoutePath(parentPath: string | undefined, routePath: string): string {
+  if (parentPath === undefined) {
+    return routePath.startsWith('/') ? routePath : joinPaths('/', routePath);
+  }
+
+  return joinPaths(parentPath, routePath);
 }
 
 function joinPaths(parentPath: string, childPath: string): string {

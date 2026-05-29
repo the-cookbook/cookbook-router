@@ -33,24 +33,25 @@ describe('normalizeRoutes', () => {
     });
   });
 
-  test('supports absolute child paths while preserving render hierarchy', () => {
-    const [dashboard] = normalizeRoutes([
+  test('joins leading-slash child paths with their parent while preserving render hierarchy', () => {
+    const [policies] = normalizeRoutes([
       {
-        id: 'dashboard',
-        path: '/dashboard',
+        id: 'policies',
+        path: '/policies',
         children: [
           {
-            id: 'pricing',
-            path: '/pricing',
+            id: 'terms-of-service',
+            path: '/terms-of-service',
           },
         ],
       },
     ]);
 
-    expect(dashboard?.children[0]).toMatchObject({
-      id: 'pricing',
-      fullPath: '/pricing',
-      parentId: 'dashboard',
+    expect(policies?.children[0]).toMatchObject({
+      id: 'terms-of-service',
+      localPath: '/terms-of-service',
+      fullPath: '/policies/terms-of-service',
+      parentId: 'policies',
     });
   });
 

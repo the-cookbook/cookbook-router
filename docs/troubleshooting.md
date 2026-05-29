@@ -24,7 +24,7 @@ Check:
 
 - the route has an `id`
 - index routes do not define `path`
-- child paths are relative unless they intentionally start with `/`
+- nested child paths are composed with their parent path, even when the child path starts with `/`
 - constrained params satisfy the pathkit constraint
 - `basename` is configured when the app is mounted under a URL prefix
 - `pathOptions.prune` is not set to `false` when you expect slash cleanup

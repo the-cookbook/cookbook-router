@@ -263,6 +263,21 @@ describe('example application integration', () => {
     ).toBeTruthy();
 
     expect(view.getByText('eddie.lake@example.com')).toBeTruthy();
+
+    await router.navigate.to('terms-of-service');
+
+    await waitFor(
+      () => expect(router.state.location.href).toBe('/policies/terms-of-service'),
+      dashboardLazyPageTimeout,
+    );
+
+    expect(
+      await view.findByRole(
+        'heading',
+        { name: 'Terms of Service', level: 1 },
+        dashboardLazyPageTimeout,
+      ),
+    ).toBeTruthy();
   });
 
   test('react-ssr renders, serializes, and hydrates consistently', async () => {

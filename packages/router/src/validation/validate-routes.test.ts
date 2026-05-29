@@ -70,6 +70,38 @@ describe('validateRoutes', () => {
     ).toThrow('Duplicate route path "/same"');
   });
 
+  test('validates leading-slash child paths relative to their parent route', () => {
+    expect(() =>
+      validateRoutes([
+        {
+          id: 'policies',
+          path: '/policies',
+          children: [
+            {
+              id: 'terms-of-service',
+              path: '/terms-of-service',
+            },
+          ],
+        },
+      ]),
+    ).not.toThrow();
+
+    expect(() =>
+      validateRoutes([
+        {
+          id: 'one',
+          path: '/one',
+          children: [{ id: 'one.child', path: '/child' }],
+        },
+        {
+          id: 'two',
+          path: '/two',
+          children: [{ id: 'two.child', path: '/child' }],
+        },
+      ]),
+    ).not.toThrow();
+  });
+
   test('rejects invalid hash configuration', () => {
     expect(() => validateRoutes([{ id: 'empty-hash', path: '/', hash: [''] }])).toThrow(
       'empty or non-string hash value',

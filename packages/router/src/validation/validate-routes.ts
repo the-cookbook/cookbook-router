@@ -320,7 +320,7 @@ function resolveFullPath(route: RouteDefinition, parentPath?: string): string | 
     throw new Error(`Route "${route.id}" defines an empty path.`);
   }
 
-  return route.path.startsWith('/') ? route.path : joinPaths(parentPath ?? '/', route.path);
+  return resolveRoutePath(parentPath, route.path);
 }
 
 function validateLayoutScope(route: RouteDefinition, context: ValidationContext): void {
@@ -553,6 +553,14 @@ function mergeParamNames(
   }
 
   return params;
+}
+
+function resolveRoutePath(parentPath: string | undefined, routePath: string): string {
+  if (parentPath === undefined) {
+    return routePath.startsWith('/') ? routePath : joinPaths('/', routePath);
+  }
+
+  return joinPaths(parentPath, routePath);
 }
 
 function joinPaths(parentPath: string, childPath: string): string {

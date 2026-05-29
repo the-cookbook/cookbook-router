@@ -47,6 +47,27 @@ describe('matchRoutes', () => {
     });
   });
 
+  test('matches nested children declared with leading slashes under their parent path', () => {
+    const routes = normalizeRoutes([
+      {
+        id: 'policies',
+        path: '/policies',
+        children: [
+          {
+            id: 'terms-of-service',
+            path: '/terms-of-service',
+          },
+        ],
+      },
+    ]);
+
+    expect(matchRoutes(routes, '/policies/terms-of-service')).toMatchObject({
+      id: 'terms-of-service',
+      pathname: '/policies/terms-of-service',
+    });
+    expect(matchRoutes(routes, '/terms-of-service')).toBeNull();
+  });
+
   test('supports wildcard and trailing-slash matches', () => {
     const routes = normalizeRoutes([{ id: 'not-found', path: '/{*path}' }]);
 
