@@ -11,6 +11,7 @@ import {
 import type { ComponentType, ReactElement, ReactNode } from 'react';
 import type {
   MatchedRoute,
+  Middleware,
   ResolvedSlots,
   RouteComponent,
   Router,
@@ -48,6 +49,7 @@ export interface RouterProviderProps {
   readonly fallback?: ReactNode;
   readonly loadingFallback?: ReactNode;
   readonly errorFallback?: ComponentType<RouterErrorFallbackProps>;
+  readonly middleware?: readonly Middleware[];
   readonly scrollRestoration?: boolean;
   readonly scrollBehavior?: RouterScrollBehavior;
 }
@@ -83,6 +85,17 @@ interface RouteErrorBoundaryState {
 export function RouterProvider(props: RouterProviderProps): ReactElement {
   const state = useRouterState(props.router);
   const redirecting = state.error === undefined && isRedirectMatch(state);
+
+  useEffect(() => {
+    if (!props.middleware?.length) {
+      return;
+    }
+
+    const unregister = props.router.useMiddleware(props.middleware);
+    void props.router.resolveCurrent();
+
+    return unregister;
+  }, [props.router, props.middleware]);
 
   useEffect(() => {
     if (!redirecting) {

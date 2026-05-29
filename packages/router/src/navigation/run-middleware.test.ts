@@ -45,7 +45,7 @@ describe('run-middleware', () => {
     expect(calls).toEqual(['global']);
   });
 
-  test('normalizes false, redirect, response, and void results', async () => {
+  test('normalizes false, redirect, rewrite, response, and void results', async () => {
     const match = createMatch();
     const location = createMemoryHistory().location;
     const response = new Response('blocked', { status: 403 });
@@ -57,6 +57,12 @@ describe('run-middleware', () => {
       runMiddleware({ middleware: [({ redirect }) => redirect('/login')], match, location }),
     ).resolves.toEqual({
       type: 'redirect',
+      to: '/login',
+    });
+    await expect(
+      runMiddleware({ middleware: [({ rewrite }) => rewrite('/login')], match, location }),
+    ).resolves.toEqual({
+      type: 'rewrite',
       to: '/login',
     });
     await expect(runMiddleware({ middleware: [() => response], match, location })).resolves.toBe(

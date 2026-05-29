@@ -1,5 +1,5 @@
 import type { ComponentType, ReactElement, ReactNode } from 'react';
-import type { Router } from '@cookbook/router';
+import type { Middleware, Router } from '@cookbook/router';
 import { RouterProvider } from './router-provider';
 import type { RouterErrorFallbackProps } from './router-provider';
 
@@ -9,6 +9,7 @@ export interface StaticRouterProviderProps {
   readonly fallback?: ReactNode;
   readonly loadingFallback?: ReactNode;
   readonly errorFallback?: ComponentType<RouterErrorFallbackProps>;
+  readonly middleware?: readonly Middleware[];
 }
 
 export function StaticRouterProvider(props: StaticRouterProviderProps): ReactElement {
@@ -18,6 +19,7 @@ export function StaticRouterProvider(props: StaticRouterProviderProps): ReactEle
       {...(props.fallback === undefined ? {} : { fallback: props.fallback })}
       {...(props.loadingFallback === undefined ? {} : { loadingFallback: props.loadingFallback })}
       {...(props.errorFallback === undefined ? {} : { errorFallback: props.errorFallback })}
+      {...(props.middleware === undefined ? {} : { middleware: props.middleware })}
     >
       {props.children}
     </RouterProvider>

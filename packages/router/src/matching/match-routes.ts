@@ -7,7 +7,7 @@ export function matchRoutes(
   routes: readonly NormalizedRoute[],
   pathname: string,
   pathOptions: RouterPathOptions = {},
-): RouteMatch | null {
+): RouteMatch<string> | null {
   const index = getRouteMatchIndex(routes);
 
   for (const route of index.rankedRoutes) {
@@ -26,6 +26,9 @@ export function matchRoutes(
     return {
       id: route.id,
       pathname,
+      search: {},
+      hash: '',
+      href: pathname,
       route,
       branch,
       params,

@@ -102,12 +102,13 @@ interface RouterProviderProps {
   readonly fallback?: ReactNode;
   readonly loadingFallback?: ReactNode;
   readonly errorFallback?: ComponentType<RouterErrorFallbackProps>;
+  readonly middleware?: readonly Middleware[];
   readonly scrollRestoration?: boolean;
   readonly scrollBehavior?: ScrollBehavior;
 }
 ```
 
-Renders the live route branch and subscribes to router state. `fallback` is not-found UI, `loadingFallback` is the global React Suspense fallback, and `errorFallback` is the global React render-error fallback. When `scrollRestoration` is enabled, scroll positions are saved per location key and restored on navigation; new non-hash locations scroll to the top.
+Renders the live route branch and subscribes to router state. `fallback` is not-found UI, `loadingFallback` is the global React Suspense fallback, `errorFallback` is the global React render-error fallback, and `middleware` registers provider-level middleware while the provider is mounted. When `scrollRestoration` is enabled, scroll positions are saved per location key and restored on navigation; new non-hash locations scroll to the top.
 
 ```tsx
 <RouterProvider
@@ -115,6 +116,7 @@ Renders the live route branch and subscribes to router state. `fallback` is not-
   fallback={<NotFoundPage />}
   loadingFallback={<AppSkeleton />}
   errorFallback={AppErrorFallback}
+  middleware={[requireAuth]}
   scrollBehavior="smooth"
   scrollRestoration
 />

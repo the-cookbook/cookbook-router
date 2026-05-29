@@ -10,7 +10,7 @@ Use this guide when routing behavior, generated contracts, examples, SSR, or tes
 - [Basename routes do not work](#basename-routes-do-not-work)
 - [Intercept throws missing configuration](#intercept-throws-missing-configuration)
 - [Call-site intercept throws `DataCloneError`](#call-site-intercept-throws-datacloneerror)
-- [Slot default IDs are missing from contracts](#slot-default-ids-are-missing-from-contracts)
+- [Slot fallback IDs are missing from contracts](#slot-fallback-ids-are-missing-from-contracts)
 - [Generated contracts are stale](#generated-contracts-are-stale)
 - [Type inference does not work](#type-inference-does-not-work)
 - [SSR returns an empty root](#ssr-returns-an-empty-root)
@@ -106,8 +106,6 @@ createRouter({ routes });
 
 For SSR, use the same custom-constraint setup in the route module used by both the server and client.
 
-For CLI generation, keep the custom constraints in `defineRoutes(..., { pathConstraints })`. The CLI reads that option automatically; no separate flag is needed. The supported static forms are a referenced object literal (`pathConstraints: constraints`) and an inline object literal (`pathConstraints: { slug: createConstraint(...) }`). Generated contract params for custom constraints are `string`. If `pathConstraints` is built dynamically, the CLI reports that it cannot statically evaluate the declaration.
-
 ## Basename routes do not work
 
 Configure basename once on the router:
@@ -118,16 +116,16 @@ createRouter({ routes, basename: '/foo' });
 
 Do not include the basename in route paths. Use `/blog`, not `/foo/blog`.
 
-Links should generate `/foo/...`, while route config remains app-relative and configured intercepts target route ids.
+Links should generate `/foo/...`, while route config and intercept patterns remain app-relative.
 
 ## Intercept throws missing configuration
 
-For configured intercepts, the source route must declare the slot and target route id.
+For configured intercepts, the source route must declare the slot and destination pattern.
 
 ```tsx
 intercepts: {
   modal: {
-    to: 'blog.articles.show',
+    to: ['articles/{slug}'],
     component: ArticleModal,
   },
 }
@@ -157,11 +155,11 @@ pnpm build:packages
 
 Also avoid putting function values in custom `history.state`.
 
-## Slot default IDs are missing from contracts
+## Slot fallback IDs are missing from contracts
 
-That is expected. Slot defaults are render defaults, not navigable routes.
+That is expected. Slot fallbacks are render defaults, not navigable routes.
 
-Use generic outlet context typing in slot default components:
+Use generic outlet context typing in fallback components:
 
 ```tsx
 const context = useOutletContext<{ user: string }>();

@@ -48,6 +48,56 @@ function createRouter() {
 }
 
 describe('RouterProvider', () => {
+  test('runs provider middleware for the current route and writes redirects to history', async () => {
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        { id: 'private', path: '/private', component: () => <h1>private</h1> },
+        { id: 'login', path: '/login', component: () => <h1>login</h1> },
+      ] as const),
+      initialEntries: ['/private'],
+    });
+    const calls: string[] = [];
+
+    const { findByText } = render(
+      <RouterProvider
+        router={router}
+        middleware={[
+          ({ route, location, redirect }) => {
+            calls.push(`${route.id}:${location.href}`);
+            return route.id === 'private' ? redirect('/login?redirect=%2Fprivate') : undefined;
+          },
+        ]}
+      />,
+    );
+
+    expect(await findByText('login')).toBeTruthy();
+    expect(router.state.location.href).toBe('/login?redirect=%2Fprivate');
+    expect(calls).toEqual(['private:/private', 'login:/login?redirect=%2Fprivate']);
+  });
+
+  test('runs provider middleware rewrites without requiring a browser URL redirect', async () => {
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        { id: 'private', path: '/private', component: () => <h1>private</h1> },
+        { id: 'login', path: '/login', component: () => <h1>login</h1> },
+      ] as const),
+      initialEntries: ['/private'],
+    });
+
+    const { findByText } = render(
+      <RouterProvider
+        router={router}
+        middleware={[
+          ({ route, rewrite }) =>
+            route.id === 'private' ? rewrite('/login?redirect=%2Fprivate') : undefined,
+        ]}
+      />,
+    );
+
+    expect(await findByText('login')).toBeTruthy();
+    expect(router.state.location.href).toBe('/login?redirect=%2Fprivate');
+  });
+
   test('renders the active layout, outlet, and page route', async () => {
     const router = createRouter();
     await router.resolveCurrent();

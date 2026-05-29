@@ -32,6 +32,30 @@ describe('consumer trial app', () => {
     expect(router.state.location.href).toBe('/login');
   });
 
+  it('runs middleware registered on RouterProvider', async () => {
+    const router = createTrialMemoryRouter(['/'], { authenticated: true });
+    await router.resolveCurrent();
+    render(
+      <App
+        router={router}
+        middleware={[
+          ({ route, redirect }) => {
+            if (route.id === 'private.dashboard') {
+              return redirect('/login');
+            }
+          },
+        ]}
+      />,
+    );
+
+    await router.navigate.to('private.dashboard');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Login required' })).toBeTruthy();
+    });
+    expect(router.state.location.href).toBe('/login');
+  });
+
   it('opens configured blog post interception in the modal slot', async () => {
     const router = await renderAt('/blog');
 

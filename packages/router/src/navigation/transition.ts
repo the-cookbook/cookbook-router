@@ -26,6 +26,11 @@ export interface TransitionRedirectResult {
   readonly to: string;
 }
 
+export interface TransitionRewriteResult {
+  readonly type: 'rewrite';
+  readonly to: string;
+}
+
 export interface TransitionErrorResult {
   readonly type: 'error';
   readonly error: unknown;
@@ -35,6 +40,7 @@ export type TransitionResult =
   | TransitionCommitResult
   | TransitionBlockedResult
   | TransitionRedirectResult
+  | TransitionRewriteResult
   | TransitionErrorResult
   | Response;
 
@@ -64,7 +70,7 @@ export async function runTransition(options: TransitionOptions): Promise<Transit
       return { type: 'blocked' };
     }
 
-    if (middlewareResult?.type === 'redirect') {
+    if (middlewareResult?.type === 'redirect' || middlewareResult?.type === 'rewrite') {
       return middlewareResult;
     }
 

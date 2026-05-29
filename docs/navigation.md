@@ -197,7 +197,21 @@ router.href({ route: 'blog.index' }); // /foo/blog
 router.match('/foo/blog'); // matches blog.index
 ```
 
-Configured intercepts target route ids, so basename handling is automatic and route config should not include the basename.
+Configured intercepts compare against app paths after basename stripping, so route config should not include the basename.
+
+`router.match()` can also validate full hrefs and preserve parsed search/hash values:
+
+```ts
+const matchedRedirect = router.match('/users/eddie-lake?tab=activity#top');
+
+if (matchedRedirect) {
+  await router.navigate.replace(matchedRedirect.id, {
+    params: matchedRedirect.params,
+    search: matchedRedirect.search,
+    hash: matchedRedirect.hash,
+  });
+}
+```
 
 ## Interception
 

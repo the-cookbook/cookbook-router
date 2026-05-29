@@ -38,6 +38,7 @@ import type {
   RankedRoute,
   ResolvedInterceptedRoute,
   RouteDefinition,
+  RegisteredRouteMatch,
   RouteMatch,
   RouteRedirect,
 } from '../routes/contracts';
@@ -129,7 +130,7 @@ export interface Router {
   resolve<Route extends string>(routeId: Route, options?: HrefOptions<Route>): RouterLocation;
   resolve<Route extends RouteId>(options: NavigateOptions<Route>): RouterLocation;
   resolve<Route extends string>(options: NavigateOptions<Route>): RouterLocation;
-  match(pathname: string): RouteMatch | null;
+  match(href: string): RegisteredRouteMatch | null;
   navigate: {
     to<Route extends RouteId>(routeId: Route, options?: HrefOptions<Route>): Promise<RouterState>;
     to<Route extends string>(routeId: Route, options?: HrefOptions<Route>): Promise<RouterState>;
@@ -151,6 +152,7 @@ export interface Router {
   };
   subscribe(listener: (state: RouterState) => void): () => void;
   block(blocker: RouterBlocker): () => void;
+  useMiddleware(middleware: readonly Middleware[]): () => void;
   resolveCurrent(): Promise<RouterState>;
   serialize(): SerializedRouterState;
 }
@@ -175,6 +177,7 @@ export function createRouterRuntime(
   const compileCachedRoutePath = createRoutePathCompiler(pathOptions);
   const listeners = new Set<(state: RouterState) => void>();
   const blockers = new Set<RouterBlocker>();
+  const runtimeMiddleware = new Set<Middleware>();
   let transitionVersion = 0;
   let activeNavigation: ActiveNavigation | undefined;
   let state: RouterState = createState(options.history.location, 'idle');
@@ -206,8 +209,8 @@ export function createRouterRuntime(
       );
       return parseHref(router.href(target.route, target.options));
     },
-    match(pathname) {
-      return matchRoutes(normalizedRoutes, stripBasename(pathname, options.basename), pathOptions);
+    match(href) {
+      return matchHref(href) as RegisteredRouteMatch | null;
     },
     navigate: {
       to(routeOrOptions: string | NavigateOptions<string>, hrefOptions?: HrefOptions<string>) {
@@ -254,6 +257,17 @@ export function createRouterRuntime(
       blockers.add(blocker);
       return () => blockers.delete(blocker);
     },
+    useMiddleware(middleware) {
+      for (const entry of middleware) {
+        runtimeMiddleware.add(entry);
+      }
+
+      return () => {
+        for (const entry of middleware) {
+          runtimeMiddleware.delete(entry);
+        }
+      };
+    },
     resolveCurrent() {
       return transitionTo(options.history.location, 'replace', false);
     },
@@ -287,9 +301,29 @@ export function createRouterRuntime(
 
     state = {
       location: options.hydrationData.location,
-      match: router.match(options.hydrationData.location.pathname),
+      match: router.match(options.hydrationData.location.href),
       navigation: options.hydrationData.navigation,
       ...(hydrationError === undefined ? {} : { error: hydrationError }),
+    };
+  }
+
+  function matchHref(href: string): RouteMatch | null {
+    const location = parseHref(href);
+    const match = matchRoutes(
+      normalizedRoutes,
+      stripBasename(location.pathname, options.basename),
+      pathOptions,
+    );
+
+    if (!match) {
+      return null;
+    }
+
+    return {
+      ...match,
+      search: parseSearch(location.search),
+      hash: location.hash,
+      href: location.href,
     };
   }
 
@@ -300,11 +334,7 @@ export function createRouterRuntime(
     intercepted?: ResolvedInterceptedRoute,
     previousLocation?: RouterLocation,
   ): RouterState {
-    const baseMatch = matchRoutes(
-      normalizedRoutes,
-      stripBasename(location.pathname, options.basename),
-      pathOptions,
-    );
+    const baseMatch = matchHref(location.href);
     const match = intercepted && baseMatch ? { ...baseMatch, intercepted } : baseMatch;
     const next: RouterState = {
       location,
@@ -502,7 +532,7 @@ export function createRouterRuntime(
       from: fromMatch,
       to: nextMatch,
       location: transitionLocation,
-      ...(options.middleware === undefined ? {} : { middleware: options.middleware }),
+      middleware: getActiveMiddleware(),
       ...(options.lifecycle === undefined ? {} : { lifecycle: options.lifecycle }),
     });
 
@@ -537,10 +567,37 @@ export function createRouterRuntime(
       }
 
       const redirectLocation = parseHref(result.to);
+      const shouldWriteRedirectHistory =
+        options.history.mode !== 'static' &&
+        (writeHistory || location.href === options.history.location.href);
       return transitionTo(
         redirectLocation,
         'replace',
-        writeHistory,
+        shouldWriteRedirectHistory,
+        redirectDepth + 1,
+        undefined,
+        undefined,
+        preventScrollReset,
+      );
+    }
+
+    if (result.type === 'rewrite') {
+      setState({ ...state, navigation: 'redirecting' });
+
+      if (isExternalHref(result.to)) {
+        return setState(
+          createState(
+            transitionLocation,
+            'error',
+            new Error(`Middleware cannot rewrite to external URL "${result.to}".`),
+          ),
+        );
+      }
+
+      return transitionTo(
+        parseHref(result.to),
+        'replace',
+        false,
         redirectDepth + 1,
         undefined,
         undefined,
@@ -580,7 +637,7 @@ export function createRouterRuntime(
         from: fromMatch,
         to: nextMatch,
         location: transitionLocation,
-        ...(options.middleware === undefined ? {} : { middleware: options.middleware }),
+        middleware: getActiveMiddleware(),
         ...(options.lifecycle === undefined ? {} : { lifecycle: options.lifecycle }),
       });
     } catch (error) {
@@ -590,6 +647,14 @@ export function createRouterRuntime(
     }
 
     return committed;
+  }
+
+  function getActiveMiddleware(): readonly Middleware[] {
+    if (!runtimeMiddleware.size) {
+      return options.middleware ?? [];
+    }
+
+    return [...(options.middleware ?? []), ...runtimeMiddleware];
   }
 
   async function isBlocked(
@@ -614,7 +679,7 @@ export function createRouterRuntime(
     readonly replaced: boolean;
   } {
     let nextLocation = location;
-    let nextMatch = router.match(nextLocation.pathname);
+    let nextMatch = router.match(nextLocation.href);
 
     if (!nextMatch) {
       const prunedPathname = prunePathname(nextLocation.pathname, pathOptions);
@@ -624,7 +689,7 @@ export function createRouterRuntime(
           ...(nextLocation.state === undefined ? {} : { state: nextLocation.state }),
           key: nextLocation.key,
         });
-        const candidateMatch = router.match(candidate.pathname);
+        const candidateMatch = router.match(candidate.href);
 
         if (candidateMatch) {
           nextLocation = candidate;
@@ -654,7 +719,7 @@ export function createRouterRuntime(
 
     return {
       location: canonicalLocation,
-      match: router.match(canonicalLocation.pathname),
+      match: router.match(canonicalLocation.href),
       replaced: options.history.mode !== 'static',
     };
   }
@@ -972,6 +1037,33 @@ function asParamRecord(params: unknown): Record<string, unknown> {
 function applyBasename(pathname: string, basename?: string): string {
   const normalizedBasename = normalizeBasename(basename);
   return normalizedBasename ? `${normalizedBasename}${pathname === '/' ? '' : pathname}` : pathname;
+}
+
+function parseSearch(search: string): Record<string, string | readonly string[]> {
+  if (!search) {
+    return {};
+  }
+
+  const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
+  const parsed: Record<string, string | string[]> = {};
+
+  for (const [key, value] of params) {
+    const current = parsed[key];
+
+    if (current === undefined) {
+      parsed[key] = value;
+      continue;
+    }
+
+    if (Array.isArray(current)) {
+      current.push(value);
+      continue;
+    }
+
+    parsed[key] = [current, value];
+  }
+
+  return parsed;
 }
 
 function stripBasename(pathname: string, basename?: string): string {

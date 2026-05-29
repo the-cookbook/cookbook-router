@@ -56,6 +56,13 @@ describe('create-memory-router', () => {
     const router = createMemoryRouter({ routes, basename: '/app' });
 
     expect(router.match('/app/users/5')?.params).toEqual({ id: '5' });
+
+    const match = router.match('/app/users/5?tab=settings#profile');
+    expect(match?.params).toEqual({ id: '5' });
+    expect(match?.search).toEqual({ tab: 'settings' });
+    expect(match?.hash).toBe('#profile');
+    expect(match?.href).toBe('/app/users/5?tab=settings#profile');
+
     expect(router.match('/other/users/5')).toBeNull();
   });
 
@@ -189,6 +196,45 @@ describe('create-memory-router', () => {
 
     expect(router.state.location.href).toBe('/');
     expect(router.state.navigation).toBe('idle');
+  });
+
+  test('redirects middleware during current resolution and writes browser history', async () => {
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        { id: 'private', path: '/private' },
+        { id: 'login', path: '/login' },
+      ] as const),
+      initialEntries: ['/private'],
+      middleware: [
+        ({ route, redirect }) =>
+          route.id === 'private' ? redirect('/login?redirect=%2Fprivate') : undefined,
+      ],
+    });
+
+    await router.resolveCurrent();
+
+    expect(router.state.location.href).toBe('/login?redirect=%2Fprivate');
+    expect(router.state.match?.id).toBe('login');
+  });
+
+  test('rewrites middleware during current resolution without writing browser history', async () => {
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        { id: 'private', path: '/private' },
+        { id: 'login', path: '/login' },
+      ] as const),
+      initialEntries: ['/private'],
+      middleware: [
+        ({ route, rewrite }) =>
+          route.id === 'private' ? rewrite('/login?redirect=%2Fprivate') : undefined,
+      ],
+    });
+
+    await router.resolveCurrent();
+
+    expect(router.state.location.href).toBe('/login?redirect=%2Fprivate');
+    expect(router.state.match?.id).toBe('login');
+    expect(router.resolveCurrent).toBeTypeOf('function');
   });
 
   test('stops redirect loops as navigation errors', async () => {

@@ -126,6 +126,39 @@ describe('repository-level router flows', () => {
     expect(router.state.location.href).toBe('/login');
   });
 
+  test('supports provider middleware redirects and rewrites', async () => {
+    const redirectRouter = createMemoryRouter({ routes, initialEntries: ['/admin'] });
+    const redirectView = render(
+      <RouterProvider
+        router={redirectRouter}
+        fallback={<h1>Not found</h1>}
+        middleware={[
+          ({ route, redirect }) =>
+            route.route.meta?.requiresAuth ? redirect('/login?redirect=%2Fadmin') : undefined,
+        ]}
+      />,
+    );
+
+    await waitFor(() => expect(redirectView.getByText('Login')).toBeTruthy());
+    expect(redirectRouter.state.location.href).toBe('/login?redirect=%2Fadmin');
+    redirectView.unmount();
+
+    const rewriteRouter = createMemoryRouter({ routes, initialEntries: ['/admin'] });
+    const rewriteView = render(
+      <RouterProvider
+        router={rewriteRouter}
+        fallback={<h1>Not found</h1>}
+        middleware={[
+          ({ route, rewrite }) =>
+            route.route.meta?.requiresAuth ? rewrite('/login?redirect=%2Fadmin') : undefined,
+        ]}
+      />,
+    );
+
+    await waitFor(() => expect(rewriteView.getByText('Login')).toBeTruthy());
+    expect(rewriteRouter.state.location.href).toBe('/login?redirect=%2Fadmin');
+  });
+
   test('handles not found routes through provider fallback without mocking matching internals', async () => {
     const router = createMemoryRouter({ routes, initialEntries: ['/does-not-exist'] });
     await router.resolveCurrent();

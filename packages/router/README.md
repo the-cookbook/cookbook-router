@@ -173,7 +173,16 @@ router.href(routeId, options);
 router.href({ route, params, search, hash });
 router.resolve(routeId, options);
 router.resolve({ route, params, search, hash });
-router.match(pathname);
+router.match(href);
+
+const matched = router.match('/login?redirect=%2Foverview');
+if (matched) {
+  await router.navigate.replace(matched.id, {
+    params: matched.params,
+    search: matched.search,
+    hash: matched.hash,
+  });
+}
 router.navigate.to(routeId, options);
 router.navigate.to({ route, params, search, hash });
 router.navigate.replace({ route, params, search, hash });

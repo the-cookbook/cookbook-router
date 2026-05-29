@@ -13,6 +13,11 @@ export interface MiddlewareRedirectResult {
   readonly to: string;
 }
 
+export interface MiddlewareRewriteResult {
+  readonly type: 'rewrite';
+  readonly to: string;
+}
+
 export interface MiddlewareCancelResult {
   readonly type: 'cancel';
 }
@@ -20,6 +25,7 @@ export interface MiddlewareCancelResult {
 export type RunMiddlewareResult =
   | undefined
   | MiddlewareRedirectResult
+  | MiddlewareRewriteResult
   | MiddlewareCancelResult
   | Response;
 
@@ -35,7 +41,8 @@ export async function runMiddleware(options: RunMiddlewareOptions): Promise<RunM
       route,
       location: options.location,
       params: options.match.params,
-      redirect: (to) => normalizeRedirectTarget(to),
+      redirect: (to) => normalizeMiddlewareTarget(to, 'redirect'),
+      rewrite: (to) => normalizeMiddlewareTarget(to, 'rewrite'),
       cancel: () => ({ type: 'cancel' }),
     });
 
@@ -61,12 +68,15 @@ function* iterateMiddlewarePipeline(options: RunMiddlewareOptions): Generator<Mi
   }
 }
 
-function normalizeRedirectTarget(to: string): MiddlewareRedirectResult {
+function normalizeMiddlewareTarget<T extends 'redirect' | 'rewrite'>(
+  to: string,
+  type: T,
+): T extends 'redirect' ? MiddlewareRedirectResult : MiddlewareRewriteResult {
   if (!to || typeof to !== 'string') {
     throw createMalformedRedirectError(to);
   }
 
-  return { type: 'redirect', to };
+  return { type, to } as T extends 'redirect' ? MiddlewareRedirectResult : MiddlewareRewriteResult;
 }
 
 function normalizeMiddlewareResult(result: MiddlewareResult): RunMiddlewareResult {
@@ -82,7 +92,7 @@ function normalizeMiddlewareResult(result: MiddlewareResult): RunMiddlewareResul
     return undefined;
   }
 
-  if (result.type === 'redirect') {
+  if (result.type === 'redirect' || result.type === 'rewrite') {
     if (!result.to) {
       throw createMalformedRedirectError(result.to);
     }

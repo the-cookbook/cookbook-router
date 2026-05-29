@@ -40,7 +40,7 @@ interface RouteDefinition {
   readonly hash?: readonly string[];
   readonly meta?: RouteMeta;
   readonly loading?: RouteComponent;
-  readonly error?: RouteComponent;
+  readonly errorFallback?: RouteComponent;
   readonly lifecycle?: RouteLifecycle;
   readonly middleware?: readonly Middleware[];
 }
@@ -51,19 +51,39 @@ Supporting shapes:
 ```ts
 interface RouteLayoutDefinition {
   readonly component?: RouteComponent;
-  readonly loading?: RouteComponent;
-  readonly error?: RouteComponent;
   readonly slots?: RouteSlotDefinitions;
 }
 
 type RouteSlotDefinitions = Readonly<Record<string, RouteSlotDefinition>>;
-type RouteSlotDefinition = RouteComponent | RouteSlotConfig | true;
+type RouteSlotDefinition = RouteSlotConfig | false;
 
 interface RouteSlotConfig {
-  readonly component?: RouteComponent;
+  readonly fallback?: RouteSlotFallback | null;
   readonly routes?: readonly RouteDefinition[];
   readonly meta?: RouteMeta;
 }
+
+interface RouteSlotFallback {
+  readonly id?: string;
+  readonly component: RouteComponent;
+  readonly meta?: RouteMeta;
+}
+
+type RouteRedirect =
+  | string
+  | {
+      readonly route: string;
+      readonly params?: Record<string, unknown>;
+      readonly search?: Record<string, unknown>;
+      readonly hash?: string | null;
+    };
+
+interface RouteInterceptConfig {
+  readonly to: readonly string[];
+  readonly component: RouteComponent;
+}
+
+type RouteIntercepts = Readonly<Record<string, RouteInterceptConfig>>;
 ```
 
 ## Field reference
@@ -83,7 +103,7 @@ interface RouteSlotConfig {
 | `hash`             | Allowed hash fragment values for generated contracts.                                                       |
 | `meta`             | Arbitrary metadata preserved in generated contracts and runtime route definitions.                          |
 | `loading`          | Route-level React Suspense fallback component rendered while the route subtree is loading.                  |
-| `error`            | Route-level React error fallback component rendered when the route subtree throws during rendering.         |
+| `errorFallback`    | Route-level React error fallback component rendered when the route subtree throws during rendering.         |
 | `lifecycle`        | Route-level transition hooks.                                                                               |
 | `middleware`       | Route-level middleware.                                                                                     |
 
@@ -343,7 +363,7 @@ Outlet context is direct-child scoped. It does not automatically leak through ev
 
 ## Layout slots
 
-Slots render named layout regions. A slot is declared by its object key. Use a component shorthand for default content, an object when metadata or slot routes are needed, and `true` for declaration-only slots used by children or intercepts.
+Slots render named layout regions.
 
 ```tsx
 {
@@ -353,8 +373,10 @@ Slots render named layout regions. A slot is declared by its object key. Use a c
     component: DashboardLayout,
     slots: {
       sidebar: {
-        component: DashboardSidebar,
-        meta: { section: 'dashboard' },
+        fallback: {
+          id: 'dashboard.sidebar.fallback',
+          component: DashboardSidebar,
+        },
         routes: [
           {
             id: 'dashboard.sidebar.activity',
@@ -363,8 +385,9 @@ Slots render named layout regions. A slot is declared by its object key. Use a c
           },
         ],
       },
-      header: DashboardHeader,
-      modal: true,
+      modal: {
+        fallback: null,
+      },
     },
   },
 }
@@ -388,12 +411,11 @@ export function DashboardLayout() {
 
 Slot rules:
 
-- `slot: Component` declares a slot and renders that component as default content.
-- `slot: { component?, meta?, routes? }` declares a slot with optional default content, metadata, and slot routes.
-- `slot: true` declares a slot without default content.
-- `fallback`, `id`, `null`, and `false` are not supported slot definitions.
+- `fallback` renders when no slot route matches.
+- `fallback: null` creates an empty but valid slot.
+- `false` disables an inherited slot for that branch.
 - Slot names are layout-scoped, not global.
-- Child routes may override a slot only when an ancestor layout declares that slot.
+- Slot fallback IDs are useful for diagnostics but are not generated as navigable route contracts.
 - Slot route IDs are generated because they are real URL-matched route definitions.
 
 When a slot route shares a URL with primary content, define both routes:
@@ -427,7 +449,7 @@ Use the primary route for navigation and the slot route for the slot-specific UI
 
 Interception lets a source route preserve its current UI while rendering a destination route into a slot. The browser URL still updates to the canonical destination URL.
 
-Configured intercepts are declared on the source route. `to` targets canonical route IDs, not path patterns. Use a string for a single target route or an array for multiple target route IDs.
+Configured intercepts are declared on the source route.
 
 ```tsx
 {
@@ -436,12 +458,12 @@ Configured intercepts are declared on the source route. `to` targets canonical r
   layout: {
     component: BlogLayout,
     slots: {
-      modal: true,
+      modal: { fallback: null },
     },
   },
   intercepts: {
     modal: {
-      to: 'blog.articles.show',
+      to: ['articles/{slug:regex([a-z0-9-]+)}'],
       component: ArticleModal,
     },
   },
@@ -515,9 +537,9 @@ Use `RouterProvider fallback` for global 404 UI. For section-specific 404 UI, de
 }
 ```
 
-Route-level `loading` components are used by `@cookbook/router-react` as React Suspense fallbacks for that route component. They are local to the route that declares them and are not inherited by child routes. Loading components render at the same outlet position as the pending route, so parent layouts and their styling remain active during loading.
+Route-level `loading` components are used by `@cookbook/router-react` as React Suspense fallbacks. They render while a lazy route component, layout, slot route, or intercepted route suspends.
 
-Route-level `error` components are used by `@cookbook/router-react` as React error-boundary fallbacks for that route component. They are local to the route that declares them and are not inherited by child routes. The fallback receives `error`, `reset`, and `route` props.
+Route-level `errorFallback` components are used by `@cookbook/router-react` as React error-boundary fallbacks. The nearest matched route with an `errorFallback` owns errors thrown by its route subtree. The fallback receives `error`, `reset`, and `route` props.
 
 ```tsx
 function ArticleLoading() {
@@ -540,50 +562,11 @@ function ArticleErrorFallback(props: RouteErrorFallbackProps) {
   path: 'articles/{slug}',
   component: ArticlePage,
   loading: ArticleLoading,
-  error: ArticleErrorFallback,
+  errorFallback: ArticleErrorFallback,
 }
 ```
 
-Layouts may also define `layout.loading` and `layout.error`. Values under `layout` are shared by that layout tree: they apply to the route component rendered by the layout and are inherited by descendant routes that do not define their own local fallback. Both fallbacks render inside that layout's `<Outlet />` position, so the layout shell remains mounted and is not recreated while child content is loading or has failed. The React provider keeps the boundary shape stable and memoizes fallback elements by fallback component and owner route, which prevents unchanged layouts from blinking during navigation.
-
-```tsx
-function DashboardLayout() {
-  return (
-    <DashboardShell>
-      <Outlet />
-    </DashboardShell>
-  );
-}
-
-function DashboardLoading() {
-  return <DashboardPageSkeleton />;
-}
-
-function DashboardErrorFallback() {
-  return <DashboardErrorState />;
-}
-
-{
-  id: 'dashboard',
-  path: '/dashboard',
-  layout: {
-    component: DashboardLayout,
-    loading: DashboardLoading,
-    error: DashboardErrorFallback,
-  },
-  children: [
-    {
-      id: 'dashboard.overview',
-      index: true,
-      component: lazy(() => import('./overview')),
-    },
-  ],
-}
-```
-
-If a child route declares its own `loading` or `error`, that route-level fallback wins for that route only. It does not become the fallback for grandchildren. Put shared pending/error UI under `layout.loading` or `layout.error`.
-
-`error` handles React rendering and lazy-import errors. Router transition errors from middleware or lifecycle hooks still flow through router navigation error handling.
+`errorFallback` handles React rendering and lazy-import errors. Router transition errors from middleware or lifecycle hooks still flow through router navigation error handling.
 
 ## Middleware and lifecycle on routes
 
@@ -734,7 +717,7 @@ Error messages include route IDs or invalid field names where possible.
 - Prefer route-object redirects over literal internal string redirects.
 - Use `basename` instead of hard-coding deployment prefixes in route paths.
 - Define primary routes for navigable pages and slot routes for slot-specific UI.
-- Slot defaults do not have separate route IDs and are not generated as route contracts.
-- Use direct `useOutletContext<Context>()` for slot default context unless you have generated outlet context contracts.
+- Keep slot fallback IDs out of generated contract expectations.
+- Use direct `useOutletContext<Context>()` for slot fallback context unless you have generated outlet context contracts.
 - Use configured intercepts for route-owned UX patterns and call-site intercepts for local UI decisions.
 - Keep external URLs out of route params; use string redirects or normal anchors for external navigation.

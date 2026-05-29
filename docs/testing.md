@@ -44,12 +44,7 @@ Each example also supports:
 pnpm --filter react-blog test
 pnpm --filter react-blog typecheck
 pnpm --filter react-blog build
-pnpm --filter react-dashboard test
-pnpm --filter react-dashboard typecheck
-pnpm --filter react-dashboard build
 ```
-
-The dashboard example intentionally delays lazy page imports so loading states are observable. Tests that assert lazy page body content should use async queries with a timeout longer than the configured page delay, and should assert error fallback behavior through the `/broken-page` route rather than by mocking the router internals.
 
 ## E2E tests
 

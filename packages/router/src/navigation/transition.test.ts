@@ -50,6 +50,17 @@ describe('transition', () => {
       to: '/login',
     });
     await expect(
+      runTransition({
+        from: null,
+        to,
+        location,
+        middleware: [({ rewrite }) => rewrite('/login')],
+      }),
+    ).resolves.toEqual({
+      type: 'rewrite',
+      to: '/login',
+    });
+    await expect(
       runTransition({ from: null, to, location, middleware: [() => response] }),
     ).resolves.toBe(response);
 

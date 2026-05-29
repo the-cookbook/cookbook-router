@@ -1,5 +1,6 @@
 import type { RouterLocation } from '../history/memory-history';
 import type { RouterPathOptions } from '../pathkit/pathkit';
+import type { RouteHashInput, RouteId, RouteParams, RouteSearch } from '../contracts';
 
 export type RouteComponent = unknown;
 export type RouteMeta = Record<string, unknown>;
@@ -152,15 +153,25 @@ export interface ResolvedSlot {
 
 export type ResolvedSlots = Readonly<Record<string, Readonly<Record<string, ResolvedSlot>>>>;
 
-export interface RouteMatch {
-  readonly id: string;
+export type ParsedRouteSearch = Record<string, string | readonly string[]>;
+
+export interface RouteMatch<Route extends string = string> {
+  readonly id: Route;
   readonly pathname: string;
+  readonly search: Route extends RouteId ? RouteSearch<Route> : ParsedRouteSearch;
+  readonly hash: Route extends RouteId ? RouteHashInput<Route> : string;
+  readonly href: string;
   readonly route: NormalizedRoute;
   readonly branch: readonly MatchedRoute[];
-  readonly params: Record<string, string>;
+  readonly params: (Route extends RouteId ? RouteParams<Route> : Record<string, unknown>) &
+    Record<string, string>;
   readonly slots: ResolvedSlots;
   readonly intercepted?: ResolvedInterceptedRoute;
 }
+
+export type RegisteredRouteMatch = RouteId extends string
+  ? RouteMatch<RouteId>
+  : RouteMatch<string>;
 
 export interface ResolvedInterceptedRoute {
   readonly slot: string;
@@ -177,6 +188,7 @@ export interface MiddlewareContext {
   readonly location: RouterLocation;
   readonly params: Record<string, string>;
   redirect: (to: string) => MiddlewareResult;
+  rewrite: (to: string) => MiddlewareResult;
   cancel: () => MiddlewareResult;
 }
 
@@ -186,6 +198,10 @@ export type MiddlewareResult =
   | Response
   | {
       readonly type: 'redirect';
+      readonly to: string;
+    }
+  | {
+      readonly type: 'rewrite';
       readonly to: string;
     }
   | {

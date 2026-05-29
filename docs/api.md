@@ -123,73 +123,29 @@ interface RouteDefinition {
   readonly hash?: readonly string[];
   readonly meta?: RouteMeta;
   readonly loading?: RouteComponent;
-  readonly error?: RouteComponent;
+  readonly errorFallback?: RouteComponent;
   readonly lifecycle?: RouteLifecycle;
   readonly middleware?: readonly Middleware[];
 }
 ```
 
-| Field        | Purpose                                                                                                                   |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| `id`         | Stable public route ID used by links, hrefs, navigation, redirects, generated contracts, and tests.                       |
-| `path`       | Local path segment or absolute path. Index routes must not define `path`.                                                 |
-| `index`      | Marks the route as the default child for its parent path.                                                                 |
-| `component`  | Route component or framework-owned render value. The core package treats it as `unknown`.                                 |
-| `layout`     | Layout component, layout-level loading/error fallbacks, and named slot definitions.                                       |
-| `children`   | Primary child routes.                                                                                                     |
-| `intercepts` | Configured route interception targets for named slots.                                                                    |
-| `redirect`   | Internal route redirect object or literal href string.                                                                    |
-| `search`     | Search key schema used by generated contracts. `type: 'one'` is a single value; `type: 'many'` is a repeated query param. |
-| `hash`       | Allowed hash values used by generated contracts.                                                                          |
-| `meta`       | Arbitrary route metadata.                                                                                                 |
-| `loading`    | Route-local React Suspense fallback component. It is not inherited by child routes.                                       |
-| `error`      | Route-local React error-boundary fallback component. It is not inherited by child routes.                                 |
-| `lifecycle`  | Route lifecycle hooks.                                                                                                    |
-| `middleware` | Route-specific middleware pipeline.                                                                                       |
-
-#### `RouteIntercepts`
-
-```ts
-type RouteInterceptTarget = string | readonly string[];
-
-interface RouteInterceptConfig {
-  readonly to: RouteInterceptTarget;
-  readonly component: RouteComponent;
-}
-
-type RouteIntercepts = Readonly<Record<string, RouteInterceptConfig>>;
-```
-
-`to` targets route IDs, not path patterns. Use a string for one target route or an array for multiple canonical target routes:
-
-```ts
-intercepts: {
-  modal: {
-    to: 'create',
-    component: CreateModal,
-  },
-}
-```
-
-#### `RouteLayoutDefinition`
-
-```ts
-interface RouteLayoutDefinition {
-  readonly component?: RouteComponent;
-  readonly loading?: RouteComponent;
-  readonly error?: RouteComponent;
-  readonly slots?: RouteSlotDefinitions;
-}
-```
-
-| Field       | Purpose                                                                                                                            |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `component` | Layout component that renders the route outlet and any layout slots.                                                               |
-| `loading`   | Layout-level React Suspense fallback shared with the route component and descendant routes that do not define their own `loading`. |
-| `error`     | Layout-level React error fallback shared with the route component and descendant routes that do not define their own `error`.      |
-| `slots`     | Named layout slot definitions. Values may be a component, `{ component?, meta?, routes? }`, or `true` for declaration-only slots.  |
-
-Layout loading and error fallback components render at the layout outlet position, so the layout shell remains mounted while child content is loading or has failed. Route-level fallbacks are local to that route and are not shared with child routes.
+| Field           | Purpose                                                                                                                   |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `id`            | Stable public route ID used by links, hrefs, navigation, redirects, generated contracts, and tests.                       |
+| `path`          | Local path segment or absolute path. Index routes must not define `path`.                                                 |
+| `index`         | Marks the route as the default child for its parent path.                                                                 |
+| `component`     | Route component or framework-owned render value. The core package treats it as `unknown`.                                 |
+| `layout`        | Layout component and named slot definitions.                                                                              |
+| `children`      | Primary child routes.                                                                                                     |
+| `intercepts`    | Configured route interception targets for named slots.                                                                    |
+| `redirect`      | Internal route redirect object or literal href string.                                                                    |
+| `search`        | Search key schema used by generated contracts. `type: 'one'` is a single value; `type: 'many'` is a repeated query param. |
+| `hash`          | Allowed hash values used by generated contracts.                                                                          |
+| `meta`          | Arbitrary route metadata.                                                                                                 |
+| `loading`       | Route-level React Suspense fallback component for loading route subtrees.                                                 |
+| `errorFallback` | Route-level React error-boundary fallback component for render errors in route subtrees.                                  |
+| `lifecycle`     | Route lifecycle hooks.                                                                                                    |
+| `middleware`    | Route-specific middleware pipeline.                                                                                       |
 
 Related: [Routing](routing.md), [Search and hash](search-and-hash.md), [Middleware](middleware.md), [Lifecycle](lifecycle.md).
 
@@ -315,7 +271,7 @@ interface Router {
   resolve<Route extends RouteId>(options: NavigateOptions<Route>): RouterLocation;
   resolve<Route extends string>(options: NavigateOptions<Route>): RouterLocation;
 
-  match(pathname: string): RouteMatch | null;
+  match(href: string): RouteMatch<RouteId> | null;
 
   navigate: {
     to<Route extends RouteId>(routeId: Route, options?: HrefOptions<Route>): Promise<RouterState>;
@@ -401,11 +357,11 @@ interface RouterState {
 
 These lower-level helpers are public for tests, tooling, and advanced integrations. Most app code should use a `Router` instance instead.
 
-| API               | Signature                                                                                                       | Use case                                                 |
-| ----------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `validateRoutes`  | `(routes: readonly RouteDefinition[], pathOptions?: RouterPathOptions) => void`                                 | Validate route tree shape and throw on invalid config.   |
-| `normalizeRoutes` | `(routes: readonly RouteDefinition[], pathOptions?: RouterPathOptions) => readonly NormalizedRoute[]`           | Convert route definitions into normalized route records. |
-| `matchRoutes`     | `(routes: readonly NormalizedRoute[], pathname: string, pathOptions?: RouterPathOptions) => RouteMatch \| null` | Match a pathname against normalized routes.              |
+| API               | Signature                                                                                                               | Use case                                                 |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `validateRoutes`  | `(routes: readonly RouteDefinition[], pathOptions?: RouterPathOptions) => void`                                         | Validate route tree shape and throw on invalid config.   |
+| `normalizeRoutes` | `(routes: readonly RouteDefinition[], pathOptions?: RouterPathOptions) => readonly NormalizedRoute[]`                   | Convert route definitions into normalized route records. |
+| `matchRoutes`     | `(routes: readonly NormalizedRoute[], pathname: string, pathOptions?: RouterPathOptions) => RouteMatch<string> \| null` | Match a pathname against normalized routes.              |
 
 ```ts
 import { matchRoutes, normalizeRoutes } from '@cookbook/router';
@@ -686,7 +642,6 @@ interface LinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly hash?: HrefOptions<Route>['hash'];
   readonly intercept?: InterceptInput;
   readonly context?: HrefOptions<Route>['context'];
-  readonly preventScrollReset?: boolean;
   readonly replace?: boolean;
   readonly children?: ReactNode;
 }
@@ -702,7 +657,7 @@ Use `to` for internal typed navigation and `href` for literal links.
 </Link>
 ```
 
-`Link` preserves native browser behavior for modified clicks, non-left clicks, external links, `target="_blank"`, and downloads. Set `preventScrollReset` to prevent `RouterProvider` scroll restoration from scrolling to the top for that navigation.
+`Link` preserves native browser behavior for modified clicks, non-left clicks, external links, `target="_blank"`, and downloads.
 
 #### `NavLink(props)`
 
@@ -723,8 +678,7 @@ interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly replace?: boolean;
   readonly intercept?: InterceptInput;
   readonly context?: HrefOptions<Route>['context'];
-  readonly preventScrollReset?: boolean;
-  readonly end?: boolean | { readonly search?: 'all' | 'ignore' };
+  readonly end?: boolean;
   readonly children?: ReactNode | ((props: NavLinkRenderProps) => ReactNode);
 }
 
@@ -735,13 +689,7 @@ function NavLink<Route extends RouteId = RouteId>(props: NavLinkProps<Route>): J
 <NavLink to="users.show" params={{ id: '42' }} end>
   {({ isActive }) => <span data-active={isActive}>User</span>}
 </NavLink>
-
-<NavLink to="users.show" params={{ id: '42' }} end={{ search: 'ignore' }}>
-  User, regardless of query string
-</NavLink>
 ```
-
-`end={true}` requires the full generated href to match, including search params. `end={{ search: 'ignore' }}` requires the pathname and hash to match while ignoring search params.
 
 #### `Outlet(props)`
 
@@ -767,7 +715,7 @@ interface SlotProps<T = unknown> {
 function Slot<T = unknown>(props: SlotProps<T>): ReactElement | null;
 ```
 
-Renders a named layout slot. A slot can render a matched slot route, default slot component, intercepted destination, not-found component, or nothing.
+Renders a named layout slot. A slot can render a matched slot route, fallback, intercepted destination, not-found component, or nothing.
 
 ### React hooks
 
@@ -792,15 +740,7 @@ function UserPage() {
   const navigate = useNavigate();
 
   return (
-    <button
-      onClick={() =>
-        void navigate.replace({
-          route: 'users.show',
-          params,
-          preventScrollReset: true,
-        })
-      }
-    >
+    <button onClick={() => void navigate.replace({ route: 'users.show', params })}>
       Refresh {search.tab ?? 'details'}
     </button>
   );
@@ -829,7 +769,7 @@ The React package also exports advanced integration helpers:
 | API                                                              | Purpose                                                                |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | `renderMatches(matches, fallback, slots?, options?)`             | Render a matched branch manually.                                      |
-| `renderRouteBoundary(match, element)`                            | Wrap one matched route element in its local Suspense/error UI.         |
+| `renderRouteBoundary(match, element)`                            | Wrap one matched route element in its route-level Suspense/error UI.   |
 | `useRouterState(router)`                                         | Subscribe to a router and return state.                                |
 | `RouterContext`                                                  | Router/state context.                                                  |
 | `OutletContext`                                                  | Outlet content/context provider.                                       |
@@ -845,8 +785,6 @@ Most applications should not need these APIs directly.
 Exported React types include:
 
 - `LinkProps`
-- `NavLinkEnd`
-- `NavLinkEndOptions`
 - `NavLinkProps`
 - `NavLinkRenderProps`
 - `OutletProps`

@@ -25,6 +25,13 @@ describe('create-router', () => {
     expect(router.href('about', { context: { source: 'ignored' } })).toBe('/about');
     expect(router.match('/about')?.route.id).toBe('about');
 
+    const match = router.match('/about?redirect=%2Foverview#details');
+    expect(match?.route.id).toBe('about');
+    expect(match?.pathname).toBe('/about');
+    expect(match?.search).toEqual({ redirect: '/overview' });
+    expect(match?.hash).toBe('#details');
+    expect(match?.href).toBe('/about?redirect=%2Foverview#details');
+
     await router.navigate.to({ route: 'about' });
     expect(router.state.location.href).toBe('/about');
 
@@ -60,6 +67,68 @@ describe('create-router', () => {
     expect(router.state.match?.route.id).toBe('post');
     expect(router.href('post', { params: { slug: 'hello-world' } })).toBe('/posts/hello-world');
     expect(() => router.href('post', { params: { slug: 'HelloWorld' } })).toThrow('HelloWorld');
+  });
+
+  test('distinguishes middleware redirect from rewrite during current resolution', async () => {
+    const authRoutes = defineRoutes([
+      { id: 'private', path: '/private' },
+      { id: 'login', path: '/login' },
+    ] as const);
+    const redirectHistory = createMemoryHistory({ initialEntries: ['/private'] });
+    const redirectRouter = createRouter({
+      routes: authRoutes,
+      history: redirectHistory,
+      middleware: [
+        ({ route, redirect }) =>
+          route.id === 'private' ? redirect('/login?redirect=%2Fprivate') : undefined,
+      ],
+    });
+
+    await redirectRouter.resolveCurrent();
+
+    expect(redirectRouter.state.location.href).toBe('/login?redirect=%2Fprivate');
+    expect(redirectHistory.location.href).toBe('/login?redirect=%2Fprivate');
+
+    const rewriteHistory = createMemoryHistory({ initialEntries: ['/private'] });
+    const rewriteRouter = createRouter({
+      routes: authRoutes,
+      history: rewriteHistory,
+      middleware: [
+        ({ route, rewrite }) =>
+          route.id === 'private' ? rewrite('/login?redirect=%2Fprivate') : undefined,
+      ],
+    });
+
+    await rewriteRouter.resolveCurrent();
+
+    expect(rewriteRouter.state.location.href).toBe('/login?redirect=%2Fprivate');
+    expect(rewriteRouter.state.match?.id).toBe('login');
+    expect(rewriteHistory.location.href).toBe('/private');
+  });
+
+  test('registers and unregisters runtime middleware', async () => {
+    const history = createMemoryHistory({ initialEntries: ['/'] });
+    const router = createRouter({ routes, history });
+    const calls: string[] = [];
+
+    const unregister = router.useMiddleware([
+      ({ location, redirect }) => {
+        calls.push(location.href);
+        return location.pathname === '/about' ? redirect('/') : undefined;
+      },
+    ]);
+
+    await router.navigate.to('about');
+
+    expect(calls).toEqual(['/about', '/']);
+    expect(router.state.location.href).toBe('/');
+    expect(history.location.href).toBe('/');
+
+    unregister();
+
+    await router.navigate.to('about');
+
+    expect(router.state.location.href).toBe('/about');
   });
 
   test('throws during route definition when an unknown custom constraint is not registered', () => {
