@@ -187,6 +187,31 @@ function validateRouteShape(route: RouteDefinition): void {
   validateRecordKeys(route.id, 'search', route.search);
   validateSearchSchema(route);
   validateRecordKeys(route.id, 'meta', route.meta);
+  validatePathlessRouteShape(route);
+}
+
+function validatePathlessRouteShape(route: RouteDefinition): void {
+  if (route.index || route.path !== undefined) {
+    return;
+  }
+
+  const hasChildren = Array.isArray(route.children) && Boolean(route.children.length);
+  const hasRenderableOrNavigableDeclaration =
+    route.component !== undefined ||
+    route.redirect !== undefined ||
+    route.search !== undefined ||
+    route.hash !== undefined ||
+    route.intercepts !== undefined ||
+    route.middleware !== undefined ||
+    route.lifecycle !== undefined ||
+    route.loading !== undefined ||
+    route.error !== undefined;
+
+  if (!hasChildren || hasRenderableOrNavigableDeclaration) {
+    throw new Error(
+      `Route "${route.id}" must define either path or index. Pathless routes are only supported as layout/group routes with children.`,
+    );
+  }
 }
 
 function validateSearchSchema(route: RouteDefinition): void {

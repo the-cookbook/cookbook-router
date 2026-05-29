@@ -200,7 +200,7 @@ A route may define a layout without a path.
 }
 ```
 
-The layout affects rendering but contributes no URL segment.
+The layout affects rendering but contributes no URL segment. Pathless routes are only valid as layout/group routes with children. A route that renders, redirects, declares search/hash contracts, or participates in navigation must define either `path` or `index: true`.
 
 ## Params
 
@@ -286,15 +286,21 @@ Generates a shape similar to:
 
 ## Redirect routes
 
-A route can redirect to another route without rendering a component.
+A route can redirect to another route without rendering a component. Redirect routes must be addressable with either `path` or `index: true`. Use an index redirect when a parent route should redirect from its own URL.
 
 ```tsx
 {
   id: 'entry',
   path: '/',
-  redirect: {
-    route: 'dashboard',
-  },
+  children: [
+    {
+      id: 'entry.redirect',
+      index: true,
+      redirect: {
+        route: 'dashboard',
+      },
+    },
+  ],
 }
 ```
 
@@ -702,6 +708,7 @@ Validation fails for common route tree problems, including:
 - missing route IDs
 - index routes with `path`
 - routes with both `index: true` and `path`
+- routes that are neither pathless layout/group routes nor addressable through `path` or `index`
 - duplicate params in a branch
 - invalid path patterns
 - invalid slot definitions

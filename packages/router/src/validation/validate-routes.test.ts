@@ -295,6 +295,64 @@ test('rejects malformed route redirect configuration', () => {
   ).toThrow('redirect.params must be an object');
 });
 
+test('requires renderable and redirect routes to declare path or index', () => {
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'entry',
+        path: '/',
+        children: [
+          {
+            id: 'entry.redirect',
+            redirect: { route: 'overview' },
+          },
+          {
+            id: 'overview',
+            path: 'overview',
+          },
+        ],
+      },
+    ]),
+  ).toThrow(
+    'Route "entry.redirect" must define either path or index. Pathless routes are only supported as layout/group routes with children.',
+  );
+
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'entry',
+        path: '/',
+        children: [
+          {
+            id: 'entry.redirect',
+            index: true,
+            redirect: { route: 'overview' },
+          },
+          {
+            id: 'overview',
+            path: 'overview',
+          },
+        ],
+      },
+    ]),
+  ).not.toThrow();
+
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'pathless.layout',
+        layout: {},
+        children: [
+          {
+            id: 'overview',
+            path: '/overview',
+          },
+        ],
+      },
+    ]),
+  ).not.toThrow();
+});
+
 test('validates search param cardinality descriptors', () => {
   expect(() =>
     validateRoutes([
