@@ -14,6 +14,7 @@ export interface NavigationItem {
   title: string;
   icon?: React.JSX.Element;
   link: NavLinkProps;
+  href?: string;
 }
 
 export function Navigation({ items }: { items: NavigationItem[] }) {
@@ -43,22 +44,36 @@ export function Navigation({ items }: { items: NavigationItem[] }) {
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <NavLink {...item.link}>
-                {({ isActive }) => (
-                  <SidebarMenuButton
-                    tooltip={item.title}
-                    isActive={isActive}
-                    className="my-1"
-                  >
-                    {item.icon}
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                )}
-              </NavLink>
-            </SidebarMenuItem>
-          ))}
+          {items.map((item) => {
+            if (item.href) {
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <a href={item.href}>
+                    <SidebarMenuButton tooltip={item.title} className="my-1">
+                      {item.icon}
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
+                  </a>
+                </SidebarMenuItem>
+              );
+            }
+            return (
+              <SidebarMenuItem key={item.title}>
+                <NavLink {...item.link}>
+                  {({ isActive }) => (
+                    <SidebarMenuButton
+                      tooltip={item.title}
+                      isActive={isActive}
+                      className="my-1"
+                    >
+                      {item.icon}
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
+                  )}
+                </NavLink>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

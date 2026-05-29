@@ -1,5 +1,12 @@
 import * as React from 'react';
-import { LayoutDashboard, ChefHat, Users, Book, Bug } from 'lucide-react';
+import {
+  LayoutDashboard,
+  ChefHat,
+  Users,
+  Book,
+  Bug,
+  CloudAlert,
+} from 'lucide-react';
 import { Link } from '@cookbook/router-react';
 import { Navigation, type NavigationItem } from '@/components/navigation';
 import { NavigationUser, type User } from '@/components/navigation-user';
@@ -43,13 +50,18 @@ const data = {
         route: 'reports',
       },
     },
-
     {
       title: 'Broken Page',
       icon: <Bug />,
       link: {
         route: 'broken-page',
       },
+    },
+    {
+      title: 'Not Found Page',
+      icon: <CloudAlert />,
+      href: '/oh-snap',
+      link: {},
     },
   ] satisfies NavigationItem[],
 };

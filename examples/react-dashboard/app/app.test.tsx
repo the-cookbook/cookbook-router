@@ -140,7 +140,11 @@ describe('react-dashboard example', () => {
     );
 
     expect(
-      await view.findByRole('heading', { name: 'Not found' }, lazyPageTimeout)
+      await view.findByRole(
+        'heading',
+        { name: 'Page not found' },
+        lazyPageTimeout
+      )
     ).toBeTruthy();
   });
 
