@@ -1,12 +1,17 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
-import { describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { App, createTestRouter } from './app';
+import { auth } from './state/auth';
 
 const lazyPageTimeout = {
   timeout: 3_000,
 };
 
 describe('react-dashboard example', () => {
+  beforeEach(() => {
+    vi.spyOn(auth, 'isAuthenticated').mockReturnValue(true);
+  });
+
   test('redirects the entry route to the overview dashboard', async () => {
     const router = createTestRouter(['/']);
     await router.resolveCurrent();
@@ -160,5 +165,37 @@ describe('react-dashboard example', () => {
     expect(
       view.getAllByRole('heading', { name: 'Reports', level: 1 })
     ).toHaveLength(2);
+  });
+
+  test('redirects to login page on non public access pages', async () => {
+    vi.spyOn(auth, 'isAuthenticated').mockReturnValueOnce(false);
+
+    const router = createTestRouter(['/overview']);
+
+    await router.resolveCurrent();
+
+    const view = render(<App router={router} />);
+
+    await waitFor(
+      () =>
+        expect(router.state.location.href).toBe('/login?redirect=%2Foverview'),
+      lazyPageTimeout
+    );
+
+    await view.findByText('Login with account');
+
+    fireEvent.click(view.getByText('Login'));
+
+    await waitFor(
+      () => expect(router.state.location.href).toBe('/overview'),
+      lazyPageTimeout
+    );
+
+    expect(
+      await view.findByText('Total Revenue', {}, lazyPageTimeout)
+    ).toBeTruthy();
+    expect(
+      view.getAllByRole('heading', { name: 'Overview', level: 1 })
+    ).toBeTruthy();
   });
 });

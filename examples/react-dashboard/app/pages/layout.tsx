@@ -5,6 +5,7 @@ import { Header } from '@/components/header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from '@/components/theme-provider';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function LayoutPage() {
   const matches = useMatches();
@@ -44,7 +45,15 @@ export function LayoutPage() {
           </AppSidebar>
           <SidebarInset>
             <Header>
-              <Slot name="header" />
+              <React.Suspense
+                fallback={
+                  <div>
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                }
+              >
+                <Slot name="header" />
+              </React.Suspense>
             </Header>
             <Outlet />
           </SidebarInset>

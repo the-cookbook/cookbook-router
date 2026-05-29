@@ -6,6 +6,11 @@
       "index": false
     },
     {
+      "id": "login",
+      "path": "/login",
+      "index": false
+    },
+    {
       "id": "create",
       "path": "/create",
       "index": false

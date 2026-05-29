@@ -3,6 +3,7 @@
 
 export interface RouteParams {
   entry: {};
+  login: {};
   create: {};
   overview: {};
   users: {};
@@ -15,8 +16,9 @@ export interface RouteParams {
 
 export interface RouteSearch {
   entry: {};
+  login: { redirect?: string | readonly string[] };
   create: {};
-  overview: { visitors?: string | readonly string[] };
+  overview: { page?: string | readonly string[]; pageSize?: string | readonly string[]; visitors?: string | readonly string[] };
   users: {};
   'users.index': {};
   'users.details': {};
@@ -27,6 +29,7 @@ export interface RouteSearch {
 
 export interface RouteHash {
   entry: never;
+  login: never;
   create: never;
   overview: never;
   users: never;
@@ -39,6 +42,7 @@ export interface RouteHash {
 
 export interface RouteMeta {
   entry: {};
+  login: { access?: string };
   create: {};
   overview: {};
   users: {};
@@ -46,11 +50,12 @@ export interface RouteMeta {
   'users.details': {};
   reports: {};
   'broken-page': {};
-  'not-found': {};
+  'not-found': { access?: string };
 }
 
 export interface RoutePaths {
   entry: '/';
+  login: '/login';
   create: '/create';
   overview: '/overview';
   users: '/users';
@@ -63,6 +68,7 @@ export interface RoutePaths {
 
 export interface RouteOutletContext {
   entry: {};
+  login: {};
   create: {};
   overview: {};
   users: {};
@@ -73,19 +79,10 @@ export interface RouteOutletContext {
   'not-found': {};
 }
 
-export const routeIds = [
-  'entry',
-  'create',
-  'overview',
-  'users',
-  'users.index',
-  'users.details',
-  'reports',
-  'broken-page',
-  'not-found',
-] as const;
+export const routeIds = ['entry', 'login', 'create', 'overview', 'users', 'users.index', 'users.details', 'reports', 'broken-page', 'not-found'] as const;
 export const routePaths = {
   entry: '/',
+  login: '/login',
   create: '/create',
   overview: '/overview',
   users: '/users',

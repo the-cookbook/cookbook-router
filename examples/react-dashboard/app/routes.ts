@@ -5,6 +5,7 @@ import { LayoutPage } from './pages/layout';
 import { NotFound } from './pages/not-found/page';
 import { ErrorPage } from './pages/error';
 import { LoadingSkeleton } from './pages/loading';
+import LoginPage from './pages/login/page';
 
 const LAZY_PAGE_DELAY_MS = 1_500;
 
@@ -143,6 +144,17 @@ export const routes = defineRoutes(
       },
     },
     {
+      id: 'login',
+      path: '/login',
+      component: LoginPage,
+      search: {
+        redirect: { type: 'one', optional: true },
+      },
+      meta: {
+        access: 'public',
+      },
+    },
+    {
       id: 'create',
       path: '/create',
       layout: {
@@ -173,6 +185,8 @@ export const routes = defineRoutes(
         },
       },
       search: {
+        page: { type: 'one', optional: true },
+        pageSize: { type: 'one', optional: true },
         visitors: { type: 'one', optional: true },
       },
     },
@@ -230,6 +244,9 @@ export const routes = defineRoutes(
       id: 'not-found',
       path: '/not-found',
       component: NotFound,
+      meta: {
+        access: 'public',
+      },
     },
   ] as const,
   { pathConstraints: constraints }

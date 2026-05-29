@@ -1,6 +1,6 @@
 # React dashboard example
 
-`examples/react-dashboard` is a production-style dashboard app that uses Cookbook Router with React, generated route contracts, async route components, layout-level loading and error fallbacks, layout slots, custom path constraints, search params, and configured route interception.
+`examples/react-dashboard` is a production-style dashboard app that uses Cookbook Router with React, generated route contracts, async route components, layout-level loading and error fallbacks, layout slots, custom path constraints, search params, middleware, and configured route interception.
 
 ## What it demonstrates
 

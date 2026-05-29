@@ -1,3 +1,12 @@
+import React from 'react';
+import {
+  EllipsisVerticalIcon,
+  CircleUserRoundIcon,
+  CreditCardIcon,
+  BellIcon,
+  LogOutIcon,
+} from 'lucide-react';
+import { useNavigate } from '@cookbook/router-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -14,13 +23,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import {
-  EllipsisVerticalIcon,
-  CircleUserRoundIcon,
-  CreditCardIcon,
-  BellIcon,
-  LogOutIcon,
-} from 'lucide-react';
+import { auth } from '@/state/auth';
 
 export interface User {
   name: string;
@@ -29,8 +32,13 @@ export interface User {
 }
 
 export function NavigationUser({ user }: { user: User }) {
+  const navigate = useNavigate();
   const { isMobile } = useSidebar();
 
+  const handleOnLogout = React.useCallback(() => {
+    auth.logout();
+    navigate.to('login');
+  }, [navigate]);
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -89,7 +97,7 @@ export function NavigationUser({ user }: { user: User }) {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleOnLogout}>
               <LogOutIcon />
               Log out
             </DropdownMenuItem>

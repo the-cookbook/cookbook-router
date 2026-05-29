@@ -1,14 +1,25 @@
+import React from 'react';
 import {
   createMemoryRouter,
   createRouter,
+  type Middleware,
   type Router,
 } from '@cookbook/router';
 import { RouterProvider } from '@cookbook/router-react';
 import { NotFound } from './pages/not-found/page';
 import { routes } from './routes';
 import { ErrorPage } from './pages/error';
+import { auth } from './state/auth';
 
 import './app.css';
+
+const authMiddleware: Middleware = ({ route, location, redirect }) => {
+  if (route.route.meta?.access === 'public' || auth.isAuthenticated()) {
+    return;
+  }
+
+  return redirect(`/login?redirect=${encodeURIComponent(location.href)}`);
+};
 
 export function createAppRouter() {
   return createRouter({ routes });
@@ -21,11 +32,14 @@ export function createTestRouter(
 }
 
 export function App({ router }: { readonly router: Router }) {
+  const middleware = React.useMemo(() => [authMiddleware], []);
+
   return (
     <RouterProvider
       router={router}
       fallback={<NotFound />}
       errorFallback={ErrorPage}
+      middleware={middleware}
       scrollBehavior="smooth"
       scrollRestoration
     />

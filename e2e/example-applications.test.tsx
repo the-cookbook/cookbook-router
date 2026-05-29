@@ -22,6 +22,7 @@ import { routes as dashboardRoutes } from '../examples/react-dashboard/app/route
 import { App as SsrApp } from '../examples/react-ssr/src/app';
 import { renderRequest } from '../examples/react-ssr/src/server';
 import { routes as ssrRoutes, ssrEvents } from '../examples/react-ssr/src/routes';
+import { auth } from '../examples/react-dashboard/app/state/auth';
 
 const dashboardLazyPageTimeout = {
   timeout: 3_000,
@@ -197,6 +198,8 @@ describe('example application integration', () => {
 
   test('react-dashboard proves dashboard slots, configured create interception, and custom slug details', async () => {
     installDashboardBrowserMocks();
+
+    vi.spyOn(auth, 'isAuthenticated').mockReturnValue(true);
 
     const router = createMemoryRouter({
       routes: dashboardRoutes,

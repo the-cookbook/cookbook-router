@@ -43,6 +43,8 @@ import {
   useReactTable,
   type ColumnDef,
   type ColumnFiltersState,
+  type OnChangeFn,
+  type PaginationState,
   type Row,
   type SortingState,
   type VisibilityState,
@@ -50,6 +52,7 @@ import {
 import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { useNavigate, useSearch } from '@cookbook/router-react';
 
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '@/components/ui/badge';
@@ -98,6 +101,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toArray } from '@/lib/utils';
 
 export const schema = z.object({
   id: z.number(),
@@ -108,6 +112,10 @@ export const schema = z.object({
   limit: z.string(),
   reviewer: z.string(),
 });
+
+const parseSearchToInt = (value: string | undefined): number | undefined => {
+  return !value || isNaN(+value) ? undefined : +value;
+};
 
 // Create a separate component for the drag handle
 function DragHandle({ id }: { id: number }) {
@@ -334,6 +342,8 @@ export function DataTable({
 }: {
   data: z.infer<typeof schema>[];
 }) {
+  const navigate = useNavigate();
+  const search = useSearch('overview');
   const [data, setData] = React.useState(() => initialData);
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
@@ -341,10 +351,11 @@ export function DataTable({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
+
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: 10,
+    pageIndex: parseSearchToInt(toArray(search.page)[0]) ?? 0,
+    pageSize: parseSearchToInt(toArray(search.pageSize)[0]) ?? 10,
   });
 
   const sortableId = React.useId();
@@ -359,6 +370,30 @@ export function DataTable({
     () => data?.map(({ id }) => id) || [],
     [data]
   );
+
+  const handleOnPaginationChange: OnChangeFn<PaginationState> =
+    React.useCallback(
+      (updater) => {
+        setPagination((currentPagination) => {
+          const nextPagination =
+            typeof updater === 'function'
+              ? updater(currentPagination)
+              : updater;
+
+          navigate.to('overview', {
+            search: {
+              ...search,
+              page: nextPagination.pageIndex.toString(),
+              pageSize: nextPagination.pageSize.toString(),
+            },
+            preventScrollReset: true,
+          });
+
+          return nextPagination;
+        });
+      },
+      [navigate, search]
+    );
 
   const table = useReactTable({
     data,
@@ -376,7 +411,7 @@ export function DataTable({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: setPagination,
+    onPaginationChange: handleOnPaginationChange,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
