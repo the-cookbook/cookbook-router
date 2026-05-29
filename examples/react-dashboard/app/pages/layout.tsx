@@ -1,5 +1,7 @@
 import React from 'react';
 import { Outlet, Slot, useMatches } from '@cookbook/router-react';
+import { toast } from 'sonner';
+import { Toaster } from '@/components/ui/sonner';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Header } from '@/components/header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -13,6 +15,7 @@ export function RootLayoutPage() {
       <TooltipProvider>
         <Outlet />
         <Slot name="modal" />
+        <Toaster />
       </TooltipProvider>
     </ThemeProvider>
   );
@@ -20,6 +23,13 @@ export function RootLayoutPage() {
 
 export function LayoutPage() {
   const matches = useMatches();
+
+  React.useEffect(() => {
+    toast.warning(
+      'Page loading is intentionally slowed down to showcase loading states.',
+      { position: 'top-right' }
+    );
+  }, []);
 
   const headerDimensions = React.useMemo(() => {
     const filtered = matches.filter(
