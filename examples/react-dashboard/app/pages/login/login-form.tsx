@@ -1,5 +1,10 @@
 import React from 'react';
-import { useNavigate, useRouter, useSearch } from '@cookbook/router-react';
+import {
+  useNavigate,
+  useRouter,
+  useSearch,
+  Link,
+} from '@cookbook/router-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -92,7 +97,8 @@ export function LoginForm({
         </Card>
         <FieldDescription className="px-6 text-center">
           By clicking continue, you agree to our{' '}
-          <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+          <Link to="terms-of-service">Terms of Service</Link> and{' '}
+          <Link to="privacy-policy">Privacy Policy</Link>.
         </FieldDescription>
       </div>
     </ThemeProvider>

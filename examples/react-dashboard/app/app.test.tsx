@@ -148,6 +148,22 @@ describe('react-dashboard example', () => {
     ).toBeTruthy();
   });
 
+  test('renders nested policy children declared with leading slash paths', async () => {
+    const router = createTestRouter(['/policies/terms-of-service']);
+    await router.resolveCurrent();
+
+    const view = render(<App router={router} />);
+
+    expect(router.state.location.href).toBe('/policies/terms-of-service');
+    expect(
+      await view.findByRole(
+        'heading',
+        { name: 'Terms of Service', level: 1 },
+        lazyPageTimeout
+      )
+    ).toBeTruthy();
+  });
+
   test('renders reports from the sidebar navigation', async () => {
     const router = createTestRouter(['/overview']);
     await router.resolveCurrent();

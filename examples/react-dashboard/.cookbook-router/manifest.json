@@ -48,6 +48,23 @@
       "index": false
     },
     {
+      "id": "policies",
+      "path": "/policies",
+      "index": false
+    },
+    {
+      "id": "terms-of-service",
+      "path": "/policies/terms-of-service",
+      "parentId": "policies",
+      "index": false
+    },
+    {
+      "id": "privacy-policy",
+      "path": "/policies/privacy-policy",
+      "parentId": "policies",
+      "index": false
+    },
+    {
       "id": "not-found",
       "path": "/not-found",
       "index": false

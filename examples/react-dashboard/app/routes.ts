@@ -6,6 +6,7 @@ import { NotFound } from './pages/not-found/page';
 import { ErrorPage } from './pages/error';
 import { LoadingSkeleton } from './pages/loading';
 import LoginPage from './pages/login/page';
+import { PoliciesLayoutPage } from './pages/policies/layout';
 
 const LAZY_PAGE_DELAY_MS = 1_500;
 
@@ -107,6 +108,23 @@ const AsyncBrokenPage = React.lazy(() =>
   import('./pages/broken-page/page').then(async ({ BrokenPage }) => ({
     default: BrokenPage,
   }))
+);
+
+/************* Policies *************/
+
+const AsyncTermsOfServicePage = React.lazy(() =>
+  import('./pages/policies/terms-of-service/page').then(
+    async ({ TermsOfServicePage }) => ({
+      default: TermsOfServicePage,
+    })
+  )
+);
+const AsyncPrivacyPolicyPage = React.lazy(() =>
+  import('./pages/policies/privacy-policy/page').then(
+    async ({ PrivacyPolicyPage }) => ({
+      default: PrivacyPolicyPage,
+    })
+  )
 );
 
 export const constraints = {
@@ -239,6 +257,34 @@ export const routes = defineRoutes(
         loading: LoadingSkeleton,
         error: ErrorPage,
       },
+    },
+    {
+      id: 'policies',
+      path: '/policies',
+      layout: {
+        component: PoliciesLayoutPage,
+      },
+      meta: {
+        access: 'public',
+      },
+      children: [
+        {
+          id: 'terms-of-service',
+          path: '/terms-of-service',
+          component: AsyncTermsOfServicePage,
+          meta: {
+            access: 'public',
+          },
+        },
+        {
+          id: 'privacy-policy',
+          path: '/privacy-policy',
+          component: AsyncPrivacyPolicyPage,
+          meta: {
+            access: 'public',
+          },
+        },
+      ],
     },
     {
       id: 'not-found',

@@ -11,6 +11,9 @@ export interface RouteParams {
   'users.details': { slug: string };
   reports: {};
   'broken-page': {};
+  policies: {};
+  'terms-of-service': {};
+  'privacy-policy': {};
   'not-found': {};
 }
 
@@ -24,6 +27,9 @@ export interface RouteSearch {
   'users.details': {};
   reports: {};
   'broken-page': {};
+  policies: {};
+  'terms-of-service': {};
+  'privacy-policy': {};
   'not-found': {};
 }
 
@@ -37,6 +43,9 @@ export interface RouteHash {
   'users.details': never;
   reports: never;
   'broken-page': never;
+  policies: never;
+  'terms-of-service': never;
+  'privacy-policy': never;
   'not-found': never;
 }
 
@@ -50,6 +59,9 @@ export interface RouteMeta {
   'users.details': {};
   reports: {};
   'broken-page': {};
+  policies: { access?: string };
+  'terms-of-service': { access?: string };
+  'privacy-policy': { access?: string };
   'not-found': { access?: string };
 }
 
@@ -63,6 +75,9 @@ export interface RoutePaths {
   'users.details': '/users/{slug:slug}';
   reports: '/reports';
   'broken-page': '/broken-page';
+  policies: '/policies';
+  'terms-of-service': '/policies/terms-of-service';
+  'privacy-policy': '/policies/privacy-policy';
   'not-found': '/not-found';
 }
 
@@ -76,10 +91,13 @@ export interface RouteOutletContext {
   'users.details': {};
   reports: {};
   'broken-page': {};
+  policies: {};
+  'terms-of-service': {};
+  'privacy-policy': {};
   'not-found': {};
 }
 
-export const routeIds = ['entry', 'login', 'create', 'overview', 'users', 'users.index', 'users.details', 'reports', 'broken-page', 'not-found'] as const;
+export const routeIds = ['entry', 'login', 'create', 'overview', 'users', 'users.index', 'users.details', 'reports', 'broken-page', 'policies', 'terms-of-service', 'privacy-policy', 'not-found'] as const;
 export const routePaths = {
   entry: '/',
   login: '/login',
@@ -90,6 +108,9 @@ export const routePaths = {
   'users.details': '/users/{slug:slug}',
   reports: '/reports',
   'broken-page': '/broken-page',
+  policies: '/policies',
+  'terms-of-service': '/policies/terms-of-service',
+  'privacy-policy': '/policies/privacy-policy',
   'not-found': '/not-found',
 } as const;
 
