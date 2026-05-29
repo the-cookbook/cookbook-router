@@ -1,4 +1,6 @@
-import { Button } from '@/components/ui/button';
+import React from 'react';
+import { CirclePlusIcon, MailIcon } from 'lucide-react';
+import { Link, useNavigate } from '@cookbook/router-react';
 import { NavLink, type NavLinkProps } from '@cookbook/router-react';
 import {
   SidebarGroup,
@@ -7,8 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { CirclePlusIcon, MailIcon } from 'lucide-react';
-import { Link } from '@cookbook/router-react';
+import { Button } from '@/components/ui/button';
 
 export interface NavigationItem {
   title: string;
@@ -18,6 +19,12 @@ export interface NavigationItem {
 }
 
 export function Navigation({ items }: { items: NavigationItem[] }) {
+  const navigate = useNavigate();
+
+  const handleOnNewMessageClick = React.useCallback(() => {
+    navigate.to('new-message');
+  }, [navigate]);
+
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -37,6 +44,7 @@ export function Navigation({ items }: { items: NavigationItem[] }) {
               size="icon"
               className="size-8 group-data-[collapsible=icon]:opacity-0"
               variant="outline"
+              onClick={handleOnNewMessageClick}
             >
               <MailIcon />
               <span className="sr-only">Inbox</span>

@@ -1,7 +1,6 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -13,11 +12,6 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-
-interface DashboardCreateContentProps {
-  onCancel?: () => void;
-  onSubmit?: () => void;
-}
 
 interface SectionTypeOption {
   value: string;
@@ -137,10 +131,7 @@ function StatusBadge({ status }: { status: MockSection['status'] }) {
   );
 }
 
-export function CreateContent({
-  onCancel,
-  onSubmit,
-}: DashboardCreateContentProps) {
+export function CreateContent() {
   return (
     <div className="grid gap-6">
       <div className="grid gap-4 sm:grid-cols-2">

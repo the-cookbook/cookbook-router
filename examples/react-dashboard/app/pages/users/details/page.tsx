@@ -16,10 +16,6 @@ export function UserDetailsLayoutHeader() {
   const username = slugToUsername(params.slug);
   const user = users.find((item) => item.username === username);
 
-  if (!user) {
-    return null;
-  }
-
   return (
     <Breadcrumb>
       <BreadcrumbList>
@@ -30,7 +26,7 @@ export function UserDetailsLayoutHeader() {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbPage>{user.name}</BreadcrumbPage>
+          <BreadcrumbPage>{user ? user.name : 'User not found'}</BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>

@@ -7,6 +7,17 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 
+export function RootLayoutPage() {
+  return (
+    <ThemeProvider defaultTheme="dark" storageKey="cookbook-theme">
+      <TooltipProvider>
+        <Outlet />
+        <Slot name="modal" />
+      </TooltipProvider>
+    </ThemeProvider>
+  );
+}
+
 export function LayoutPage() {
   const matches = useMatches();
 
@@ -30,36 +41,31 @@ export function LayoutPage() {
   }, [matches]);
 
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="cookbook-theme">
-      <TooltipProvider>
-        <SidebarProvider
-          style={
-            {
-              '--sidebar-width': 'calc(var(--spacing) * 72)',
-              '--header-height': `calc(var(--spacing) * ${headerDimensions.height})`,
-            } as React.CSSProperties
-          }
-        >
-          <AppSidebar variant="inset">
-            <Slot name="sidebar" />
-          </AppSidebar>
-          <SidebarInset>
-            <Header>
-              <React.Suspense
-                fallback={
-                  <div>
-                    <Skeleton className="h-4 w-32" />
-                  </div>
-                }
-              >
-                <Slot name="header" />
-              </React.Suspense>
-            </Header>
-            <Outlet />
-          </SidebarInset>
-          <Slot name="modal" />
-        </SidebarProvider>
-      </TooltipProvider>
-    </ThemeProvider>
+    <SidebarProvider
+      style={
+        {
+          '--sidebar-width': 'calc(var(--spacing) * 72)',
+          '--header-height': `calc(var(--spacing) * ${headerDimensions.height})`,
+        } as React.CSSProperties
+      }
+    >
+      <AppSidebar variant="inset">
+        <Slot name="sidebar" />
+      </AppSidebar>
+      <SidebarInset>
+        <Header>
+          <React.Suspense
+            fallback={
+              <div>
+                <Skeleton className="h-4 w-32" />
+              </div>
+            }
+          >
+            <Slot name="header" />
+          </React.Suspense>
+        </Header>
+        <Outlet />
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

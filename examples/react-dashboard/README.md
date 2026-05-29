@@ -10,6 +10,7 @@
 - `layout.error` on `/broken-page`, rendered inside the shared layout when the route throws.
 - Layout slots for route-specific headers and modal rendering.
 - Automatic configured interception from `/overview` to `/create` through the `modal` slot.
+- Automatic configured interception from any page to `/messages/new` through the `modal` slot.
 - Canonical direct rendering of `/create` as a full page.
 - Generated contracts from `app/routes.ts`.
 - A custom `slug` path constraint used by `/users/{slug:slug}`.
@@ -73,14 +74,17 @@ Because the example uses a delayed lazy import, tests that assert page body cont
 ## Route model
 
 ```txt
-/                  -> redirects to /overview
-/overview          -> dashboard overview
-/create            -> canonical create page
-/users             -> users index
-/users/{slug:slug} -> user details
-/reports           -> reports dashboard
-/broken-page       -> intentionally throwing route rendered through layout.error
-/not-found         -> not found page
+/                           -> redirects to /overview
+/overview                   -> dashboard overview
+/create                     -> canonical create page
+/users                      -> users index
+/users/{slug:slug}          -> user details
+/reports                    -> reports dashboard
+/broken-page                -> intentionally throwing route rendered through layout.error
+/login                      -> login page
+/policies/terms-of-service  -> fake terms of service page
+/policies/privacy-policy    -> fake privacy policy page
+/*                          -> not found page
 ```
 
 The `/overview` route owns this configured intercept:

@@ -1,3 +1,5 @@
+import { UserNotFound } from '../not-found';
+
 import {
   activityItems,
   assignedSections,
@@ -11,7 +13,6 @@ import { UserDetailHeader } from './user-detail-header';
 import { UserDetailStats } from './user-detail-stats';
 import { UserPermissionsCard } from './user-permissions-card';
 import { UserProfileCard } from './user-profile-card';
-import { useNavigate } from '@cookbook/router-react';
 
 interface UserDetailPageProps {
   slug: string;
@@ -20,12 +21,9 @@ interface UserDetailPageProps {
 export function UserDetail({ slug }: UserDetailPageProps) {
   const username = slugToUsername(slug);
   const user = users.find((item) => item.username === username);
-  const navigate = useNavigate();
 
   if (!user) {
-    navigate.replace('not-found');
-
-    return;
+    return <UserNotFound slug={slug} username={username} />;
   }
 
   return (

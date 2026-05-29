@@ -3,8 +3,9 @@
 
 export interface RouteParams {
   entry: {};
-  login: {};
+  'entry.redirect': {};
   create: {};
+  'new-message': {};
   overview: {};
   users: {};
   'users.index': {};
@@ -14,13 +15,15 @@ export interface RouteParams {
   policies: {};
   'terms-of-service': {};
   'privacy-policy': {};
-  'not-found': {};
+  login: {};
+  'not-found': { path: string };
 }
 
 export interface RouteSearch {
   entry: {};
-  login: { redirect?: string | readonly string[] };
+  'entry.redirect': {};
   create: {};
+  'new-message': {};
   overview: { page?: string | readonly string[]; pageSize?: string | readonly string[]; visitors?: string | readonly string[] };
   users: {};
   'users.index': {};
@@ -30,13 +33,15 @@ export interface RouteSearch {
   policies: {};
   'terms-of-service': {};
   'privacy-policy': {};
+  login: { redirect?: string | readonly string[] };
   'not-found': {};
 }
 
 export interface RouteHash {
   entry: never;
-  login: never;
+  'entry.redirect': never;
   create: never;
+  'new-message': never;
   overview: never;
   users: never;
   'users.index': never;
@@ -46,13 +51,15 @@ export interface RouteHash {
   policies: never;
   'terms-of-service': never;
   'privacy-policy': never;
+  login: never;
   'not-found': never;
 }
 
 export interface RouteMeta {
   entry: {};
-  login: { access?: string };
+  'entry.redirect': {};
   create: {};
+  'new-message': {};
   overview: {};
   users: {};
   'users.index': {};
@@ -62,13 +69,15 @@ export interface RouteMeta {
   policies: { access?: string };
   'terms-of-service': { access?: string };
   'privacy-policy': { access?: string };
+  login: { access?: string };
   'not-found': { access?: string };
 }
 
 export interface RoutePaths {
   entry: '/';
-  login: '/login';
+  'entry.redirect': '/';
   create: '/create';
+  'new-message': '/messages/new';
   overview: '/overview';
   users: '/users';
   'users.index': '/users';
@@ -78,13 +87,15 @@ export interface RoutePaths {
   policies: '/policies';
   'terms-of-service': '/policies/terms-of-service';
   'privacy-policy': '/policies/privacy-policy';
-  'not-found': '/not-found';
+  login: '/login';
+  'not-found': '/{*path}';
 }
 
 export interface RouteOutletContext {
   entry: {};
-  login: {};
+  'entry.redirect': {};
   create: {};
+  'new-message': {};
   overview: {};
   users: {};
   'users.index': {};
@@ -94,14 +105,16 @@ export interface RouteOutletContext {
   policies: {};
   'terms-of-service': {};
   'privacy-policy': {};
+  login: {};
   'not-found': {};
 }
 
-export const routeIds = ['entry', 'login', 'create', 'overview', 'users', 'users.index', 'users.details', 'reports', 'broken-page', 'policies', 'terms-of-service', 'privacy-policy', 'not-found'] as const;
+export const routeIds = ['entry', 'entry.redirect', 'create', 'new-message', 'overview', 'users', 'users.index', 'users.details', 'reports', 'broken-page', 'policies', 'terms-of-service', 'privacy-policy', 'login', 'not-found'] as const;
 export const routePaths = {
   entry: '/',
-  login: '/login',
+  'entry.redirect': '/',
   create: '/create',
+  'new-message': '/messages/new',
   overview: '/overview',
   users: '/users',
   'users.index': '/users',
@@ -111,7 +124,8 @@ export const routePaths = {
   policies: '/policies',
   'terms-of-service': '/policies/terms-of-service',
   'privacy-policy': '/policies/privacy-policy',
-  'not-found': '/not-found',
+  login: '/login',
+  'not-found': '/{*path}',
 } as const;
 
 export interface RouterContracts {

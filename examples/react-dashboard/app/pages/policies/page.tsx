@@ -9,7 +9,7 @@ export function NotFound() {
   const navigate = useNavigate();
 
   const handleOnBackClick = React.useCallback(() => {
-    if (window.history.state?.lenght) {
+    if (window.history.state.lenght) {
       navigate.back();
 
       return;

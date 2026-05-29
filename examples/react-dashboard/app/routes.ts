@@ -1,12 +1,13 @@
 import React from 'react';
 import { defineRoutes, createConstraint } from '@cookbook/router';
 
-import { LayoutPage } from './pages/layout';
+import { RootLayoutPage, LayoutPage } from './pages/layout';
 import { NotFound } from './pages/not-found/page';
 import { ErrorPage } from './pages/error';
 import { LoadingSkeleton } from './pages/loading';
 import LoginPage from './pages/login/page';
 import { PoliciesLayoutPage } from './pages/policies/layout';
+import { PoliciesPageSkeleton } from './pages/policies/loading';
 
 const LAZY_PAGE_DELAY_MS = 1_500;
 
@@ -21,6 +22,8 @@ const AsyncOverviewPage = React.lazy(() =>
   })
 );
 
+/************* CREATE *************/
+
 const AsyncOverviewLayoutHeader = React.lazy(() =>
   import('./pages/overview/page').then(async ({ OverviewLayoutHeader }) => ({
     default: OverviewLayoutHeader,
@@ -33,7 +36,6 @@ const AsyncOverviewCreateModal = React.lazy(() =>
   }))
 );
 
-/************* CREATE *************/
 const AsyncCreatePage = React.lazy(() =>
   import('./pages/create/page').then(async ({ CreatePage }) => {
     await new Promise((resolve) => setTimeout(resolve, LAZY_PAGE_DELAY_MS));
@@ -42,6 +44,26 @@ const AsyncCreatePage = React.lazy(() =>
       default: CreatePage,
     };
   })
+);
+
+/************* SEND EMSSAGE *************/
+const AsyncSendMessageLayoutHeader = React.lazy(() =>
+  import('./pages/messages/new/page').then(
+    async ({ NewMessageLayoutHeader }) => ({
+      default: NewMessageLayoutHeader,
+    })
+  )
+);
+const AsyncSendMessagePage = React.lazy(() =>
+  import('./pages/messages/new/page').then(async ({ NewMessagePage }) => ({
+    default: NewMessagePage,
+  }))
+);
+
+const AsyncSendMessageModalPage = React.lazy(() =>
+  import('./pages/messages/new/page').then(async ({ NewMessageModalPage }) => ({
+    default: NewMessageModalPage,
+  }))
 );
 
 const AsyncCreateLayoutHeader = React.lazy(() =>
@@ -157,13 +179,158 @@ export const routes = defineRoutes(
     {
       id: 'entry',
       path: '/',
-      redirect: {
-        route: 'overview',
+      layout: {
+        component: RootLayoutPage,
+        loading: LoadingSkeleton,
+        slots: {
+          header: true,
+          modal: true,
+        },
       },
+      intercepts: {
+        modal: {
+          to: ['new-message'],
+          component: AsyncSendMessageModalPage,
+        },
+      },
+      children: [
+        {
+          id: 'entry.redirect',
+          index: true,
+          redirect: {
+            route: 'overview',
+          },
+        },
+        {
+          id: 'create',
+          path: '/create',
+          layout: {
+            component: LayoutPage,
+            slots: {
+              header: AsyncCreateLayoutHeader,
+            },
+          },
+          component: AsyncCreatePage,
+        },
+        {
+          id: 'new-message',
+          path: '/messages/new',
+          layout: {
+            component: LayoutPage,
+            slots: {
+              header: AsyncSendMessageLayoutHeader,
+            },
+          },
+          component: AsyncSendMessagePage,
+        },
+        {
+          id: 'overview',
+          path: '/overview',
+          component: AsyncOverviewPage,
+          layout: {
+            component: LayoutPage,
+            slots: {
+              header: AsyncOverviewLayoutHeader,
+            },
+          },
+          intercepts: {
+            modal: {
+              to: 'create',
+              component: AsyncOverviewCreateModal,
+            },
+          },
+          search: {
+            page: { type: 'one', optional: true },
+            pageSize: { type: 'one', optional: true },
+            visitors: { type: 'one', optional: true },
+          },
+        },
+        {
+          id: 'users',
+          path: '/users',
+          layout: {
+            component: LayoutPage,
+            slots: {
+              header: AsyncUsersLayoutHeader,
+            },
+          },
+          children: [
+            {
+              id: 'users.index',
+              index: true,
+              component: AsyncUsersPage,
+            },
+            {
+              id: 'users.details',
+              path: '{slug:slug}',
+              component: AsyncUserDetailPage,
+              layout: {
+                slots: {
+                  header: AsyncUserDetailsLayoutHeader,
+                },
+              },
+            },
+          ],
+        },
+        {
+          id: 'reports',
+          path: '/reports',
+          component: AsyncReportsPage,
+          layout: {
+            component: LayoutPage,
+            loading: LoadingSkeleton,
+            slots: {
+              header: AsyncReportsLayoutHeader,
+            },
+          },
+        },
+        {
+          id: 'broken-page',
+          path: '/broken-page',
+          component: AsyncBrokenPage,
+          layout: {
+            component: LayoutPage,
+            loading: LoadingSkeleton,
+            error: ErrorPage,
+          },
+        },
+        {
+          id: 'policies',
+          path: '/policies',
+          layout: {
+            component: PoliciesLayoutPage,
+            loading: PoliciesPageSkeleton,
+          },
+          meta: {
+            access: 'public',
+          },
+          children: [
+            {
+              id: 'terms-of-service',
+              path: '/terms-of-service',
+              component: AsyncTermsOfServicePage,
+              meta: {
+                access: 'public',
+              },
+            },
+            {
+              id: 'privacy-policy',
+              path: '/privacy-policy',
+              component: AsyncPrivacyPolicyPage,
+              meta: {
+                access: 'public',
+              },
+            },
+          ],
+        },
+      ],
     },
     {
       id: 'login',
       path: '/login',
+      layout: {
+        component: RootLayoutPage,
+      },
       component: LoginPage,
       search: {
         redirect: { type: 'one', optional: true },
@@ -173,125 +340,14 @@ export const routes = defineRoutes(
       },
     },
     {
-      id: 'create',
-      path: '/create',
-      layout: {
-        component: LayoutPage,
-        loading: LoadingSkeleton,
-        slots: {
-          header: AsyncCreateLayoutHeader,
-        },
-      },
-      component: AsyncCreatePage,
-    },
-    {
-      id: 'overview',
-      path: '/overview',
-      component: AsyncOverviewPage,
-      layout: {
-        component: LayoutPage,
-        loading: LoadingSkeleton,
-        slots: {
-          header: AsyncOverviewLayoutHeader,
-          modal: true,
-        },
-      },
-      intercepts: {
-        modal: {
-          to: 'create',
-          component: AsyncOverviewCreateModal,
-        },
-      },
-      search: {
-        page: { type: 'one', optional: true },
-        pageSize: { type: 'one', optional: true },
-        visitors: { type: 'one', optional: true },
-      },
-    },
-    {
-      id: 'users',
-      path: '/users',
-      layout: {
-        component: LayoutPage,
-        loading: LoadingSkeleton,
-        slots: {
-          header: AsyncUsersLayoutHeader,
-        },
-      },
-      children: [
-        {
-          id: 'users.index',
-          index: true,
-          component: AsyncUsersPage,
-        },
-        {
-          id: 'users.details',
-          path: '{slug:slug}',
-          component: AsyncUserDetailPage,
-          layout: {
-            slots: {
-              header: AsyncUserDetailsLayoutHeader,
-            },
-          },
-        },
-      ],
-    },
-    {
-      id: 'reports',
-      path: '/reports',
-      component: AsyncReportsPage,
-      layout: {
-        component: LayoutPage,
-        loading: LoadingSkeleton,
-        slots: {
-          header: AsyncReportsLayoutHeader,
-        },
-      },
-    },
-    {
-      id: 'broken-page',
-      path: '/broken-page',
-      component: AsyncBrokenPage,
-      layout: {
-        component: LayoutPage,
-        loading: LoadingSkeleton,
-        error: ErrorPage,
-      },
-    },
-    {
-      id: 'policies',
-      path: '/policies',
-      layout: {
-        component: PoliciesLayoutPage,
-      },
-      meta: {
-        access: 'public',
-      },
-      children: [
-        {
-          id: 'terms-of-service',
-          path: '/terms-of-service',
-          component: AsyncTermsOfServicePage,
-          meta: {
-            access: 'public',
-          },
-        },
-        {
-          id: 'privacy-policy',
-          path: '/privacy-policy',
-          component: AsyncPrivacyPolicyPage,
-          meta: {
-            access: 'public',
-          },
-        },
-      ],
-    },
-    {
       id: 'not-found',
-      path: '/not-found',
+      path: '/{*path}',
       component: NotFound,
       meta: {
         access: 'public',
+      },
+      layout: {
+        component: RootLayoutPage,
       },
     },
   ] as const,

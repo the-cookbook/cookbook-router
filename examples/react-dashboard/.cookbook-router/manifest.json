@@ -6,23 +6,33 @@
       "index": false
     },
     {
-      "id": "login",
-      "path": "/login",
-      "index": false
+      "id": "entry.redirect",
+      "path": "/",
+      "parentId": "entry",
+      "index": true
     },
     {
       "id": "create",
       "path": "/create",
+      "parentId": "entry",
+      "index": false
+    },
+    {
+      "id": "new-message",
+      "path": "/messages/new",
+      "parentId": "entry",
       "index": false
     },
     {
       "id": "overview",
       "path": "/overview",
+      "parentId": "entry",
       "index": false
     },
     {
       "id": "users",
       "path": "/users",
+      "parentId": "entry",
       "index": false
     },
     {
@@ -40,16 +50,19 @@
     {
       "id": "reports",
       "path": "/reports",
+      "parentId": "entry",
       "index": false
     },
     {
       "id": "broken-page",
       "path": "/broken-page",
+      "parentId": "entry",
       "index": false
     },
     {
       "id": "policies",
       "path": "/policies",
+      "parentId": "entry",
       "index": false
     },
     {
@@ -65,8 +78,13 @@
       "index": false
     },
     {
+      "id": "login",
+      "path": "/login",
+      "index": false
+    },
+    {
       "id": "not-found",
-      "path": "/not-found",
+      "path": "/{*path}",
       "index": false
     }
   ]

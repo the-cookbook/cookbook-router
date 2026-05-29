@@ -135,14 +135,14 @@ describe('react-dashboard example', () => {
     const view = render(<App router={router} />);
 
     await waitFor(
-      () => expect(router.state.location.href).toBe('/not-found'),
+      () => expect(router.state.location.href).toBe('/users/missing-user'),
       lazyPageTimeout
     );
 
     expect(
       await view.findByRole(
         'heading',
-        { name: 'Page not found' },
+        { name: 'User not found' },
         lazyPageTimeout
       )
     ).toBeTruthy();
