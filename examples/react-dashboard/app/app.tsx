@@ -13,6 +13,8 @@ import { auth } from './state/auth';
 
 import './app.css';
 
+const basePath = import.meta.env.VITE_BASE_PATH ?? '/';
+
 const authMiddleware: Middleware = ({ route, location, redirect }) => {
   if (route.route.meta?.access === 'public' || auth.isAuthenticated()) {
     return;
@@ -22,7 +24,7 @@ const authMiddleware: Middleware = ({ route, location, redirect }) => {
 };
 
 export function createAppRouter() {
-  return createRouter({ routes });
+  return createRouter({ routes, basename: basePath });
 }
 
 export function createTestRouter(
