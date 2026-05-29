@@ -8,6 +8,7 @@ Live Example: [https://the-cookbook.github.io/cookbook-router/overview](https://
 
 ## Table of contents
 
+- [Motivation](#motivation)
 - [Packages](#packages)
 - [Requirements](#requirements)
 - [Install](#install)
@@ -22,6 +23,27 @@ Live Example: [https://the-cookbook.github.io/cookbook-router/overview](https://
 - [Documentation](#documentation)
 - [Documentation map](#documentation-map)
 - [Development notes](#development-notes)
+
+## Motivation
+
+Most modern routing solutions work well for common application flows, but many have moved toward file-system routing as the primary architecture. That approach is convenient at the start of a project, but it can also make routes too dependent on folder structure, reduce architectural freedom, and make large applications harder to organize around product domains, permissions, layouts, data ownership, or business workflows.
+
+Cookbook Router takes a route-definition-first approach. Routes are declared explicitly, with stable route IDs, typed navigation, generated contracts, middleware, layouts, slots, intercepts, redirects, SSR support, and validation built into the routing layer. The URL structure remains fully under your control without forcing the application architecture to mirror the filesystem.
+
+A key difference is path parameter validation. Many routers match dynamic segments but leave validation to page components, loaders, or application code. Cookbook Router validates route params at the routing boundary through path constraints, so invalid URLs fail naturally into not-found behavior before they reach business logic. This reduces defensive checks inside screens and makes route validity part of the route contract.
+
+Modern applications also need middleware for authentication, authorization, redirects, rewrites, guards, analytics, and request-like navigation control. Cookbook Router supports middleware as a first-class routing primitive, including route-level middleware and provider-level middleware for React applications. That keeps cross-cutting navigation rules close to the router instead of scattering them across pages, effects, or layout components.
+
+The goal is not to replace framework conventions with more ceremony. The goal is to provide a routing model that scales with application complexity while preserving developer choice:
+
+- define routes where they best fit your architecture;
+- navigate by stable route IDs instead of fragile path strings;
+- validate URL params before rendering business screens;
+- centralize navigation rules with middleware;
+- support advanced UI patterns such as layouts, slots, and intercepts;
+- keep SSR, generated contracts, and runtime behavior aligned.
+
+Cookbook Router is designed for teams that want the type safety and structure of modern routers without giving up control over how their application is organized.
 
 ## Packages
 
