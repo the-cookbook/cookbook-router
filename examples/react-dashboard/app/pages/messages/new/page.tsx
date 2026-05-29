@@ -127,7 +127,7 @@ export function NewMessageModalPage() {
           </DialogDescription>
         </DialogHeader>
 
-        <NewMessagePage />
+        <NewMessage />
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={handleOnClose}>
@@ -158,8 +158,11 @@ export function NewMessagePage() {
             </div>
             <NewMessage />
             <div className="mt-6 flex justify-end gap-2">
-              <Button variant="outline">Cancel</Button>
-              <Button>Create</Button>
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
+
+              <Button type="submit">Send message</Button>
             </div>
           </div>
         </div>
