@@ -244,12 +244,12 @@ Parses the current query string into an object.
 const search = useSearchParams('articles.index');
 ```
 
-### `useHash()`
+### `useHashParams()`
 
 Returns the current hash without the leading `#`, or `null`.
 
 ```tsx
-const section = useHash('articles.show');
+const section = useHashParams('articles.show');
 ```
 
 ### `useOutletContext()`

@@ -124,10 +124,10 @@ Pass `null` to avoid a hash.
 ## Read hash values
 
 ```tsx
-import { useHash } from '@cookbook/router-react';
+import { useHashParams } from '@cookbook/router-react';
 
 export function ArticlePage() {
-  const hash = useHash('articles.show');
+  const hash = useHashParams('articles.show');
   return <p>Section: {hash ?? 'none'}</p>;
 }
 ```

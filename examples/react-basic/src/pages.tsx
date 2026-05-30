@@ -2,7 +2,7 @@ import {
   Link,
   NavLink,
   Outlet,
-  useHash,
+  useHashParams,
   useLocation,
   useNavigate,
   useParams,
@@ -43,7 +43,7 @@ export function HomePage() {
 export function UserPage() {
   const params = useParams('users.show');
   const search = useSearchParams('users.show');
-  const hash = useHash();
+  const hash = useHashParams();
   const location = useLocation();
   const navigate = useNavigate();
 

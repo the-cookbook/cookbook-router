@@ -41,7 +41,7 @@ export type {
 } from './context/router-context';
 export { useBlocker } from './hooks/use-blocker';
 export type { BlockerState, UseBlockerOptions } from './hooks/use-blocker';
-export { useHash } from './hooks/use-hash';
+export { useHashParams } from './hooks/use-hash-params';
 export { useHref } from './hooks/use-href';
 export { useLocation } from './hooks/use-location';
 export { useMatches } from './hooks/use-matches';

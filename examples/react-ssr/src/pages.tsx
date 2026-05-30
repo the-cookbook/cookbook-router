@@ -1,7 +1,7 @@
 import {
   Link,
   Outlet,
-  useHash,
+  useHashParams,
   useLocation,
   useParams,
   useSearchParams,
@@ -50,7 +50,7 @@ export function UserPage() {
 export function ArticlePage() {
   const params = useParams('articles.show');
   const search = useSearchParams('articles.show');
-  const hash = useHash();
+  const hash = useHashParams();
   const location = useLocation();
 
   return (

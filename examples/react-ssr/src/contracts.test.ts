@@ -1,5 +1,5 @@
 import { describe, expectTypeOf, test } from 'vitest';
-import { useHash, useParams, useSearchParams } from '@cookbook/router-react';
+import { useHashParams, useParams, useSearchParams } from '@cookbook/router-react';
 import type {
   RouteHash,
   RouteParams,
@@ -21,7 +21,7 @@ describe('react-ssr generated contracts', () => {
     function assertHookInference() {
       const params = useParams('articles.show');
       const search = useSearchParams('articles.show');
-      const hash = useHash('articles.show');
+      const hash = useHashParams('articles.show');
 
       expectTypeOf(params).toEqualTypeOf<{ slug: string }>();
       expectTypeOf(search).toEqualTypeOf<{ preview?: string }>();

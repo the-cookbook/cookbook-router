@@ -2,7 +2,7 @@ import {
   Link,
   Outlet,
   Slot,
-  useHash,
+  useHashParams,
   useNavigate,
   useOutletContext,
   useParams,
@@ -64,7 +64,7 @@ export function GalleryIndexPage() {
 export function PhotoPage() {
   const params = useParams('photos.show');
   const search = useSearchParams('photos.show');
-  const hash = useHash();
+  const hash = useHashParams();
   return (
     <article className="panel stack">
       <h1>Photo page {params.id}</h1>

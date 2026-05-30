@@ -70,7 +70,7 @@ Use `as const` so route IDs, paths, hash values, and metadata remain literal eno
 Create `src/pages.tsx`.
 
 ```tsx
-import { Link, Outlet, useParams, useSearchParams, useHash } from '@cookbook/router-react';
+import { Link, Outlet, useParams, useSearchParams, useHashParams } from '@cookbook/router-react';
 
 export function RootLayout() {
   return (
@@ -93,7 +93,7 @@ export function HomePage() {
 export function UserPage() {
   const params = useParams('users.show');
   const search = useSearchParams('users.show');
-  const hash = useHash('users.show');
+  const hash = useHashParams('users.show');
 
   return (
     <article>

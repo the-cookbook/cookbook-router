@@ -2,13 +2,13 @@ import { renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
 import { describe, expect, expectTypeOf, test } from 'vitest';
 import { RouterProvider } from '../components/router-provider';
-import { useHash } from './use-hash';
+import { useHashParams } from './use-hash-params';
 
 function Page() {
   return null;
 }
 
-describe('useHash', () => {
+describe('useHashParams', () => {
   test('returns current hash without the leading marker', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
@@ -26,7 +26,7 @@ describe('useHash', () => {
       <RouterProvider router={router}>{children}</RouterProvider>
     );
 
-    const { result } = renderHook(() => useHash('user'), { wrapper });
+    const { result } = renderHook(() => useHashParams('user'), { wrapper });
 
     expect(result.current).toBe('profile');
     expectTypeOf(result.current).toEqualTypeOf<'profile' | 'settings' | 'bio' | 'top' | null>();
@@ -42,7 +42,7 @@ describe('useHash', () => {
       <RouterProvider router={router}>{children}</RouterProvider>
     );
 
-    const { result } = renderHook(() => useHash(), { wrapper });
+    const { result } = renderHook(() => useHashParams(), { wrapper });
 
     expect(result.current).toBeNull();
   });

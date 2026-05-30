@@ -2,7 +2,7 @@ import {
   Link,
   Outlet,
   Slot,
-  useHash,
+  useHashParams,
   useNavigate,
   useOutletContext,
   useParams,
@@ -45,7 +45,7 @@ export function HomePage() {
 export function UserPage() {
   const params = useParams('users.show');
   const search = useSearchParams('users.show');
-  const hash = useHash();
+  const hash = useHashParams();
 
   return (
     <section>

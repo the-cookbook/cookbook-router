@@ -7,7 +7,7 @@ import type { RouteHash, RouteId } from '@cookbook/router';
  * When generated contracts are registered, passing a route id narrows the hash
  * value to that route's allowed hash union.
  */
-export function useHash<Route extends RouteId = RouteId>(
+export function useHashParams<Route extends RouteId = RouteId>(
   _routeId?: Route,
 ): RouteHash<Route> | null {
   const hash = useRouterContext().state.location.hash;

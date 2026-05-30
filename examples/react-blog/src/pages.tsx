@@ -4,7 +4,7 @@ import {
   NavLink,
   Outlet,
   Slot,
-  useHash,
+  useHashParams,
   useNavigate,
   useOutletContext,
   useParams,
@@ -199,7 +199,7 @@ export function ArticleErrorFallback(props: RouteErrorFallbackProps) {
 export function ArticlePage() {
   const params = useParams('blog.articles.show');
   const search = useSearchParams('blog.articles.show');
-  const hash = useHash();
+  const hash = useHashParams();
   const article = findArticle(params.slug);
 
   if (!article) {

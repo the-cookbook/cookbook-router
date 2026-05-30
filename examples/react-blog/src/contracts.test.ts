@@ -1,5 +1,5 @@
 import { describe, expectTypeOf, test } from 'vitest';
-import { useHash, useParams, useSearchParams } from '@cookbook/router-react';
+import { useHashParams, useParams, useSearchParams } from '@cookbook/router-react';
 import type {
   RouteHash,
   RouteMeta,
@@ -27,7 +27,7 @@ describe('react-blog generated contracts', () => {
       const params = useParams('blog.articles.show');
       const search = useSearchParams('blog.articles.show');
       const loginSearch = useSearchParams('blog.login');
-      const hash = useHash('blog.articles.show');
+      const hash = useHashParams('blog.articles.show');
 
       expectTypeOf(params).toEqualTypeOf<{ slug: string }>();
       expectTypeOf(search).toEqualTypeOf<{
