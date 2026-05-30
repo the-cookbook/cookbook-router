@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createBrowserHistory } from './browser-history';
 
 interface ListenerMap {
@@ -44,7 +44,7 @@ function createWindowMock() {
 }
 
 describe('browser-history', () => {
-  test('reads, writes, emits, and cleans up browser events', () => {
+  it('reads, writes, emits, and cleans up browser events', () => {
     const windowMock = createWindowMock();
     const history = createBrowserHistory({ window: windowMock as unknown as Window });
     const events: string[] = [];
@@ -68,7 +68,7 @@ describe('browser-history', () => {
     expect(windowMock.listeners).toEqual({});
   });
 
-  test('throws without a window-like environment', () => {
+  it('throws without a window-like environment', () => {
     const previousWindow = globalThis.window;
 
     // @ts-expect-error Vitest node environment may not define window.

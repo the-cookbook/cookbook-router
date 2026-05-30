@@ -1,11 +1,11 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createMemoryHistory } from '../history/memory-history';
 import { normalizeRoutes } from '../matching/normalize-routes';
 import { matchRoutes } from '../matching/match-routes';
 import { completeTransition, runTransition } from './transition';
 
 describe('transition', () => {
-  test('commits successful transitions and completes after hooks', async () => {
+  it('commits successful transitions and completes after hooks', async () => {
     const calls: string[] = [];
     const routes = normalizeRoutes([
       {
@@ -27,7 +27,7 @@ describe('transition', () => {
     expect(calls).toEqual(['after']);
   });
 
-  test('returns blocked, redirect, response, and error states', async () => {
+  it('returns blocked, redirect, response, and error states', async () => {
     const routes = normalizeRoutes([{ id: 'home', path: '/' }]);
     const to = matchRoutes(routes, '/');
     const location = createMemoryHistory().location;
@@ -77,13 +77,13 @@ describe('transition', () => {
     expect(result.type).toBe('error');
   });
 
-  test('can commit not-found transitions without a match', async () => {
+  it('can commit not-found transitions without a match', async () => {
     await expect(
       runTransition({ from: null, to: null, location: createMemoryHistory().location }),
     ).resolves.toEqual({ type: 'commit' });
   });
 
-  test('rethrows after-navigation errors after error handlers run', async () => {
+  it('rethrows after-navigation errors after error handlers run', async () => {
     const calls: string[] = [];
     const location = createMemoryHistory().location;
 

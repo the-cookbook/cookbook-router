@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { RouterProvider } from '../components/router-provider';
 import { useLocation } from './use-location';
 
@@ -9,7 +9,7 @@ function Page() {
 }
 
 describe('useLocation', () => {
-  test('returns current location including search and hash', async () => {
+  it('returns current location including search and hash', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'page', path: '/page', component: Page }] as const),
       initialEntries: ['/page?tab=a#top'],

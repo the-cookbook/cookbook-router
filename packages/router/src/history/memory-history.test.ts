@@ -1,8 +1,8 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createMemoryHistory, parseHref } from './memory-history';
 
 describe('memory-history', () => {
-  test('parses pathname, search, hash, state, and stable key', () => {
+  it('parses pathname, search, hash, state, and stable key', () => {
     expect(parseHref('/users/1?tab=settings#profile', { key: 'k', state: { ok: true } })).toEqual({
       pathname: '/users/1',
       search: '?tab=settings',
@@ -13,7 +13,7 @@ describe('memory-history', () => {
     });
   });
 
-  test('pushes, replaces, walks entries, clamps movement, and unsubscribes', () => {
+  it('pushes, replaces, walks entries, clamps movement, and unsubscribes', () => {
     const history = createMemoryHistory({ initialEntries: ['/one', '/two'], initialIndex: 9 });
     const events: string[] = [];
     const unsubscribe = history.listen((event) =>
@@ -44,7 +44,7 @@ describe('memory-history', () => {
     ]);
   });
 
-  test('defaults to root when no initial entries are provided', () => {
+  it('defaults to root when no initial entries are provided', () => {
     expect(createMemoryHistory().location.href).toBe('/');
   });
 });

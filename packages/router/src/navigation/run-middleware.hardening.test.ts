@@ -1,10 +1,10 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createMemoryHistory } from '../history/memory-history';
 import { defineRoutes } from '../routes/define-routes';
 import { createRouter } from '../router/create-router';
 
 describe('run-middleware hardening', () => {
-  test('rejects malformed redirect results with a diagnostic error', async () => {
+  it('rejects malformed redirect results with a diagnostic error', async () => {
     const routes = defineRoutes([
       { id: 'home', path: '/' },
       { id: 'target', path: '/target' },
@@ -21,7 +21,7 @@ describe('run-middleware hardening', () => {
     expect(String(state.error)).toContain('Middleware redirect target must be a non-empty string');
   });
 
-  test('uses a stable route context for every middleware in the pipeline', async () => {
+  it('uses a stable route context for every middleware in the pipeline', async () => {
     const seen: string[] = [];
     const routes = defineRoutes([
       {

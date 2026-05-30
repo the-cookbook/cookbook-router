@@ -1,9 +1,9 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { normalizeRoutes } from './normalize-routes';
 import { flattenRoutes, rankRoutes } from './rank-routes';
 
 describe('rankRoutes', () => {
-  test('flattens normalized route trees', () => {
+  it('flattens normalized route trees', () => {
     const normalized = normalizeRoutes([
       {
         id: 'root',
@@ -15,7 +15,7 @@ describe('rankRoutes', () => {
     expect(flattenRoutes(normalized).map((route) => route.id)).toEqual(['root', 'home']);
   });
 
-  test('ranks static routes before dynamic routes and wildcard routes', () => {
+  it('ranks static routes before dynamic routes and wildcard routes', () => {
     const normalized = normalizeRoutes([
       { id: 'files.catch', path: '/files/{*path}' },
       { id: 'files.show', path: '/files/{id:int}' },
@@ -29,7 +29,7 @@ describe('rankRoutes', () => {
     ]);
   });
 
-  test('returns cached flattened and ranked arrays for repeated reads of the same normalized tree', () => {
+  it('returns cached flattened and ranked arrays for repeated reads of the same normalized tree', () => {
     const normalized = normalizeRoutes([
       { id: 'home', path: '/' },
       { id: 'users.show', path: '/users/{id:int}' },
@@ -39,7 +39,7 @@ describe('rankRoutes', () => {
     expect(rankRoutes(normalized)).toBe(rankRoutes(normalized));
   });
 
-  test('uses declaration order as the final tie breaker', () => {
+  it('uses declaration order as the final tie breaker', () => {
     const normalized = normalizeRoutes([
       { id: 'first', path: '/{first}' },
       { id: 'second', path: '/{second}' },

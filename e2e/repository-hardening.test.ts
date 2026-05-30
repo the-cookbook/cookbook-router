@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, join } from 'node:path';
 
@@ -11,7 +11,7 @@ const packageSourceRoots = [
 const typeOnlyAllowlist = new Set(['packages/router/src/routes/contracts.ts']);
 
 describe('repository hardening', () => {
-  test('every implementation file has a colocated test file or explicit type-only allowlist entry', () => {
+  it('every implementation file has a colocated test file or explicit type-only allowlist entry', () => {
     const missing: string[] = [];
 
     for (const sourceRoot of packageSourceRoots) {
@@ -40,7 +40,7 @@ describe('repository hardening', () => {
     expect(missing).toEqual([]);
   });
 
-  test('test suite does not contain focused or skipped tests', () => {
+  it('test suite does not contain focused or skipped tests', () => {
     const offenders: string[] = [];
     const pattern = /\b(?:describe|test|it)\.(?:only|skip)\s*\(/;
 
@@ -61,7 +61,7 @@ describe('repository hardening', () => {
     expect(offenders).toEqual([]);
   });
 
-  test('CI validates the hardened runtime surface', () => {
+  it('CI validates the hardened runtime surface', () => {
     const workflow = readFileSync(join(root, '.github/workflows/ci.yml'), 'utf8');
 
     expect(workflow).toContain('pnpm lint');

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, expectTypeOf, test } from 'vitest';
+import { afterEach, describe, expect, expectTypeOf, it } from 'vitest';
 import { resetConstraints } from '@cookbook/pathkit';
 import { createConstraint } from '../pathkit/pathkit';
 import { defineRoutes } from './define-routes';
@@ -8,7 +8,7 @@ afterEach(() => {
 });
 
 describe('defineRoutes', () => {
-  test('preserves route literals and readonly route trees', () => {
+  it('preserves route literals and readonly route trees', () => {
     const routes = defineRoutes([
       {
         id: 'root',
@@ -35,7 +35,7 @@ describe('defineRoutes', () => {
     >();
   });
 
-  test('runs development validation immediately', () => {
+  it('runs development validation immediately', () => {
     expect(() =>
       defineRoutes([
         {
@@ -47,7 +47,7 @@ describe('defineRoutes', () => {
     ).toThrow('must not define path');
   });
 
-  test('registers custom path constraints before immediate validation', () => {
+  it('registers custom path constraints before immediate validation', () => {
     const slug = createConstraint({
       parse: (paramName, value) => {
         if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
@@ -69,7 +69,7 @@ describe('defineRoutes', () => {
     expect(routes[0]?.path).toBe('/posts/{slug:slug}');
   });
 
-  test('applies path options during immediate validation', () => {
+  it('applies path options during immediate validation', () => {
     const routes = defineRoutes([{ id: 'gallery', path: '/gallery/' }] as const, {
       pathOptions: { prune: false },
     });

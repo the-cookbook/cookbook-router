@@ -1,7 +1,7 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('package entrypoint', () => {
-  test('exports React integration APIs', async () => {
+  it('exports React integration APIs', async () => {
     const module = await import('./index');
 
     expect(module.RouterProvider).toBeTypeOf('function');

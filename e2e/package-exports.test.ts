@@ -1,4 +1,4 @@
-import { describe, expect, expectTypeOf, test } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import {
   createMemoryRouter,
   createRouter,
@@ -80,11 +80,11 @@ const exportedFunctions = [
 ];
 
 describe('package exports and generated contract types', () => {
-  test('all public workspace package exports are importable', () => {
+  it('all public workspace package exports are importable', () => {
     expect(exportedFunctions.every((value) => typeof value === 'function')).toBe(true);
   });
 
-  test('generated blog contracts expose route IDs, params, search, hash, meta, paths, and outlet context', () => {
+  it('generated blog contracts expose route IDs, params, search, hash, meta, paths, and outlet context', () => {
     expectTypeOf<keyof BlogContracts['params']>().toEqualTypeOf<
       'blog' | 'blog.index' | 'blog.posts.show'
     >();
@@ -103,7 +103,7 @@ describe('package exports and generated contract types', () => {
     }>();
   });
 
-  test('generated dashboard contracts expose custom constraints, search params, and paths', () => {
+  it('generated dashboard contracts expose custom constraints, search params, and paths', () => {
     expectTypeOf<keyof DashboardContracts['params']>().toEqualTypeOf<
       | 'entry'
       | 'create'
@@ -125,7 +125,7 @@ describe('package exports and generated contract types', () => {
     >().toEqualTypeOf<'/users/{slug:slug}'>();
   });
 
-  test('workspace router package returns the runtime contract from public API', () => {
+  it('workspace router package returns the runtime contract from public API', () => {
     const routes = defineRoutes([{ id: 'home', path: '/' }] as const);
     const router = createMemoryRouter({ routes });
 

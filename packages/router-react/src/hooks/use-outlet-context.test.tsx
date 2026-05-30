@@ -1,10 +1,10 @@
 import { renderHook } from '@testing-library/react';
-import { describe, expect, test, expectTypeOf } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { OutletContext } from '../context/router-context';
 import { useOutletContext } from './use-outlet-context';
 
 describe('useOutletContext', () => {
-  test('returns nearest outlet context', () => {
+  it('returns nearest outlet context', () => {
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <OutletContext.Provider value={{ context: { user: 'Ada' } }}>
         {children}
@@ -16,13 +16,13 @@ describe('useOutletContext', () => {
     expect(result.current.user).toBe('Ada');
   });
 
-  test('throws in strict mode when context is absent', () => {
+  it('throws in strict mode when context is absent', () => {
     expect(() => renderHook(() => useOutletContext('dashboard.home', { strict: true }))).toThrow(
       'Outlet context for route "dashboard.home" was requested in strict mode',
     );
   });
 
-  test('supports route-id inference from contracts', () => {
+  it('supports route-id inference from contracts', () => {
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <OutletContext.Provider value={{ context: { user: 'Ada' } }}>
         {children}

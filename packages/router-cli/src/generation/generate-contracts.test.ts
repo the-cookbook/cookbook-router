@@ -1,9 +1,9 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { sampleRoutes } from '../test-helpers';
 import { generateContracts } from './generate-contracts';
 
 describe('generateContracts', () => {
-  test('generates route contract interfaces', () => {
+  it('generates route contract interfaces', () => {
     const output = generateContracts(sampleRoutes);
 
     expect(output.startsWith('/* eslint-disable */\n')).toBe(true);
@@ -20,7 +20,7 @@ describe('generateContracts', () => {
     expect(output).toContain('export const routePaths = {');
   });
 
-  test('generates empty contracts for routes without optional URL state', () => {
+  it('generates empty contracts for routes without optional URL state', () => {
     const output = generateContracts([{ id: 'about', path: '/about' }]);
 
     expect(output).toContain('about: {};');
@@ -31,7 +31,7 @@ describe('generateContracts', () => {
     expect(output).toContain('/* eslint-enable */');
   });
 
-  test('quotes invalid TypeScript property names', () => {
+  it('quotes invalid TypeScript property names', () => {
     const output = generateContracts([
       { id: 'blog.posts.show', path: '/blog/{slug:regex([a-z0-9-]+)}' },
     ]);
@@ -40,7 +40,7 @@ describe('generateContracts', () => {
     expect(output).toContain('slug: string');
   });
 
-  test('generates contracts for slot routes and declaration-only slots', () => {
+  it('generates contracts for slot routes and declaration-only slots', () => {
     const output = generateContracts([
       {
         id: 'dashboard',
@@ -63,7 +63,7 @@ describe('generateContracts', () => {
     expect(output).toContain("'dashboard.sidebar.activity': '/dashboard/activity/{itemId:int}';");
   });
 
-  test('throws for invalid route configuration', () => {
+  it('throws for invalid route configuration', () => {
     expect(() => generateContracts([{ id: 'bad', index: true, path: '/bad' }])).toThrow('index');
     expect(() =>
       generateContracts([{ id: 'bad', path: '/', search: { query: 'string' } } as never]),

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   createMemoryRouter,
   createStaticRouter,
@@ -19,7 +19,7 @@ const routes = defineRoutes([
 ] as const);
 
 describe('repository security audit regressions', () => {
-  test('hydration state can be embedded in HTML without script injection', async () => {
+  it('hydration state can be embedded in HTML without script injection', async () => {
     const router = createMemoryRouter({
       routes,
       initialEntries: ['/users/1?tab=</script>#profile'],
@@ -34,20 +34,20 @@ describe('repository security audit regressions', () => {
     );
   });
 
-  test('SSR request handling rejects executable protocols', () => {
+  it('SSR request handling rejects executable protocols', () => {
     expect(() => createStaticRouter({ routes, url: 'javascript:alert(1)' })).toThrow(
       'Static router URL must use http, https',
     );
   });
 
-  test('CLI generation refuses unsafe write targets', async () => {
+  it('CLI generation refuses unsafe write targets', async () => {
     const result = await generateCommand({ routes, outDir: 'bad\0dir' });
 
     expect(result.ok).toBe(false);
     expect(result.errors[0]).toContain('null byte');
   });
 
-  test('redirect loops still fail closed as navigation errors', async () => {
+  it('redirect loops still fail closed as navigation errors', async () => {
     const router = createMemoryRouter({
       routes,
       middleware: [({ redirect }) => redirect('/users/1')],

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { matchRoutes } from '../matching/match-routes';
 import { normalizeRoutes } from '../matching/normalize-routes';
 import { getResolvedSlot, resolveSlots } from './resolve-slots';
@@ -86,7 +86,7 @@ function expectMatch(pathname: string) {
 }
 
 describe('resolveSlots', () => {
-  test('resolves layout-scoped fallback, empty, and matched slot routes', () => {
+  it('resolves layout-scoped fallback, empty, and matched slot routes', () => {
     const indexMatch = expectMatch('/dashboard');
     const activityMatch = expectMatch('/dashboard/activity');
 
@@ -105,7 +105,7 @@ describe('resolveSlots', () => {
     });
   });
 
-  test('supports child fallback overrides and declaration-only child slots', () => {
+  it('supports child fallback overrides and declaration-only child slots', () => {
     const settingsMatch = expectMatch('/dashboard/settings');
     const fullscreenMatch = expectMatch('/dashboard/fullscreen');
 
@@ -118,7 +118,7 @@ describe('resolveSlots', () => {
     });
   });
 
-  test('keeps nested slot names scoped by layout owner', () => {
+  it('keeps nested slot names scoped by layout owner', () => {
     const nestedMatch = expectMatch('/dashboard/nested');
 
     expect(getResolvedSlot(nestedMatch.slots, 'dashboard', 'sidebar')).toMatchObject({
@@ -131,14 +131,14 @@ describe('resolveSlots', () => {
     });
   });
 
-  test('can resolve slots directly from a branch for SSR', () => {
+  it('can resolve slots directly from a branch for SSR', () => {
     const match = expectMatch('/dashboard/activity');
     const slots = resolveSlots(match.branch, '/dashboard/activity');
 
     expect(getResolvedSlot(slots, 'dashboard', 'sidebar')).toMatchObject({ status: 'matched' });
   });
 
-  test('returns undefined for missing slots', () => {
+  it('returns undefined for missing slots', () => {
     const match = expectMatch('/dashboard');
 
     expect(getResolvedSlot(match.slots, 'dashboard', 'missing')).toBeUndefined();

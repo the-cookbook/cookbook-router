@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   generateCommand,
   manifestCommand,
@@ -28,7 +28,7 @@ const validRoutes = [
 ] as const;
 
 describe('CLI integration in isolated workspaces', () => {
-  test('generates contracts, registration, and manifest into a real temporary workspace', async () => {
+  it('generates contracts, registration, and manifest into a real temporary workspace', async () => {
     const workspace = await mkdtemp(join(tmpdir(), 'cookbook-router-e2e-'));
     const routeFile = join(workspace, 'routes.json');
     const outDir = join(workspace, '.cookbook-router');
@@ -56,7 +56,7 @@ describe('CLI integration in isolated workspaces', () => {
     }
   });
 
-  test('validates route failures through the public validate command', async () => {
+  it('validates route failures through the public validate command', async () => {
     const fs = createMemoryFileSystem({
       'routes.json': JSON.stringify({ routes: [{ id: 'bad', index: true, path: '/bad' }] }),
     });
@@ -67,7 +67,7 @@ describe('CLI integration in isolated workspaces', () => {
     expect(result.errors.join('\n')).toContain('index');
   });
 
-  test('generates only the manifest when the manifest command is used', async () => {
+  it('generates only the manifest when the manifest command is used', async () => {
     const fs = createMemoryFileSystem({ 'routes.json': JSON.stringify({ routes: validRoutes }) });
 
     const result = await manifestCommand({ routeFiles: ['routes.json'], fs, outDir: 'generated' });
@@ -77,7 +77,7 @@ describe('CLI integration in isolated workspaces', () => {
     expect(fs.files.has('generated/contracts.ts')).toBe(false);
   });
 
-  test('watch mode regenerates contracts, registration, and manifest after route file changes', async () => {
+  it('watch mode regenerates contracts, registration, and manifest after route file changes', async () => {
     const fs = createMemoryFileSystem({ 'routes.json': JSON.stringify({ routes: validRoutes }) });
     let changeCount = 0;
     let resolveChange!: () => void;
@@ -114,7 +114,7 @@ describe('CLI integration in isolated workspaces', () => {
     watcher.close();
   });
 
-  test('generateCommand creates parent directories in temp workspaces', async () => {
+  it('generateCommand creates parent directories in temp workspaces', async () => {
     const workspace = await mkdtemp(join(tmpdir(), 'cookbook-router-e2e-'));
     const routeFile = join(workspace, 'config', 'routes.json');
     const outDir = join(workspace, 'generated', 'router');

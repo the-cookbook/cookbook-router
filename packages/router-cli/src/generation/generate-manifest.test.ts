@@ -1,9 +1,9 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { sampleRoutes } from '../test-helpers';
 import { generateManifest, serializeManifest } from './generate-manifest';
 
 describe('generateManifest', () => {
-  test('generates manifest entries from normalized routes', () => {
+  it('generates manifest entries from normalized routes', () => {
     expect(generateManifest(sampleRoutes)).toEqual({
       routes: [
         { id: 'root', path: '/', index: false },
@@ -13,14 +13,14 @@ describe('generateManifest', () => {
     });
   });
 
-  test('serializes generated manifest with a trailing newline', () => {
+  it('serializes generated manifest with a trailing newline', () => {
     const serialized = serializeManifest({ routes: [{ id: 'home', path: '/', index: true }] });
 
     expect(serialized.endsWith('\n')).toBe(true);
     expect(JSON.parse(serialized)).toEqual({ routes: [{ id: 'home', path: '/', index: true }] });
   });
 
-  test('generates manifest with custom path constraints from defineRoutes options', () => {
+  it('generates manifest with custom path constraints from defineRoutes options', () => {
     const manifest = generateManifest([{ id: 'post.show', path: '/posts/{slug:slug}' }], {
       pathConstraints: {
         slug: {
@@ -36,7 +36,7 @@ describe('generateManifest', () => {
     ]);
   });
 
-  test('fails invalid routes before writing manifest content', () => {
+  it('fails invalid routes before writing manifest content', () => {
     expect(() => generateManifest([{ id: 'bad', path: '/users/{id:int}/{id:int}' }])).toThrow(
       /Duplicate parameter 'id' found in the route '\/users\/\{id:int\}\/\{id:int\}'/,
     );

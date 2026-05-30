@@ -1,6 +1,6 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes, type Router } from '@cookbook/router';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { Link } from './link';
 import { Outlet } from './outlet';
 import { RouterProvider } from './router-provider';
@@ -154,7 +154,7 @@ async function createRouter(initialEntries: readonly string[]): Promise<Router> 
 }
 
 describe('Slot', () => {
-  test('renders slot fallback with direct slot context', async () => {
+  it('renders slot fallback with direct slot context', async () => {
     const router = await createRouter(['/dashboard']);
     const { getByText, queryByText } = render(<RouterProvider router={router} />);
 
@@ -162,7 +162,7 @@ describe('Slot', () => {
     expect(getByText('dashboard')).toBeTruthy();
   });
 
-  test('renders URL-matched slot routes and exposes slot route params', async () => {
+  it('renders URL-matched slot routes and exposes slot route params', async () => {
     const router = await createRouter(['/dashboard/activity/7']);
     const { getByText } = render(<RouterProvider router={router} />);
 
@@ -170,7 +170,7 @@ describe('Slot', () => {
     expect(getByText('activity-page')).toBeTruthy();
   });
 
-  test('renders child slot fallback overrides', async () => {
+  it('renders child slot fallback overrides', async () => {
     const router = await createRouter(['/dashboard/settings']);
     const { getByText, queryByText } = render(<RouterProvider router={router} />);
 
@@ -178,7 +178,7 @@ describe('Slot', () => {
     expect(queryByText('fallback:dashboard-slot')).toBeNull();
   });
 
-  test('renders nothing for disabled and fallback-null slots', async () => {
+  it('renders nothing for disabled and fallback-null slots', async () => {
     const router = await createRouter(['/dashboard/fullscreen']);
     const { queryByText } = render(<RouterProvider router={router} />);
 
@@ -186,7 +186,7 @@ describe('Slot', () => {
     expect(queryByText('settings-sidebar')).toBeNull();
   });
 
-  test('keeps nested same-name slots scoped to the layout owner', async () => {
+  it('keeps nested same-name slots scoped to the layout owner', async () => {
     const router = await createRouter(['/dashboard/nested']);
     const { getByText } = render(<RouterProvider router={router} />);
 
@@ -194,7 +194,7 @@ describe('Slot', () => {
     expect(getByText('nested-sidebar')).toBeTruthy();
   });
 
-  test('uses navigation context for intercepted slot renders before slot context', async () => {
+  it('uses navigation context for intercepted slot renders before slot context', async () => {
     function ModalLayout() {
       return (
         <section>
@@ -232,7 +232,7 @@ describe('Slot', () => {
     expect(view.queryByText('modal:slot-context')).toBeNull();
   });
 
-  test('automatically renders configured intercepts from Link navigation', async () => {
+  it('automatically renders configured intercepts from Link navigation', async () => {
     function ModalLayout() {
       return (
         <section>
@@ -272,7 +272,7 @@ describe('Slot', () => {
     expect(router.state.previousLocation?.href).toBe('/modal-source');
   });
 
-  test('opens the nested canonical route from inside an active configured intercept without reintercepting', async () => {
+  it('opens the nested canonical route from inside an active configured intercept without reintercepting', async () => {
     function BlogLayout() {
       return (
         <section>
@@ -355,7 +355,7 @@ describe('Slot', () => {
     expect(router.state.match?.intercepted).toBeUndefined();
   });
 
-  test('missing slot references render null instead of throwing', async () => {
+  it('missing slot references render null instead of throwing', async () => {
     function MissingSlotLayout() {
       return (
         <section>
@@ -388,7 +388,7 @@ describe('Slot', () => {
 });
 
 describe('Slot route provider fallbacks', () => {
-  test('uses RouterProvider error for slot route render errors', async () => {
+  it('uses RouterProvider error for slot route render errors', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     function BrokenSlot(): never {
@@ -425,7 +425,7 @@ describe('Slot route provider fallbacks', () => {
     consoleError.mockRestore();
   });
 
-  test('uses RouterProvider error for intercepted route render errors', async () => {
+  it('uses RouterProvider error for intercepted route render errors', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     function BrokenModal(): never {

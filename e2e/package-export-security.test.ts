@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 const packages = [
   'packages/router/package.json',
@@ -8,7 +8,7 @@ const packages = [
 ];
 
 describe('package export hardening', () => {
-  test('packages expose only root entrypoint and package metadata', async () => {
+  it('packages expose only root entrypoint and package metadata', async () => {
     for (const packageJsonPath of packages) {
       const manifest = JSON.parse(await readFile(packageJsonPath, 'utf8')) as {
         exports: Record<string, unknown>;
@@ -18,7 +18,7 @@ describe('package export hardening', () => {
     }
   });
 
-  test('packages retain tree-shaking and declaration metadata', async () => {
+  it('packages retain tree-shaking and declaration metadata', async () => {
     for (const packageJsonPath of packages) {
       const manifest = JSON.parse(await readFile(packageJsonPath, 'utf8')) as {
         sideEffects?: boolean;

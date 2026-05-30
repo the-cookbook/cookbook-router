@@ -1,7 +1,7 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('package entrypoint', () => {
-  test('exports public router primitives and diagnostics', async () => {
+  it('exports public router primitives and diagnostics', async () => {
     const module = await import('./index');
 
     expect(Object.keys(module).sort()).toEqual([

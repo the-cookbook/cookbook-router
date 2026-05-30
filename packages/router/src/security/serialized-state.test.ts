@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   assertSerializedRouterState,
   parseSerializedRouterState,
@@ -18,21 +18,21 @@ describe('serialized router state safety', () => {
     navigation: 'idle' as const,
   };
 
-  test('escapes strings that would break a hydration script tag', () => {
+  it('escapes strings that would break a hydration script tag', () => {
     const serialized = stringifySerializedRouterState(state);
 
     expect(serialized).not.toContain('</script>');
     expect(serialized).toContain('\\u003c/script\\u003e');
   });
 
-  test('parses and validates serialized state', () => {
+  it('parses and validates serialized state', () => {
     const parsed = parseSerializedRouterState(stringifySerializedRouterState(state));
 
     expect(parsed.location.href).toBe('/users/1?q=script#top');
     expect(parsed.navigation).toBe('idle');
   });
 
-  test('rejects malformed locations and navigation states', () => {
+  it('rejects malformed locations and navigation states', () => {
     expect(() =>
       assertSerializedRouterState({
         location: { pathname: 'javascript:alert(1)' },

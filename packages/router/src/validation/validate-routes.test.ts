@@ -1,8 +1,8 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { validateRoutes } from './validate-routes';
 
 describe('validateRoutes', () => {
-  test('accepts valid route trees, slot defaults, declaration-only slots, and slot routes', () => {
+  it('accepts valid route trees, slot defaults, declaration-only slots, and slot routes', () => {
     expect(() =>
       validateRoutes([
         {
@@ -35,7 +35,7 @@ describe('validateRoutes', () => {
     ).not.toThrow();
   });
 
-  test('rejects missing and duplicate route ids', () => {
+  it('rejects missing and duplicate route ids', () => {
     expect(() => validateRoutes([{ id: '', path: '/' }])).toThrow('non-empty string id');
     expect(() =>
       validateRoutes([
@@ -45,7 +45,7 @@ describe('validateRoutes', () => {
     ).toThrow('Duplicate route id');
   });
 
-  test('rejects invalid index route shapes', () => {
+  it('rejects invalid index route shapes', () => {
     expect(() => validateRoutes([{ id: 'home', index: true, path: '/' }])).toThrow(
       'must not define path',
     );
@@ -54,14 +54,14 @@ describe('validateRoutes', () => {
     ).toThrow('must not define children');
   });
 
-  test('rejects empty paths and invalid pathkit patterns', () => {
+  it('rejects empty paths and invalid pathkit patterns', () => {
     expect(() => validateRoutes([{ id: 'empty', path: '' }])).toThrow('empty path');
     expect(() => validateRoutes([{ id: 'bad', path: '/users/{id:number}' }])).toThrow(
       'Unknown constraint type',
     );
   });
 
-  test('rejects duplicate absolute route paths', () => {
+  it('rejects duplicate absolute route paths', () => {
     expect(() =>
       validateRoutes([
         { id: 'one', path: '/same' },
@@ -70,7 +70,7 @@ describe('validateRoutes', () => {
     ).toThrow('Duplicate route path "/same"');
   });
 
-  test('validates leading-slash child paths relative to their parent route', () => {
+  it('validates leading-slash child paths relative to their parent route', () => {
     expect(() =>
       validateRoutes([
         {
@@ -102,7 +102,7 @@ describe('validateRoutes', () => {
     ).not.toThrow();
   });
 
-  test('rejects invalid hash configuration', () => {
+  it('rejects invalid hash configuration', () => {
     expect(() => validateRoutes([{ id: 'empty-hash', path: '/', hash: [''] }])).toThrow(
       'empty or non-string hash value',
     );
@@ -111,7 +111,7 @@ describe('validateRoutes', () => {
     );
   });
 
-  test('rejects invalid slot names and removed slot forms', () => {
+  it('rejects invalid slot names and removed slot forms', () => {
     expect(() =>
       validateRoutes([
         {
@@ -166,7 +166,7 @@ describe('validateRoutes', () => {
   });
 });
 
-test('rejects invalid slot object and routes configuration', () => {
+it('rejects invalid slot object and routes configuration', () => {
   expect(() =>
     validateRoutes([
       {
@@ -217,7 +217,7 @@ test('rejects invalid slot object and routes configuration', () => {
   ).toThrow('Unknown constraint type');
 });
 
-test('allows a slot route to share the primary branch URL it decorates', () => {
+it('allows a slot route to share the primary branch URL it decorates', () => {
   expect(() =>
     validateRoutes([
       {
@@ -237,7 +237,7 @@ test('allows a slot route to share the primary branch URL it decorates', () => {
   ).not.toThrow();
 });
 
-test('allows the same path in different layout slot scopes', () => {
+it('allows the same path in different layout slot scopes', () => {
   expect(() =>
     validateRoutes([
       {
@@ -259,7 +259,7 @@ test('allows the same path in different layout slot scopes', () => {
   ).not.toThrow();
 });
 
-test('rejects duplicate route paths inside the same layout slot scope', () => {
+it('rejects duplicate route paths inside the same layout slot scope', () => {
   expect(() =>
     validateRoutes([
       {
@@ -281,7 +281,7 @@ test('rejects duplicate route paths inside the same layout slot scope', () => {
   ).toThrow('Duplicate route path "/dashboard/activity/{id:int}"');
 });
 
-test('rejects malformed route redirect configuration', () => {
+it('rejects malformed route redirect configuration', () => {
   expect(() => validateRoutes([{ id: 'entry', path: '/', redirect: '' }])).toThrow(
     'redirect must be a non-empty string',
   );
@@ -295,7 +295,7 @@ test('rejects malformed route redirect configuration', () => {
   ).toThrow('redirect.params must be an object');
 });
 
-test('requires renderable and redirect routes to declare path or index', () => {
+it('requires renderable and redirect routes to declare path or index', () => {
   expect(() =>
     validateRoutes([
       {
@@ -353,7 +353,7 @@ test('requires renderable and redirect routes to declare path or index', () => {
   ).not.toThrow();
 });
 
-test('validates search param cardinality descriptors', () => {
+it('validates search param cardinality descriptors', () => {
   expect(() =>
     validateRoutes([
       {
@@ -383,7 +383,7 @@ test('validates search param cardinality descriptors', () => {
   ).toThrow('optional must be a boolean');
 });
 
-test('rejects layout fallbacks and slots when no layout component is in scope', () => {
+it('rejects layout fallbacks and slots when no layout component is in scope', () => {
   expect(() =>
     validateRoutes([
       {
@@ -407,7 +407,7 @@ test('rejects layout fallbacks and slots when no layout component is in scope', 
   ).toThrow('declares layout.slots');
 });
 
-test('rejects child slot declarations that do not target an active declared slot', () => {
+it('rejects child slot declarations that do not target an active declared slot', () => {
   expect(() =>
     validateRoutes([
       {
@@ -428,7 +428,7 @@ test('rejects child slot declarations that do not target an active declared slot
   );
 });
 
-test('allows child slot declarations when an ancestor layout declares the slot', () => {
+it('allows child slot declarations when an ancestor layout declares the slot', () => {
   expect(() =>
     validateRoutes([
       {
@@ -447,7 +447,7 @@ test('allows child slot declarations when an ancestor layout declares the slot',
   ).not.toThrow();
 });
 
-test('rejects intercepts targeting undeclared slots', () => {
+it('rejects intercepts targeting undeclared slots', () => {
   expect(() =>
     validateRoutes([
       {
@@ -463,7 +463,7 @@ test('rejects intercepts targeting undeclared slots', () => {
   );
 });
 
-test('allows intercepts targeting declared slots', () => {
+it('allows intercepts targeting declared slots', () => {
   expect(() =>
     validateRoutes([
       {
@@ -477,7 +477,7 @@ test('allows intercepts targeting declared slots', () => {
   ).not.toThrow();
 });
 
-test('rejects removed route and layout errorFallback properties', () => {
+it('rejects removed route and layout errorFallback properties', () => {
   expect(() =>
     validateRoutes([
       { id: 'article', path: '/article', component: {}, errorFallback: {} } as never,

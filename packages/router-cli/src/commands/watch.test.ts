@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createMemoryFileSystem, sampleRoutes } from '../test-helpers';
 import { watchCommand } from './watch';
 
@@ -7,7 +7,7 @@ function nextTick(): Promise<void> {
 }
 
 describe('watchCommand', () => {
-  test('generates initially and registers route file watchers', async () => {
+  it('generates initially and registers route file watchers', async () => {
     const fs = createMemoryFileSystem({ 'routes.json': JSON.stringify({ routes: sampleRoutes }) });
     const results: boolean[] = [];
     const handle = watchCommand({
@@ -27,7 +27,7 @@ describe('watchCommand', () => {
     expect(fs.watchers.get('routes.json')).toEqual([]);
   });
 
-  test('regenerates generated artifacts after route file changes', async () => {
+  it('regenerates generated artifacts after route file changes', async () => {
     const fs = createMemoryFileSystem({
       'routes.json': JSON.stringify({ routes: [{ id: 'home', path: '/' }] }),
     });
@@ -56,7 +56,7 @@ describe('watchCommand', () => {
     handle.close();
   });
 
-  test('reports invalid regeneration results without closing the watcher', async () => {
+  it('reports invalid regeneration results without closing the watcher', async () => {
     const fs = createMemoryFileSystem({ 'routes.json': JSON.stringify({ routes: sampleRoutes }) });
     const results: boolean[] = [];
     const handle = watchCommand({
@@ -82,7 +82,7 @@ describe('watchCommand', () => {
     handle.close();
   });
 
-  test('registers a watcher for every route file', async () => {
+  it('registers a watcher for every route file', async () => {
     const fs = createMemoryFileSystem({
       'routes-a.json': JSON.stringify({ routes: [{ id: 'home', path: '/' }] }),
       'routes-b.json': JSON.stringify({ routes: [{ id: 'about', path: '/about' }] }),
@@ -103,7 +103,7 @@ describe('watchCommand', () => {
     expect(fs.watchers.get('routes-b.json')).toEqual([]);
   });
 
-  test('requires route files because in-memory routes cannot be watched', async () => {
+  it('requires route files because in-memory routes cannot be watched', async () => {
     const results: string[] = [];
     const handle = watchCommand({
       routes: sampleRoutes,
@@ -121,7 +121,7 @@ describe('watchCommand', () => {
     handle.close();
   });
 
-  test('reports file watcher setup failures as the initial result', async () => {
+  it('reports file watcher setup failures as the initial result', async () => {
     const fs = createMemoryFileSystem({ 'routes.json': JSON.stringify({ routes: sampleRoutes }) });
     fs.watch = () => {
       throw new Error('watch unavailable');
@@ -145,7 +145,7 @@ describe('watchCommand', () => {
     handle.close();
   });
 
-  test('reports missing file system watch support', async () => {
+  it('reports missing file system watch support', async () => {
     const fs = createMemoryFileSystem({ 'routes.json': JSON.stringify({ routes: sampleRoutes }) });
     fs.watch = undefined as never;
     const results: string[] = [];
@@ -167,7 +167,7 @@ describe('watchCommand', () => {
     handle.close();
   });
 
-  test('closes previously opened watchers when setup later fails', async () => {
+  it('closes previously opened watchers when setup later fails', async () => {
     const fs = createMemoryFileSystem({
       'routes-a.json': JSON.stringify({ routes: [{ id: 'a', path: '/a' }] }),
       'routes-b.json': JSON.stringify({ routes: [{ id: 'b', path: '/b' }] }),
@@ -201,7 +201,7 @@ describe('watchCommand', () => {
     handle.close();
   });
 
-  test('coalesces rapid change events into one regeneration', async () => {
+  it('coalesces rapid change events into one regeneration', async () => {
     const fs = createMemoryFileSystem({
       'routes.json': JSON.stringify({ routes: [{ id: 'home', path: '/' }] }),
     });
@@ -228,7 +228,7 @@ describe('watchCommand', () => {
     handle.close();
   });
 
-  test('close is idempotent and prevents pending regenerations', async () => {
+  it('close is idempotent and prevents pending regenerations', async () => {
     const fs = createMemoryFileSystem({
       'routes.json': JSON.stringify({ routes: [{ id: 'home', path: '/' }] }),
     });
@@ -253,7 +253,7 @@ describe('watchCommand', () => {
     expect(fs.files.get('.cookbook-router/manifest.json')).not.toContain('later');
   });
 
-  test('generates in watch mode with custom path constraints from defineRoutes options', async () => {
+  it('generates in watch mode with custom path constraints from defineRoutes options', async () => {
     const fs = createMemoryFileSystem({
       'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
 

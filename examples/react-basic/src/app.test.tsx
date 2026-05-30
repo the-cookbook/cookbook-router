@@ -1,5 +1,5 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
-import { describe, expect, expectTypeOf, test } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import { App } from './app';
 import { createTestRouter } from './router';
 import { lifecycleEvents } from './routes';
@@ -9,7 +9,7 @@ interface ExpectedParams {
 }
 
 describe('react-basic example', () => {
-  test('renders typed params, search, and hash from workspace packages', async () => {
+  it('renders typed params, search, and hash from workspace packages', async () => {
     const router = createTestRouter(['/users/42?tab=settings#profile']);
     await router.resolveCurrent();
 
@@ -27,7 +27,7 @@ describe('react-basic example', () => {
     expectTypeOf<{ id: string }>().toEqualTypeOf<ExpectedParams>();
   });
 
-  test('runs middleware and lifecycle around navigation', async () => {
+  it('runs middleware and lifecycle around navigation', async () => {
     lifecycleEvents.length = 0;
     const router = createTestRouter(['/']);
     await router.resolveCurrent();

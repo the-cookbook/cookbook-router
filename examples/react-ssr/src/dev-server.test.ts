@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Plugin } from 'vite';
 import { createReactSsrDevPlugin } from './dev-server';
 
@@ -33,7 +33,7 @@ function configurePlugin(plugin: Plugin, server: MockServer) {
 }
 
 describe('react-ssr dev server', () => {
-  test('serves SSR HTML for browser document requests in Vite dev mode', async () => {
+  it('serves SSR HTML for browser document requests in Vite dev mode', async () => {
     const renderRequest = vi.fn(
       async (url: string) => `<html><body><div id="root">SSR:${url}</div></body></html>`,
     );
@@ -82,7 +82,7 @@ describe('react-ssr dev server', () => {
     expect(body).toContain('vite-dev');
   });
 
-  test('passes asset requests to Vite instead of rendering SSR HTML', async () => {
+  it('passes asset requests to Vite instead of rendering SSR HTML', async () => {
     let middleware: MockMiddleware | undefined;
     const next = vi.fn();
 

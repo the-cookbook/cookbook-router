@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { RouterProvider } from '../components/router-provider';
 import { useBlocker } from './use-blocker';
 
@@ -15,7 +15,7 @@ function createWrapper(router: ReturnType<typeof createMemoryRouter>) {
 }
 
 describe('useBlocker', () => {
-  test('returns blocked state from the when flag', async () => {
+  it('returns blocked state from the when flag', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'home', path: '/', component: Page }] as const),
     });
@@ -28,7 +28,7 @@ describe('useBlocker', () => {
     expect(result.current.blocked).toBe(true);
   });
 
-  test('blocks router navigation while enabled', async () => {
+  it('blocks router navigation while enabled', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
         { id: 'home', path: '/', component: Page },
@@ -50,7 +50,7 @@ describe('useBlocker', () => {
     confirm.mockRestore();
   });
 
-  test('allows router navigation when the confirmation succeeds', async () => {
+  it('allows router navigation when the confirmation succeeds', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
         { id: 'home', path: '/', component: Page },
@@ -70,7 +70,7 @@ describe('useBlocker', () => {
     confirm.mockRestore();
   });
 
-  test('registers and cleans beforeunload listener only when enabled', async () => {
+  it('registers and cleans beforeunload listener only when enabled', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'home', path: '/', component: Page }] as const),
     });

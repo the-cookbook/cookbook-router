@@ -1,9 +1,9 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
-import { describe, expect, expectTypeOf, test } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import { App, createTestRouter } from './app';
 
 describe('react-intercepts example', () => {
-  test('configured interception renders destination in modal slot and preserves source page', async () => {
+  it('configured interception renders destination in modal slot and preserves source page', async () => {
     const router = createTestRouter(['/gallery']);
     await router.resolveCurrent();
     const { getByText } = render(<App router={router} />);
@@ -16,7 +16,7 @@ describe('react-intercepts example', () => {
     expect(router.state.location.href).toBe('/photos/1?source=configured#details');
   });
 
-  test('call-site interception and direct visit behavior are distinct', async () => {
+  it('call-site interception and direct visit behavior are distinct', async () => {
     const router = createTestRouter(['/gallery']);
     await router.resolveCurrent();
     const intercepted = render(<App router={router} />);

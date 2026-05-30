@@ -1,9 +1,9 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createMemoryFileSystem, sampleRoutes } from '../test-helpers';
 import { validateCommand } from './validate';
 
 describe('validateCommand', () => {
-  test('returns ok for valid in-memory routes', async () => {
+  it('returns ok for valid in-memory routes', async () => {
     await expect(validateCommand({ routes: sampleRoutes })).resolves.toEqual({
       ok: true,
       files: [],
@@ -11,7 +11,7 @@ describe('validateCommand', () => {
     });
   });
 
-  test('returns ok for valid route files', async () => {
+  it('returns ok for valid route files', async () => {
     const fs = createMemoryFileSystem({ 'routes.json': JSON.stringify({ routes: sampleRoutes }) });
 
     await expect(validateCommand({ routeFiles: ['routes.json'], fs })).resolves.toEqual({
@@ -21,7 +21,7 @@ describe('validateCommand', () => {
     });
   });
 
-  test('returns errors for duplicate route IDs', async () => {
+  it('returns errors for duplicate route IDs', async () => {
     const result = await validateCommand({
       routes: [
         { id: 'x', path: '/x' },
@@ -33,7 +33,7 @@ describe('validateCommand', () => {
     expect(result.errors[0]).toContain('Duplicate route id');
   });
 
-  test('validates route files with custom path constraints from defineRoutes options', async () => {
+  it('validates route files with custom path constraints from defineRoutes options', async () => {
     const fs = createMemoryFileSystem({
       'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
 

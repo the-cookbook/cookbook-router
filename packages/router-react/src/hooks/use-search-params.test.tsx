@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
-import { describe, expect, expectTypeOf, test } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import { RouterProvider } from '../components/router-provider';
 import { useSearchParams } from './use-search-params';
 
@@ -9,7 +9,7 @@ function Page() {
 }
 
 describe('useSearchParams', () => {
-  test('returns typed search values for current search string', async () => {
+  it('returns typed search values for current search string', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'user', path: '/page', component: Page }] as const),
       initialEntries: ['/page?tab=settings&empty='],

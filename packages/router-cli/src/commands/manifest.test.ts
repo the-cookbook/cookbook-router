@@ -1,9 +1,9 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createMemoryFileSystem, sampleRoutes } from '../test-helpers';
 import { manifestCommand } from './manifest';
 
 describe('manifestCommand', () => {
-  test('writes only manifest output', async () => {
+  it('writes only manifest output', async () => {
     const fs = createMemoryFileSystem();
     const result = await manifestCommand({ routes: sampleRoutes, outDir: 'generated', fs });
 
@@ -12,7 +12,7 @@ describe('manifestCommand', () => {
     expect(JSON.parse(fs.files.get('generated/manifest.json') ?? '{}').routes).toHaveLength(3);
   });
 
-  test('reports invalid route files', async () => {
+  it('reports invalid route files', async () => {
     const fs = createMemoryFileSystem({
       'routes.json': JSON.stringify({ routes: [{ id: 'bad', path: '/{' }] }),
     });

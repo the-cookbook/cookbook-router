@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
-import { describe, expect, test, expectTypeOf } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { RouterProvider } from '../components/router-provider';
 import { useParams } from './use-params';
 
@@ -9,7 +9,7 @@ function Page() {
 }
 
 describe('useParams', () => {
-  test('returns params for the active route', async () => {
+  it('returns params for the active route', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', component: Page }] as const),
       initialEntries: ['/users/42'],
@@ -25,7 +25,7 @@ describe('useParams', () => {
     expectTypeOf(result.current.id).toEqualTypeOf<number>();
   });
 
-  test('infers params for slot route IDs', () => {
+  it('infers params for slot route IDs', () => {
     expectTypeOf(
       null as unknown as ReturnType<typeof useParams<'dashboard.sidebar.activity'>>,
     ).toEqualTypeOf<{ id: number }>();

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createMemoryHistory } from '../history/memory-history';
 import { normalizeRoutes } from '../matching/normalize-routes';
 import { matchRoutes } from '../matching/match-routes';
@@ -29,7 +29,7 @@ function createMatch() {
 }
 
 describe('run-middleware', () => {
-  test('runs global middleware before route middleware and stops on cancel', async () => {
+  it('runs global middleware before route middleware and stops on cancel', async () => {
     const calls: string[] = [];
     const middleware: Middleware = () => {
       calls.push('global');
@@ -45,7 +45,7 @@ describe('run-middleware', () => {
     expect(calls).toEqual(['global']);
   });
 
-  test('normalizes false, redirect, rewrite, response, and void results', async () => {
+  it('normalizes false, redirect, rewrite, response, and void results', async () => {
     const match = createMatch();
     const location = createMemoryHistory().location;
     const response = new Response('blocked', { status: 403 });
@@ -73,7 +73,7 @@ describe('run-middleware', () => {
     ).resolves.toEqual({ type: 'cancel' });
   });
 
-  test('passes params and location to middleware', async () => {
+  it('passes params and location to middleware', async () => {
     const seen: unknown[] = [];
     const match = createMatch();
 

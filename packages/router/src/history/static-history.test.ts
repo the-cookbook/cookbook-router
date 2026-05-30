@@ -1,8 +1,8 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createStaticHistory } from './static-history';
 
 describe('static-history', () => {
-  test('exposes a fixed parsed location and inert traversal methods', () => {
+  it('exposes a fixed parsed location and inert traversal methods', () => {
     const history = createStaticHistory({ url: '/ssr?x=1#top' });
     const unsubscribe = history.listen(() => undefined);
 
@@ -13,7 +13,7 @@ describe('static-history', () => {
     expect(() => unsubscribe()).not.toThrow();
   });
 
-  test('throws when write navigation is attempted', () => {
+  it('throws when write navigation is attempted', () => {
     const history = createStaticHistory({ url: '/' });
 
     expect(() => history.push('/next')).toThrow('Static history cannot push navigation entries.');

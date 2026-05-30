@@ -1,8 +1,8 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { validateRoutes } from './validate-routes';
 
 describe('validateRoutes security hardening', () => {
-  test('rejects malformed route scalar fields before path handling', () => {
+  it('rejects malformed route scalar fields before path handling', () => {
     expect(() => validateRoutes([{ id: 'bad', path: 42 } as never])).toThrow(
       'path must be a string',
     );
@@ -14,7 +14,7 @@ describe('validateRoutes security hardening', () => {
     );
   });
 
-  test('rejects malformed hash configuration', () => {
+  it('rejects malformed hash configuration', () => {
     expect(() => validateRoutes([{ id: 'bad', path: '/', hash: 'profile' } as never])).toThrow(
       'hash configuration must be an array',
     );
@@ -23,7 +23,7 @@ describe('validateRoutes security hardening', () => {
     );
   });
 
-  test('rejects unsafe search and meta keys that can poison generated contracts', () => {
+  it('rejects unsafe search and meta keys that can poison generated contracts', () => {
     expect(() =>
       validateRoutes([{ id: 'bad', path: '/', search: { constructor: 'string' } } as never]),
     ).toThrow('search contains unsafe key "constructor"');

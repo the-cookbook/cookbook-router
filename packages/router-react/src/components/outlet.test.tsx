@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { Outlet } from './outlet';
 import { RouterProvider } from './router-provider';
 import { useOutletContext } from '../hooks/use-outlet-context';
@@ -34,7 +34,7 @@ function LeafPageWithOutlet() {
 }
 
 describe('Outlet', () => {
-  test('renders the matched child route', async () => {
+  it('renders the matched child route', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
         {
@@ -52,7 +52,7 @@ describe('Outlet', () => {
     expect(getByText('from layout')).toBeTruthy();
   });
 
-  test('returns undefined context when no outlet context exists', async () => {
+  it('returns undefined context when no outlet context exists', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'page', path: '/', component: MissingContextPage }] as const),
     });
@@ -63,7 +63,7 @@ describe('Outlet', () => {
     expect(getByText('undefined')).toBeTruthy();
   });
 
-  test('throws a descriptive strict-mode error when context is missing', async () => {
+  it('throws a descriptive strict-mode error when context is missing', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'page', path: '/', component: StrictMissingPage }] as const),
     });
@@ -74,7 +74,7 @@ describe('Outlet', () => {
     );
   });
 
-  test('renders nothing for a leaf route outlet instead of recursively rendering the page', async () => {
+  it('renders nothing for a leaf route outlet instead of recursively rendering the page', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'page', path: '/', component: LeafPageWithOutlet }] as const),
     });

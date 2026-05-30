@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 const execFileAsync = promisify(execFile);
 const rootDir = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -17,7 +17,7 @@ async function runPnpm(args: readonly string[]) {
 }
 
 describe('workspace build and resolution', () => {
-  test('workspace package manifests resolve each other through workspace dependencies', async () => {
+  it('workspace package manifests resolve each other through workspace dependencies', async () => {
     const routerReact = JSON.parse(
       await readFile(join(rootDir, 'packages/router-react/package.json'), 'utf8'),
     ) as { dependencies: Record<string, string> };
@@ -39,7 +39,7 @@ describe('workspace build and resolution', () => {
     expect(reactDashboard.dependencies['@cookbook/router-react']).toBe('workspace:*');
   });
 
-  test('package export maps point to build outputs for every package', async () => {
+  it('package export maps point to build outputs for every package', async () => {
     for (const packageName of ['router', 'router-react', 'router-cli']) {
       const manifest = JSON.parse(
         await readFile(join(rootDir, 'packages', packageName, 'package.json'), 'utf8'),
@@ -63,7 +63,7 @@ describe('workspace build and resolution', () => {
     }
   });
 
-  test('root CI script covers typecheck, package tests, example tests, e2e tests, and builds', async () => {
+  it('root CI script covers typecheck, package tests, example tests, e2e tests, and builds', async () => {
     const manifest = JSON.parse(await readFile(join(rootDir, 'package.json'), 'utf8')) as {
       scripts: Record<string, string>;
     };
@@ -75,13 +75,13 @@ describe('workspace build and resolution', () => {
     expect(manifest.scripts['test:ci']).toContain('pnpm build:examples');
   });
 
-  test('builds all workspace packages in CI', async () => {
+  it('builds all workspace packages in CI', async () => {
     const result = await runPnpm(['build']);
 
     expect(result.stderr).not.toContain('error');
   });
 
-  test('builds every example application in CI', async () => {
+  it('builds every example application in CI', async () => {
     const result = await runPnpm(['build:examples']);
 
     expect(result.stderr).not.toContain('error');

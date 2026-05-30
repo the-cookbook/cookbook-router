@@ -1,5 +1,5 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   createMemoryRouter,
   createStaticRouter,
@@ -94,7 +94,7 @@ const routes = defineRoutes([
 const events: string[] = [];
 
 describe('repository-level router flows', () => {
-  test('navigates with typed params, search, hash, middleware, lifecycle, and redirects', async () => {
+  it('navigates with typed params, search, hash, middleware, lifecycle, and redirects', async () => {
     events.length = 0;
     const middleware: Middleware = ({ route, redirect }) => {
       if (route.route.meta?.requiresAuth) {
@@ -126,7 +126,7 @@ describe('repository-level router flows', () => {
     expect(router.state.location.href).toBe('/login');
   });
 
-  test('supports provider middleware redirects and rewrites', async () => {
+  it('supports provider middleware redirects and rewrites', async () => {
     const redirectRouter = createMemoryRouter({ routes, initialEntries: ['/admin'] });
     const redirectView = render(
       <RouterProvider
@@ -159,7 +159,7 @@ describe('repository-level router flows', () => {
     expect(rewriteRouter.state.location.href).toBe('/login?redirect=%2Fadmin');
   });
 
-  test('handles not found routes through provider fallback without mocking matching internals', async () => {
+  it('handles not found routes through provider fallback without mocking matching internals', async () => {
     const router = createMemoryRouter({ routes, initialEntries: ['/does-not-exist'] });
     await router.resolveCurrent();
 
@@ -169,7 +169,7 @@ describe('repository-level router flows', () => {
     expect(router.state.match).toBeNull();
   });
 
-  test('reports href and route validation errors from public APIs', () => {
+  it('reports href and route validation errors from public APIs', () => {
     const router = createMemoryRouter({ routes });
 
     expect(() => router.href('user', { params: { id: 'abc' } as never })).toThrow(
@@ -182,7 +182,7 @@ describe('repository-level router flows', () => {
     ).toThrow('index');
   });
 
-  test('serializes static SSR state and hydrates a memory router to the same route', async () => {
+  it('serializes static SSR state and hydrates a memory router to the same route', async () => {
     const staticRouter = createStaticRouter({ routes, url: '/users/9?tab=settings#profile' });
     await staticRouter.resolveCurrent();
     const hydrationData = serializeRouterState(staticRouter);

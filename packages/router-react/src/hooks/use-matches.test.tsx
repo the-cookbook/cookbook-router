@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { Outlet } from '../components/outlet';
 import { RouterProvider } from '../components/router-provider';
 import { useMatches } from './use-matches';
@@ -13,7 +13,7 @@ function Page() {
 }
 
 describe('useMatches', () => {
-  test('returns current route branch', async () => {
+  it('returns current route branch', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
         {

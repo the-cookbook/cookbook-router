@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
-import { describe, expect, expectTypeOf, test } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import { RouterProvider } from '../components/router-provider';
 import { useHashParams } from './use-hash-params';
 
@@ -9,7 +9,7 @@ function Page() {
 }
 
 describe('useHashParams', () => {
-  test('returns current hash without the leading marker', async () => {
+  it('returns current hash without the leading marker', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
         {
@@ -32,7 +32,7 @@ describe('useHashParams', () => {
     expectTypeOf(result.current).toEqualTypeOf<'profile' | 'settings' | 'bio' | 'top' | null>();
   });
 
-  test('returns null without a hash', async () => {
+  it('returns null without a hash', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'user', path: '/page', component: Page }] as const),
       initialEntries: ['/page'],

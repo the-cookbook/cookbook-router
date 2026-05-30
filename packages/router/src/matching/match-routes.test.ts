@@ -1,9 +1,9 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { matchRoutes } from './match-routes';
 import { normalizeRoutes } from './normalize-routes';
 
 describe('matchRoutes', () => {
-  test('matches the highest-ranked route and returns decoded params', () => {
+  it('matches the highest-ranked route and returns decoded params', () => {
     const routes = normalizeRoutes([
       { id: 'users.dynamic', path: '/users/{id:int}' },
       { id: 'users.new', path: '/users/new' },
@@ -18,7 +18,7 @@ describe('matchRoutes', () => {
     });
   });
 
-  test('returns the matched branch with inherited params', () => {
+  it('returns the matched branch with inherited params', () => {
     const routes = normalizeRoutes([
       {
         id: 'organizations',
@@ -47,7 +47,7 @@ describe('matchRoutes', () => {
     });
   });
 
-  test('matches nested children declared with leading slashes under their parent path', () => {
+  it('matches nested children declared with leading slashes under their parent path', () => {
     const routes = normalizeRoutes([
       {
         id: 'policies',
@@ -68,13 +68,13 @@ describe('matchRoutes', () => {
     expect(matchRoutes(routes, '/terms-of-service')).toBeNull();
   });
 
-  test('supports wildcard and trailing-slash matches', () => {
+  it('supports wildcard and trailing-slash matches', () => {
     const routes = normalizeRoutes([{ id: 'not-found', path: '/{*path}' }]);
 
     expect(matchRoutes(routes, '/missing/page/')?.params).toEqual({ path: 'missing/page/' });
   });
 
-  test('returns null for non-matches and pathkit constraint failures', () => {
+  it('returns null for non-matches and pathkit constraint failures', () => {
     const routes = normalizeRoutes([{ id: 'users.show', path: '/users/{id:int}' }]);
 
     expect(matchRoutes(routes, '/teams/1')).toBeNull();

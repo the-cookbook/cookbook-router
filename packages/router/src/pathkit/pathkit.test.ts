@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { resetConstraints } from '@cookbook/pathkit';
 import {
   compilePathPattern,
@@ -18,14 +18,14 @@ afterEach(() => {
 });
 
 describe('pathkit integration adapter', () => {
-  test('delegates validation to @cookbook/pathkit', () => {
+  it('delegates validation to @cookbook/pathkit', () => {
     expect(() => validatePathPattern('/users/{id:int}')).not.toThrow();
     expect(() => validatePathPattern('/users/{id:number}')).toThrow(
       'Unknown constraint type: "number"',
     );
   });
 
-  test('extracts path params from @cookbook/pathkit tokens', () => {
+  it('extracts path params from @cookbook/pathkit tokens', () => {
     expect(
       getPathParams(`/organizations/{organizationId:regex(${uuidPattern})}/users/{userId:int}`),
     ).toEqual([
@@ -42,7 +42,7 @@ describe('pathkit integration adapter', () => {
     ]);
   });
 
-  test('matches static, string, int, regex-constrained, and wildcard params through @cookbook/pathkit', () => {
+  it('matches static, string, int, regex-constrained, and wildcard params through @cookbook/pathkit', () => {
     expect(matchPathPattern('/users/{id:int}', '/users/42')).toEqual({ id: '42' });
     expect(matchPathPattern('/files/{name}', '/files/readme.md')).toEqual({ name: 'readme.md' });
     expect(matchPathPattern('/posts/{slug:regex([a-z0-9-]+)}', '/posts/hello-world')).toEqual({
@@ -61,13 +61,13 @@ describe('pathkit integration adapter', () => {
     });
   });
 
-  test('treats @cookbook/pathkit constraint failures as non-matches', () => {
+  it('treats @cookbook/pathkit constraint failures as non-matches', () => {
     expect(matchPathPattern('/users/{id:int}', '/users/abc')).toBeNull();
     expect(matchPathPattern('/posts/{slug:regex([a-z0-9-]+)}', '/posts/no spaces')).toBeNull();
     expect(matchPathPattern('/users/{id:int}', '/teams/42')).toBeNull();
   });
 
-  test('compiles href pathnames through @cookbook/pathkit', () => {
+  it('compiles href pathnames through @cookbook/pathkit', () => {
     expect(compilePathPattern('/users/{id:int}', { id: 42 })).toBe('/users/42');
     expect(compilePathPattern('/assets/{*path}', { path: ['images', 'logo.svg'] })).toBe(
       '/assets/images/logo.svg',
@@ -78,7 +78,7 @@ describe('pathkit integration adapter', () => {
     ).toThrow('must be one of');
   });
 
-  test('uses prune all as the default path cleanup behavior', () => {
+  it('uses prune all as the default path cleanup behavior', () => {
     expect(compilePathPattern('/hello//world/')).toBe('/hello/world');
     expect(prunePathname('/gallery/')).toBe('/gallery');
     expect(prunePathname('/gallery//photos/', { prune: 'duplication' })).toBe('/gallery/photos/');
@@ -86,7 +86,7 @@ describe('pathkit integration adapter', () => {
     expect(prunePathname('/gallery//photos/', { prune: false })).toBe('/gallery//photos/');
   });
 
-  test('supports pathkit-only route features that the router does not implement itself', () => {
+  it('supports pathkit-only route features that the router does not implement itself', () => {
     expect(matchPathPattern('/page/{section:list(home|dashboard)}', '/page/dashboard')).toEqual({
       section: 'dashboard',
     });
@@ -94,7 +94,7 @@ describe('pathkit integration adapter', () => {
     expect(matchPathPattern('/search/{term?}', '/search')).toEqual({});
   });
 
-  test('rejects malformed pathkit patterns with pathkit errors', () => {
+  it('rejects malformed pathkit patterns with pathkit errors', () => {
     expect(() => validatePathPattern('/users/{id:int')).toThrow('Expected closing brace');
     expect(() => validatePathPattern('/users/{:int}')).toThrow('Missing parameter name');
     expect(() => validatePathPattern('/users/{id:number}')).toThrow(
@@ -105,14 +105,14 @@ describe('pathkit integration adapter', () => {
     );
   });
 
-  test('accepts the root route pattern', () => {
+  it('accepts the root route pattern', () => {
     expect(matchPathPattern('/', '/')).toEqual({});
     expect(getPathParams('/')).toEqual([]);
   });
 });
 
 describe('custom path constraints', () => {
-  test('registers constraints created with createConstraint', () => {
+  it('registers constraints created with createConstraint', () => {
     const slug = createConstraint({
       parse: (paramName, value) => {
         if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
@@ -142,7 +142,7 @@ describe('custom path constraints', () => {
     );
   });
 
-  test('clears pathkit caches when replacing a registered constraint', () => {
+  it('clears pathkit caches when replacing a registered constraint', () => {
     const first = createConstraint({
       parse: (_paramName, value) => {
         if (value !== 'first') {
@@ -170,7 +170,7 @@ describe('custom path constraints', () => {
     expect(matchPathPattern('/demo/{value:mode}', '/demo/second')).toEqual({ value: 'second' });
   });
 
-  test('rejects empty custom constraint names', () => {
+  it('rejects empty custom constraint names', () => {
     const constraint = createConstraint({
       parse: () => {},
       verify: () => {},

@@ -1,6 +1,6 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { lazy, useEffect } from 'react';
 import { Link } from './link';
 import { Outlet } from './outlet';
@@ -48,7 +48,7 @@ function createRouter() {
 }
 
 describe('RouterProvider', () => {
-  test('runs provider middleware for the current route and writes redirects to history', async () => {
+  it('runs provider middleware for the current route and writes redirects to history', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
         { id: 'private', path: '/private', component: () => <h1>private</h1> },
@@ -75,7 +75,7 @@ describe('RouterProvider', () => {
     expect(calls).toEqual(['private:/private', 'login:/login?redirect=%2Fprivate']);
   });
 
-  test('runs provider middleware rewrites without requiring a browser URL redirect', async () => {
+  it('runs provider middleware rewrites without requiring a browser URL redirect', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
         { id: 'private', path: '/private', component: () => <h1>private</h1> },
@@ -98,7 +98,7 @@ describe('RouterProvider', () => {
     expect(router.state.location.href).toBe('/login?redirect=%2Fprivate');
   });
 
-  test('renders the active layout, outlet, and page route', async () => {
+  it('renders the active layout, outlet, and page route', async () => {
     const router = createRouter();
     await router.resolveCurrent();
 
@@ -108,7 +108,7 @@ describe('RouterProvider', () => {
     expect(getByText('home')).toBeTruthy();
   });
 
-  test('rerenders when router state changes through navigation', async () => {
+  it('rerenders when router state changes through navigation', async () => {
     const router = createRouter();
     await router.resolveCurrent();
 
@@ -126,7 +126,7 @@ describe('RouterProvider', () => {
     await waitFor(() => expect(getByText('user:/users/42')).toBeTruthy());
   });
 
-  test('resolves redirect-only routes when mounted', async () => {
+  it('resolves redirect-only routes when mounted', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
         {
@@ -153,7 +153,7 @@ describe('RouterProvider', () => {
     expect(router.state.location.href).toBe('/dashboard');
   });
 
-  test('does not freeze when replace navigation is requested during render', async () => {
+  it('does not freeze when replace navigation is requested during render', async () => {
     function MissingUserPage() {
       const navigate = useNavigate();
       void navigate.replace('not-found');
@@ -179,7 +179,7 @@ describe('RouterProvider', () => {
     expect(router.state.location.href).toBe('/not-found');
   });
 
-  test('renders fallback when no route matches', async () => {
+  it('renders fallback when no route matches', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'home', path: '/', component: HomePage }] as const),
       initialEntries: ['/missing'],
@@ -190,7 +190,7 @@ describe('RouterProvider', () => {
 
     expect(getByText('not found')).toBeTruthy();
   });
-  test('renders route loading fallback when route component suspends', async () => {
+  it('renders route loading fallback when route component suspends', async () => {
     let resolvePage: ((value: { default: typeof HomePage }) => void) | undefined;
     const LazyPage = lazy(
       () =>
@@ -226,7 +226,7 @@ describe('RouterProvider', () => {
     await waitFor(() => expect(getByText('home')).toBeTruthy());
   });
 
-  test('renders route loading fallback inside the parent outlet when route component suspends', async () => {
+  it('renders route loading fallback inside the parent outlet when route component suspends', async () => {
     const LazyPage = lazy(() => new Promise<{ default: typeof HomePage }>(() => undefined));
 
     function ShellLayout() {
@@ -274,7 +274,7 @@ describe('RouterProvider', () => {
     expect(getByTestId('article-outlet').textContent).toContain('loading inside outlet');
   });
 
-  test('renders same-route layout loading fallback inside that route layout outlet', async () => {
+  it('renders same-route layout loading fallback inside that route layout outlet', async () => {
     const LazyPage = lazy(() => new Promise<{ default: typeof HomePage }>(() => undefined));
 
     function DashboardLayout() {
@@ -310,7 +310,7 @@ describe('RouterProvider', () => {
     expect(getByTestId('dashboard-layout-outlet').textContent).toContain('dashboard route loading');
   });
 
-  test('keeps same-route layout mounted while its component loads', async () => {
+  it('keeps same-route layout mounted while its component loads', async () => {
     let resolvePage: ((value: { default: typeof HomePage }) => void) | undefined;
     let mountCount = 0;
     const LazyPage = lazy(
@@ -365,7 +365,7 @@ describe('RouterProvider', () => {
     expect(mountCount).toBe(1);
   });
 
-  test('keeps the same layout component mounted across sibling route navigation', async () => {
+  it('keeps the same layout component mounted across sibling route navigation', async () => {
     let layoutMounts = 0;
 
     function PersistentLayout() {
@@ -425,7 +425,7 @@ describe('RouterProvider', () => {
     expect(layoutMounts).toBe(1);
   });
 
-  test('does not share route-level loading fallback with child routes', async () => {
+  it('does not share route-level loading fallback with child routes', async () => {
     const LazyPage = lazy(() => new Promise<{ default: typeof HomePage }>(() => undefined));
 
     function ParentLoading() {
@@ -457,7 +457,7 @@ describe('RouterProvider', () => {
     expect(queryByText('parent route loading')).toBeNull();
   });
 
-  test('keeps a shared layout mounted while navigating to a lazy child route', async () => {
+  it('keeps a shared layout mounted while navigating to a lazy child route', async () => {
     let resolveReports: ((value: { default: typeof AboutPage }) => void) | undefined;
     let mountCount = 0;
     const LazyReportsPage = lazy(
@@ -525,7 +525,7 @@ describe('RouterProvider', () => {
     expect(mountCount).toBe(1);
   });
 
-  test('uses layout loading fallback for child routes without their own loading fallback', async () => {
+  it('uses layout loading fallback for child routes without their own loading fallback', async () => {
     const LazyPage = lazy(() => new Promise<{ default: typeof HomePage }>(() => undefined));
 
     function ShellLayout() {
@@ -561,7 +561,7 @@ describe('RouterProvider', () => {
     expect(getByTestId('dashboard-outlet').textContent).toContain('dashboard section loading');
   });
 
-  test('prefers route loading fallback over inherited layout loading fallback', async () => {
+  it('prefers route loading fallback over inherited layout loading fallback', async () => {
     const LazyPage = lazy(() => new Promise<{ default: typeof HomePage }>(() => undefined));
 
     function ShellLayout() {
@@ -601,7 +601,7 @@ describe('RouterProvider', () => {
     expect(queryByText('layout loading')).toBeNull();
   });
 
-  test('renders global loading fallback when route component suspends without route loading', async () => {
+  it('renders global loading fallback when route component suspends without route loading', async () => {
     const LazyPage = lazy(() => new Promise<{ default: typeof HomePage }>(() => undefined));
 
     const router = createMemoryRouter({
@@ -617,7 +617,7 @@ describe('RouterProvider', () => {
     expect(await findByText('global loading')).toBeTruthy();
   });
 
-  test('renders route error when route component throws', async () => {
+  it('renders route error when route component throws', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     function BrokenPage(): never {
@@ -646,7 +646,7 @@ describe('RouterProvider', () => {
     consoleError.mockRestore();
   });
 
-  test('renders nearest layout error for child route errors', async () => {
+  it('renders nearest layout error for child route errors', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     function BrokenPage(): never {
@@ -675,7 +675,7 @@ describe('RouterProvider', () => {
     consoleError.mockRestore();
   });
 
-  test('renders same-route layout error inside that route layout outlet', async () => {
+  it('renders same-route layout error inside that route layout outlet', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     function BrokenPage(): never {
@@ -716,7 +716,7 @@ describe('RouterProvider', () => {
     consoleError.mockRestore();
   });
 
-  test('does not share route-level error with child routes', async () => {
+  it('does not share route-level error with child routes', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     function BrokenPage(): never {
@@ -753,7 +753,7 @@ describe('RouterProvider', () => {
     consoleError.mockRestore();
   });
 
-  test('renders global error when no route error exists', async () => {
+  it('renders global error when no route error exists', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     function BrokenPage(): never {
@@ -777,7 +777,7 @@ describe('RouterProvider', () => {
     consoleError.mockRestore();
   });
 
-  test('allows route error to reset after the thrown error is fixed', async () => {
+  it('allows route error to reset after the thrown error is fixed', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     let shouldThrow = true;
 
@@ -820,7 +820,7 @@ describe('RouterProvider', () => {
 });
 
 describe('RouterProvider scroll restoration', () => {
-  test('scrolls to the top on push navigation when enabled', async () => {
+  it('scrolls to the top on push navigation when enabled', async () => {
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     const router = createRouter();
     await router.resolveCurrent();
@@ -842,7 +842,7 @@ describe('RouterProvider scroll restoration', () => {
     scrollTo.mockRestore();
   });
 
-  test('does not reset scroll when navigation opts out', async () => {
+  it('does not reset scroll when navigation opts out', async () => {
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     const router = createRouter();
     await router.resolveCurrent();
@@ -866,7 +866,7 @@ describe('RouterProvider scroll restoration', () => {
     scrollTo.mockRestore();
   });
 
-  test('uses configured scroll behavior when resetting scroll position', async () => {
+  it('uses configured scroll behavior when resetting scroll position', async () => {
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
 
     const router = createMemoryRouter({
@@ -892,7 +892,7 @@ describe('RouterProvider scroll restoration', () => {
     scrollTo.mockRestore();
   });
 
-  test('uses auto scroll behavior by default', async () => {
+  it('uses auto scroll behavior by default', async () => {
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
 
     const router = createMemoryRouter({
@@ -918,7 +918,7 @@ describe('RouterProvider scroll restoration', () => {
     scrollTo.mockRestore();
   });
 
-  test('uses configured scroll behavior when restoring saved scroll position', async () => {
+  it('uses configured scroll behavior when restoring saved scroll position', async () => {
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
 
     Object.defineProperty(window, 'scrollX', {

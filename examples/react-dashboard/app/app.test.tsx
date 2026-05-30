@@ -1,5 +1,5 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App, createTestRouter } from './app';
 import { auth } from './state/auth';
 
@@ -12,7 +12,7 @@ describe('react-dashboard example', () => {
     vi.spyOn(auth, 'isAuthenticated').mockReturnValue(true);
   });
 
-  test('redirects the entry route to the overview dashboard', async () => {
+  it('redirects the entry route to the overview dashboard', async () => {
     const router = createTestRouter(['/']);
     await router.resolveCurrent();
 
@@ -27,7 +27,7 @@ describe('react-dashboard example', () => {
     ).toBeTruthy();
   });
 
-  test('keeps overview navigation active when search params are present', async () => {
+  it('keeps overview navigation active when search params are present', async () => {
     const router = createTestRouter(['/overview?visitors=30d']);
     await router.resolveCurrent();
 
@@ -44,7 +44,7 @@ describe('react-dashboard example', () => {
     expect(router.state.location.href).toBe('/overview?visitors=30d');
   });
 
-  test('opens the create route as an automatic configured modal intercept from overview', async () => {
+  it('opens the create route as an automatic configured modal intercept from overview', async () => {
     const router = createTestRouter(['/overview']);
     await router.resolveCurrent();
 
@@ -74,7 +74,7 @@ describe('react-dashboard example', () => {
     expect(router.state.location.href).toBe('/overview');
   });
 
-  test('renders the canonical create page on direct visit without opening the modal intercept', async () => {
+  it('renders the canonical create page on direct visit without opening the modal intercept', async () => {
     const router = createTestRouter(['/create']);
     await router.resolveCurrent();
 
@@ -91,7 +91,7 @@ describe('react-dashboard example', () => {
     ).toBeTruthy();
   });
 
-  test('renders user details through the custom slug constraint', async () => {
+  it('renders user details through the custom slug constraint', async () => {
     const router = createTestRouter(['/users/eddie-lake']);
     await router.resolveCurrent();
 
@@ -111,7 +111,7 @@ describe('react-dashboard example', () => {
     expect(view.getByText('Workspace Owner')).toBeTruthy();
   });
 
-  test('renders the broken page through the layout error fallback', async () => {
+  it('renders the broken page through the layout error fallback', async () => {
     const router = createTestRouter(['/broken-page']);
     await router.resolveCurrent();
 
@@ -128,7 +128,7 @@ describe('react-dashboard example', () => {
     expect(view.getByText('Broken Page')).toBeTruthy();
   });
 
-  test('redirects missing user detail records to not found without freezing', async () => {
+  it('redirects missing user detail records to not found without freezing', async () => {
     const router = createTestRouter(['/users/missing-user']);
     await router.resolveCurrent();
 
@@ -148,7 +148,7 @@ describe('react-dashboard example', () => {
     ).toBeTruthy();
   });
 
-  test('renders nested policy children declared with leading slash paths', async () => {
+  it('renders nested policy children declared with leading slash paths', async () => {
     const router = createTestRouter(['/policies/terms-of-service']);
     await router.resolveCurrent();
 
@@ -164,7 +164,7 @@ describe('react-dashboard example', () => {
     ).toBeTruthy();
   });
 
-  test('renders reports from the sidebar navigation', async () => {
+  it('renders reports from the sidebar navigation', async () => {
     const router = createTestRouter(['/overview']);
     await router.resolveCurrent();
 
@@ -187,7 +187,7 @@ describe('react-dashboard example', () => {
     ).toHaveLength(2);
   });
 
-  test('redirects to login page on non public access pages', async () => {
+  it('redirects to login page on non public access pages', async () => {
     vi.spyOn(auth, 'isAuthenticated').mockReturnValueOnce(false);
 
     const router = createTestRouter(['/overview']);

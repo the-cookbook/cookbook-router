@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 const packageNames = ['router', 'router-react', 'router-cli'] as const;
 
@@ -9,7 +9,7 @@ async function readJson(path: string) {
 }
 
 describe('production release readiness', () => {
-  test('published packages expose ESM, CJS, declarations, metadata, and tree-shaking hints', async () => {
+  it('published packages expose ESM, CJS, declarations, metadata, and tree-shaking hints', async () => {
     for (const packageName of packageNames) {
       const packageJson = await readJson(join('packages', packageName, 'package.json'));
       const exports = packageJson.exports as Record<string, Record<string, string> | string>;
@@ -40,7 +40,7 @@ describe('production release readiness', () => {
     }
   });
 
-  test('root scripts include CI-compatible validation phases', async () => {
+  it('root scripts include CI-compatible validation phases', async () => {
     const packageJson = await readJson('package.json');
     const scripts = packageJson.scripts as Record<string, string>;
 
@@ -54,7 +54,7 @@ describe('production release readiness', () => {
     expect(scripts['validate:release']).toContain('test:coverage');
   });
 
-  test('release governance files are present', async () => {
+  it('release governance files are present', async () => {
     await expect(readFile('LICENSE', 'utf8')).resolves.toContain('MIT License');
     await expect(readFile('SECURITY.md', 'utf8')).resolves.toContain('Reporting a vulnerability');
     await expect(readFile('.github/workflows/ci.yml', 'utf8')).resolves.toContain(

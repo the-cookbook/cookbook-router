@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { matchRoutes } from './match-routes';
 import { normalizeRoutes } from './normalize-routes';
 
@@ -14,7 +14,7 @@ const routes = normalizeRoutes([
 ]);
 
 describe('matchRoutes performance-sensitive behavior', () => {
-  test('reuses cached ranking and parent indexes for repeated matching', () => {
+  it('reuses cached ranking and parent indexes for repeated matching', () => {
     const results = Array.from(
       { length: 500 },
       () => matchRoutes(routes, '/items-75/123')?.route.id,

@@ -1,8 +1,8 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { generateRegister } from './generate-register';
 
 describe('generateRegister', () => {
-  test('generates global router contract module augmentation', () => {
+  it('generates global router contract module augmentation', () => {
     const output = generateRegister();
 
     expect(output).toContain("import type { RouterContracts } from './contracts';");

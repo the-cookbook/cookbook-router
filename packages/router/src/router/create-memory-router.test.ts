@@ -1,4 +1,4 @@
-import { describe, expect, expectTypeOf, test } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import { defineRoutes } from '../routes/define-routes';
 import { createMemoryRouter } from './create-memory-router';
 
@@ -15,7 +15,7 @@ const routes = defineRoutes([
 ] as const);
 
 describe('create-memory-router', () => {
-  test('creates initial state from memory location', () => {
+  it('creates initial state from memory location', () => {
     const router = createMemoryRouter({
       routes,
       initialEntries: ['/users/42?tab=settings#profile'],
@@ -26,7 +26,7 @@ describe('create-memory-router', () => {
     expect(router.state.match?.params).toEqual({ id: '42' });
   });
 
-  test('preserves registered href option inference', () => {
+  it('preserves registered href option inference', () => {
     const router = createMemoryRouter({ routes });
 
     expectTypeOf(
@@ -34,7 +34,7 @@ describe('create-memory-router', () => {
     ).toEqualTypeOf<string>();
   });
 
-  test('generates hrefs with params, search, hash, wildcard, and basename', () => {
+  it('generates hrefs with params, search, hash, wildcard, and basename', () => {
     const router = createMemoryRouter({ routes, basename: '/app' });
 
     expect(
@@ -52,7 +52,7 @@ describe('create-memory-router', () => {
     );
   });
 
-  test('matches routes by stripping basename', () => {
+  it('matches routes by stripping basename', () => {
     const router = createMemoryRouter({ routes, basename: '/app' });
 
     expect(router.match('/app/users/5')?.params).toEqual({ id: '5' });
@@ -66,7 +66,7 @@ describe('create-memory-router', () => {
     expect(router.match('/other/users/5')).toBeNull();
   });
 
-  test('navigates with push, replace, back, forward, and go', async () => {
+  it('navigates with push, replace, back, forward, and go', async () => {
     const router = createMemoryRouter({ routes, initialEntries: ['/'] });
     const states: string[] = [];
     const unsubscribe = router.subscribe((state) =>
@@ -92,7 +92,7 @@ describe('create-memory-router', () => {
     expect(states).toContain('idle:/users/2');
   });
 
-  test('uses prune all by default for hrefs and canonical startup URLs', async () => {
+  it('uses prune all by default for hrefs and canonical startup URLs', async () => {
     const trailingRoutes = defineRoutes([{ id: 'gallery', path: '/gallery/' }] as const);
     const router = createMemoryRouter({
       routes: trailingRoutes,
@@ -106,7 +106,7 @@ describe('create-memory-router', () => {
     expect(router.state.match?.id).toBe('gallery');
   });
 
-  test('can preserve trailing delimiters when path pruning is disabled', async () => {
+  it('can preserve trailing delimiters when path pruning is disabled', async () => {
     const trailingRoutes = defineRoutes([{ id: 'gallery', path: '/gallery/' }] as const);
     const router = createMemoryRouter({
       routes: trailingRoutes,
@@ -120,7 +120,7 @@ describe('create-memory-router', () => {
     expect(router.state.location.href).toBe('/gallery/');
   });
 
-  test('throws helpful href errors for unknown, missing, empty, and invalid params', () => {
+  it('throws helpful href errors for unknown, missing, empty, and invalid params', () => {
     const router = createMemoryRouter({ routes });
 
     expect(() => router.href('missing')).toThrow('not registered');
@@ -131,7 +131,7 @@ describe('create-memory-router', () => {
     );
   });
 
-  test('blocks cancelled middleware without changing the committed URL', async () => {
+  it('blocks cancelled middleware without changing the committed URL', async () => {
     const router = createMemoryRouter({
       routes,
       middleware: [({ cancel }) => cancel()],
@@ -143,7 +143,7 @@ describe('create-memory-router', () => {
     expect(router.state.location.href).toBe('/');
   });
 
-  test('redirects route entries before rendering the source route', async () => {
+  it('redirects route entries before rendering the source route', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
         {
@@ -167,7 +167,7 @@ describe('create-memory-router', () => {
     expect(router.state.navigation).toBe('idle');
   });
 
-  test('uses configured maxRedirectDepth for route redirect loops', async () => {
+  it('uses configured maxRedirectDepth for route redirect loops', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
         { id: 'one', path: '/', redirect: { route: 'two' } },
@@ -184,7 +184,7 @@ describe('create-memory-router', () => {
     );
   });
 
-  test('redirects middleware to another URL', async () => {
+  it('redirects middleware to another URL', async () => {
     const router = createMemoryRouter({
       routes,
       middleware: [
@@ -198,7 +198,7 @@ describe('create-memory-router', () => {
     expect(router.state.navigation).toBe('idle');
   });
 
-  test('redirects middleware during current resolution and writes browser history', async () => {
+  it('redirects middleware during current resolution and writes browser history', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
         { id: 'private', path: '/private' },
@@ -217,7 +217,7 @@ describe('create-memory-router', () => {
     expect(router.state.match?.id).toBe('login');
   });
 
-  test('rewrites middleware during current resolution without writing browser history', async () => {
+  it('rewrites middleware during current resolution without writing browser history', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
         { id: 'private', path: '/private' },
@@ -237,7 +237,7 @@ describe('create-memory-router', () => {
     expect(router.resolveCurrent).toBeTypeOf('function');
   });
 
-  test('stops redirect loops as navigation errors', async () => {
+  it('stops redirect loops as navigation errors', async () => {
     const router = createMemoryRouter({
       routes,
       middleware: [({ redirect }) => redirect('/users/1')],
@@ -251,7 +251,7 @@ describe('create-memory-router', () => {
     );
   });
 
-  test('runs middleware and lifecycle for the leaf matched route', async () => {
+  it('runs middleware and lifecycle for the leaf matched route', async () => {
     const events: string[] = [];
     const router = createMemoryRouter({
       routes: defineRoutes([
@@ -286,7 +286,7 @@ describe('create-memory-router', () => {
     expect(router.state.match?.id).toBe('login');
   });
 
-  test('stores response and thrown errors as navigation errors', async () => {
+  it('stores response and thrown errors as navigation errors', async () => {
     const responseRouter = createMemoryRouter({
       routes,
       middleware: [() => new Response('unauthorized')],
@@ -308,7 +308,7 @@ describe('create-memory-router', () => {
     expect((errorRouter.state.error as Error).message).toBe('explode');
   });
 
-  test('serializes and hydrates router state', async () => {
+  it('serializes and hydrates router state', async () => {
     const router = createMemoryRouter({ routes });
     await router.navigate.to('users.show', { params: { id: '9' }, search: { tab: 'profile' } });
 
@@ -319,7 +319,7 @@ describe('create-memory-router', () => {
     expect(hydrated.state.match?.params).toEqual({ id: '9' });
   });
 
-  test('uses hydration location before explicit initial entries', async () => {
+  it('uses hydration location before explicit initial entries', async () => {
     const staticLike = createMemoryRouter({
       routes,
       initialEntries: ['/users/9?tab=settings#profile'],

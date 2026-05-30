@@ -1,9 +1,9 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createMemoryFileSystem, sampleRoutes } from '../test-helpers';
 import { loadRouteFiles, validateRouteFiles } from './validate-route-files';
 
 describe('validateRouteFiles', () => {
-  test('loads and validates JSON route files', async () => {
+  it('loads and validates JSON route files', async () => {
     const fs = createMemoryFileSystem({ 'routes.json': JSON.stringify({ routes: sampleRoutes }) });
 
     await expect(validateRouteFiles({ routeFiles: ['routes.json'], fs })).resolves.toEqual([
@@ -11,7 +11,7 @@ describe('validateRouteFiles', () => {
     ]);
   });
 
-  test('loads multiple files in order', async () => {
+  it('loads multiple files in order', async () => {
     const fs = createMemoryFileSystem({
       'a.json': JSON.stringify({ routes: [{ id: 'a', path: '/a' }] }),
       'b.json': JSON.stringify({ routes: [{ id: 'b', path: '/b' }] }),
@@ -22,7 +22,7 @@ describe('validateRouteFiles', () => {
     expect(sources.map((source) => source.path)).toEqual(['a.json', 'b.json']);
   });
 
-  test('rejects route file paths with null bytes before reading', async () => {
+  it('rejects route file paths with null bytes before reading', async () => {
     const fs = createMemoryFileSystem({ 'routes.json': JSON.stringify({ routes: sampleRoutes }) });
 
     await expect(validateRouteFiles({ routeFiles: ['routes.json\0'], fs })).rejects.toThrow(
@@ -30,7 +30,7 @@ describe('validateRouteFiles', () => {
     );
   });
 
-  test('fails invalid JSON', async () => {
+  it('fails invalid JSON', async () => {
     const fs = createMemoryFileSystem({ 'routes.json': '{' });
 
     await expect(validateRouteFiles({ routeFiles: ['routes.json'], fs })).rejects.toThrow(
@@ -38,7 +38,7 @@ describe('validateRouteFiles', () => {
     );
   });
 
-  test('fails when routes array is missing', async () => {
+  it('fails when routes array is missing', async () => {
     const fs = createMemoryFileSystem({ 'routes.json': JSON.stringify({}) });
 
     await expect(validateRouteFiles({ routeFiles: ['routes.json'], fs })).rejects.toThrow(
@@ -46,7 +46,7 @@ describe('validateRouteFiles', () => {
     );
   });
 
-  test('fails invalid route definitions', async () => {
+  it('fails invalid route definitions', async () => {
     const fs = createMemoryFileSystem({
       'routes.json': JSON.stringify({ routes: [{ id: 'bad', index: true, path: '/bad' }] }),
     });
@@ -54,7 +54,7 @@ describe('validateRouteFiles', () => {
     await expect(validateRouteFiles({ routeFiles: ['routes.json'], fs })).rejects.toThrow('index');
   });
 
-  test('loads routes from JavaScript modules for real CLI usage', async () => {
+  it('loads routes from JavaScript modules for real CLI usage', async () => {
     const { mkdtemp, rm, writeFile } = await import('node:fs/promises');
     const { join } = await import('node:path');
     const { tmpdir } = await import('node:os');
@@ -72,7 +72,7 @@ describe('validateRouteFiles', () => {
     }
   });
 
-  test('loads routes from TypeScript and TSX modules for real CLI usage', async () => {
+  it('loads routes from TypeScript and TSX modules for real CLI usage', async () => {
     const { mkdtemp, rm, writeFile } = await import('node:fs/promises');
     const { join } = await import('node:path');
     const { tmpdir } = await import('node:os');
@@ -103,7 +103,7 @@ export const routes = defineRoutes([
     }
   });
 
-  test('loads static route modules with slot component shorthand and declaration-only slots', async () => {
+  it('loads static route modules with slot component shorthand and declaration-only slots', async () => {
     const fs = createMemoryFileSystem({
       'src/routes.tsx': `import { defineRoutes } from '@cookbook/router';
 import { LayoutPage, HeaderPage, ModalPage, HomePage } from './pages';
@@ -143,7 +143,7 @@ export const routes = defineRoutes([
     });
   });
 
-  test('loads static route modules with slot object component definitions', async () => {
+  it('loads static route modules with slot object component definitions', async () => {
     const fs = createMemoryFileSystem({
       'src/routes.tsx': `import { defineRoutes } from '@cookbook/router';
 import { LayoutPage, HeaderPage, HomePage } from './pages';
@@ -179,7 +179,7 @@ export const routes = defineRoutes([
     });
   });
 
-  test('loads defineRoutes call after imports and typed declarations', async () => {
+  it('loads defineRoutes call after imports and typed declarations', async () => {
     const fs = createMemoryFileSystem({
       'src/routes.tsx': `import { defineRoutes } from '@cookbook/router';
 import { BlockedPage, HomePage, RootLayout, UserPage } from './pages';
@@ -245,7 +245,7 @@ export const routes = defineRoutes([
     expect(sources[0]?.routes[0]?.children?.[1]?.id).toBe('users.show');
   });
 
-  test('handles brackets and escaped quotes inside route strings while extracting modules', async () => {
+  it('handles brackets and escaped quotes inside route strings while extracting modules', async () => {
     const fs = createMemoryFileSystem({
       'routes.tsx': `import { defineRoutes } from '@cookbook/router';
 import { ArticlePage, RootLayout } from './pages';
@@ -285,7 +285,7 @@ export const routes = defineRoutes([
     });
   });
 
-  test('loads defineRoutes options with referenced custom path constraints', async () => {
+  it('loads defineRoutes options with referenced custom path constraints', async () => {
     const fs = createMemoryFileSystem({
       'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
 
@@ -313,7 +313,7 @@ export const routes = defineRoutes([
     expect(sources[0]?.routeOptions?.pathConstraints).toHaveProperty('slug');
   });
 
-  test('loads defineRoutes options with inline custom path constraints', async () => {
+  it('loads defineRoutes options with inline custom path constraints', async () => {
     const fs = createMemoryFileSystem({
       'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
 
@@ -336,7 +336,7 @@ export const routes = defineRoutes([
     await expect(loadRouteFiles({ routeFiles: ['routes.tsx'], fs })).resolves.toHaveLength(1);
   });
 
-  test('keeps unknown custom constraint validation errors when options do not declare it', async () => {
+  it('keeps unknown custom constraint validation errors when options do not declare it', async () => {
     const fs = createMemoryFileSystem({
       'routes.tsx': `import { defineRoutes } from '@cookbook/router';
 
@@ -351,7 +351,7 @@ export const routes = defineRoutes([
     );
   });
 
-  test('extracts options while skipping comments and escaped quoted text', async () => {
+  it('extracts options while skipping comments and escaped quoted text', async () => {
     const fs = createMemoryFileSystem({
       'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
 
@@ -385,7 +385,7 @@ export const routes = defineRoutes([
     expect(sources[0]?.routes[0]?.meta).toEqual({ title: "It's quoted" });
   });
 
-  test('reports unsupported non-object defineRoutes options clearly', async () => {
+  it('reports unsupported non-object defineRoutes options clearly', async () => {
     const fs = createMemoryFileSystem({
       'routes.tsx': `import { defineRoutes } from '@cookbook/router';
 
@@ -400,7 +400,7 @@ export const routes = defineRoutes([
     );
   });
 
-  test('reports invalid static pathOptions clearly', async () => {
+  it('reports invalid static pathOptions clearly', async () => {
     const fs = createMemoryFileSystem({
       'routes.tsx': `import { defineRoutes } from '@cookbook/router';
 
@@ -417,7 +417,7 @@ export const routes = defineRoutes([
     );
   });
 
-  test('reports unsupported dynamic pathConstraints declarations clearly', async () => {
+  it('reports unsupported dynamic pathConstraints declarations clearly', async () => {
     const fs = createMemoryFileSystem({
       'routes.tsx': `import { defineRoutes } from '@cookbook/router';
 

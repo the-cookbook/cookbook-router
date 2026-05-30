@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { normalizeRoutes } from './normalize-routes';
 import { createMatchedBranch, getRouteMatchIndex } from './route-match-index';
 
@@ -16,7 +16,7 @@ const routes = normalizeRoutes([
 ]);
 
 describe('route match index', () => {
-  test('caches the route index for repeated matching against the same normalized tree', () => {
+  it('caches the route index for repeated matching against the same normalized tree', () => {
     const first = getRouteMatchIndex(routes);
     const second = getRouteMatchIndex(routes);
 
@@ -28,7 +28,7 @@ describe('route match index', () => {
     expect(first.routesById.get('organizations.users.show')?.parentId).toBe('organizations');
   });
 
-  test('creates matched branches without rebuilding parent lookup maps', () => {
+  it('creates matched branches without rebuilding parent lookup maps', () => {
     const index = getRouteMatchIndex(routes);
     const route = index.routesById.get('organizations.users.show');
 

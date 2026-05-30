@@ -2,7 +2,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react';
 import { renderToString } from 'react-dom/server';
 import { hydrateRoot } from 'react-dom/client';
 import { act } from 'react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   createMemoryRouter,
   createStaticRouter,
@@ -83,7 +83,7 @@ function installDashboardBrowserMocks() {
 }
 
 describe('example application integration', () => {
-  test('react-basic exercises generated contracts, typed params, search, hash, middleware, and lifecycle', async () => {
+  it('react-basic exercises generated contracts, typed params, search, hash, middleware, and lifecycle', async () => {
     lifecycleEvents.length = 0;
     const middlewareEvents: string[] = [];
     const router = createMemoryRouter({
@@ -110,7 +110,7 @@ describe('example application integration', () => {
     expect(lifecycleEvents).toContain('users.afterEnter');
   });
 
-  test('react-slots renders fallback, matched slot routes, overrides, and disabled slots', async () => {
+  it('react-slots renders fallback, matched slot routes, overrides, and disabled slots', async () => {
     const router = createMemoryRouter({ routes: slotRoutes, initialEntries: ['/dashboard'] });
     await router.resolveCurrent();
     const view = render(<SlotsApp router={router} />);
@@ -129,7 +129,7 @@ describe('example application integration', () => {
     expect(view.queryByText(/sidebar for John Doe/)).toBeNull();
   });
 
-  test('react-intercepts supports configured, call-site, back, forward, and direct visit behavior', async () => {
+  it('react-intercepts supports configured, call-site, back, forward, and direct visit behavior', async () => {
     const router = createMemoryRouter({ routes: interceptRoutes, initialEntries: ['/gallery'] });
     await router.resolveCurrent();
     const view = render(<InterceptsApp router={router} />);
@@ -165,7 +165,7 @@ describe('example application integration', () => {
     expect(directView.queryByRole('dialog', { name: 'Photo modal' })).toBeNull();
   });
 
-  test('react-blog proves blog post modal interception and canonical full page direct visits', async () => {
+  it('react-blog proves blog post modal interception and canonical full page direct visits', async () => {
     const router = createMemoryRouter({ routes: blogRoutes, initialEntries: ['/blog'] });
     await router.resolveCurrent();
     const view = render(<BlogApp router={router} />);
@@ -196,7 +196,7 @@ describe('example application integration', () => {
     expect(directView.queryByRole('dialog', { name: 'Blog post modal' })).toBeNull();
   });
 
-  test('react-dashboard proves dashboard slots, configured create interception, and custom slug details', async () => {
+  it('react-dashboard proves dashboard slots, configured create interception, and custom slug details', async () => {
     installDashboardBrowserMocks();
 
     vi.spyOn(auth, 'isAuthenticated').mockReturnValue(true);
@@ -280,7 +280,7 @@ describe('example application integration', () => {
     ).toBeTruthy();
   });
 
-  test('react-ssr renders, serializes, and hydrates consistently', async () => {
+  it('react-ssr renders, serializes, and hydrates consistently', async () => {
     ssrEvents.length = 0;
     const html = await renderRequest('/ssr/users/11?tab=settings');
 

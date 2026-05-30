@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createMemoryHistory } from '../history/memory-history';
 import { normalizeRoutes } from '../matching/normalize-routes';
 import { matchRoutes } from '../matching/match-routes';
@@ -49,7 +49,7 @@ function createMatches() {
 }
 
 describe('run-lifecycle', () => {
-  test('runs global before, route leave, route enter, and after hooks in order', async () => {
+  it('runs global before, route leave, route enter, and after hooks in order', async () => {
     const data = createMatches();
     const lifecycle: GlobalLifecycle = {
       beforeNavigate: () => {
@@ -72,7 +72,7 @@ describe('run-lifecycle', () => {
     ]);
   });
 
-  test('blocks when global, beforeLeave, or beforeEnter returns false', async () => {
+  it('blocks when global, beforeLeave, or beforeEnter returns false', async () => {
     const data = createMatches();
 
     await expect(
@@ -94,7 +94,7 @@ describe('run-lifecycle', () => {
     ).resolves.toBe(false);
   });
 
-  test('flows errors to route and global handlers', async () => {
+  it('flows errors to route and global handlers', async () => {
     const data = createMatches();
     const error = new Error('boom');
 

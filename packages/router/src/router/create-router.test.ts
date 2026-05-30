@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { resetConstraints } from '@cookbook/pathkit';
 import { createMemoryHistory } from '../history/memory-history';
 import { createConstraint } from '../pathkit/pathkit';
@@ -15,7 +15,7 @@ afterEach(() => {
 });
 
 describe('create-router', () => {
-  test('uses provided history and exposes resolve helpers', async () => {
+  it('uses provided history and exposes resolve helpers', async () => {
     const history = createMemoryHistory({ initialEntries: ['/about'] });
     const router = createRouter({ routes, history });
 
@@ -39,7 +39,7 @@ describe('create-router', () => {
     expect(deserializeRouterState(serialized)).toEqual(serialized);
   });
 
-  test('registers custom path constraints before route validation and href generation', () => {
+  it('registers custom path constraints before route validation and href generation', () => {
     const slug = createConstraint({
       parse: (paramName, value) => {
         if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
@@ -69,7 +69,7 @@ describe('create-router', () => {
     expect(() => router.href('post', { params: { slug: 'HelloWorld' } })).toThrow('HelloWorld');
   });
 
-  test('distinguishes middleware redirect from rewrite during current resolution', async () => {
+  it('distinguishes middleware redirect from rewrite during current resolution', async () => {
     const authRoutes = defineRoutes([
       { id: 'private', path: '/private' },
       { id: 'login', path: '/login' },
@@ -106,7 +106,7 @@ describe('create-router', () => {
     expect(rewriteHistory.location.href).toBe('/private');
   });
 
-  test('registers and unregisters runtime middleware', async () => {
+  it('registers and unregisters runtime middleware', async () => {
     const history = createMemoryHistory({ initialEntries: ['/'] });
     const router = createRouter({ routes, history });
     const calls: string[] = [];
@@ -131,7 +131,7 @@ describe('create-router', () => {
     expect(router.state.location.href).toBe('/about');
   });
 
-  test('throws during route definition when an unknown custom constraint is not registered', () => {
+  it('throws during route definition when an unknown custom constraint is not registered', () => {
     expect(() => defineRoutes([{ id: 'post', path: '/posts/{slug:slug}' }] as const)).toThrow(
       'Unknown constraint type: "slug"',
     );
@@ -139,7 +139,7 @@ describe('create-router', () => {
 });
 
 describe('router navigation blockers', () => {
-  test('blocks programmatic navigation before history is written', async () => {
+  it('blocks programmatic navigation before history is written', async () => {
     const history = createMemoryHistory({ initialEntries: ['/'] });
     const router = createRouter({ routes, history });
     router.block(() => false);
@@ -150,7 +150,7 @@ describe('router navigation blockers', () => {
     expect(history.location.href).toBe('/');
   });
 
-  test('deduplicates repeated replace navigation to the same target while pending', async () => {
+  it('deduplicates repeated replace navigation to the same target while pending', async () => {
     const history = createMemoryHistory({ initialEntries: ['/'] });
     let releaseMiddleware: (() => void) | undefined;
     const release = new Promise<void>((resolve) => {
@@ -172,7 +172,7 @@ describe('router navigation blockers', () => {
     expect(router.state.location.href).toBe('/about');
   });
 
-  test('stores preventScrollReset metadata for navigation consumers', async () => {
+  it('stores preventScrollReset metadata for navigation consumers', async () => {
     const history = createMemoryHistory({ initialEntries: ['/'] });
     const router = createRouter({ routes, history });
 
@@ -186,7 +186,7 @@ describe('router navigation blockers', () => {
     });
   });
 
-  test('unregisters navigation blockers', async () => {
+  it('unregisters navigation blockers', async () => {
     const router = createRouter({
       routes,
       history: createMemoryHistory({ initialEntries: ['/'] }),

@@ -1,4 +1,4 @@
-import { expectTypeOf, test } from 'vitest';
+import { expectTypeOf, it } from 'vitest';
 import type {
   CliFileSystem,
   CommandResult,
@@ -7,7 +7,7 @@ import type {
   WatchHandle,
 } from './contracts';
 
-test('exposes CLI contracts', () => {
+it('exposes CLI contracts', () => {
   expectTypeOf<Register>().toMatchTypeOf<object>();
   expectTypeOf<RouterContracts>().toMatchTypeOf<object>();
   expectTypeOf<CommandResult>().toHaveProperty('ok').toEqualTypeOf<boolean>();

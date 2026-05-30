@@ -1,12 +1,12 @@
 import { render } from '@testing-library/react';
 import { createRouter, deserializeRouterState, type SerializedRouterState } from '@cookbook/router';
-import { describe, expect, expectTypeOf, test } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import { App } from './app';
 import { renderRequest } from './server';
 import { routes, ssrEvents } from './routes';
 
 describe('react-ssr example', () => {
-  test('renders SSR HTML and embeds hydration data', async () => {
+  it('renders SSR HTML and embeds hydration data', async () => {
     ssrEvents.length = 0;
     const html = await renderRequest('/articles/typed-routing?preview=true#summary');
 
@@ -18,7 +18,7 @@ describe('react-ssr example', () => {
     ]);
   });
 
-  test('hydrates from serialized state while preserving typed hrefs', async () => {
+  it('hydrates from serialized state while preserving typed hrefs', async () => {
     const hydrationData: SerializedRouterState = {
       location: {
         pathname: '/articles/typed-routing',

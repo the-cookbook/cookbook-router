@@ -1,5 +1,5 @@
 import { fireEvent, render, waitFor, within } from '@testing-library/react';
-import { afterEach, describe, expect, expectTypeOf, test } from 'vitest';
+import { afterEach, describe, expect, expectTypeOf, it } from 'vitest';
 import { resetAuth } from './auth';
 import { App, createTestRouter } from './app';
 
@@ -8,7 +8,7 @@ describe('react-blog example', () => {
     resetAuth();
   });
 
-  test('renders a styled real-world blog home with navigation and custom slots', async () => {
+  it('renders a styled real-world blog home with navigation and custom slots', async () => {
     const router = createTestRouter(['/blog']);
     await router.resolveCurrent();
     const { getByText } = render(<App router={router} />);
@@ -20,7 +20,7 @@ describe('react-blog example', () => {
     expect(getByText('Editorial desk')).toBeTruthy();
   });
 
-  test('flags the active blog navigation item from the current route', async () => {
+  it('flags the active blog navigation item from the current route', async () => {
     const homeRouter = createTestRouter(['/blog']);
     await homeRouter.resolveCurrent();
     const homeView = render(<App router={homeRouter} />);
@@ -54,7 +54,7 @@ describe('react-blog example', () => {
     ).toBeNull();
   });
 
-  test('keeps Articles active when an article is opened as an intercepted modal', async () => {
+  it('keeps Articles active when an article is opened as an intercepted modal', async () => {
     const router = createTestRouter(['/blog/articles']);
     await router.resolveCurrent();
     const { getAllByText, getByRole } = render(<App router={router} />);
@@ -67,7 +67,7 @@ describe('react-blog example', () => {
     expect(nav.getByRole('link', { name: 'Home' }).getAttribute('aria-current')).toBeNull();
   });
 
-  test('configured blog article interception renders a modal while preserving the article list', async () => {
+  it('configured blog article interception renders a modal while preserving the article list', async () => {
     const router = createTestRouter(['/blog/articles']);
     await router.resolveCurrent();
     const { getAllByText, getByRole, getByText } = render(<App router={router} />);
@@ -83,7 +83,7 @@ describe('react-blog example', () => {
     );
   });
 
-  test('call-site article interception is clone-safe and keeps the list route mounted', async () => {
+  it('call-site article interception is clone-safe and keeps the list route mounted', async () => {
     const router = createTestRouter(['/blog/articles']);
     await router.resolveCurrent();
     const { getAllByText, getByText } = render(<App router={router} />);
@@ -98,7 +98,7 @@ describe('react-blog example', () => {
     );
   });
 
-  test('article modal Back button returns to the previous route', async () => {
+  it('article modal Back button returns to the previous route', async () => {
     const router = createTestRouter(['/blog/articles']);
     await router.resolveCurrent();
     const { getAllByText, getByRole, queryByRole } = render(<App router={router} />);
@@ -116,7 +116,7 @@ describe('react-blog example', () => {
     expect(router.state.location.href).toBe('/blog/articles');
   });
 
-  test('article modal closes when Escape is pressed', async () => {
+  it('article modal closes when Escape is pressed', async () => {
     const router = createTestRouter(['/blog/articles']);
     await router.resolveCurrent();
     const { getAllByText, getByRole, queryByRole } = render(<App router={router} />);
@@ -131,7 +131,7 @@ describe('react-blog example', () => {
     expect(router.state.location.href).toBe('/blog/articles');
   });
 
-  test('direct visit renders the canonical full article page instead of the modal', async () => {
+  it('direct visit renders the canonical full article page instead of the modal', async () => {
     const router = createTestRouter(['/blog/articles/modal-routes?ref=direct#share']);
     await router.resolveCurrent();
 
@@ -147,7 +147,7 @@ describe('react-blog example', () => {
     expectTypeOf<{ slug: string }>().toEqualTypeOf<{ slug: string }>();
   });
 
-  test('search and archive routes provide real blog discovery flows', async () => {
+  it('search and archive routes provide real blog discovery flows', async () => {
     const searchRouter = createTestRouter(['/blog/articles?query=auth']);
     await searchRouter.resolveCurrent();
     const searchView = render(<App router={searchRouter} />);
@@ -165,7 +165,7 @@ describe('react-blog example', () => {
     expect(archiveView.getByText('2025')).toBeTruthy();
   });
 
-  test('restricted area redirects to login and returns through the redirect search parameter', async () => {
+  it('restricted area redirects to login and returns through the redirect search parameter', async () => {
     const router = createTestRouter(['/blog/members']);
     await router.resolveCurrent();
     const { getByText } = render(<App router={router} />);
@@ -184,7 +184,7 @@ describe('react-blog example', () => {
     expect(router.state.location.href).toBe('/blog/members');
   });
 
-  test('logout sends the user to login with a redirect back to the protected location', async () => {
+  it('logout sends the user to login with a redirect back to the protected location', async () => {
     const router = createTestRouter(['/blog/members']);
     await router.resolveCurrent();
     const { getByText } = render(<App router={router} />);

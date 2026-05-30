@@ -1,6 +1,6 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { NavLink } from './nav-link';
 import { RouterProvider } from './router-provider';
 
@@ -9,7 +9,7 @@ function Page() {
 }
 
 describe('NavLink', () => {
-  test('marks matching href as active', async () => {
+  it('marks matching href as active', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
         { id: 'home', path: '/', component: Page },
@@ -28,7 +28,7 @@ describe('NavLink', () => {
     expect(getByText('settings').getAttribute('aria-current')).toBe('page');
   });
 
-  test('passes active state to render prop children', async () => {
+  it('passes active state to render prop children', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'home', path: '/', component: Page }] as const),
     });
@@ -45,7 +45,7 @@ describe('NavLink', () => {
     expect(getByText('active')).toBeTruthy();
   });
 
-  test('end=true requires the complete href including search params', async () => {
+  it('end=true requires the complete href including search params', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', component: Page }] as const),
       initialEntries: ['/users/1?tab=settings'],
@@ -67,7 +67,7 @@ describe('NavLink', () => {
     expect(getByText('settings').getAttribute('aria-current')).toBe('page');
   });
 
-  test('end search=all requires all search params to match', async () => {
+  it('end search=all requires all search params to match', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', component: Page }] as const),
       initialEntries: ['/users/1?tab=settings'],
@@ -90,7 +90,7 @@ describe('NavLink', () => {
     expect(getByText('exact search').getAttribute('aria-current')).toBe('page');
   });
 
-  test('end search=ignore matches the pathname while ignoring search params', async () => {
+  it('end search=ignore matches the pathname while ignoring search params', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', component: Page }] as const),
       initialEntries: ['/users/1?tab=settings'],
@@ -113,7 +113,7 @@ describe('NavLink', () => {
     expect(getByText('ignored search').getAttribute('aria-current')).toBe('page');
   });
 
-  test('passes preventScrollReset to Link navigation', async () => {
+  it('passes preventScrollReset to Link navigation', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
         { id: 'home', path: '/', component: Page },

@@ -1,12 +1,12 @@
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { runCli, shouldRunCli } from './index';
 import { sampleRoutes } from './test-helpers';
 
 describe('CLI executable runner', () => {
-  test('prints help for empty arguments', async () => {
+  it('prints help for empty arguments', async () => {
     const stdout: string[] = [];
 
     await expect(runCli([], { stdout: (message) => stdout.push(message) })).resolves.toBe(0);
@@ -15,7 +15,7 @@ describe('CLI executable runner', () => {
     expect(stdout.join('\n')).toContain('generate');
   });
 
-  test('prints version output', async () => {
+  it('prints version output', async () => {
     const stdout: string[] = [];
 
     await expect(
@@ -25,7 +25,7 @@ describe('CLI executable runner', () => {
     expect(stdout).toEqual(['1.2.3']);
   });
 
-  test('prints unknown command diagnostics', async () => {
+  it('prints unknown command diagnostics', async () => {
     const stderr: string[] = [];
 
     await expect(
@@ -35,7 +35,7 @@ describe('CLI executable runner', () => {
     expect(stderr.join('\n')).toContain('Unknown command "bad-command"');
   });
 
-  test('prints command errors and returns non-zero exit code', async () => {
+  it('prints command errors and returns non-zero exit code', async () => {
     const stderr: string[] = [];
 
     await expect(runCli(['validate'], { stderr: (message) => stderr.push(message) })).resolves.toBe(
@@ -45,7 +45,7 @@ describe('CLI executable runner', () => {
     expect(stderr.join('\n')).toContain('No routes or routeFiles were provided.');
   });
 
-  test('runs generate as a real CLI command', async () => {
+  it('runs generate as a real CLI command', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'cookbook-router-cli-runner-'));
     const routeFile = join(dir, 'routes.json');
     const outDir = join(dir, '.cookbook-router');
@@ -75,7 +75,7 @@ describe('CLI executable runner', () => {
     }
   });
 
-  test('accepts generate --watch and dispatches to watch validation', async () => {
+  it('accepts generate --watch and dispatches to watch validation', async () => {
     const stderr: string[] = [];
 
     await expect(
@@ -88,7 +88,7 @@ describe('CLI executable runner', () => {
     expect(stderr.join('\n')).not.toContain('Unknown option "--watch"');
   });
 
-  test('detects when the built file is executed directly', () => {
+  it('detects when the built file is executed directly', () => {
     expect(
       shouldRunCli('file:///repo/packages/router-cli/dist/index.js', [
         '/usr/bin/node',

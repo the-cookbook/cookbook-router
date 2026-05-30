@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   assertGeneratedOutputDoesNotClobberRouteFiles,
   assertSafeCliPath,
@@ -7,7 +7,7 @@ import {
 } from './safe-paths';
 
 describe('safe cli paths', () => {
-  test('returns fixed generated artifact paths inside outDir', () => {
+  it('returns fixed generated artifact paths inside outDir', () => {
     expect(resolveGeneratedOutputPaths('.cookbook-router')).toEqual({
       outDir: '.cookbook-router',
       contractsPath: '.cookbook-router/contracts.ts',
@@ -16,7 +16,7 @@ describe('safe cli paths', () => {
     });
   });
 
-  test('rejects empty and null-byte paths', () => {
+  it('rejects empty and null-byte paths', () => {
     expect(() => assertSafeCliPath('outDir', '')).toThrow('non-empty path string');
     expect(() => assertSafeCliPath('outDir', 'safe\0unsafe')).toThrow('null byte');
     expect(() => assertSafeRouteFilePaths(['routes.json', 'bad\0routes.json'])).toThrow(
@@ -24,7 +24,7 @@ describe('safe cli paths', () => {
     );
   });
 
-  test('rejects generated writes that clobber source route files', () => {
+  it('rejects generated writes that clobber source route files', () => {
     const output = resolveGeneratedOutputPaths('.cookbook-router');
 
     expect(() =>

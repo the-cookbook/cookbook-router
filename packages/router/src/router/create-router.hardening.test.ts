@@ -1,10 +1,10 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createMemoryHistory } from '../history/memory-history';
 import { defineRoutes } from '../routes/define-routes';
 import { createRouter } from './create-router';
 
 describe('create-router hardening', () => {
-  test('reports hydration mismatches without logging or throwing during construction', () => {
+  it('reports hydration mismatches without logging or throwing during construction', () => {
     const routes = defineRoutes([{ id: 'home', path: '/' }] as const);
     const history = createMemoryHistory({ initialEntries: ['/client'] });
     const router = createRouter({
@@ -21,7 +21,7 @@ describe('create-router hardening', () => {
     expect(String(router.state.error)).toContain('Hydration data was created for "/server"');
   });
 
-  test('ignores stale async navigation commits when a later navigation wins', async () => {
+  it('ignores stale async navigation commits when a later navigation wins', async () => {
     let releaseFirstNavigation!: () => void;
     const firstNavigation = new Promise<void>((resolve) => {
       releaseFirstNavigation = resolve;
@@ -53,7 +53,7 @@ describe('create-router hardening', () => {
     expect(router.state.location.href).toBe('/fast');
   });
 
-  test('surfaces after-navigation lifecycle failures in router state', async () => {
+  it('surfaces after-navigation lifecycle failures in router state', async () => {
     const failure = new Error('analytics failed');
     const routes = defineRoutes([
       { id: 'home', path: '/' },
@@ -76,7 +76,7 @@ describe('create-router hardening', () => {
     expect(router.state.location.href).toBe('/about');
   });
 
-  test('keeps repeated href generation deterministic for hot navigation paths', () => {
+  it('keeps repeated href generation deterministic for hot navigation paths', () => {
     const routes = defineRoutes([{ id: 'users.show', path: '/users/{id:int}' }] as const);
     const router = createRouter({ routes });
 
@@ -87,7 +87,7 @@ describe('create-router hardening', () => {
     expect(new Set(hrefs)).toEqual(new Set(['/users/42']));
   });
 
-  test('serializes search params in a stable order for cached href generation', () => {
+  it('serializes search params in a stable order for cached href generation', () => {
     const routes = defineRoutes([{ id: 'users.show', path: '/users/{id:int}' }] as const);
     const router = createRouter({ routes });
 
@@ -100,7 +100,7 @@ describe('create-router hardening', () => {
     ).toBe('/users/42?filter=active&tab=settings#profile');
   });
 
-  test('handles large repeated href workloads without changing results', () => {
+  it('handles large repeated href workloads without changing results', () => {
     const routes = defineRoutes([{ id: 'users.show', path: '/users/{id:int}' }] as const);
     const router = createRouter({ routes });
     const hrefs: string[] = [];
@@ -114,7 +114,7 @@ describe('create-router hardening', () => {
     expect(new Set(hrefs).size).toBe(10);
   });
 
-  test('validates duplicate resolved child paths at route definition time', () => {
+  it('validates duplicate resolved child paths at route definition time', () => {
     expect(() =>
       defineRoutes([
         {

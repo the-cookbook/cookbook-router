@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { RouterProvider } from '../components/router-provider';
 import { useRouterContext } from './router-context';
 
@@ -14,7 +14,7 @@ function Page() {
 }
 
 describe('router context', () => {
-  test('provides router state to descendants', async () => {
+  it('provides router state to descendants', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'home', path: '/', component: Page }] as const),
     });
@@ -29,7 +29,7 @@ describe('router context', () => {
     expect(getByText('/')).toBeTruthy();
   });
 
-  test('throws outside a provider', () => {
+  it('throws outside a provider', () => {
     expect(() => render(<Consumer />)).toThrow(
       'Cookbook Router hooks must be used inside <RouterProvider> or <StaticRouterProvider>.',
     );

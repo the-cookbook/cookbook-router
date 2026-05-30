@@ -1,6 +1,6 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { Link } from './link';
 import { RouterProvider } from './router-provider';
 import { useLocation } from '../hooks/use-location';
@@ -20,7 +20,7 @@ function createRouter() {
 }
 
 describe('Link', () => {
-  test('renders a real href with params, search, and hash', async () => {
+  it('renders a real href with params, search, and hash', async () => {
     const router = createRouter();
     await router.resolveCurrent();
 
@@ -35,7 +35,7 @@ describe('Link', () => {
     expect(getByText('profile').getAttribute('href')).toBe('/users/7?tab=settings#top');
   });
 
-  test('supports the to alias for lower-boilerplate links', async () => {
+  it('supports the to alias for lower-boilerplate links', async () => {
     const router = createRouter();
     await router.resolveCurrent();
 
@@ -50,7 +50,7 @@ describe('Link', () => {
     expect(getByText('alias').getAttribute('href')).toBe('/users/6');
   });
 
-  test('left click performs client navigation', async () => {
+  it('left click performs client navigation', async () => {
     const router = createRouter();
     await router.resolveCurrent();
 
@@ -68,7 +68,7 @@ describe('Link', () => {
     await waitFor(() => expect(getByText('/users/8')).toBeTruthy());
   });
 
-  test('replace click performs replace navigation', async () => {
+  it('replace click performs replace navigation', async () => {
     const router = createRouter();
     await router.resolveCurrent();
     const replace = vi.spyOn(router.navigate, 'replace');
@@ -91,7 +91,7 @@ describe('Link', () => {
     );
   });
 
-  test('passes preventScrollReset to navigation options', async () => {
+  it('passes preventScrollReset to navigation options', async () => {
     const router = createRouter();
     await router.resolveCurrent();
     const navigate = vi.spyOn(router.navigate, 'to');
@@ -114,7 +114,7 @@ describe('Link', () => {
     );
   });
 
-  test('modifier and external clicks preserve browser behavior', async () => {
+  it('modifier and external clicks preserve browser behavior', async () => {
     const router = createRouter();
     await router.resolveCurrent();
     const navigate = vi.spyOn(router.navigate, 'to');
@@ -124,7 +124,7 @@ describe('Link', () => {
         <Link route="user" params={{ id: 9 }}>
           modified
         </Link>
-        <Link href="https://other.test/path">external</Link>
+        <Link href="https://other.it/path">external</Link>
       </RouterProvider>,
     );
 
@@ -134,7 +134,7 @@ describe('Link', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  test('respects prevented events', async () => {
+  it('respects prevented events', async () => {
     const router = createRouter();
     await router.resolveCurrent();
     const navigate = vi.spyOn(router.navigate, 'to');

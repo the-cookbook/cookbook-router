@@ -1,8 +1,8 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { normalizeRoutes } from './normalize-routes';
 
 describe('normalizeRoutes', () => {
-  test('keeps localPath and resolves fullPath for nested relative paths', () => {
+  it('keeps localPath and resolves fullPath for nested relative paths', () => {
     const [root] = normalizeRoutes([
       {
         id: 'users',
@@ -33,7 +33,7 @@ describe('normalizeRoutes', () => {
     });
   });
 
-  test('joins leading-slash child paths with their parent while preserving render hierarchy', () => {
+  it('joins leading-slash child paths with their parent while preserving render hierarchy', () => {
     const [policies] = normalizeRoutes([
       {
         id: 'policies',
@@ -55,7 +55,7 @@ describe('normalizeRoutes', () => {
     });
   });
 
-  test('supports index routes and pathless layout routes', () => {
+  it('supports index routes and pathless layout routes', () => {
     const [layout] = normalizeRoutes([
       {
         id: 'dashboard.layout',
@@ -84,7 +84,7 @@ describe('normalizeRoutes', () => {
     expect(index).toMatchObject({ id: 'dashboard.index', fullPath: '/dashboard', index: true });
   });
 
-  test('inherits parent params and rejects duplicate param names across a branch', () => {
+  it('inherits parent params and rejects duplicate param names across a branch', () => {
     const [organizations] = normalizeRoutes([
       {
         id: 'organizations',
@@ -120,7 +120,7 @@ describe('normalizeRoutes', () => {
   });
 });
 
-test('normalizes layout-scoped slot fallbacks and slot routes', () => {
+it('normalizes layout-scoped slot fallbacks and slot routes', () => {
   const Sidebar = () => null;
   const Activity = () => null;
   const [dashboard] = normalizeRoutes([
@@ -166,7 +166,7 @@ test('normalizes layout-scoped slot fallbacks and slot routes', () => {
   expect(modal?.fallback).toBeUndefined();
 });
 
-test('normalizes child slot overrides and declaration-only inherited slots', () => {
+it('normalizes child slot overrides and declaration-only inherited slots', () => {
   const [dashboard] = normalizeRoutes([
     {
       id: 'dashboard',

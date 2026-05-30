@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { RouterProvider } from '../components/router-provider';
 import { useNavigate } from './use-navigate';
 
@@ -18,7 +18,7 @@ function createTestRouter() {
 }
 
 describe('useNavigate', () => {
-  test('navigates through the router API', async () => {
+  it('navigates through the router API', async () => {
     const router = createTestRouter();
     await router.resolveCurrent();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
@@ -34,7 +34,7 @@ describe('useNavigate', () => {
     expect(router.state.location.href).toBe('/users/22');
   });
 
-  test('passes preventScrollReset through navigate options', async () => {
+  it('passes preventScrollReset through navigate options', async () => {
     const router = createTestRouter();
     await router.resolveCurrent();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (

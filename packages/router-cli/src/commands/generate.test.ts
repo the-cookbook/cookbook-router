@@ -1,9 +1,9 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createMemoryFileSystem, sampleRoutes } from '../test-helpers';
 import { generateCommand, resolveRoutes } from './generate';
 
 describe('generateCommand', () => {
-  test('writes generated contracts, manifest, and registration files', async () => {
+  it('writes generated contracts, manifest, and registration files', async () => {
     const fs = createMemoryFileSystem();
     const result = await generateCommand({ routes: sampleRoutes, outDir: 'generated', fs });
 
@@ -19,24 +19,24 @@ describe('generateCommand', () => {
     expect(fs.files.get('generated/register.d.ts')).toContain("declare module '@cookbook/router'");
   });
 
-  test('loads routes from route files', async () => {
+  it('loads routes from route files', async () => {
     const fs = createMemoryFileSystem({ 'routes.json': JSON.stringify({ routes: sampleRoutes }) });
 
     await expect(resolveRoutes({ routeFiles: ['routes.json'], fs })).resolves.toEqual(sampleRoutes);
   });
 
-  test('returns an error when no route source exists', async () => {
+  it('returns an error when no route source exists', async () => {
     await expect(resolveRoutes({})).rejects.toThrow('No routes');
   });
 
-  test('returns command errors for invalid configuration', async () => {
+  it('returns command errors for invalid configuration', async () => {
     const result = await generateCommand({ routes: [{ id: 'bad', index: true, path: '/bad' }] });
 
     expect(result.ok).toBe(false);
     expect(result.errors[0]).toContain('index');
   });
 
-  test('refuses to write generated artifacts over route source files', async () => {
+  it('refuses to write generated artifacts over route source files', async () => {
     const fs = createMemoryFileSystem({
       '.cookbook-router/contracts.ts': JSON.stringify({ routes: sampleRoutes }),
     });
@@ -48,7 +48,7 @@ describe('generateCommand', () => {
     );
   });
 
-  test('returns command errors for file system failures', async () => {
+  it('returns command errors for file system failures', async () => {
     const fs = createMemoryFileSystem();
     fs.writeFile = async () => {
       throw new Error('disk full');
@@ -59,7 +59,7 @@ describe('generateCommand', () => {
     expect(result).toEqual({ ok: false, files: [], errors: ['disk full'] });
   });
 
-  test('generates artifacts from a TypeScript route file using defineRoutes', async () => {
+  it('generates artifacts from a TypeScript route file using defineRoutes', async () => {
     const { mkdtemp, readFile, rm, writeFile } = await import('node:fs/promises');
     const { join } = await import('node:path');
     const { tmpdir } = await import('node:os');
@@ -130,7 +130,7 @@ export const routes = defineRoutes([
     }
   });
 
-  test('generates contracts from route files with custom path constraints', async () => {
+  it('generates contracts from route files with custom path constraints', async () => {
     const fs = createMemoryFileSystem({
       'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
 
@@ -161,7 +161,7 @@ export const routes = defineRoutes([
     expect(fs.files.get('.cookbook-router/manifest.json')).toContain('/posts/{slug:slug}');
   });
 
-  test('generates contracts from route files with inline custom path constraints', async () => {
+  it('generates contracts from route files with inline custom path constraints', async () => {
     const fs = createMemoryFileSystem({
       'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
 
@@ -187,7 +187,7 @@ export const routes = defineRoutes([
     );
   });
 
-  test('keeps built-in constraint generation unchanged', async () => {
+  it('keeps built-in constraint generation unchanged', async () => {
     const fs = createMemoryFileSystem({
       'routes.tsx': `import { defineRoutes } from '@cookbook/router';
 

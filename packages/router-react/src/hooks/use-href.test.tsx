@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { RouterProvider } from '../components/router-provider';
 import { useHref } from './use-href';
 
@@ -9,7 +9,7 @@ function Page() {
 }
 
 describe('useHref', () => {
-  test('generates href through the router', async () => {
+  it('generates href through the router', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', component: Page }] as const),
     });
@@ -26,7 +26,7 @@ describe('useHref', () => {
     expect(result.current).toBe('/users/3?tab=profile#bio');
   });
 
-  test('accepts an object target for cleaner call sites', async () => {
+  it('accepts an object target for cleaner call sites', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', component: Page }] as const),
     });

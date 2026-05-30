@@ -1,5 +1,5 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { createRouter, defineRoutes } from '@cookbook/router';
 import { Link, Outlet, RouterProvider, useLocation, useParams } from '@cookbook/router-react';
 
@@ -53,7 +53,7 @@ describe('browser-like navigation', () => {
     window.history.replaceState(null, '', '/');
   });
 
-  test('Link clicks push to the address bar, back restores source route, and forward restores destination route', async () => {
+  it('Link clicks push to the address bar, back restores source route, and forward restores destination route', async () => {
     const router = createRouter({ routes });
     await router.resolveCurrent();
     const view = render(<RouterProvider router={router} />);
@@ -75,7 +75,7 @@ describe('browser-like navigation', () => {
     expect(window.location.pathname).toBe('/users/5');
   });
 
-  test('replace navigation keeps the route state and browser URL synchronized', async () => {
+  it('replace navigation keeps the route state and browser URL synchronized', async () => {
     const router = createRouter({ routes });
     await router.resolveCurrent();
     render(<RouterProvider router={router} />);

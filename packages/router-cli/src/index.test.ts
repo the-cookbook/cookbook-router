@@ -1,7 +1,7 @@
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createMemoryFileSystem, sampleRoutes } from './test-helpers';
 import {
   generateCommand,
@@ -13,7 +13,7 @@ import {
 } from './index';
 
 describe('package entrypoint', () => {
-  test('exports CLI commands and generators', () => {
+  it('exports CLI commands and generators', () => {
     expect(generateCommand).toBeTypeOf('function');
     expect(validateCommand).toBeTypeOf('function');
     expect(watchCommand).toBeTypeOf('function');
@@ -21,15 +21,15 @@ describe('package entrypoint', () => {
     expect(generateManifest(sampleRoutes).routes.map((route) => route.id)).toContain('users.show');
   });
 
-  test('returns failure for unknown CLI command', async () => {
+  it('returns failure for unknown CLI command', async () => {
     await expect(runCli(['unknown'])).resolves.toBe(1);
   });
 
-  test('returns failure when validate has no route file option', async () => {
+  it('returns failure when validate has no route file option', async () => {
     await expect(runCli(['validate'])).resolves.toBe(1);
   });
 
-  test('parses validate CLI command with a route file', async () => {
+  it('parses validate CLI command with a route file', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'cookbook-router-cli-'));
     const routeFile = join(dir, 'routes.json');
 
@@ -42,7 +42,7 @@ describe('package entrypoint', () => {
     }
   });
 
-  test('parses generate CLI command with route and output options', async () => {
+  it('parses generate CLI command with route and output options', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'cookbook-router-cli-'));
     const routeFile = join(dir, 'routes.json');
     const outDir = join(dir, '.cookbook-router');
@@ -64,7 +64,7 @@ describe('package entrypoint', () => {
     }
   });
 
-  test('parses manifest CLI command with route and output options', async () => {
+  it('parses manifest CLI command with route and output options', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'cookbook-router-cli-'));
     const routeFile = join(dir, 'routes.json');
     const outDir = join(dir, '.cookbook-router');
@@ -83,7 +83,7 @@ describe('package entrypoint', () => {
     }
   });
 
-  test('can still generate with exported command and custom fs', async () => {
+  it('can still generate with exported command and custom fs', async () => {
     const fs = createMemoryFileSystem();
 
     await expect(generateCommand({ routes: sampleRoutes, fs })).resolves.toMatchObject({
