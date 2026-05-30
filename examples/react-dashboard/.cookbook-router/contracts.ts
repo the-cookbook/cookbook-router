@@ -26,7 +26,7 @@ export interface RouteSearch {
   'new-message': {};
   overview: { page?: string | readonly string[]; pageSize?: string | readonly string[]; visitors?: string | readonly string[] };
   users: {};
-  'users.index': {};
+  'users.index': { page?: string | readonly string[]; pageSize?: string | readonly string[]; status?: string | readonly string[]; role?: string | readonly string[]; q?: string | readonly string[] };
   'users.details': {};
   reports: {};
   'broken-page': {};

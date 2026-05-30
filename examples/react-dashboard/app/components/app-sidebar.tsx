@@ -89,10 +89,10 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <Navigation items={data.navigation} />
+        {children}
       </SidebarContent>
       <SidebarFooter>
         <NavigationUser user={data.user} />
-        {children}
       </SidebarFooter>
     </Sidebar>
   );

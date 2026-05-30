@@ -119,6 +119,12 @@ const AsyncReportsPage = React.lazy(() =>
   })
 );
 
+const AsyncReportsSidebarWidget = React.lazy(() =>
+  import('./pages/reports/sidebar').then(async ({ ReportsSidebarWidget }) => ({
+    default: ReportsSidebarWidget,
+  }))
+);
+
 const AsyncReportsLayoutHeader = React.lazy(() =>
   import('./pages/reports/page').then(async ({ ReportsLayoutHeader }) => ({
     default: ReportsLayoutHeader,
@@ -184,6 +190,7 @@ export const routes = defineRoutes(
         loading: LoadingSkeleton,
         slots: {
           header: true,
+          sidebar: true,
           modal: true,
         },
       },
@@ -259,6 +266,13 @@ export const routes = defineRoutes(
               id: 'users.index',
               index: true,
               component: AsyncUsersPage,
+              search: {
+                page: { type: 'one', optional: true },
+                pageSize: { type: 'one', optional: true },
+                status: { type: 'one', optional: true },
+                role: { type: 'one', optional: true },
+                q: { type: 'one', optional: true },
+              },
             },
             {
               id: 'users.details',
@@ -281,6 +295,7 @@ export const routes = defineRoutes(
             loading: LoadingSkeleton,
             slots: {
               header: AsyncReportsLayoutHeader,
+              sidebar: AsyncReportsSidebarWidget,
             },
           },
         },

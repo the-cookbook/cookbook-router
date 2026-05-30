@@ -23,10 +23,13 @@ import {
   useReactTable,
   type ColumnDef,
   type ColumnFiltersState,
+  type OnChangeFn,
+  type PaginationState,
   type SortingState,
   type VisibilityState,
 } from '@tanstack/react-table';
-import { Link } from '@cookbook/router-react';
+import { Link, useSearch, useNavigate } from '@cookbook/router-react';
+import { throttle } from 'throttle-debounce';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -57,6 +60,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { toArray } from '@/lib/utils';
 
 interface DashboardUser {
   id: string;
@@ -69,6 +73,10 @@ interface DashboardUser {
   sections: number;
   lastActive: string;
 }
+
+const parseSearchToInt = (value: string | undefined): number | undefined => {
+  return !value || isNaN(+value) ? undefined : +value;
+};
 
 function getInitials(name: string) {
   return name
@@ -313,13 +321,86 @@ const columns: ColumnDef<DashboardUser>[] = [
 ];
 
 export function UsersDataTable({ data }: { data: DashboardUser[] }) {
+  const navigate = useNavigate();
+  const search = useSearch('users.index');
+
+  const initialQuery = toArray(search.q)[0] ?? '';
+  const initialStatus = toArray(search.status)[0] ?? 'all';
+  const initialRole = toArray(search.role)[0] ?? 'all';
+
   const [sorting, setSorting] = React.useState<SortingState>([]);
+
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    () => {
+      const filters: ColumnFiltersState = [];
+
+      if (initialQuery) {
+        filters.push({
+          id: 'user',
+          value: initialQuery,
+        });
+      }
+
+      if (initialStatus !== 'all') {
+        filters.push({
+          id: 'status',
+          value: initialStatus,
+        });
+      }
+
+      if (initialRole !== 'all') {
+        filters.push({
+          id: 'role',
+          value: initialRole,
+        });
+      }
+
+      return filters;
+    }
   );
+
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
+
   const [rowSelection, setRowSelection] = React.useState({});
+
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: parseSearchToInt(toArray(search.page)[0]) ?? 0,
+    pageSize: parseSearchToInt(toArray(search.pageSize)[0]) ?? 10,
+  });
+
+  const navigateWithSearch = React.useCallback(
+    (nextSearch: Partial<typeof search>) => {
+      navigate.to('users.index', {
+        search: {
+          ...search,
+          ...nextSearch,
+        },
+        preventScrollReset: true,
+      });
+    },
+    [navigate, search]
+  );
+
+  const handleOnPaginationChange: OnChangeFn<PaginationState> =
+    React.useCallback(
+      (updater) => {
+        setPagination((currentPagination) => {
+          const nextPagination =
+            typeof updater === 'function'
+              ? updater(currentPagination)
+              : updater;
+
+          navigateWithSearch({
+            page: nextPagination.pageIndex.toString(),
+            pageSize: nextPagination.pageSize.toString(),
+          });
+
+          return nextPagination;
+        });
+      },
+      [navigateWithSearch]
+    );
 
   const table = useReactTable({
     data,
@@ -329,11 +410,22 @@ export function UsersDataTable({ data }: { data: DashboardUser[] }) {
       columnFilters,
       columnVisibility,
       rowSelection,
+      pagination,
     },
     enableRowSelection: true,
+
+    /**
+     * Important:
+     * React Table resets the page index when filters change by default.
+     * That triggers onPaginationChange and can overwrite freshly updated
+     * search params like role/status/q.
+     */
+    autoResetPageIndex: false,
+
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: handleOnPaginationChange,
     onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -341,6 +433,72 @@ export function UsersDataTable({ data }: { data: DashboardUser[] }) {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
+  const resetPagination = React.useCallback(() => {
+    setPagination((currentPagination) => ({
+      ...currentPagination,
+      pageIndex: 0,
+    }));
+  }, []);
+
+  const handleOnStatusChange = React.useCallback(
+    (status: string) => {
+      table
+        .getColumn('status')
+        ?.setFilterValue(status === 'all' ? undefined : status);
+
+      resetPagination();
+
+      navigateWithSearch({
+        status,
+        page: '0',
+      });
+    },
+    [table, resetPagination, navigateWithSearch]
+  );
+
+  const handleOnRoleChange = React.useCallback(
+    (role: string) => {
+      table
+        .getColumn('role')
+        ?.setFilterValue(role === 'all' ? undefined : role);
+
+      resetPagination();
+
+      navigateWithSearch({
+        role,
+        page: '0',
+      });
+    },
+    [table, resetPagination, navigateWithSearch]
+  );
+
+  const throttledSearchChange = React.useMemo(
+    () =>
+      throttle(150, (value: string) => {
+        table.getColumn('user')?.setFilterValue(value || undefined);
+
+        resetPagination();
+
+        navigateWithSearch({
+          q: value,
+          page: '0',
+        });
+      }),
+    [table, resetPagination, navigateWithSearch]
+  );
+
+  React.useEffect(() => {
+    return () => {
+      throttledSearchChange.cancel({ upcomingOnly: true });
+    };
+  }, [throttledSearchChange]);
+
+  const handleSearchChange = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      throttledSearchChange(event.target.value);
+    },
+    [throttledSearchChange]
+  );
   const selectedRows = table.getFilteredSelectedRowModel().rows.length;
   const filteredRows = table.getFilteredRowModel().rows.length;
 
@@ -349,11 +507,10 @@ export function UsersDataTable({ data }: { data: DashboardUser[] }) {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="relative w-full lg:max-w-sm">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+
           <Input
             value={(table.getColumn('user')?.getFilterValue() as string) ?? ''}
-            onChange={(event) =>
-              table.getColumn('user')?.setFilterValue(event.target.value)
-            }
+            onChange={handleSearchChange}
             placeholder="Search users or emails..."
             className="pl-9"
           />
@@ -364,15 +521,12 @@ export function UsersDataTable({ data }: { data: DashboardUser[] }) {
             value={
               (table.getColumn('status')?.getFilterValue() as string) ?? 'all'
             }
-            onValueChange={(value) =>
-              table
-                .getColumn('status')
-                ?.setFilterValue(value === 'all' ? undefined : value)
-            }
+            onValueChange={handleOnStatusChange}
           >
             <SelectTrigger className="w-full sm:w-[150px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
+
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="Active">Active</SelectItem>
@@ -385,15 +539,12 @@ export function UsersDataTable({ data }: { data: DashboardUser[] }) {
             value={
               (table.getColumn('role')?.getFilterValue() as string) ?? 'all'
             }
-            onValueChange={(value) =>
-              table
-                .getColumn('role')
-                ?.setFilterValue(value === 'all' ? undefined : value)
-            }
+            onValueChange={handleOnRoleChange}
           >
             <SelectTrigger className="w-full sm:w-[140px]">
               <SelectValue placeholder="Role" />
             </SelectTrigger>
+
             <SelectContent>
               <SelectItem value="all">All roles</SelectItem>
               <SelectItem value="Owner">Owner</SelectItem>
@@ -459,7 +610,7 @@ export function UsersDataTable({ data }: { data: DashboardUser[] }) {
           </TableHeader>
 
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -508,6 +659,7 @@ export function UsersDataTable({ data }: { data: DashboardUser[] }) {
               <SelectTrigger id="rows-per-page" className="h-9 w-[76px]">
                 <SelectValue />
               </SelectTrigger>
+
               <SelectContent side="top">
                 {[10, 20, 30, 40, 50].map((pageSize) => (
                   <SelectItem key={pageSize} value={`${pageSize}`}>

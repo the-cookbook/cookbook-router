@@ -4,20 +4,21 @@
 
 ## What it demonstrates
 
-- A shell layout shared by overview, users, reports, create, and broken-page routes.
-- Async page components that suspend during navigation so layout-level loading states can be previewed.
+- Shared shell layout across the overview, users, reports, create, broken-page, and not-found demo routes.
+- Async page components that suspend during navigation, making layout-level loading states easy to preview.
 - `layout.loading` fallbacks rendered inside the shared layout outlet.
-- `layout.error` on `/broken-page`, rendered inside the shared layout when the route throws.
-- Layout slots for route-specific headers and modal rendering.
-- Automatic configured interception from `/overview` to `/create` through the `modal` slot.
-- Automatic configured interception from any page to `/messages/new` through the `modal` slot.
-- Canonical direct rendering of `/create` as a full page.
-- Generated contracts from `app/routes.ts`.
-- A custom `slug` path constraint used by `/users/{slug:slug}`.
-- Search params on `/overview?visitors=...`.
+- `layout.error` boundaries rendered inside the shared layout when a child route throws.
+- Route-specific layout slots for headers, sidebars, and modals.
+- Configured route interception from `/overview` to `/create` through the `modal` slot.
+- Configured route interception from any page to `/messages/new` through the `modal` slot.
+- Custom sidebar rendering on `/reports`.
+- Direct rendering of `/create` as a full page when visited directly.
+- Generated TypeScript route contracts from `app/routes.ts`.
+- Custom `slug` path constraint for `/users/{slug:slug}`.
+- Search-param handling on `/overview?visitors=...`.
 - `NavLink` matching that keeps the overview item active while ignoring search params.
-- A not-found redirect for missing user detail records.
-- Route error handling with a broken-page demo route.
+- User-detail not-found handling for missing user records.
+- Route error handling through the broken-page demo route.
 
 ## Run it
 
