@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useNavigate } from '@cookbook/router-react';
+import { useNavigate, useBlocker } from '@cookbook/router-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +28,12 @@ function NewMessage() {
     name: '',
     email: '',
     message: '',
+  });
+
+  useBlocker({
+    when: Boolean(formData.name || formData.email || formData.message),
+    message:
+      'Your message has not been sent. Leave this page and discard your draft?',
   });
 
   const handleOnClose = React.useCallback(() => {

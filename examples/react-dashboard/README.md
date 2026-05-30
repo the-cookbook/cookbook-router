@@ -1,6 +1,6 @@
 # React dashboard example
 
-`examples/react-dashboard` is a production-style dashboard app that uses Cookbook Router with React, generated route contracts, async route components, layout-level loading and error fallbacks, layout slots, custom path constraints, search params, middleware, and link-level route interception.
+`examples/react-dashboard` is a production-style dashboard app that uses Cookbook Router with React, generated route contracts, async route components, layout-level loading and error fallbacks, layout slots, custom path constraints, search params, middleware, link-level route interception, and navigation blocking.
 
 ## What it demonstrates
 
@@ -15,6 +15,7 @@
 - Sheet-based document previews rendered inside the `modal` slot.
 - Direct rendering of `/create` as a full page when visited directly.
 - Direct rendering of `/documents/{documentId}` as a full document detail page when visited directly.
+- Navigation blocking on `/messages/new` with `useBlocker()` when the message form has unsaved changes.
 - Custom sidebar rendering on `/reports`.
 - Document library with contextual preview behavior for intercepted document detail routes.
 - Generated TypeScript route contracts from `app/routes.ts`.
@@ -53,7 +54,7 @@ pnpm --filter react-dashboard typecheck
 pnpm --filter react-dashboard build
 ```
 
-The unit tests cover entry redirects, async layout loading behavior, search-preserving active navigation, link-level route interception, canonical full-page rendering, sheet-based document previews, custom slug params, missing-record handling, broken-page error fallback rendering, and generated contract inference.
+The unit tests cover entry redirects, async layout loading behavior, search-preserving active navigation, link-level route interception, canonical full-page rendering, sheet-based document previews, navigation blocking for dirty forms, custom slug params, missing-record handling, broken-page error fallback rendering, and generated contract inference.
 
 ## Async loading and route errors
 
@@ -104,6 +105,38 @@ Client navigation from `/documents` to `/documents/{documentId}` opens a documen
 
 The same pattern is used for modal-style flows such as creating records or composing messages. A link can navigate to the canonical destination route while choosing whether that navigation should render through a layout slot.
 
+## Navigation blocking
+
+The `/messages/new` route demonstrates navigation blocking with `useBlocker()`.
+
+The message composer tracks form state locally and blocks navigation when any field has a value.
+The blocker warns users before they leave with an unsent message draft.
+
+```tsx
+function NewMessage() {
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = React.useState<MessageFormData>({
+    name: '',
+    email: '',
+    message: '',
+  });
+
+  useBlocker({
+    when: Boolean(formData.name || formData.email || formData.message),
+    message: 'Your message has not been sent. Leave this page and discard your draft?',
+  });
+
+  const handleOnClose = React.useCallback(() => {
+    navigate.back();
+  }, [navigate]);
+
+  // ...
+}
+```
+
+This applies both when `/messages/new` is rendered as an intercepted modal and when it is visited directly as a canonical route.
+
 ## Documents preview behavior
 
 The documents section demonstrates a common dashboard pattern:
@@ -127,7 +160,7 @@ This shows how the same route can support both contextual preview UI and canonic
 /documents                  -> document library
 /documents/{documentId}     -> document details
 /reports                    -> reports dashboard
-/messages/new               -> message composer
+/messages/new               -> message composer with dirty-form navigation blocking
 /broken-page                -> intentionally throwing route rendered through layout.error
 /login                      -> login page
 /policies/terms-of-service  -> fake terms of service page
