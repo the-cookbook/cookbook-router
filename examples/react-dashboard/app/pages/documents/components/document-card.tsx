@@ -13,6 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import type { DocumentItem } from '../data/documents';
 
 import { DocumentStatusBadge } from './document-status-badge';
+import { DocumentPreview } from '../page';
 
 interface DocumentCardProps {
   document: DocumentItem;
@@ -40,6 +41,10 @@ export function DocumentCard({ document }: DocumentCardProps) {
               to="documents.details"
               params={{ documentId: document.id }}
               className="hover:underline"
+              intercept={{
+                slot: 'modal',
+                component: DocumentPreview,
+              }}
             >
               {document.title}
             </Link>

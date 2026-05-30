@@ -125,12 +125,6 @@ const AsyncDocumentsLayoutHeader = React.lazy(() =>
   }))
 );
 
-const AsyncDocumentPreview = React.lazy(() =>
-  import('./pages/documents/page').then(async ({ DocumentPreview }) => ({
-    default: DocumentPreview,
-  }))
-);
-
 /************* DOCUMENTS DETAILS *************/
 const AsyncDocumentDetailPage = React.lazy(() =>
   import('./pages/documents/details/page').then(
@@ -348,12 +342,6 @@ export const routes = defineRoutes(
               layout: {
                 slots: {
                   header: AsyncDocumentsLayoutHeader,
-                },
-              },
-              intercepts: {
-                modal: {
-                  to: 'documents.details',
-                  component: AsyncDocumentPreview,
                 },
               },
             },
