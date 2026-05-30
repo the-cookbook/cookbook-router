@@ -108,6 +108,50 @@ const AsyncUserDetailsLayoutHeader = React.lazy(() =>
   )
 );
 
+/************* DOCUMENTS *************/
+const AsyncDocumentsPage = React.lazy(() =>
+  import('./pages/documents/page').then(async ({ DocumentsPage }) => {
+    await new Promise((resolve) => setTimeout(resolve, LAZY_PAGE_DELAY_MS));
+
+    return {
+      default: DocumentsPage,
+    };
+  })
+);
+
+const AsyncDocumentsLayoutHeader = React.lazy(() =>
+  import('./pages/documents/page').then(async ({ DocumentsLayoutHeader }) => ({
+    default: DocumentsLayoutHeader,
+  }))
+);
+
+const AsyncDocumentPreview = React.lazy(() =>
+  import('./pages/documents/page').then(async ({ DocumentPreview }) => ({
+    default: DocumentPreview,
+  }))
+);
+
+/************* DOCUMENTS DETAILS *************/
+const AsyncDocumentDetailPage = React.lazy(() =>
+  import('./pages/documents/details/page').then(
+    async ({ DocumentDetailPage }) => {
+      await new Promise((resolve) => setTimeout(resolve, LAZY_PAGE_DELAY_MS));
+
+      return {
+        default: DocumentDetailPage,
+      };
+    }
+  )
+);
+
+const AsyncDocumentDetailLayoutHeader = React.lazy(() =>
+  import('./pages/documents/details/page').then(
+    async ({ DocumentDetailLayoutHeader }) => ({
+      default: DocumentDetailLayoutHeader,
+    })
+  )
+);
+
 /************* REPORTS *************/
 const AsyncReportsPage = React.lazy(() =>
   import('./pages/reports/page').then(async ({ ReportsPage }) => {
@@ -281,6 +325,45 @@ export const routes = defineRoutes(
               layout: {
                 slots: {
                   header: AsyncUserDetailsLayoutHeader,
+                },
+              },
+            },
+          ],
+        },
+        {
+          id: 'documents',
+          path: '/documents',
+          layout: {
+            component: LayoutPage,
+            loading: LoadingSkeleton,
+            slots: {
+              header: true,
+            },
+          },
+          children: [
+            {
+              id: 'documents.index',
+              index: true,
+              component: AsyncDocumentsPage,
+              layout: {
+                slots: {
+                  header: AsyncDocumentsLayoutHeader,
+                },
+              },
+              intercepts: {
+                modal: {
+                  to: 'documents.details',
+                  component: AsyncDocumentPreview,
+                },
+              },
+            },
+            {
+              id: 'documents.details',
+              path: '/{documentId:slug}',
+              component: AsyncDocumentDetailPage,
+              layout: {
+                slots: {
+                  header: AsyncDocumentDetailLayoutHeader,
                 },
               },
             },

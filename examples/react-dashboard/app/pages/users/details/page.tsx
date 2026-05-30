@@ -1,3 +1,4 @@
+import { Link, useParams } from '@cookbook/router-react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -6,7 +7,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { Link, useParams } from '@cookbook/router-react';
 import { UserDetail } from './components/user-detail';
 import { slugToUsername } from './components/utils';
 import { users } from './components/data/users';

@@ -4,21 +4,26 @@
 
 ## What it demonstrates
 
-- Shared shell layout across the overview, users, reports, create, broken-page, and not-found demo routes.
+- Shared shell layout across the overview, users, documents, reports, create, broken-page, policy, and not-found demo routes.
 - Async page components that suspend during navigation, making layout-level loading states easy to preview.
 - `layout.loading` fallbacks rendered inside the shared layout outlet.
 - `layout.error` boundaries rendered inside the shared layout when a child route throws.
-- Route-specific layout slots for headers, sidebars, and modals.
+- Route-specific layout slots for headers, sidebars, modals, and previews.
 - Configured route interception from `/overview` to `/create` through the `modal` slot.
 - Configured route interception from any page to `/messages/new` through the `modal` slot.
-- Custom sidebar rendering on `/reports`.
+- Configured route interception from `/documents` to `/documents/{documentId}` through the `preview` slot.
 - Direct rendering of `/create` as a full page when visited directly.
+- Direct rendering of `/documents/{documentId}` as a full document detail page when visited directly.
+- Custom sidebar rendering on `/reports`.
+- Document library with sheet-based preview behavior for intercepted document detail routes.
 - Generated TypeScript route contracts from `app/routes.ts`.
 - Custom `slug` path constraint for `/users/{slug:slug}`.
 - Search-param handling on `/overview?visitors=...`.
 - `NavLink` matching that keeps the overview item active while ignoring search params.
 - User-detail not-found handling for missing user records.
+- Document-detail not-found handling for missing document records.
 - Route error handling through the broken-page demo route.
+- Fake policy pages for terms of service and privacy policy routes.
 
 ## Run it
 
@@ -47,7 +52,7 @@ pnpm --filter react-dashboard typecheck
 pnpm --filter react-dashboard build
 ```
 
-The unit tests cover entry redirects, async layout loading behavior, search-preserving active navigation, automatic modal interception, canonical full-page rendering, custom slug params, missing-record redirects, broken-page error fallback rendering, and generated contract inference.
+The unit tests cover entry redirects, async layout loading behavior, search-preserving active navigation, configured route interception, canonical full-page rendering, sheet-based document previews, custom slug params, missing-record handling, broken-page error fallback rendering, and generated contract inference.
 
 ## Async loading and route errors
 
@@ -72,21 +77,9 @@ This demonstrates `layout.error`: the fallback is owned by the route layout and 
 
 Because the example uses a delayed lazy import, tests that assert page body content use a timeout longer than `LAZY_PAGE_DELAY_MS`.
 
-## Route model
+## Route interception
 
-```txt
-/                           -> redirects to /overview
-/overview                   -> dashboard overview
-/create                     -> canonical create page
-/users                      -> users index
-/users/{slug:slug}          -> user details
-/reports                    -> reports dashboard
-/broken-page                -> intentionally throwing route rendered through layout.error
-/login                      -> login page
-/policies/terms-of-service  -> fake terms of service page
-/policies/privacy-policy    -> fake privacy policy page
-/*                          -> not found page
-```
+The app demonstrates configured interception with both modal and sheet-style UI.
 
 The `/overview` route owns this configured intercept:
 
@@ -100,3 +93,59 @@ intercepts: {
 ```
 
 Client navigation from `/overview` to `/create` opens the create modal and preserves the overview branch. Direct visits to `/create` render the canonical create page.
+
+The shared shell also demonstrates message composition through the `modal` slot:
+
+```ts
+intercepts: {
+  modal: {
+    to: 'messages.new',
+    component: MessageModal,
+  },
+}
+```
+
+Client navigation to `/messages/new` opens the message composer as a modal from any shell-backed page.
+
+The documents page demonstrates sheet-style detail previews through the `preview` slot:
+
+```ts
+intercepts: {
+  preview: {
+    to: 'documents.details',
+    component: DocumentPreviewRoute,
+  },
+}
+```
+
+Client navigation from `/documents` to `/documents/{documentId}` opens a document preview sheet and preserves the document library page behind it. Direct visits to `/documents/{documentId}` render the full document detail page.
+
+## Route model
+
+```txt
+/                           -> redirects to /overview
+/overview                   -> dashboard overview
+/create                     -> canonical create page
+/users                      -> users index
+/users/{slug:slug}          -> user details
+/documents                  -> document library
+/documents/{documentId}     -> document details
+/reports                    -> reports dashboard
+/messages/new               -> message composer
+/broken-page                -> intentionally throwing route rendered through layout.error
+/login                      -> login page
+/policies/terms-of-service  -> fake terms of service page
+/policies/privacy-policy    -> fake privacy policy page
+/*                          -> not found page
+```
+
+## Documents preview behavior
+
+The documents section demonstrates a common dashboard pattern:
+
+- `/documents` renders a document library.
+- Navigating from `/documents` to `/documents/{documentId}` opens the document in a sheet through the `preview` slot.
+- Visiting `/documents/{documentId}` directly renders the full document detail page.
+- Closing the preview sheet returns to `/documents`.
+
+This shows how the same route can support both contextual preview UI and canonical direct rendering.

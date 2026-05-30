@@ -48,6 +48,24 @@
       "index": false
     },
     {
+      "id": "documents",
+      "path": "/documents",
+      "parentId": "entry",
+      "index": false
+    },
+    {
+      "id": "documents.index",
+      "path": "/documents",
+      "parentId": "documents",
+      "index": true
+    },
+    {
+      "id": "documents.details",
+      "path": "/documents/{documentId:slug}",
+      "parentId": "documents",
+      "index": false
+    },
+    {
       "id": "reports",
       "path": "/reports",
       "parentId": "entry",

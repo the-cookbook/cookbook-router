@@ -10,6 +10,9 @@ export interface RouteParams {
   users: {};
   'users.index': {};
   'users.details': { slug: string };
+  documents: {};
+  'documents.index': {};
+  'documents.details': { documentId: string };
   reports: {};
   'broken-page': {};
   policies: {};
@@ -28,6 +31,9 @@ export interface RouteSearch {
   users: {};
   'users.index': { page?: string | readonly string[]; pageSize?: string | readonly string[]; status?: string | readonly string[]; role?: string | readonly string[]; q?: string | readonly string[] };
   'users.details': {};
+  documents: {};
+  'documents.index': {};
+  'documents.details': {};
   reports: {};
   'broken-page': {};
   policies: {};
@@ -46,6 +52,9 @@ export interface RouteHash {
   users: never;
   'users.index': never;
   'users.details': never;
+  documents: never;
+  'documents.index': never;
+  'documents.details': never;
   reports: never;
   'broken-page': never;
   policies: never;
@@ -64,6 +73,9 @@ export interface RouteMeta {
   users: {};
   'users.index': {};
   'users.details': {};
+  documents: {};
+  'documents.index': {};
+  'documents.details': {};
   reports: {};
   'broken-page': {};
   policies: { access?: string };
@@ -82,6 +94,9 @@ export interface RoutePaths {
   users: '/users';
   'users.index': '/users';
   'users.details': '/users/{slug:slug}';
+  documents: '/documents';
+  'documents.index': '/documents';
+  'documents.details': '/documents/{documentId:slug}';
   reports: '/reports';
   'broken-page': '/broken-page';
   policies: '/policies';
@@ -100,6 +115,9 @@ export interface RouteOutletContext {
   users: {};
   'users.index': {};
   'users.details': {};
+  documents: {};
+  'documents.index': {};
+  'documents.details': {};
   reports: {};
   'broken-page': {};
   policies: {};
@@ -109,7 +127,7 @@ export interface RouteOutletContext {
   'not-found': {};
 }
 
-export const routeIds = ['entry', 'entry.redirect', 'create', 'new-message', 'overview', 'users', 'users.index', 'users.details', 'reports', 'broken-page', 'policies', 'terms-of-service', 'privacy-policy', 'login', 'not-found'] as const;
+export const routeIds = ['entry', 'entry.redirect', 'create', 'new-message', 'overview', 'users', 'users.index', 'users.details', 'documents', 'documents.index', 'documents.details', 'reports', 'broken-page', 'policies', 'terms-of-service', 'privacy-policy', 'login', 'not-found'] as const;
 export const routePaths = {
   entry: '/',
   'entry.redirect': '/',
@@ -119,6 +137,9 @@ export const routePaths = {
   users: '/users',
   'users.index': '/users',
   'users.details': '/users/{slug:slug}',
+  documents: '/documents',
+  'documents.index': '/documents',
+  'documents.details': '/documents/{documentId:slug}',
   reports: '/reports',
   'broken-page': '/broken-page',
   policies: '/policies',

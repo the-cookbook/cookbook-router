@@ -6,6 +6,7 @@ import {
   Book,
   Bug,
   CloudAlert,
+  FileText,
 } from 'lucide-react';
 import { Link } from '@cookbook/router-react';
 import { Navigation, type NavigationItem } from '@/components/navigation';
@@ -41,6 +42,13 @@ const data = {
       icon: <Users />,
       link: {
         route: 'users',
+      },
+    },
+    {
+      title: 'Documents',
+      icon: <FileText />,
+      link: {
+        route: 'documents',
       },
     },
     {
