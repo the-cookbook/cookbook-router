@@ -1,4 +1,11 @@
-import { Link, Outlet, useHash, useLocation, useParams, useSearch } from '@cookbook/router-react';
+import {
+  Link,
+  Outlet,
+  useHash,
+  useLocation,
+  useParams,
+  useSearchParams,
+} from '@cookbook/router-react';
 
 export function RootLayout() {
   return (
@@ -30,7 +37,7 @@ export function HomePage() {
 
 export function UserPage() {
   const params = useParams('ssr.users.show');
-  const search = useSearch('ssr.users.show');
+  const search = useSearchParams('ssr.users.show');
 
   return (
     <section className="panel stack">
@@ -42,7 +49,7 @@ export function UserPage() {
 
 export function ArticlePage() {
   const params = useParams('articles.show');
-  const search = useSearch('articles.show');
+  const search = useSearchParams('articles.show');
   const hash = useHash();
   const location = useLocation();
 

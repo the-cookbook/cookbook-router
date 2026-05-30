@@ -249,18 +249,18 @@ A slot can render a matched slot route, fallback, intercepted destination, route
 | `useMatches()`                                  | Return the current matched branch.                        |
 | `useNavigation()`                               | Return the navigation state.                              |
 | `useParams(routeId?)`                           | Read route params.                                        |
-| `useSearch(routeId?)`                           | Read parsed search params.                                |
+| `useSearchParams(routeId?)`                     | Read parsed search params.                                |
 | `useHash(routeId?)`                             | Read the hash without `#`, or `null`.                     |
 | `useOutletContext()`                            | Read nearest outlet or slot context.                      |
 | `useBlocker({ when, message? })`                | Block in-app navigation and browser unload while enabled. |
 
 ```tsx
-import { useHref, useNavigate, useSearch } from '@cookbook/router-react';
+import { useHref, useNavigate, useSearchParams } from '@cookbook/router-react';
 
 function ArticleToolbar() {
   const href = useHref('articles.index', { search: { tag: 'typescript' } });
   const navigate = useNavigate();
-  const search = useSearch('articles.index');
+  const search = useSearchParams('articles.index');
 
   return (
     <button

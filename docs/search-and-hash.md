@@ -64,17 +64,17 @@ Undefined and null search values are omitted.
 ## Read search values
 
 ```tsx
-import { useSearch } from '@cookbook/router-react';
+import { useSearchParams } from '@cookbook/router-react';
 
 export function ArticlesPage() {
-  const search = useSearch('articles.index');
+  const search = useSearchParams('articles.index');
   const query = search.query ?? '';
 
   return <p>Search: {query}</p>;
 }
 ```
 
-`useSearch()` parses the current query string. When generated contracts are registered, the returned object is typed for the route ID. Parsing is URL-faithful: a key that appears once is returned as a string, and a key that appears multiple times is returned as `readonly string[]`. The route schema does not coerce `type: 'many'` into an array-only runtime value and does not reject repeated values for `type: 'one'`.
+`useSearchParams()` parses the current query string. When generated contracts are registered, the returned object is typed for the route ID. Parsing is URL-faithful: a key that appears once is returned as a string, and a key that appears multiple times is returned as `readonly string[]`. The route schema does not coerce `type: 'many'` into an array-only runtime value and does not reject repeated values for `type: 'one'`.
 
 ## Declare hash values
 

@@ -6,7 +6,7 @@ import {
   useNavigate,
   useOutletContext,
   useParams,
-  useSearch,
+  useSearchParams,
 } from '@cookbook/router-react';
 
 export interface SlotContextValue {
@@ -44,7 +44,7 @@ export function HomePage() {
 
 export function UserPage() {
   const params = useParams('users.show');
-  const search = useSearch('users.show');
+  const search = useSearchParams('users.show');
   const hash = useHash();
 
   return (

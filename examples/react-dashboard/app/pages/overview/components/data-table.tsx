@@ -52,7 +52,7 @@ import {
 import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { useNavigate, useSearch } from '@cookbook/router-react';
+import { useNavigate, useSearchParams } from '@cookbook/router-react';
 
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '@/components/ui/badge';
@@ -343,7 +343,7 @@ export function DataTable({
   data: z.infer<typeof schema>[];
 }) {
   const navigate = useNavigate();
-  const search = useSearch('overview');
+  const search = useSearchParams('overview');
   const [data, setData] = React.useState(() => initialData);
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =

@@ -9,7 +9,7 @@ import {
   useOutletContext,
   useParams,
   useRouter,
-  useSearch,
+  useSearchParams,
 } from '@cookbook/router-react';
 import type { RouteErrorFallbackProps } from '@cookbook/router-react';
 import { login, logout } from './auth';
@@ -121,7 +121,7 @@ export function BlogHomePage() {
 }
 
 export function ArticlesPage() {
-  const search = useSearch('blog.articles');
+  const search = useSearchParams('blog.articles');
   const query = normalizeSingleValue(search.query);
   const results = searchArticles(query);
 
@@ -198,7 +198,7 @@ export function ArticleErrorFallback(props: RouteErrorFallbackProps) {
 
 export function ArticlePage() {
   const params = useParams('blog.articles.show');
-  const search = useSearch('blog.articles.show');
+  const search = useSearchParams('blog.articles.show');
   const hash = useHash();
   const article = findArticle(params.slug);
 
@@ -417,7 +417,7 @@ export function MembersPage() {
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const search = useSearch('blog.login');
+  const search = useSearchParams('blog.login');
   const redirect = normalizeRedirect(normalizeSingleValue(search.redirect));
 
   async function handleLogin() {

@@ -236,12 +236,12 @@ Reads params from the current match or a route in the active branch.
 const params = useParams('users.show');
 ```
 
-### `useSearch()`
+### `useSearchParams()`
 
 Parses the current query string into an object.
 
 ```tsx
-const search = useSearch('articles.index');
+const search = useSearchParams('articles.index');
 ```
 
 ### `useHash()`

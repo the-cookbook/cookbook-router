@@ -728,7 +728,7 @@ Renders a named layout slot. A slot can render a matched slot route, fallback, i
 | `useMatches`       | `() => readonly MatchedRoute[]`                                                                                 | Read the active matched branch.                           |
 | `useNavigation`    | `() => RouterNavigationState`                                                                                   | Read transition state.                                    |
 | `useParams`        | `(routeId?) => RouteParams<Route>`                                                                              | Read current or route-specific params.                    |
-| `useSearch`        | `(routeId?) => RouteSearch<Route>`                                                                              | Read parsed search params.                                |
+| `useSearchParams`  | `(routeId?) => RouteSearch<Route>`                                                                              | Read parsed search params.                                |
 | `useHash`          | `(routeId?) => RouteHash<Route> \| null`                                                                        | Read hash without `#`.                                    |
 | `useOutletContext` | `() => unknown`, `<Route>(routeId, options?) => RouteOutletContext<Route>`, or `<Context>(options?) => Context` | Read nearest outlet/slot context.                         |
 | `useBlocker`       | `(options: UseBlockerOptions) => BlockerState`                                                                  | Block in-app navigation and browser unload while enabled. |
@@ -736,7 +736,7 @@ Renders a named layout slot. A slot can render a matched slot route, fallback, i
 ```tsx
 function UserPage() {
   const params = useParams('users.show');
-  const search = useSearch('users.show');
+  const search = useSearchParams('users.show');
   const navigate = useNavigate();
 
   return (

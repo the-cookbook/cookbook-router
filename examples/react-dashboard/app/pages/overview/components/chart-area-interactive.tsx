@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
-import { useNavigate, useSearch } from '@cookbook/router-react';
+import { useNavigate, useSearchParams } from '@cookbook/router-react';
 
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -147,7 +147,7 @@ function isValidTimeRange(tab: string | undefined): tab is TimeRange {
 export function ChartAreaInteractive(props: { timeRange: string | undefined }) {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const search = useSearch('overview');
+  const search = useSearchParams('overview');
   const [timeRange, setTimeRange] = React.useState(
     isValidTimeRange(props.timeRange) ? props.timeRange : '90d'
   );

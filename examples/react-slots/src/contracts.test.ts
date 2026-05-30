@@ -1,5 +1,5 @@
 import { describe, expectTypeOf, test } from 'vitest';
-import { useHash, useParams, useSearch } from '@cookbook/router-react';
+import { useHash, useParams, useSearchParams } from '@cookbook/router-react';
 import type {
   RouteHash,
   RouteParams,
@@ -20,7 +20,7 @@ describe('react-slots generated contracts', () => {
   test('react hooks read generated router contracts globally', () => {
     function assertHookInference() {
       const params = useParams('dashboard.activity');
-      const search = useSearch('dashboard.activity');
+      const search = useSearchParams('dashboard.activity');
       const hash = useHash('dashboard.activity');
 
       expectTypeOf(params).toEqualTypeOf<{}>();

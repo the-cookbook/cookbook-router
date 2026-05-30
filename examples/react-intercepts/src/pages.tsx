@@ -6,7 +6,7 @@ import {
   useNavigate,
   useOutletContext,
   useParams,
-  useSearch,
+  useSearchParams,
 } from '@cookbook/router-react';
 
 export function GalleryLayout() {
@@ -63,7 +63,7 @@ export function GalleryIndexPage() {
 
 export function PhotoPage() {
   const params = useParams('photos.show');
-  const search = useSearch('photos.show');
+  const search = useSearchParams('photos.show');
   const hash = useHash();
   return (
     <article className="panel stack">

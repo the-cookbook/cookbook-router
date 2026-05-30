@@ -28,7 +28,7 @@ import {
   type SortingState,
   type VisibilityState,
 } from '@tanstack/react-table';
-import { Link, useSearch, useNavigate } from '@cookbook/router-react';
+import { Link, useSearchParams, useNavigate } from '@cookbook/router-react';
 import { throttle } from 'throttle-debounce';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -322,7 +322,7 @@ const columns: ColumnDef<DashboardUser>[] = [
 
 export function UsersDataTable({ data }: { data: DashboardUser[] }) {
   const navigate = useNavigate();
-  const search = useSearch('users.index');
+  const search = useSearchParams('users.index');
 
   const initialQuery = toArray(search.q)[0] ?? '';
   const initialStatus = toArray(search.status)[0] ?? 'all';

@@ -14,7 +14,7 @@ import {
   useLocation,
   useNavigate,
   useParams,
-  useSearch,
+  useSearchParams,
 } from '@cookbook/router-react';
 
 function RootLayout() {
@@ -50,7 +50,7 @@ function HomePage() {
 
 function UserPage() {
   const params = useParams('user');
-  const search = useSearch('user');
+  const search = useSearchParams('user');
   const location = useLocation();
   return (
     <h1>

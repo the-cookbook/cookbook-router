@@ -29,7 +29,7 @@ import {
   useOutletContext,
   useParams,
   useRouter,
-  useSearch,
+  useSearchParams,
 } from '@cookbook/router-react';
 import {
   generateCommand,
@@ -69,7 +69,7 @@ const exportedFunctions = [
   useOutletContext,
   useParams,
   useRouter,
-  useSearch,
+  useSearchParams,
   generateCommand,
   generateContracts,
   generateManifest,

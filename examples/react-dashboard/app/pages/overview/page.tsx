@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useSearch } from '@cookbook/router-react';
+import { useNavigate, useSearchParams } from '@cookbook/router-react';
 import {
   Dialog,
   DialogContent,
@@ -53,7 +53,7 @@ export function OverviewCreateModal() {
 }
 
 export function OverviewPage() {
-  const search = useSearch('overview');
+  const search = useSearchParams('overview');
 
   return (
     <div className="flex flex-1 flex-col">

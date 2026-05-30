@@ -2,7 +2,7 @@ import React from 'react';
 import {
   useNavigate,
   useRouter,
-  useSearch,
+  useSearchParams,
   Link,
 } from '@cookbook/router-react';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<'div'>) {
   const navigate = useNavigate();
-  const { redirect } = useSearch('login');
+  const { redirect } = useSearchParams('login');
   const router = useRouter();
 
   const handleOnSubmit = React.useCallback(

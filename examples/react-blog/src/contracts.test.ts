@@ -1,5 +1,5 @@
 import { describe, expectTypeOf, test } from 'vitest';
-import { useHash, useParams, useSearch } from '@cookbook/router-react';
+import { useHash, useParams, useSearchParams } from '@cookbook/router-react';
 import type {
   RouteHash,
   RouteMeta,
@@ -25,8 +25,8 @@ describe('react-blog generated contracts', () => {
   test('react hooks read generated router contracts globally', () => {
     function assertHookInference() {
       const params = useParams('blog.articles.show');
-      const search = useSearch('blog.articles.show');
-      const loginSearch = useSearch('blog.login');
+      const search = useSearchParams('blog.articles.show');
+      const loginSearch = useSearchParams('blog.login');
       const hash = useHash('blog.articles.show');
 
       expectTypeOf(params).toEqualTypeOf<{ slug: string }>();

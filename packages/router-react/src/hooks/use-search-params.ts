@@ -8,9 +8,9 @@ import type { RouteId, RouteSearch } from '@cookbook/router';
  * Passing a route id narrows the result through generated search contracts.
  * Repeated query parameters are returned as arrays.
  */
-export function useSearch<Route extends RouteId>(routeId: Route): RouteSearch<Route>;
-export function useSearch(): RouteSearch<RouteId>;
-export function useSearch<Route extends RouteId>(
+export function useSearchParams<Route extends RouteId>(routeId: Route): RouteSearch<Route>;
+export function useSearchParams(): RouteSearch<RouteId>;
+export function useSearchParams<Route extends RouteId>(
   _routeId?: Route,
 ): RouteSearch<Route> | RouteSearch<RouteId> {
   const search = useRouterContext().state.location.search;

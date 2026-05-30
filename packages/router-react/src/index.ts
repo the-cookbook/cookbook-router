@@ -51,5 +51,5 @@ export { useOutletContext } from './hooks/use-outlet-context';
 export type { OutletContextOptions } from './hooks/use-outlet-context';
 export { useParams } from './hooks/use-params';
 export { useRouter } from './hooks/use-router';
-export { useSearch } from './hooks/use-search';
+export { useSearchParams } from './hooks/use-search-params';
 export type { Register, RegisteredContracts, RouterContracts } from './contracts';
