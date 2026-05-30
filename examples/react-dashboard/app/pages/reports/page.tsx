@@ -1,7 +1,17 @@
+import { Button } from '@/components/ui/button';
 import { Reports } from './components/reports-page';
 
 export function ReportsLayoutHeader() {
-  return <h1 className="text-base font-medium">Reports</h1>;
+  return (
+    <div className="flex w-full items-center justify-between">
+      <h1 className="text-base font-medium">Reports</h1>
+
+      <div className="flex items-center gap-2">
+        <Button variant="outline">Export CSV</Button>
+        <Button>Generate Report</Button>
+      </div>
+    </div>
+  );
 }
 
 export function ReportsPage() {

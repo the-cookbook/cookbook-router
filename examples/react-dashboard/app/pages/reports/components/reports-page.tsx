@@ -35,11 +35,6 @@ export function Reports() {
             section-level risk.
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <Button variant="outline">Export CSV</Button>
-          <Button>Generate Report</Button>
-        </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

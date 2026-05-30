@@ -5,16 +5,25 @@ import {
   CreditCardIcon,
   BellIcon,
   LogOutIcon,
+  SunMoonIcon,
+  MonitorCogIcon,
+  SunIcon,
+  MoonIcon,
 } from 'lucide-react';
 import { useNavigate } from '@cookbook/router-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuPortal,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -24,6 +33,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { auth } from '@/state/auth';
+import { useTheme } from './theme-provider';
 
 export interface User {
   name: string;
@@ -34,6 +44,7 @@ export interface User {
 export function NavigationUser({ user }: { user: User }) {
   const navigate = useNavigate();
   const { isMobile } = useSidebar();
+  const { theme, setTheme } = useTheme();
 
   const handleOnLogout = React.useCallback(() => {
     auth.logout();
@@ -95,6 +106,40 @@ export function NavigationUser({ user }: { user: User }) {
                 <BellIcon />
                 Notifications
               </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <SunMoonIcon aria-hidden="true" />
+                  Theme
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuCheckboxItem
+                      checked={theme === 'system'}
+                      onCheckedChange={() => setTheme('system')}
+                    >
+                      <MonitorCogIcon aria-hidden="true" />
+                      System
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={theme === 'light'}
+                      onCheckedChange={() => setTheme('light')}
+                    >
+                      <SunIcon aria-hidden="true" />
+                      Light
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={theme === 'dark'}
+                      onCheckedChange={() => setTheme('dark')}
+                    >
+                      <MoonIcon aria-hidden="true" />
+                      Dark
+                    </DropdownMenuCheckboxItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleOnLogout}>

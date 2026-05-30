@@ -25,10 +25,14 @@ export function LayoutPage() {
   const matches = useMatches();
 
   React.useEffect(() => {
-    toast.warning(
-      'Page loading is intentionally slowed down to showcase loading states.',
+    const ref = toast.warning(
+      'Page loading is intentionally slowed down to showcase loading and transitions states.',
       { position: 'top-right' }
     );
+
+    return () => {
+      toast.dismiss(ref);
+    };
   }, []);
 
   const headerDimensions = React.useMemo(() => {
