@@ -12,21 +12,51 @@ import {
 import type { ConstraintValidation, MatchedParam, RouteSegment } from '@cookbook/pathkit';
 import type { RouteParamDefinition } from '../routes/contracts';
 
+/**
+ * Re-exported path constraint helpers from `@cookbook/pathkit`.
+ *
+ * Use `createConstraint` to author custom constraints, `hasConstraint` and
+ * `getConstraint` for diagnostics, and `unregisterConstraint` in tests that need
+ * to isolate global constraint registration.
+ */
 export { hasConstraint, getConstraint, unregisterConstraint, createConstraint };
 
+/**
+ * Path pruning mode applied during validation, matching, and href compilation.
+ *
+ * `all` removes duplicate and trailing slashes, `duplication` removes only
+ * repeated slashes, `trailing` removes only trailing slashes, and `false`
+ * preserves authored pathnames.
+ */
 export type PathPruneOption = 'all' | 'duplication' | 'trailing' | false;
 
+/**
+ * Router path options forwarded to path validation, matching, and compilation.
+ */
 export interface RouterPathOptions {
   readonly prune?: PathPruneOption;
 }
 
+/**
+ * Validation contract for a custom path constraint.
+ */
 export type RouterPathConstraint = ConstraintValidation;
+/**
+ * Custom path constraints keyed by constraint name.
+ */
 export type RouterPathConstraints = Readonly<Record<string, RouterPathConstraint>>;
 
 export const DEFAULT_PATH_OPTIONS: Required<RouterPathOptions> = {
   prune: 'all',
 };
 
+/**
+ * Values accepted by path compilation for named route parameters.
+ *
+ * Missing required params or params that fail their constraint throw during href
+ * generation. Catch-all params may be provided as a slash-delimited string or an
+ * array of primitive segments.
+ */
 export type PathkitCompileParams = Record<
   string,
   string | number | boolean | (string | number | boolean)[] | null | undefined
@@ -36,6 +66,13 @@ const matchers = new Map<string, ReturnType<typeof match>>();
 const compilers = new Map<string, ReturnType<typeof compile>>();
 const tokens = new Map<string, readonly RouteSegment[]>();
 
+/**
+ * Registers custom constraints with the underlying pathkit registry.
+ *
+ * Registration is global to the process, so tests that define temporary
+ * constraints should unregister or isolate names. Caches are cleared after
+ * registration so validation, matching, and compilation see the new behavior.
+ */
 export function registerPathConstraints(constraints?: RouterPathConstraints): void {
   if (!constraints) {
     return;
@@ -58,6 +95,9 @@ function clearPathkitCaches(): void {
   tokens.clear();
 }
 
+/**
+ * Validates a route path pattern against built-in and registered constraints.
+ */
 export function validatePathPattern(pattern: string, options?: RouterPathOptions): void {
   (validateRoute as (pattern: string, options?: Required<RouterPathOptions>) => void)(
     pattern,
@@ -65,6 +105,9 @@ export function validatePathPattern(pattern: string, options?: RouterPathOptions
   );
 }
 
+/**
+ * Tokenizes and caches a route path pattern.
+ */
 export function getPathTokens(pattern: string): readonly RouteSegment[] {
   const cached = tokens.get(pattern);
 
@@ -77,6 +120,9 @@ export function getPathTokens(pattern: string): readonly RouteSegment[] {
   return parsed;
 }
 
+/**
+ * Extracts normalized parameter definitions from a route path pattern.
+ */
 export function getPathParams(pattern: string): readonly RouteParamDefinition[] {
   return getPathTokens(pattern)
     .filter(
@@ -90,6 +136,9 @@ export function getPathParams(pattern: string): readonly RouteParamDefinition[] 
     }));
 }
 
+/**
+ * Matches a pathname against a route pattern and returns raw string params.
+ */
 export function matchPathPattern(
   pattern: string,
   pathname: string,
@@ -115,6 +164,11 @@ export function matchPathPattern(
   return normalizeMatchedParams(pattern, result.params);
 }
 
+/**
+ * Compiles a route pattern and params into a pathname.
+ *
+ * Required params and constraint failures throw before navigation occurs.
+ */
 export function compilePathPattern(
   pattern: string,
   params?: PathkitCompileParams,
@@ -137,12 +191,14 @@ export function compilePathPattern(
   return compiler(params);
 }
 
+/** Normalizes partial path options to router defaults. */
 export function normalizePathOptions(options?: RouterPathOptions): Required<RouterPathOptions> {
   return {
     prune: options?.prune ?? DEFAULT_PATH_OPTIONS.prune,
   };
 }
 
+/** Applies configured slash pruning to a pathname. */
 export function prunePathname(pathname: string, options?: RouterPathOptions): string {
   const prune = normalizePathOptions(options).prune;
   let next = pathname || '/';

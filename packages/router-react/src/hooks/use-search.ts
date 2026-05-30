@@ -2,6 +2,12 @@ import { useMemo } from 'react';
 import { useRouterContext } from '../context/router-context';
 import type { RouteId, RouteSearch } from '@cookbook/router';
 
+/**
+ * Parses and returns the current search values.
+ *
+ * Passing a route id narrows the result through generated search contracts.
+ * Repeated query parameters are returned as arrays.
+ */
 export function useSearch<Route extends RouteId>(routeId: Route): RouteSearch<Route>;
 export function useSearch(): RouteSearch<RouteId>;
 export function useSearch<Route extends RouteId>(

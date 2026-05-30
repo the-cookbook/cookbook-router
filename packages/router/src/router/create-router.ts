@@ -58,6 +58,13 @@ import {
   stringifySerializedRouterState,
 } from '../security/serialized-state';
 
+/**
+ * Options for creating a router runtime.
+ *
+ * Routes are validated and normalized immediately. `defineRoutes` options such
+ * as custom path constraints are respected before path validation. Hydration
+ * data must describe the same href as the active history location.
+ */
 export interface CreateRouterOptions {
   readonly routes: readonly RouteDefinition[];
   readonly basename?: string;
@@ -70,26 +77,48 @@ export interface CreateRouterOptions {
   readonly maxRedirectionDepth?: number;
 }
 
+/**
+ * Options used when generating an href or navigating to a route id.
+ *
+ * `intercept` explicitly requests or disambiguates a slot intercept. Configured
+ * route intercepts are still automatic when the active source route declares
+ * them. `context` is carried to intercepted rendering state.
+ */
 export interface HrefOptions<Route extends string> extends RouteUrlOptions<Route> {
   readonly intercept?: InterceptInput;
   readonly context?: unknown;
   readonly preventScrollReset?: boolean;
 }
 
+/**
+ * Object-form navigation target used by href, resolve, and navigate methods.
+ */
 export interface NavigateOptions<Route extends string> extends HrefOptions<Route> {
   readonly route: Route;
 }
 
+/**
+ * Context passed to navigation blockers before middleware and lifecycle hooks run.
+ */
 export interface RouterBlockerContext {
   readonly from: RouteMatch | null;
   readonly to: RouteMatch | null;
   readonly location: RouterLocation;
 }
 
+/**
+ * Function that can cancel a navigation.
+ *
+ * Return `false` to block the transition. Throwing places the router in error
+ * state for the attempted location.
+ */
 export type RouterBlocker = (
   context: RouterBlockerContext,
 ) => boolean | void | Promise<boolean | void>;
 
+/**
+ * Current router state exposed through subscriptions and React hooks.
+ */
 export interface RouterState {
   readonly location: RouterLocation;
   readonly match: RouteMatch | null;
@@ -98,6 +127,12 @@ export interface RouterState {
   readonly previousLocation?: RouterLocation;
 }
 
+/**
+ * Minimal serializable state used for SSR hydration.
+ *
+ * The serialized location must match the client history location when a browser
+ * router is created with `hydrationData`.
+ */
 export interface SerializedRouterState {
   readonly location: RouterLocation;
   readonly navigation: RouterNavigationState;
@@ -118,24 +153,46 @@ interface ActiveNavigation {
   readonly promise: Promise<RouterState>;
 }
 
+/**
+ * Router runtime returned by `createRouter`, `createMemoryRouter`, and
+ * `createStaticRouter`.
+ *
+ * The runtime owns normalized routes, current match state, navigation, blockers,
+ * middleware, and serialization. All route-id APIs use generated contracts when
+ * module augmentation has registered them.
+ */
 export interface Router {
+  /** Normalized route tree derived from the authored definitions. */
   readonly routes: readonly NormalizedRoute[];
+  /** Flattened route list ordered for deterministic matching. */
   readonly rankedRoutes: readonly RankedRoute[];
+  /** Latest router state snapshot. Subscribe to receive updates. */
   readonly state: RouterState;
+  /**
+   * Generates a URL for a route id without navigating.
+   *
+   * Required params and invalid path constraints throw during href generation so
+   * broken links fail before navigation.
+   */
   href<Route extends RouteId>(routeId: Route, options?: HrefOptions<Route>): string;
   href<Route extends string>(routeId: Route, options?: HrefOptions<Route>): string;
   href<Route extends RouteId>(options: NavigateOptions<Route>): string;
   href<Route extends string>(options: NavigateOptions<Route>): string;
+  /** Resolves a route id into a parsed location without changing history. */
   resolve<Route extends RouteId>(routeId: Route, options?: HrefOptions<Route>): RouterLocation;
   resolve<Route extends string>(routeId: Route, options?: HrefOptions<Route>): RouterLocation;
   resolve<Route extends RouteId>(options: NavigateOptions<Route>): RouterLocation;
   resolve<Route extends string>(options: NavigateOptions<Route>): RouterLocation;
+  /** Matches an arbitrary href against the ranked routes and returns match state. */
   match(href: string): RegisteredRouteMatch | null;
+  /** Programmatic navigation methods. */
   navigate: {
+    /** Pushes a new history entry and resolves the transition. */
     to<Route extends RouteId>(routeId: Route, options?: HrefOptions<Route>): Promise<RouterState>;
     to<Route extends string>(routeId: Route, options?: HrefOptions<Route>): Promise<RouterState>;
     to<Route extends RouteId>(options: NavigateOptions<Route>): Promise<RouterState>;
     to<Route extends string>(options: NavigateOptions<Route>): Promise<RouterState>;
+    /** Replaces the current history entry and resolves the transition. */
     replace<Route extends RouteId>(
       routeId: Route,
       options?: HrefOptions<Route>,
@@ -146,21 +203,41 @@ export interface Router {
     ): Promise<RouterState>;
     replace<Route extends RouteId>(options: NavigateOptions<Route>): Promise<RouterState>;
     replace<Route extends string>(options: NavigateOptions<Route>): Promise<RouterState>;
+    /** Delegates to the history back operation. */
     back: () => void;
+    /** Delegates to the history forward operation. */
     forward: () => void;
+    /** Moves through history by `delta` entries. */
     go: (delta: number) => void;
   };
+  /** Subscribes to state changes and returns an unsubscribe function. */
   subscribe(listener: (state: RouterState) => void): () => void;
+  /** Registers a navigation blocker and returns a cleanup function. */
   block(blocker: RouterBlocker): () => void;
+  /** Adds runtime middleware for as long as the returned cleanup is retained. */
   useMiddleware(middleware: readonly Middleware[]): () => void;
+  /** Resolves the current history location; useful for bootstrapping direct entry. */
   resolveCurrent(): Promise<RouterState>;
+  /** Returns hydration-safe state for SSR serialization. */
   serialize(): SerializedRouterState;
 }
 
+/**
+ * Creates a browser router by default, or uses the supplied history implementation.
+ *
+ * Use this in browser applications. For tests and SSR prefer the dedicated
+ * memory/static helpers.
+ */
 export function createRouter(options: CreateRouterOptions): Router {
   const history = options.history ?? createDefaultHistory(options.hydrationData?.location.href);
   return createRouterRuntime({ ...options, history });
 }
+
+/**
+ * Creates a router from an explicit history implementation.
+ *
+ * This lower-level helper is mainly useful for custom histories and tests.
+ */
 
 export function createRouterRuntime(
   options: Required<Pick<CreateRouterOptions, 'history'>> & CreateRouterOptions,
@@ -802,14 +879,23 @@ function isExternalHref(href: string): boolean {
   return /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(href);
 }
 
+/**
+ * Extracts the router state needed to hydrate a matching client router.
+ */
 export function serializeRouterState(router: Pick<Router, 'serialize'>): SerializedRouterState {
   return assertSerializedRouterState(router.serialize());
 }
 
+/**
+ * Serializes router hydration state to a JSON string with validation hardening.
+ */
 export function stringifyRouterState(router: Pick<Router, 'serialize'>): string {
   return stringifySerializedRouterState(router.serialize());
 }
 
+/**
+ * Parses serialized hydration state and validates the expected router-state shape.
+ */
 export function deserializeRouterState(
   state: SerializedRouterState | string,
 ): SerializedRouterState {

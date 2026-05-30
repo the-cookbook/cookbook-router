@@ -17,6 +17,13 @@ interface GeneratedRouteContract {
   readonly path: string;
 }
 
+/**
+ * Generates the TypeScript route contract file from normalized routes.
+ *
+ * The generated output includes params, search, hash, meta, paths, outlet
+ * context, route ids, and route paths. Custom path constraints supplied through
+ * `defineRoutes` options are registered before validation.
+ */
 export function generateContracts(
   routes: readonly RouteDefinition[],
   options: DefineRoutesOptions | RouterPathOptions = {},

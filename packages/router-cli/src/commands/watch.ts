@@ -2,10 +2,17 @@ import { generateCommand } from './generate';
 import { nodeFileSystem } from '../node-file-system';
 import type { CommandResult, WatchHandle, WatchOptions } from '../contracts';
 
+/** Options for watch-mode generation. */
 export interface WatchCommandOptions extends WatchOptions {}
 
 const DEFAULT_DEBOUNCE_MS = 50;
 
+/**
+ * Watches route files and re-runs generation after a debounce.
+ *
+ * The returned handle exposes the initial command result and a cleanup function
+ * that closes active watchers.
+ */
 export function watchCommand(options: WatchCommandOptions): WatchHandle {
   const watchers: { close: () => void }[] = [];
   const fs = options.fs ?? nodeFileSystem;

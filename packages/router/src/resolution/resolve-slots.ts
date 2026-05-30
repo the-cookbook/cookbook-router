@@ -7,6 +7,12 @@ import type {
 } from '../routes/contracts';
 import { createMatchedBranch, getRouteMatchIndex } from '../matching/route-match-index';
 
+/**
+ * Resolves all slots owned by the active matched branch.
+ *
+ * Each slot becomes matched content, fallback content, empty, disabled, or
+ * not-found state depending on the active pathname and slot configuration.
+ */
 export function resolveSlots(
   branch: readonly MatchedRoute[],
   pathname: string,
@@ -39,6 +45,9 @@ export function resolveSlots(
   return resolved;
 }
 
+/**
+ * Reads one resolved slot by owner route id and slot name.
+ */
 export function getResolvedSlot(
   slots: ResolvedSlots,
   ownerRouteId: string,

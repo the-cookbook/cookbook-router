@@ -7,14 +7,32 @@ import type {
   RouteMatch,
 } from '../routes/contracts';
 
+/**
+ * Explicit intercept declaration supplied by a call site such as `Link` or
+ * `router.navigate`.
+ *
+ * Use this for overrides or disambiguation. Route-configured intercepts remain
+ * automatic when the active source route declares them.
+ */
 export interface CallSiteInterceptInput {
   readonly slot: string;
   readonly component?: RouteComponent;
   readonly element?: RouteComponent;
 }
 
+/**
+ * Intercept request accepted by href and navigation APIs.
+ *
+ * A string selects a configured slot. An object manually declares the slot and
+ * component to render for this navigation.
+ */
 export type InterceptInput = string | CallSiteInterceptInput;
 
+/**
+ * History state stored while an intercepted navigation is active.
+ *
+ * It lets browser back close the intercepted UI and restore the previous branch.
+ */
 export interface InterceptHistoryState {
   readonly __cookbookRouterIntercept: {
     readonly slot: string;
@@ -26,6 +44,9 @@ export interface InterceptHistoryState {
   };
 }
 
+/**
+ * Fully resolved intercept used by the router during a transition.
+ */
 export interface ResolvedIntercept {
   readonly slot: string;
   readonly sourceRouteId: string;
@@ -36,6 +57,7 @@ export interface ResolvedIntercept {
   readonly context?: unknown;
 }
 
+/** Options used to resolve configured or call-site intercepts. */
 export interface ResolveInterceptOptions {
   readonly source: RouteMatch | null;
   readonly destination: RouteMatch | null;
@@ -47,6 +69,10 @@ export interface ResolveInterceptOptions {
   readonly context?: unknown;
 }
 
+/**
+ * Normalizes route-configured intercepts from an authored route into one entry
+ * per slot/target pair.
+ */
 export function normalizeConfiguredIntercepts(
   route: NormalizedRoute,
   _pathOptions: RouterPathOptions = {},
@@ -71,6 +97,9 @@ function normalizeInterceptTargets(target: string | readonly string[]): readonly
   return typeof target === 'string' ? [target] : target;
 }
 
+/**
+ * Validates and normalizes call-site intercept input.
+ */
 export function normalizeCallSiteIntercept(
   intercept: InterceptInput | undefined,
 ): CallSiteInterceptInput | null {
@@ -96,6 +125,13 @@ export function normalizeCallSiteIntercept(
   };
 }
 
+/**
+ * Resolves whether a navigation should render as an intercept.
+ *
+ * Direct visits have no source route and therefore render the canonical target.
+ * Client navigation first honors call-site overrides, then automatic configured
+ * intercepts declared by the active source branch.
+ */
 export function resolveIntercept(options: ResolveInterceptOptions): ResolvedIntercept | null {
   if (!options.source || !options.destination) {
     return null;
@@ -157,6 +193,9 @@ export function resolveIntercept(options: ResolveInterceptOptions): ResolvedInte
   };
 }
 
+/**
+ * Restores an active intercept from browser history state during pop navigation.
+ */
 export function restoreInterceptFromState(
   state: unknown,
   source: RouteMatch | null,
@@ -193,6 +232,9 @@ export function restoreInterceptFromState(
   };
 }
 
+/**
+ * Creates the history state needed to preserve an intercepted navigation.
+ */
 export function createInterceptHistoryState(
   intercept: ResolvedIntercept,
   previousHref: string,
@@ -217,6 +259,9 @@ export function createInterceptHistoryState(
   return { __cookbookRouterIntercept: state };
 }
 
+/**
+ * Validates that every configured intercept points at a known route id.
+ */
 export function validateInterceptTargets(routes: readonly NormalizedRoute[]): void {
   const flat = flattenRoutes(routes);
   const routeIds = new Set(flat.map((route) => route.id));

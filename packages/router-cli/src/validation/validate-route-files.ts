@@ -7,6 +7,10 @@ import { nodeFileSystem } from '../node-file-system';
 
 const defaultFs: CliFileSystem = nodeFileSystem;
 
+/**
+ * Loads route modules from disk and returns their route definitions plus any
+ * `defineRoutes` options discovered on the exported route array.
+ */
 export async function loadRouteFiles(
   options: LoadRouteFilesOptions,
 ): Promise<readonly CliRouteSource[]> {
@@ -28,6 +32,7 @@ export async function loadRouteFiles(
   return sources;
 }
 
+/** Validates all loaded route files without writing generated artifacts. */
 export async function validateRouteFiles(
   options: LoadRouteFilesOptions,
 ): Promise<readonly CliRouteSource[]> {

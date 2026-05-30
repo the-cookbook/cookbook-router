@@ -34,6 +34,7 @@ import { validateCommand } from './commands/validate';
 import { watchCommand } from './commands/watch';
 import type { CliRouteOptions, CommandResult } from './contracts';
 
+/** Options for embedding or testing the CLI runner. */
 export interface CliRunnerOptions {
   readonly stdout?: (message: string) => void;
   readonly stderr?: (message: string) => void;
@@ -63,6 +64,9 @@ Options:
   -h, --help            Show help
   -v, --version         Show version`;
 
+/**
+ * Runs the CLI command dispatcher and returns a process-style exit code.
+ */
 export async function runCli(
   argv: readonly string[],
   runnerOptions: CliRunnerOptions = {},
@@ -121,6 +125,7 @@ export async function runCli(
   return 1;
 }
 
+/** Returns true when the current module URL is the process entrypoint. */
 export function shouldRunCli(
   moduleUrl: string = import.meta.url,
   argv: readonly string[] = process.argv,

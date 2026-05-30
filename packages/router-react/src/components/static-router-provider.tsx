@@ -3,6 +3,7 @@ import type { Middleware, Router } from '@cookbook/router';
 import { RouterProvider } from './router-provider';
 import type { RouterErrorFallbackProps } from './router-provider';
 
+/** Props for rendering a router in SSR/static environments. */
 export interface StaticRouterProviderProps {
   readonly router: Router;
   readonly children?: ReactNode;
@@ -12,6 +13,11 @@ export interface StaticRouterProviderProps {
   readonly middleware?: readonly Middleware[];
 }
 
+/**
+ * Thin SSR/static wrapper around `RouterProvider`.
+ *
+ * Use with a static router created for the current request URL.
+ */
 export function StaticRouterProvider(props: StaticRouterProviderProps): ReactElement {
   return (
     <RouterProvider

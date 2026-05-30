@@ -4,16 +4,25 @@ import { Link } from './link';
 import { useHref } from '../hooks/use-href';
 import { useLocation } from '../hooks/use-location';
 
+/** Render props supplied to `NavLink` children. */
 export interface NavLinkRenderProps {
   readonly isActive: boolean;
 }
 
+/** Fine-grained active matching options for `NavLink.end`. */
 export interface NavLinkEndOptions {
   readonly search?: 'all' | 'ignore';
 }
 
+/**
+ * Active matching mode for `NavLink`.
+ *
+ * `false` allows prefix path matches. `true` requires the full href. Object form
+ * can ignore search while still comparing pathname and hash.
+ */
 export type NavLinkEnd = boolean | NavLinkEndOptions;
 
+/** Props for a route-aware link that exposes active state. */
 export interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
   AnchorHTMLAttributes<HTMLAnchorElement>,
   'children' | 'href'
@@ -31,6 +40,11 @@ export interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly children?: ReactNode | ((props: NavLinkRenderProps) => ReactNode);
 }
 
+/**
+ * Renders a `Link` with `aria-current="page"` when the target is active.
+ *
+ * Children may be a render function that receives `isActive`.
+ */
 export function NavLink<Route extends RouteId = RouteId>(props: NavLinkProps<Route>) {
   const {
     route,

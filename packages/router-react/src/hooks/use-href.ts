@@ -1,6 +1,12 @@
 import type { HrefOptions, NavigateOptions, RouteId } from '@cookbook/router';
 import { useRouter } from './use-router';
 
+/**
+ * Generates an href for a route id without navigating.
+ *
+ * Params, search, and hash are inferred from generated contracts when `Register`
+ * is augmented.
+ */
 export function useHref<Route extends RouteId>(
   routeId: Route,
   options?: HrefOptions<Route>,

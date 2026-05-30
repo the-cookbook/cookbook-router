@@ -11,11 +11,19 @@ import {
 import { asComponent, renderMatches, renderRouteBoundary } from './router-provider';
 import type { RenderMatchesOptions } from './router-provider';
 
+/** Props for rendering a named slot from the nearest layout context. */
 export interface SlotProps<T = unknown> {
   readonly name: string;
   readonly context?: T;
 }
 
+/**
+ * Renders content for a named layout slot.
+ *
+ * If the active navigation is intercepted for this slot, the intercepted
+ * component renders first. Otherwise the slot renders matched slot routes,
+ * fallback content, or nothing for empty/disabled states.
+ */
 export function Slot<T = unknown>(props: SlotProps<T>): ReactElement | null {
   const value = useSlotRenderContext();
   const routerContext = useRouterContext();

@@ -1,6 +1,11 @@
 import { useRouteRenderContext, useRouterContext } from '../context/router-context';
 import type { RouteId, RouteParams } from '@cookbook/router';
 
+/**
+ * Reads route params for the current render context or active match.
+ *
+ * Passing a route id narrows the result through generated params contracts.
+ */
 export function useParams<Route extends RouteId>(routeId: Route): RouteParams<Route>;
 export function useParams(): RouteParams<RouteId>;
 export function useParams<Route extends RouteId>(

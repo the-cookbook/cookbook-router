@@ -5,6 +5,7 @@ import {
   type RouterLocation,
 } from './memory-history';
 
+/** Options for the browser history adapter. */
 export interface BrowserHistoryOptions {
   readonly window?: Pick<
     Window,
@@ -12,6 +13,12 @@ export interface BrowserHistoryOptions {
   >;
 }
 
+/**
+ * Creates a DOM-backed history adapter using `window.history`.
+ *
+ * Modifier-key navigation and external redirects remain browser-native; internal
+ * pushes/replaces notify router subscribers with parsed locations.
+ */
 export function createBrowserHistory(options: BrowserHistoryOptions = {}): RouterHistory {
   const browserWindow = options.window ?? globalThis.window;
 

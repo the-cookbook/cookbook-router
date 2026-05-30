@@ -25,24 +25,37 @@ import {
 } from '../context/router-context';
 import type { RenderBoundaryOptions } from '../context/router-context';
 
+/** Props passed to a route-local loading fallback component. */
 export interface RouteLoadingFallbackProps {
   readonly route: MatchedRoute;
 }
 
+/** Props passed to a route-local error fallback component. */
 export interface RouteErrorFallbackProps {
   readonly error: unknown;
   readonly reset: () => void;
   readonly route: MatchedRoute;
 }
 
+/** Props passed to the global router error fallback. */
 export interface RouterErrorFallbackProps {
   readonly error: unknown;
   readonly reset: () => void;
   readonly route?: MatchedRoute;
 }
 
+/** Scroll behavior used when the provider restores scroll after navigation. */
 export type RouterScrollBehavior = ScrollBehavior;
 
+/**
+ * Props for the React router provider.
+ *
+ * The provider subscribes to router state, renders the active branch, registers
+ * runtime middleware, handles scroll restoration, and coordinates Suspense/error
+ * boundaries. `loadingFallback` is the global Suspense fallback; route
+ * `loading` is route-local, while `layout.loading` can be inherited by
+ * descendants rendered inside the layout shell.
+ */
 export interface RouterProviderProps {
   readonly router: Router;
   readonly children?: ReactNode;
@@ -54,18 +67,22 @@ export interface RouterProviderProps {
   readonly scrollBehavior?: RouterScrollBehavior;
 }
 
+/** Render options shared by branch and slot rendering helpers. */
 export interface RenderMatchesOptions extends RenderBoundaryOptions {}
 
+/** Concrete loading fallback selected for a matched route boundary. */
 export interface ResolvedLoadingFallback {
   readonly component: RouteComponent;
   readonly match: MatchedRoute;
 }
 
+/** Concrete error fallback selected for a matched route boundary. */
 export interface ResolvedErrorFallback {
   readonly component: RouteComponent;
   readonly match: MatchedRoute;
 }
 
+/** Layout fallback state inherited while rendering descendant matches. */
 export interface InheritedRouteFallbacks {
   readonly loading?: ResolvedLoadingFallback;
   readonly error?: ResolvedErrorFallback;
@@ -82,6 +99,9 @@ interface RouteErrorBoundaryState {
   readonly error: unknown | undefined;
 }
 
+/**
+ * Provides router state to React and renders the active route branch.
+ */
 export function RouterProvider(props: RouterProviderProps): ReactElement {
   const state = useRouterState(props.router);
   const redirecting = state.error === undefined && isRedirectMatch(state);
@@ -132,6 +152,7 @@ export function RouterProvider(props: RouterProviderProps): ReactElement {
   return <RouterContext.Provider value={contextValue}>{rendered}</RouterContext.Provider>;
 }
 
+/** Subscribes React rendering to router state with `useSyncExternalStore`. */
 export function useRouterState(router: Router): RouterState {
   return useSyncExternalStore(
     router.subscribe,
@@ -140,6 +161,10 @@ export function useRouterState(router: Router): RouterState {
   );
 }
 
+/**
+ * Renders a matched branch recursively with layouts, outlets, slots, loading
+ * boundaries, and error boundaries.
+ */
 export function renderMatches(
   matches: readonly MatchedRoute[],
   fallback: ReactNode,

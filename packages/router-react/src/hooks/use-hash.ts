@@ -1,6 +1,12 @@
 import { useRouterContext } from '../context/router-context';
 import type { RouteHash, RouteId } from '@cookbook/router';
 
+/**
+ * Reads the current hash fragment without the leading `#`.
+ *
+ * When generated contracts are registered, passing a route id narrows the hash
+ * value to that route's allowed hash union.
+ */
 export function useHash<Route extends RouteId = RouteId>(
   _routeId?: Route,
 ): RouteHash<Route> | null {

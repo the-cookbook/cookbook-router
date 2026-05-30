@@ -10,8 +10,10 @@ import { nodeFileSystem } from '../node-file-system';
 
 const defaultFs: CliFileSystem = nodeFileSystem;
 
+/** Options for generating only the route manifest artifact. */
 export interface ManifestOptions extends CliRouteOptions {}
 
+/** Generates `manifest.json` for a route tree without writing type contracts. */
 export async function manifestCommand(options: ManifestOptions): Promise<CommandResult> {
   try {
     const fs = options.fs ?? defaultFs;

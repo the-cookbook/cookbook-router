@@ -6,6 +6,7 @@ import type {
   RouterPathOptions,
 } from '@cookbook/router';
 
+/** Serialized route entry written to `manifest.json`. */
 export interface ManifestRoute {
   readonly id: string;
   readonly path?: string;
@@ -13,10 +14,12 @@ export interface ManifestRoute {
   readonly index: boolean;
 }
 
+/** Complete route manifest generated for tooling and diagnostics. */
 export interface RouteManifest {
   readonly routes: readonly ManifestRoute[];
 }
 
+/** Generates a JSON-serializable manifest from a route tree. */
 export function generateManifest(
   routes: readonly RouteDefinition[],
   options: DefineRoutesOptions | RouterPathOptions = {},
@@ -35,6 +38,7 @@ export function generateManifest(
   };
 }
 
+/** Serializes a route manifest with stable formatting. */
 export function serializeManifest(manifest: RouteManifest): string {
   return `${JSON.stringify(manifest, null, 2)}\n`;
 }

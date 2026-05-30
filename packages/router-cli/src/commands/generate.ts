@@ -13,8 +13,15 @@ import { nodeFileSystem } from '../node-file-system';
 
 const defaultFs: CliFileSystem = nodeFileSystem;
 
+/** Options for generating contracts, register declarations, and manifest JSON. */
 export interface GenerateOptions extends CliRouteOptions {}
 
+/**
+ * Generates `contracts.ts`, `register.d.ts`, and `manifest.json`.
+ *
+ * Route files are loaded from TypeScript modules when provided. `defineRoutes`
+ * options, including custom `pathConstraints`, are registered before generation.
+ */
 export async function generateCommand(options: GenerateOptions): Promise<CommandResult> {
   try {
     const fs = options.fs ?? defaultFs;
@@ -45,11 +52,17 @@ export async function generateCommand(options: GenerateOptions): Promise<Command
   }
 }
 
+/** Resolves route definitions from direct CLI options or route files. */
 export async function resolveRoutes(options: CliRouteOptions): Promise<readonly RouteDefinition[]> {
   const routeFile = await resolveRouteInput(options);
   return routeFile.routes;
 }
 
+/**
+ * Resolves a complete route file model from direct routes or loaded route files.
+ *
+ * Multiple route files are merged, including path options and custom constraints.
+ */
 export async function resolveRouteInput(options: CliRouteOptions): Promise<RouteFile> {
   if (options.routes) {
     return {

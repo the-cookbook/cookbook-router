@@ -2,6 +2,13 @@ import type { AnchorHTMLAttributes, MouseEvent, ReactNode } from 'react';
 import type { HrefOptions, InterceptInput, RouteId } from '@cookbook/router';
 import { useRouter } from '../hooks/use-router';
 
+/**
+ * Props for a router-aware anchor.
+ *
+ * Use `route` or `to` for typed internal navigation. Use `href` when the link is
+ * external or should bypass route-id generation. Params/search/hash are inferred
+ * from generated contracts when `Register` is augmented.
+ */
 export interface LinkProps<Route extends RouteId = RouteId> extends Omit<
   AnchorHTMLAttributes<HTMLAnchorElement>,
   'href'
@@ -19,6 +26,11 @@ export interface LinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly children?: ReactNode;
 }
 
+/**
+ * Renders an anchor that uses router navigation for unmodified same-origin
+ * left-clicks while preserving native browser behavior for external URLs,
+ * downloads, targets, and modifier keys.
+ */
 export function Link<Route extends RouteId = RouteId>(props: LinkProps<Route>) {
   const {
     route,
@@ -77,6 +89,9 @@ export function Link<Route extends RouteId = RouteId>(props: LinkProps<Route>) {
   );
 }
 
+/**
+ * Returns true when an anchor click should remain native browser behavior.
+ */
 export function shouldPreserveBrowserBehavior(
   event: MouseEvent<HTMLAnchorElement>,
   href: string,
