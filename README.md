@@ -4,7 +4,9 @@
 
 Cookbook Router is a typed, SSR-ready routing framework built on top of `@cookbook/pathkit`. The repository contains a framework-agnostic runtime, React bindings, and a CLI that generates TypeScript contracts and route manifests from route definitions.
 
-Live Example: [https://the-cookbook.github.io/cookbook-router/overview](https://the-cookbook.github.io/cookbook-router/overview)
+**Live Example**: [https://the-cookbook.github.io/cookbook-router/overview](https://the-cookbook.github.io/cookbook-router/overview)
+
+**API documentation**: [https://the-cookbook.github.io/cookbook-router-docs/](https://the-cookbook.github.io/cookbook-router-docs/)
 
 ## Table of contents
 
