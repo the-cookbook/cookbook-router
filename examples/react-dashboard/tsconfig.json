@@ -10,7 +10,8 @@
       "@cookbook/router-react/*": ["../../packages/router-react/src/*"],
       "@/*": ["app/*"]
     },
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "app",

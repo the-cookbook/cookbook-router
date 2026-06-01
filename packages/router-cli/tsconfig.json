@@ -4,11 +4,11 @@
     "rootDir": "../..",
     "outDir": "dist",
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
-    "baseUrl": ".",
     "paths": {
       "@cookbook/router": ["../router/src/index.ts"],
       "@cookbook/router/*": ["../router/src/*"]
-    }
+    },
+    "types": ["node"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["dist", "node_modules"]
