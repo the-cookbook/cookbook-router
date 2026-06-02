@@ -28,6 +28,45 @@ describe('NavLink', () => {
     expect(getByText('settings').getAttribute('aria-current')).toBe('page');
   });
 
+  it('marks a local href as active', async () => {
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        { id: 'home', path: '/', component: Page },
+        { id: 'settings', path: '/settings', component: Page },
+      ] as const),
+      initialEntries: ['/settings'],
+    });
+    await router.resolveCurrent();
+
+    const { getByText } = render(
+      <RouterProvider router={router}>
+        <NavLink href="/settings">settings href</NavLink>
+      </RouterProvider>,
+    );
+
+    expect(getByText('settings href').getAttribute('href')).toBe('/settings');
+    expect(getByText('settings href').getAttribute('aria-current')).toBe('page');
+  });
+
+  it('marks a same-origin absolute href as active', async () => {
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        { id: 'home', path: '/', component: Page },
+        { id: 'settings', path: '/settings', component: Page },
+      ] as const),
+      initialEntries: ['/settings'],
+    });
+    await router.resolveCurrent();
+
+    const { getByText } = render(
+      <RouterProvider router={router}>
+        <NavLink href={`${window.location.origin}/settings`}>absolute settings href</NavLink>
+      </RouterProvider>,
+    );
+
+    expect(getByText('absolute settings href').getAttribute('aria-current')).toBe('page');
+  });
+
   it('passes active state to render prop children', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'home', path: '/', component: Page }] as const),

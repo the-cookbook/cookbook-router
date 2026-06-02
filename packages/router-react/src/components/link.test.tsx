@@ -114,6 +114,27 @@ describe('Link', () => {
     );
   });
 
+  it('preserves native behavior for explicit same-origin hrefs without a route id', async () => {
+    const router = createRouter();
+    await router.resolveCurrent();
+    const navigate = vi.spyOn(router.navigate, 'to');
+
+    const { getByText } = render(
+      <RouterProvider router={router}>
+        <Link href="/users/3">native local href</Link>
+        <LocationView />
+      </RouterProvider>,
+    );
+
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+    const allowed = getByText('native local href').dispatchEvent(event);
+
+    expect(allowed).toBe(true);
+    expect(event.defaultPrevented).toBe(false);
+    expect(navigate).not.toHaveBeenCalled();
+    expect(getByText('/')).toBeTruthy();
+  });
+
   it('modifier and external clicks preserve browser behavior', async () => {
     const router = createRouter();
     await router.resolveCurrent();

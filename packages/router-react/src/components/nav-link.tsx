@@ -1,8 +1,8 @@
 import type { AnchorHTMLAttributes, ReactNode } from 'react';
 import type { HrefOptions, InterceptInput, RouteId } from '@cookbook/router';
 import { Link } from './link';
-import { useHref } from '../hooks/use-href';
 import { useLocation } from '../hooks/use-location';
+import { useRouter } from '../hooks/use-router';
 
 /** Render props supplied to `NavLink` children. */
 export interface NavLinkRenderProps {
@@ -29,6 +29,7 @@ export interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
 > {
   readonly route?: Route;
   readonly to?: Route;
+  readonly href?: string;
   readonly params?: HrefOptions<Route>['params'];
   readonly search?: HrefOptions<Route>['search'];
   readonly hash?: HrefOptions<Route>['hash'];
@@ -52,6 +53,7 @@ export function NavLink<Route extends RouteId = RouteId>(props: NavLinkProps<Rou
     params,
     search,
     hash,
+    href: explicitHref,
     end,
     children,
     intercept,
@@ -61,11 +63,13 @@ export function NavLink<Route extends RouteId = RouteId>(props: NavLinkProps<Rou
   } = props;
   const routeId = route ?? to;
 
-  if (!routeId) {
-    throw new Error('NavLink requires either route or to.');
+  if (!routeId && !explicitHref) {
+    throw new Error('NavLink requires route, to, or href.');
   }
 
-  const href = useHref(routeId, createHrefOptions<Route>(params, search, hash));
+  const router = useRouter();
+  const href =
+    explicitHref ?? router.href(routeId as Route, createHrefOptions<Route>(params, search, hash));
   const location = useLocation();
   const isActive = isNavLinkActive(location.href, location.pathname, href, end);
   const renderedChildren = typeof children === 'function' ? children({ isActive }) : children;
@@ -73,7 +77,8 @@ export function NavLink<Route extends RouteId = RouteId>(props: NavLinkProps<Rou
   return (
     <Link
       {...linkProps}
-      route={routeId}
+      {...(routeId ? { route: routeId } : {})}
+      {...(explicitHref ? { href: explicitHref } : {})}
       {...createLinkOptions<Route>(params, search, hash, intercept, context, preventScrollReset)}
       aria-current={isActive ? 'page' : linkProps['aria-current']}
     >
@@ -100,17 +105,46 @@ function isNavLinkActive(
   targetHref: string,
   end: NavLinkEnd | undefined,
 ): boolean {
+  const normalizedTargetHref = normalizeActiveHref(targetHref);
+
+  if (normalizedTargetHref === undefined) {
+    return false;
+  }
+
   if (!end) {
     return (
-      currentHref === targetHref || currentPathname.startsWith(withoutSearchOrHash(targetHref))
+      currentHref === normalizedTargetHref ||
+      currentPathname.startsWith(withoutSearchOrHash(normalizedTargetHref))
     );
   }
 
   if (typeof end === 'object' && end.search === 'ignore') {
-    return stripSearch(currentHref) === stripSearch(targetHref);
+    return stripSearch(currentHref) === stripSearch(normalizedTargetHref);
   }
 
-  return currentHref === targetHref;
+  return currentHref === normalizedTargetHref;
+}
+
+function normalizeActiveHref(href: string): string | undefined {
+  if (!href) {
+    return undefined;
+  }
+
+  if (!href.startsWith('http://') && !href.startsWith('https://')) {
+    return href;
+  }
+
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+
+  const url = new URL(href, window.location.href);
+
+  if (url.origin !== window.location.origin) {
+    return undefined;
+  }
+
+  return `${url.pathname}${url.search}${url.hash}`;
 }
 
 function withoutSearchOrHash(href: string): string {

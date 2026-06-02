@@ -56,15 +56,16 @@ export function Navigation({ items }: { items: NavigationItem[] }) {
             if (item.href) {
               return (
                 <SidebarMenuItem key={item.title}>
-                  <a href={item.href}>
+                  <NavLink href={item.href}>
                     <SidebarMenuButton tooltip={item.title} className="my-1">
                       {item.icon}
                       <span>{item.title}</span>
                     </SidebarMenuButton>
-                  </a>
+                  </NavLink>
                 </SidebarMenuItem>
               );
             }
+
             return (
               <SidebarMenuItem key={item.title}>
                 <NavLink {...item.link}>

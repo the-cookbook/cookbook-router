@@ -68,11 +68,11 @@ export function Link<Route extends RouteId = RouteId>(props: LinkProps<Route>) {
       return;
     }
 
-    event.preventDefault();
-
     if (!routeId) {
       return;
     }
+
+    event.preventDefault();
 
     if (replace) {
       await navigate.replace(routeId, hrefOptions);

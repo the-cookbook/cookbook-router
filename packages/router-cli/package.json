@@ -41,6 +41,13 @@
     },
     "./package.json": "./package.json"
   },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "rollup -c ../../rollup.config.mjs",
     "lint": "eslint src --ext .ts,.tsx",
@@ -53,12 +60,5 @@
     "@cookbook/router": "workspace:*"
   },
   "peerDependencies": {},
-  "devDependencies": {},
-  "engines": {
-    "node": ">=18"
-  },
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
-  }
+  "devDependencies": {}
 }
