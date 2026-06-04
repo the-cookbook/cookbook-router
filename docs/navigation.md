@@ -1,6 +1,6 @@
 # Navigation
 
-Cookbook Router navigation is route-ID based. Paths declare URL matching; route IDs drive href generation, links, programmatic navigation, redirects, and generated type inference.
+Cookbook Router navigation is route-ID based. Paths declare URL matching; route IDs drive href generation, links, programmatic navigation, redirects, and generated type inference. URLKit builds and parses params, search, and hash for these route operations.
 
 ## Table of contents
 
@@ -9,6 +9,7 @@ Cookbook Router navigation is route-ID based. Paths declare URL matching; route 
 - [React links](#react-links)
 - [Active links](#active-links)
 - [Search and hash](#search-and-hash)
+- [URL options](#url-options)
 - [Redirects](#redirects)
 - [Basename](#basename)
 - [Interception](#interception)
@@ -23,7 +24,7 @@ Use `router.href()` to generate a URL from a route ID.
 ```ts
 const href = router.href({
   route: 'users.show',
-  params: { id: '42' },
+  params: { id: 42 },
   search: { tab: 'settings' },
   hash: 'profile',
 });
@@ -35,11 +36,13 @@ Generated URL:
 /users/42?tab=settings#profile
 ```
 
+`{id:int}` and `{value:number}` params use numbers in generated contracts and router state. Custom constraints remain strings unless URLKit supports typed static inference for the custom constraint.
+
 The two-argument form is also supported:
 
 ```ts
 const href = router.href('users.show', {
-  params: { id: '42' },
+  params: { id: 42 },
 });
 ```
 
@@ -48,7 +51,7 @@ Use `router.resolve()` when you need a parsed `RouterLocation`.
 ```ts
 const location = router.resolve({
   route: 'users.show',
-  params: { id: '42' },
+  params: { id: 42 },
 });
 
 location.pathname; // /users/42
@@ -60,12 +63,12 @@ location.href; // /users/42
 ```ts
 await router.navigate.to({
   route: 'users.show',
-  params: { id: '42' },
+  params: { id: 42 },
 });
 
 await router.navigate.replace({
   route: 'users.show',
-  params: { id: '43' },
+  params: { id: 43 },
 });
 
 router.navigate.back();
@@ -84,7 +87,7 @@ router.navigate.go(-2);
 ```tsx
 import { Link } from '@cookbook/router-react';
 
-<Link to="users.show" params={{ id: '42' }} search={{ tab: 'settings' }} hash="profile">
+<Link to="users.show" params={{ id: 42 }} search={{ tab: 'settings' }} hash="profile">
   User 42
 </Link>;
 ```
@@ -143,7 +146,27 @@ router.href({ route: 'articles.show', params: { slug }, hash: '#comments' });
 
 Both produce `#comments`.
 
-Undefined and null search values are omitted from generated URLs.
+Undefined and null search values are omitted from generated URLs. Search and hash are parsed through URLKit in `router.match()`, `router.resolve()`, middleware contexts, lifecycle contexts, and React hooks.
+
+### URL options
+
+URL options can be configured globally on the router, per route, or per call/hook/component. Supported public options include `arrayFormat`, `invalidSearch`, and `invalidHash`.
+
+```ts
+const router = createRouter({
+  routes,
+  url: { arrayFormat: 'repeat' },
+});
+
+const href = router.href('products', {
+  search: { tags: ['router', 'typescript'] },
+  url: { arrayFormat: 'comma' },
+});
+```
+
+Precedence is per-call, then route-level `url`, then router-level `url`, then URLKit defaults. `repeat` writes `?tags=router&tags=typescript`; `comma` writes `?tags=router%2Ctypescript`.
+
+`invalidSearch` and `invalidHash` support `'recover'`, `'no-match'`, and `'error'`. The default is `'recover'`: invalid search/hash values are treated as missing, and descriptor defaults apply when declared. `'no-match'` rejects the route candidate and continues fallback/not-found matching. `'error'` keeps the path route matched and exposes the parse failure through router error state.
 
 ## Redirects
 

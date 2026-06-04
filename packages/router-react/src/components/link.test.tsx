@@ -15,6 +15,12 @@ function createRouter() {
     routes: defineRoutes([
       { id: 'home', path: '/', component: LocationView },
       { id: 'user', path: '/users/{id:int}', component: LocationView },
+      {
+        id: 'products',
+        path: '/products',
+        search: { tags: { value: 'string', type: 'many', optional: true } },
+        component: LocationView,
+      },
     ] as const),
   });
 }
@@ -33,6 +39,35 @@ describe('Link', () => {
     );
 
     expect(getByText('profile').getAttribute('href')).toBe('/users/7?tab=settings#top');
+  });
+
+  it('forwards URL options to href generation and navigation', async () => {
+    const router = createRouter();
+    await router.resolveCurrent();
+    const navigate = vi.spyOn(router.navigate, 'to');
+
+    const { getByText } = render(
+      <RouterProvider router={router}>
+        <Link
+          route="products"
+          search={{ tags: ['router', 'typescript'] }}
+          url={{ arrayFormat: 'comma' }}
+        >
+          products
+        </Link>
+      </RouterProvider>,
+    );
+
+    expect(getByText('products').getAttribute('href')).toBe('/products?tags=router%2Ctypescript');
+
+    fireEvent.click(getByText('products'));
+
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith('products', {
+        search: { tags: ['router', 'typescript'] },
+        url: { arrayFormat: 'comma' },
+      }),
+    );
   });
 
   it('supports the to alias for lower-boilerplate links', async () => {

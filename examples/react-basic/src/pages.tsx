@@ -16,7 +16,7 @@ export function RootLayout() {
         <NavLink to="home" end>
           Home
         </NavLink>
-        <NavLink to="users.show" params={{ id: '42' }} search={{ tab: 'settings' }} hash="profile">
+        <NavLink to="users.show" params={{ id: 42 }} search={{ tab: 'settings' }} hash="profile">
           Ada Lovelace
         </NavLink>
       </nav>
@@ -33,8 +33,15 @@ export function HomePage() {
         This page demonstrates typed route IDs, params, search params, hash values, middleware, and
         lifecycle hooks.
       </p>
-      <Link to="users.show" params={{ id: '7' }} search={{ tab: 'profile' }} hash="security">
+      <Link to="users.show" params={{ id: 7 }} search={{ tab: 'profile' }} hash="security">
         Open user 7 security tab
+      </Link>
+      <Link
+        to="products"
+        search={{ tags: ['router', 'typescript'] }}
+        url={{ arrayFormat: 'repeat' }}
+      >
+        Open products with repeated tags
       </Link>
     </section>
   );
@@ -70,6 +77,21 @@ export function UserPage() {
       >
         Replace with settings
       </button>
+    </section>
+  );
+}
+
+export function ProductsPage() {
+  const search = useSearchParams('products', { url: { arrayFormat: 'repeat' } });
+  const tags = Array.isArray(search.tags) ? search.tags.join(', ') : 'none';
+
+  return (
+    <section className="panel stack">
+      <h1>Products</h1>
+      <p>Tags: {tags}</p>
+      <Link to="products" search={{ tags: ['docs', 'examples'] }}>
+        Route-level comma array format
+      </Link>
     </section>
   );
 }

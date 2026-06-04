@@ -458,7 +458,7 @@ function ArticleActions(props: { readonly article: Article; readonly referrer: s
       <Link
         to="blog.articles.show"
         params={{ slug: props.article.slug }}
-        search={{ filters: 'call-site', ref: 'call-site' }}
+        search={{ filters: ['call-site'], ref: 'call-site' }}
         hash="share"
         intercept={{ slot: 'modal', component: ArticleModal }}
         context={{ source: 'call-site' }}
@@ -517,7 +517,7 @@ function ArticleCard(props: { readonly article: Article; readonly referrer: stri
         <Link
           to="blog.articles.show"
           params={{ slug: props.article.slug }}
-          search={{ filters: 'call-site', ref: 'call-site' }}
+          search={{ filters: ['call-site'], ref: 'call-site' }}
           hash="share"
           intercept={{ slot: 'modal', component: ArticleModal }}
           context={{ source: 'call-site' }}

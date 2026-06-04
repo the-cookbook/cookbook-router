@@ -5,14 +5,14 @@ export interface RouteParams {
   entry: {};
   gallery: {};
   'gallery.index': {};
-  'photos.show': { id: string };
+  'photos.show': { id: number };
 }
 
 export interface RouteSearch {
   entry: {};
   gallery: {};
   'gallery.index': {};
-  'photos.show': { source?: string | readonly string[] };
+  'photos.show': { source?: string };
 }
 
 export interface RouteHash {

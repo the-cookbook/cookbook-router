@@ -10,6 +10,7 @@ import type {
 describe('react-ssr generated contracts', () => {
   it('exposes generated route IDs, params, hash values, and paths', () => {
     expectTypeOf<RouteParams['articles.show']>().toEqualTypeOf<{ slug: string }>();
+    expectTypeOf<RouteParams['ssr.users.show']>().toEqualTypeOf<{ id: number }>();
     expectTypeOf<RouteHash['articles.show']>().toEqualTypeOf<'comments' | 'summary'>();
     expectTypeOf<
       RoutePaths['articles.show']
@@ -20,10 +21,12 @@ describe('react-ssr generated contracts', () => {
   it('react hooks read generated router contracts globally', () => {
     function assertHookInference() {
       const params = useParams('articles.show');
+      const userParams = useParams('ssr.users.show');
       const search = useSearchParams('articles.show');
       const hash = useHashParams('articles.show');
 
       expectTypeOf(params).toEqualTypeOf<{ slug: string }>();
+      expectTypeOf(userParams).toEqualTypeOf<{ id: number }>();
       expectTypeOf(search).toEqualTypeOf<{ preview?: string }>();
       expectTypeOf(hash).toEqualTypeOf<'comments' | 'summary' | null>();
     }

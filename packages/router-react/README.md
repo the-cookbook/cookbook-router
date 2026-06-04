@@ -66,7 +66,7 @@ function Layout() {
   return (
     <main>
       <Link to="home">Home</Link>
-      <Link to="users.show" params={{ id: '42' }}>
+      <Link to="users.show" params={{ id: 42 }}>
         User 42
       </Link>
       <Outlet />
@@ -76,6 +76,7 @@ function Layout() {
 
 function UserPage() {
   const params = useParams('users.show');
+  // params.id is a number for `{id:int}`.
   return <h1>User {params.id}</h1>;
 }
 ```
@@ -151,6 +152,7 @@ interface LinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly params?: HrefOptions<Route>['params'];
   readonly search?: HrefOptions<Route>['search'];
   readonly hash?: HrefOptions<Route>['hash'];
+  readonly url?: HrefOptions<Route>['url'];
   readonly intercept?: InterceptInput;
   readonly context?: HrefOptions<Route>['context'];
   readonly preventScrollReset?: boolean;
@@ -159,11 +161,19 @@ interface LinkProps<Route extends RouteId = RouteId> extends Omit<
 }
 ```
 
-Use `to` for typed internal routes and `href` for literal anchor URLs.
+Use `to` for typed internal routes and `href` for literal anchor URLs. Params, search, and hash are URLKit-backed; `{id:int}` params are numbers. `url` accepts per-component URLKit options such as `arrayFormat`, `invalidSearch`, and `invalidHash`, overriding route-level and router-level defaults.
 
 ```tsx
 <Link to="articles.show" params={{ slug: 'typed-routing' }} hash="comments">
   Read article
+</Link>
+
+<Link
+  to="products"
+  search={{ tags: ['router', 'typescript'] }}
+  url={{ arrayFormat: 'comma' }}
+>
+  Products
 </Link>
 ```
 
@@ -185,6 +195,7 @@ interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly params?: HrefOptions<Route>['params'];
   readonly search?: HrefOptions<Route>['search'];
   readonly hash?: HrefOptions<Route>['hash'];
+  readonly url?: HrefOptions<Route>['url'];
   readonly replace?: boolean;
   readonly intercept?: InterceptInput;
   readonly context?: HrefOptions<Route>['context'];
@@ -204,7 +215,7 @@ interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
 </NavLink>
 ```
 
-`end={true}` requires the full generated href to match, including search params. Use `end={{ search: 'ignore' }}` to match the route path while ignoring query-string differences.
+`end={true}` requires the full generated href to match, including search params. Use `end={{ search: 'ignore' }}` to match the route path while ignoring query-string differences. Route-id targets use the same `url` options as `Link` when generating the active href.
 
 ### `Outlet`
 
@@ -249,8 +260,10 @@ A slot can render a matched slot route, fallback, intercepted destination, route
 | `useMatches()`                                  | Return the current matched branch.                        |
 | `useNavigation()`                               | Return the navigation state.                              |
 | `useParams(routeId?)`                           | Read route params.                                        |
-| `useSearchParams(routeId?)`                     | Read parsed search params.                                |
-| `useHashParams(routeId?)`                       | Read the hash without `#`, or `null`.                     |
+| `useSearchParams(routeId?, options?)`           | Read URLKit-parsed search params.                         |
+| `useSearch(routeId?, options?)`                 | Alias for `useSearchParams`.                              |
+| `useHashParams(routeId?, options?)`             | Read URLKit-parsed hash, or `null`.                       |
+| `useHash(routeId?, options?)`                   | Alias for `useHashParams`.                                |
 | `useOutletContext()`                            | Read nearest outlet or slot context.                      |
 | `useBlocker({ when, message? })`                | Block in-app navigation and browser unload while enabled. |
 
@@ -278,7 +291,20 @@ function ArticleToolbar() {
 }
 ```
 
-`useBlocker()` blocks in-app router transitions and browser unload while enabled.
+URL options can be overridden per hook/component call. Precedence is: per-call hook/component options, then route-level `url`, then router-level `url`, then URLKit defaults. `RouterProvider` does not define separate URL defaults; configure framework-agnostic defaults on the core router.
+
+```tsx
+const href = useHref('products', {
+  search: { tags: ['router', 'typescript'] },
+  url: { arrayFormat: 'comma' },
+});
+
+const search = useSearchParams('products', {
+  url: { arrayFormat: 'repeat' },
+});
+```
+
+`useBlocker()` blocks in-app router transitions and browser unload while enabled. Browsers control the unload confirmation text; do not rely on custom browser unload messages.
 
 ## Interception and slots
 

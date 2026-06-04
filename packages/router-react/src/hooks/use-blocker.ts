@@ -15,8 +15,9 @@ export interface BlockerState {
 /**
  * Registers a router blocker while `when` is truthy.
  *
- * In the browser, `message` is also used for unload protection. Internal router
- * navigation is cancelled when the blocker returns false.
+ * For in-app router navigation, `message` is passed to `window.confirm` when
+ * available. For browser unload, browsers show their own generic confirmation
+ * text; custom unload text is not guaranteed or promised.
  */
 export function useBlocker(options: UseBlockerOptions): BlockerState {
   const { router } = useRouterContext();

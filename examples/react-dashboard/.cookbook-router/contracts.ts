@@ -27,9 +27,9 @@ export interface RouteSearch {
   'entry.redirect': {};
   create: {};
   'new-message': {};
-  overview: { page?: string | readonly string[]; pageSize?: string | readonly string[]; visitors?: string | readonly string[] };
+  overview: { page: number; pageSize?: number; visitors?: string };
   users: {};
-  'users.index': { page?: string | readonly string[]; pageSize?: string | readonly string[]; status?: string | readonly string[]; role?: string | readonly string[]; q?: string | readonly string[] };
+  'users.index': { page?: number; pageSize?: number; status: string; role?: string; q?: string };
   'users.details': {};
   documents: {};
   'documents.index': {};
@@ -39,7 +39,7 @@ export interface RouteSearch {
   policies: {};
   'terms-of-service': {};
   'privacy-policy': {};
-  login: { redirect?: string | readonly string[] };
+  login: { redirect?: string };
   'not-found': {};
 }
 

@@ -1,44 +1,52 @@
 # Search and hash
 
-Search and hash declarations describe URL state for generated contracts. Runtime URL serialization is handled by router href generation and navigation.
+Search and hash declarations describe URL state for runtime parsing, href/navigation building, and generated contracts. `@cookbook/router` delegates this URL-state work to `@cookbook/urlkit`.
 
 ## Table of contents
 
 - [Declare search fields](#declare-search-fields)
 - [Generate search URLs](#generate-search-urls)
 - [Read search values](#read-search-values)
+- [Array format](#array-format)
+- [Invalid search params](#invalid-search-params)
+- [Unknown search params](#unknown-search-params)
 - [Declare hash values](#declare-hash-values)
 - [Generate hash URLs](#generate-hash-urls)
 - [Read hash values](#read-hash-values)
 - [Runtime behavior](#runtime-behavior)
+- [Static extraction](#static-extraction)
 - [Best practices](#best-practices)
 
 ## Declare search fields
+
+Use URLKit-compatible static descriptors in route definitions.
 
 ```tsx
 {
   id: 'articles.index',
   path: '/articles',
   search: {
-    query: { type: 'one', optional: true },
-    tag: { type: 'one', optional: true },
-    filters: { type: 'many', optional: true },
+    query: { value: 'string', optional: true },
+    page: { value: 'int', default: 1 },
+    filters: { value: 'string', type: 'many', optional: true },
+    featured: { value: 'boolean', optional: true },
   },
   component: ArticlesPage,
 }
 ```
 
-The generator uses the keys and cardinality of `search` to emit route-specific fields:
+The generated contract and runtime state follow URLKit parsed-value semantics:
 
 ```ts
-{
+type ArticlesSearch = {
   query?: string;
-  tag?: string;
-  filters?: string | readonly string[];
-}
+  page: number;
+  filters?: readonly string[];
+  featured?: boolean;
+};
 ```
 
-`type: 'one'` generates a single `string` value. `type: 'many'` generates `string | readonly string[]` so callers may pass either one value or repeated values.
+`int` and `number` parse to `number`; `boolean` parses to `boolean`; `type: 'many'` parses repeated values according to the effective `arrayFormat`.
 
 ## Generate search URLs
 
@@ -47,16 +55,16 @@ router.href({
   route: 'articles.index',
   search: {
     query: 'routing',
-    tag: 'typescript',
+    page: 2,
     filters: ['ssr', 'react'],
   },
 });
 ```
 
-Generated URL:
+With the default repeated-key format, the generated URL is:
 
 ```txt
-/articles?filters=ssr&filters=react&query=routing&tag=typescript
+/articles?filters=ssr&filters=react&page=2&query=routing
 ```
 
 Undefined and null search values are omitted.
@@ -74,7 +82,104 @@ export function ArticlesPage() {
 }
 ```
 
-`useSearchParams()` parses the current query string. When generated contracts are registered, the returned object is typed for the route ID. Parsing is URL-faithful: a key that appears once is returned as a string, and a key that appears multiple times is returned as `readonly string[]`. The route schema does not coerce `type: 'many'` into an array-only runtime value and does not reject repeated values for `type: 'one'`.
+`useSearchParams()` and `useSearch()` read URLKit-parsed search state from the current router match. Router middleware, lifecycle hooks, `router.match()`, and `router.resolve()` receive the same parsed values.
+
+## Array format
+
+Configure `arrayFormat` globally, per route, or per call/hook/component.
+
+```ts
+const router = createRouter({
+  routes,
+  url: { arrayFormat: 'repeat' },
+});
+```
+
+```tsx
+{
+  id: 'products',
+  path: '/products',
+  search: {
+    tags: { value: 'string', type: 'many', optional: true },
+  },
+  url: { arrayFormat: 'comma' },
+}
+```
+
+```tsx
+<Link to="products" search={{ tags: ['router', 'typescript'] }} url={{ arrayFormat: 'repeat' }}>
+  Products
+</Link>
+```
+
+Precedence is:
+
+1. per-call, hook, or component `url`
+2. route-level `url`
+3. router-level `url`
+4. URLKit default
+
+`repeat` writes `?tags=router&tags=typescript`. `comma` writes `?tags=router%2Ctypescript` and parses `?tags=router,typescript` as `['router', 'typescript']`.
+
+## Invalid search params
+
+Search params are commonly edited by users or left behind by old links. Cookbook Router therefore exposes `invalidSearch` to control how URLKit-backed search parsing handles malformed declared values.
+
+```ts
+const router = createRouter({
+  routes,
+  url: {
+    arrayFormat: 'repeat',
+    invalidSearch: 'recover',
+  },
+});
+```
+
+Supported modes are:
+
+| Mode         | Behavior                                                                                          |
+| ------------ | ------------------------------------------------------------------------------------------------- |
+| `'recover'`  | Keep the route matched. Treat invalid values as missing; descriptor defaults apply when declared. |
+| `'no-match'` | Reject that route candidate and continue normal fallback/not-found matching.                      |
+| `'error'`    | Keep the path route matched and surface the parse failure through router error state.             |
+
+The default is `'recover'`. This applies to optional, defaulted, and required search fields because search is URL state, not route identity.
+
+For example:
+
+```ts
+search: {
+  page: { value: 'number', default: 1, optional: true },
+  pageSize: { value: 'number', optional: true },
+}
+```
+
+With `invalidSearch: 'recover'`, `/overview?page=a&pageSize=10` parses as:
+
+```ts
+{ page: 1, pageSize: 10 }
+```
+
+With `invalidSearch: 'error'`, the same URL keeps the path route matched and exposes the parse failure through router error state. With `invalidSearch: 'no-match'`, that route candidate is rejected and normal fallback/not-found matching continues.
+
+## Invalid hash values
+
+`invalidHash` uses the same policy model as `invalidSearch`:
+
+```ts
+createRouter({
+  routes,
+  url: {
+    invalidHash: 'recover',
+  },
+});
+```
+
+With `recover`, invalid hash values are treated as missing and descriptor defaults apply when present. With `error`, the path route remains matched and the parse failure is exposed through router error state. With `no-match`, the route candidate is rejected and fallback/not-found matching continues.
+
+## Unknown search params
+
+Route `search` descriptors define the route-owned search state. Unknown search params are not part of the generated route contract. URLKit-backed parsing may reject, ignore, or preserve unknown values depending on the URLKit options currently exposed by the router. The v1 public router option model exposes `arrayFormat`, `invalidSearch`, and `invalidHash`; add support for additional URLKit options only when the router API intentionally supports them.
 
 ## Declare hash values
 
@@ -132,20 +237,33 @@ export function ArticlePage() {
 }
 ```
 
-The hook returns the hash without the leading `#`, or `null`.
+`useHashParams()` and `useHash()` return the parsed hash value without the leading `#`, or `null` when no hash is present.
 
 ## Runtime behavior
 
-- Search values are serialized with `URLSearchParams`-style URL encoding.
-- Search values are read back as strings.
+- URLKit parses path params, search, and hash for matches and resolves.
+- URLKit builds hrefs for params, search, and hash.
 - Hash values are normalized to include one leading `#` in generated hrefs.
-- Hash changes are part of `RouterLocation` and browser history updates.
+- Invalid hash values fail through URLKit-backed validation.
 - Search and hash are independent from route params.
+
+## Static extraction
+
+Route files consumed by `@cookbook/router-cli` must remain statically analyzable. Use static descriptors such as:
+
+```ts
+search: {
+  page: { value: 'int', default: 1 },
+  tags: { value: 'string', type: 'many' },
+}
+```
+
+Do not use URLKit runtime builders such as `int().default(1)` in CLI-consumed route files unless the CLI explicitly supports them.
 
 ## Best practices
 
 - Put shareable UI state in search or hash, not outlet context.
 - Use params for required path identity and search for optional filters/sorting.
 - Use hash for in-page sections, tabs, or share anchors.
-- Keep search values string-friendly. Serialize complex values yourself before navigation.
-- Use `type: 'many'` for repeated query params and normalize values in UI code when necessary.
+- Prefer static URL descriptors so runtime, generated contracts, and CLI workflows stay aligned.
+- Configure `arrayFormat` once at the router level when possible; override at route or call sites only when a route has a different URL contract.

@@ -1,6 +1,6 @@
 # Routing
 
-Routes describe URL matching, route identity, rendering hierarchy, metadata, redirects, slots, intercepts, middleware, lifecycle hooks, and generated contract inputs.
+Routes describe URL matching, route identity, rendering hierarchy, metadata, redirects, slots, intercepts, middleware, lifecycle hooks, and generated contract inputs. URL state is parsed and built by `@cookbook/urlkit`; Cookbook Router owns the route tree and routing behavior around that URL state.
 
 ## Table of contents
 
@@ -37,7 +37,8 @@ interface RouteDefinition {
   readonly intercepts?: RouteIntercepts;
   readonly redirect?: RouteRedirect;
   readonly search?: RouteSearchSchema;
-  readonly hash?: readonly string[];
+  readonly hash?: RouteHashSchema;
+  readonly url?: RouterUrlOptions;
   readonly meta?: RouteMeta;
   readonly loading?: RouteComponent;
   readonly errorFallback?: RouteComponent;
@@ -88,24 +89,25 @@ type RouteIntercepts = Readonly<Record<string, RouteInterceptConfig>>;
 
 ## Field reference
 
-| Field              | Purpose                                                                                                     |
-| ------------------ | ----------------------------------------------------------------------------------------------------------- |
-| `id`               | Required stable route ID. Used for navigation, contracts, diagnostics, and metadata lookup.                 |
-| `path`             | URL pattern. Child paths are relative unless they start with `/`.                                           |
-| `index`            | Marks a child as the default route for its parent path. Index routes must not define `path`.                |
-| `component`        | Page component rendered for this route.                                                                     |
-| `layout.component` | Layout wrapper component. Layouts render child branches through `<Outlet />`.                               |
-| `layout.slots`     | Named layout regions rendered through `<Slot name="..." />`.                                                |
-| `children`         | Primary child route branch.                                                                                 |
-| `intercepts`       | Configured source-route interception rules keyed by target slot name.                                       |
-| `redirect`         | Internal or external redirect target. Redirect-only routes do not need components.                          |
-| `search`           | Search contract source. Use `{ type: 'one' }` for single values and `{ type: 'many' }` for repeated values. |
-| `hash`             | Allowed hash fragment values for generated contracts.                                                       |
-| `meta`             | Arbitrary metadata preserved in generated contracts and runtime route definitions.                          |
-| `loading`          | Route-level React Suspense fallback component rendered while the route subtree is loading.                  |
-| `errorFallback`    | Route-level React error fallback component rendered when the route subtree throws during rendering.         |
-| `lifecycle`        | Route-level transition hooks.                                                                               |
-| `middleware`       | Route-level middleware.                                                                                     |
+| Field              | Purpose                                                                                                                            |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | Required stable route ID. Used for navigation, contracts, diagnostics, and metadata lookup.                                        |
+| `path`             | URL pattern. Child paths are relative unless they start with `/`.                                                                  |
+| `index`            | Marks a child as the default route for its parent path. Index routes must not define `path`.                                       |
+| `component`        | Page component rendered for this route.                                                                                            |
+| `layout.component` | Layout wrapper component. Layouts render child branches through `<Outlet />`.                                                      |
+| `layout.slots`     | Named layout regions rendered through `<Slot name="..." />`.                                                                       |
+| `children`         | Primary child route branch.                                                                                                        |
+| `intercepts`       | Configured source-route interception rules keyed by target slot name.                                                              |
+| `redirect`         | Internal or external redirect target. Redirect-only routes do not need components.                                                 |
+| `search`           | URLKit-compatible static search descriptor for parsed search state and generated contracts.                                        |
+| `hash`             | URLKit-compatible static hash descriptor or allowed hash fragment values.                                                          |
+| `url`              | Route-level URL options such as `arrayFormat`, `invalidSearch`, and `invalidHash`; overrides router-level defaults for this route. |
+| `meta`             | Arbitrary metadata preserved in generated contracts and runtime route definitions.                                                 |
+| `loading`          | Route-level React Suspense fallback component rendered while the route subtree is loading.                                         |
+| `errorFallback`    | Route-level React error fallback component rendered when the route subtree throws during rendering.                                |
+| `lifecycle`        | Route-level transition hooks.                                                                                                      |
+| `middleware`       | Route-level middleware.                                                                                                            |
 
 ## Path composition
 
@@ -204,7 +206,7 @@ The layout affects rendering but contributes no URL segment. Pathless routes are
 
 ## Params
 
-Path params come from `@cookbook/pathkit` patterns.
+Path params use PathKit path-pattern syntax and URLKit parsed-param semantics. PathKit remains the path-pattern primitive beneath URLKit, while URLKit owns parsing, validation, URL matching, and href path building for route URL contracts.
 
 ```tsx
 {
@@ -214,46 +216,53 @@ Path params come from `@cookbook/pathkit` patterns.
 }
 ```
 
-Generated params are currently typed as strings, including constrained params:
+Generated params and runtime match state use parsed URLKit values:
 
-| Pattern                    | Generated value type | Runtime behavior                   |
-| -------------------------- | -------------------- | ---------------------------------- |
-| `{id}`                     | `string`             | Captures a segment.                |
-| `{id:string}`              | `string`             | Captures a string segment.         |
-| `{id:int}`                 | `string`             | Matches integer-shaped URL values. |
-| `{slug:regex([a-z0-9-]+)}` | `string`             | Matches the configured regex.      |
-| `{*path}`                  | `string`             | Captures wildcard path data.       |
+| Pattern                    | Parsed/generated type | Runtime behavior                     |
+| -------------------------- | --------------------- | ------------------------------------ |
+| `{id}`                     | `string`              | Captures a segment.                  |
+| `{id:string}`              | `string`              | Captures a string segment.           |
+| `{id:int}`                 | `number`              | Parses an integer-shaped URL value.  |
+| `{value:number}`           | `number`              | Parses a numeric URL value.          |
+| `{slug:regex([a-z0-9-]+)}` | `string`              | Matches the configured regex.        |
+| `{slug:slug}`              | `string`              | Uses a registered custom constraint. |
+| `{*path}`                  | `string`              | Captures wildcard path data.         |
 
 Duplicate param names in the same parent-to-child branch fail validation.
 
-Custom path constraints let you define reusable validation rules for route params beyond the built-in constraints such as `int`, `string`, and `regex`. Register them with [`pathConstraints`](#pathconstraints) before using them in route paths.
+Custom path constraints let you define reusable validation rules for route params beyond the built-in constraints such as `int`, `number`, `string`, and `regex`. Register them with [`pathConstraints`](#pathconstraints) before using them in route paths so the router can forward them to URLKit before route validation, matching, and href generation. Custom constraints generate `string` params unless URLKit supports typed static inference for the custom constraint.
 
 ## Search, hash, and metadata
 
-Search contracts are generated from the keys of `search`.
+Search contracts are generated from URLKit-compatible static `search` descriptors. Keep descriptors static in route files consumed by the CLI; do not use URLKit runtime builders there unless static extraction explicitly supports them.
 
 ```tsx
 {
   id: 'articles.index',
   path: '/articles',
   search: {
-    query: { type: 'one', optional: true },
-    tag: { type: 'one', optional: true },
-    filters: { type: 'many', optional: true },
+    query: { value: 'string', optional: true },
+    page: { value: 'int', default: 1 },
+    filters: { value: 'string', type: 'many', optional: true },
+  },
+  url: {
+    arrayFormat: 'comma',
   },
   component: ArticlesPage,
 }
 ```
 
-Generated fields follow the declared cardinality:
+Generated fields and runtime state follow URLKit parsing semantics:
 
 ```ts
 type ArticlesSearch = {
   query?: string;
-  tag?: string;
-  filters?: string | readonly string[];
+  page: number;
+  filters?: readonly string[];
 };
 ```
+
+`url.arrayFormat` controls repeated search param parsing and building. Router-level defaults can be set on `createRouter({ url })`; route-level `url` overrides router defaults; per-call, hook, and component `url` options override both.
 
 Hash values become a string union:
 
@@ -312,7 +321,7 @@ Redirect with params, search, and hash:
   path: '/u/{id:int}',
   redirect: {
     route: 'users.show',
-    params: { id: '42' },
+    params: { id: 42 },
     search: { tab: 'profile' },
     hash: 'settings',
   },
@@ -633,9 +642,9 @@ createRouter({ routes, maxRedirectDepth: 20 });
 
 ### `pathConstraints`
 
-Custom path constraints let route params use reusable validation rules beyond the built-in constraints such as `int`, `string`, and `regex`. Create custom constraints with `createConstraint()` and register them through `defineRoutes(..., { pathConstraints })` before using them in route paths.
+Custom path constraints let route params use reusable validation rules beyond the built-in constraints such as `int`, `number`, `string`, and `regex`. Create custom constraints with `createConstraint()` and register them through `defineRoutes(..., { pathConstraints })` before using them in route paths.
 
-`defineRoutes()` validates route patterns immediately, so any custom constraint referenced by a route path must already be registered. For the full constraint API, see the `@cookbook/pathkit` documentation for `createConstraint`.
+`defineRoutes()` validates route patterns immediately, so any custom constraint referenced by a route path must already be registered. Cookbook Router forwards registered constraints to URLKit before descriptor validation, matching, parsing, and href building. For the full constraint API, see the `@cookbook/pathkit` documentation for `createConstraint`.
 
 ```ts
 import { createConstraint, createRouter, defineRoutes } from '@cookbook/router';
@@ -667,7 +676,7 @@ const router = createRouter({
 
 ### `pathOptions.prune`
 
-Path options are forwarded to `@cookbook/pathkit` wrappers and router canonicalization.
+Path options are forwarded to PathKit wrappers and router canonicalization. URL state parsing/building remains owned by URLKit.
 
 Default:
 
@@ -697,7 +706,7 @@ Matching is deterministic:
 3. Index routes are prioritized for their parent path.
 4. Route IDs remain the primary lookup key for navigation and diagnostics.
 
-Matching uses normalized route paths and `@cookbook/pathkit` constraints.
+Matching uses normalized route paths and URLKit-backed route URL contracts. PathKit remains the lower-level path-pattern primitive beneath URLKit.
 
 ## Validation diagnostics
 

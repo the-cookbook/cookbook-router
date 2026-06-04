@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createConstraint } from '@cookbook/router';
 import { sampleRoutes } from '../test-helpers';
 import { generateContracts } from './generate-contracts';
 
@@ -9,10 +10,10 @@ describe('generateContracts', () => {
     expect(output.startsWith('/* eslint-disable */\n')).toBe(true);
     expect(output).toContain('export interface RouteParams');
     expect(output.trimEnd().endsWith('/* eslint-enable */')).toBe(true);
-    expect(output).toContain("'users.show': { id: string };");
+    expect(output).toContain("'users.show': { id: number };");
     expect(output).toContain('tab?: string');
     expect(output).toContain('page?: string');
-    expect(output).toContain('filters?: string | readonly string[]');
+    expect(output).toContain('filters?: readonly string[]');
     expect(output).toContain("'profile' | 'settings'");
     expect(output).toContain("'users.show': '/users/{id:int}';");
     expect(output).toContain('outletContext: RouteOutletContext;');
@@ -59,14 +60,47 @@ describe('generateContracts', () => {
       },
     ] as never);
 
-    expect(output).toContain("'dashboard.sidebar.activity': { itemId: string };");
+    expect(output).toContain("'dashboard.sidebar.activity': { itemId: number };");
     expect(output).toContain("'dashboard.sidebar.activity': '/dashboard/activity/{itemId:int}';");
+  });
+
+  it('infers URLKit parsed params and static search descriptor types', () => {
+    const output = generateContracts([
+      {
+        id: 'products.show',
+        path: '/products/{price:number}',
+        search: {
+          page: { value: 'int', default: 1 },
+          featured: { value: 'boolean', optional: true },
+          tags: { value: 'string', type: 'many' },
+          sort: { value: { type: 'enum', values: ['new', 'top'] }, optional: true },
+        },
+        hash: { type: 'enum', values: ['details', 'reviews'], optional: true },
+      },
+    ]);
+
+    expect(output).toContain("'products.show': { price: number };");
+    expect(output).toContain(
+      "'products.show': { page: number; featured?: boolean; tags: readonly string[]; sort?: 'new' | 'top' };",
+    );
+    expect(output).toContain("'products.show': 'details' | 'reviews' | undefined;");
+  });
+
+  it('keeps custom path constraints as strings in generated params', () => {
+    const output = generateContracts([{ id: 'post.show', path: '/posts/{slug:slug}' }], {
+      pathConstraints: {
+        slug: createConstraint({
+          parse: () => undefined,
+          verify: () => undefined,
+          toRegExp: () => '[a-z0-9-]+',
+        }),
+      },
+    } as never);
+
+    expect(output).toContain("'post.show': { slug: string };");
   });
 
   it('throws for invalid route configuration', () => {
     expect(() => generateContracts([{ id: 'bad', index: true, path: '/bad' }])).toThrow('index');
-    expect(() =>
-      generateContracts([{ id: 'bad', path: '/', search: { query: 'string' } } as never]),
-    ).toThrow('must use');
   });
 });

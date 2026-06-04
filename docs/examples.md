@@ -1,6 +1,6 @@
 # Examples guide
 
-The examples are executable documentation for common routing patterns. Each example has tests and type checks.
+The examples are executable documentation for common routing patterns. Each example has tests and type checks, and they use URLKit-backed parsed params/search/hash behavior.
 
 ## Table of contents
 
@@ -38,14 +38,15 @@ pnpm test:examples
 
 Shows:
 
-- route params
-- search params
-- hash values
+- URLKit-parsed route params, including numeric `{id:int}` values
+- URLKit-parsed search params
+- URLKit-parsed hash values
+- router, route, and React call-site `arrayFormat` behavior
 - middleware redirects
 - lifecycle hooks
 - generated contracts
 
-Use this example when learning the minimal app setup.
+Use this example when learning the minimal app setup and URL option precedence.
 
 ## `react-slots`
 
@@ -67,6 +68,7 @@ Shows:
 - configured intercepts
 - call-site intercepts
 - canonical full-page destination route
+- numeric `{id:int}` params in intercepted destinations
 - modal slot rendering
 - browser back/forward behavior
 
@@ -82,7 +84,7 @@ Shows a fuller real-world app:
 - article detail pages
 - archive
 - restricted members area
-- login and logout with `redirect` search param
+- login and logout with URLKit-parsed `redirect` search param
 - sidebar and preview slots
 - article modal interception
 - canonical direct article pages
@@ -98,6 +100,7 @@ Shows:
 - `StaticRouterProvider`
 - serialized hydration state
 - client hydration
+- parsed numeric `{id:int}` params during SSR and hydration
 - Vite dev SSR middleware
 - server-included CSS
 

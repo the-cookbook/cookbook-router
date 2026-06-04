@@ -15,12 +15,12 @@ export interface RouteParams {
 export interface RouteSearch {
   entry: {};
   blog: {};
-  'blog.home': { query?: string | readonly string[] };
-  'blog.articles': { query?: string | readonly string[] };
-  'blog.articles.show': { ref?: string | readonly string[]; filters?: string | readonly string[] };
+  'blog.home': { query?: string };
+  'blog.articles': { query?: string };
+  'blog.articles.show': { ref?: string; filters?: readonly string[] };
   'blog.archive': {};
   'blog.members': {};
-  'blog.login': { redirect?: string | readonly string[] };
+  'blog.login': { redirect?: string };
 }
 
 export interface RouteHash {

@@ -8,6 +8,7 @@ export interface AppProps {
 
 export function App({ router, staticRender }: AppProps) {
   const Provider = staticRender ? StaticRouterProvider : RouterProvider;
+
   return (
     <Provider
       router={router}

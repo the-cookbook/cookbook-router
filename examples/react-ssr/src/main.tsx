@@ -19,6 +19,7 @@ if (!rootElement) {
 const hydrationData = window.__COOKBOOK_ROUTER__
   ? deserializeRouterState(window.__COOKBOOK_ROUTER__)
   : undefined;
+
 const router = createRouter({
   routes,
   ...(hydrationData ? { hydrationData } : {}),

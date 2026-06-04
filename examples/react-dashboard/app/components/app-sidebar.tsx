@@ -41,7 +41,8 @@ const data = {
       title: 'Users',
       icon: <Users />,
       link: {
-        route: 'users',
+        route: 'users.index',
+        end: { search: 'ignore' },
       },
     },
     {

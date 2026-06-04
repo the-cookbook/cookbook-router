@@ -21,7 +21,7 @@ export function UserDetailsLayoutHeader() {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link to="users">Users</Link>
+            <Link to="users.index">Users</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />

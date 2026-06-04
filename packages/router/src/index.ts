@@ -24,7 +24,9 @@ export type {
   ResolvedSlots,
   RouteMeta,
   RouteParamDefinition,
+  RouteHashSchema,
   RouteSearchSchema,
+  RouteSearchStaticValue,
   RouteSearchValueSchema,
   RouteSearchValueType,
   RouteSlotConfig,
@@ -36,6 +38,15 @@ export type {
   RouterPathConstraints,
   RouterPathOptions,
 } from './pathkit/pathkit';
+export type {
+  CreateRouterRouteUrlContractOptions,
+  ResolveUrlOptionsInput,
+  RouterRouteUrlContract,
+  RouterRouteUrlDescriptor,
+  RouterInvalidUrlStatePolicy,
+  RouterUrlArrayFormat,
+  RouterUrlOptions,
+} from './url';
 export type {
   Register,
   RegisteredContracts,
@@ -61,6 +72,7 @@ export type {
   SerializedRouterState,
   HrefOptions,
   NavigateOptions,
+  MatchOptions,
   CreateRouterOptions,
 } from './router/create-router';
 export type { CreateStaticRouterOptions } from './router/create-static-router';
@@ -80,6 +92,7 @@ export {
   createConstraint,
   registerPathConstraints,
 } from './pathkit/pathkit';
+export { createRouteUrlContract, registerUrlPathConstraints, resolveUrlOptions } from './url';
 export { defineRoutes } from './routes/define-routes';
 export { matchRoutes } from './matching/match-routes';
 export { flattenRoutes, rankRoutes } from './matching/rank-routes';

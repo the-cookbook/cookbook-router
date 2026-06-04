@@ -29,7 +29,7 @@ describe('create-router', () => {
     expect(match?.route.id).toBe('about');
     expect(match?.pathname).toBe('/about');
     expect(match?.search).toEqual({ redirect: '/overview' });
-    expect(match?.hash).toBe('#details');
+    expect(match?.hash).toBe('details');
     expect(match?.href).toBe('/about?redirect=%2Foverview#details');
 
     await router.navigate.to({ route: 'about' });
@@ -67,6 +67,31 @@ describe('create-router', () => {
     expect(router.state.match?.route.id).toBe('post');
     expect(router.href('post', { params: { slug: 'hello-world' } })).toBe('/posts/hello-world');
     expect(() => router.href('post', { params: { slug: 'HelloWorld' } })).toThrow('HelloWorld');
+  });
+
+  it('registers createRouter path constraints before validation and normalization', () => {
+    const slug = createConstraint({
+      parse: (paramName, value) => {
+        if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
+          throw new Error(`Parameter "${paramName}" must be a valid slug`);
+        }
+      },
+      verify: (_paramName, params) => {
+        if (params) {
+          throw new Error('slug does not accept parameters');
+        }
+      },
+      toRegExp: () => '[a-z0-9-]+',
+    });
+
+    const router = createRouter({
+      routes: [{ id: 'post', path: '/posts/{slug:create_router_slug}' }],
+      pathConstraints: { create_router_slug: slug },
+      history: createMemoryHistory({ initialEntries: ['/posts/hello-world'] }),
+    });
+
+    expect(router.state.match?.route.id).toBe('post');
+    expect(router.href('post', { params: { slug: 'hello-world' } })).toBe('/posts/hello-world');
   });
 
   it('distinguishes middleware redirect from rewrite during current resolution', async () => {

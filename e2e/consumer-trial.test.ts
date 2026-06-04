@@ -59,10 +59,8 @@ describe('external consumer trial app', () => {
     const typeTests = read('consumer-trial/src/contracts.test.ts');
 
     expect(register).toContain("declare module '@cookbook/router'");
-    expect(contracts).toContain("'users.show': {");
-    expect(contracts).toContain('id: string;');
-    expect(contracts).toContain("'blog.posts.show': {");
-    expect(contracts).toContain('slug: string;');
+    expect(contracts).toContain("'users.show': { id: number };");
+    expect(contracts).toContain("'blog.posts.show': { slug: string };");
     expect(typeTests).toContain("RouteParams<'users.show'>");
     expect(typeTests).toContain("RouteSearch<'users.show'>");
     expect(typeTests).toContain("RouteHashInput<'users.show'>");

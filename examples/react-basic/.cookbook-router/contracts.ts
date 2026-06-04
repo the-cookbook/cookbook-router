@@ -4,14 +4,16 @@
 export interface RouteParams {
   root: {};
   home: {};
-  'users.show': { id: string };
+  'users.show': { id: number };
+  products: {};
   blocked: {};
 }
 
 export interface RouteSearch {
   root: {};
   home: {};
-  'users.show': { tab?: string | readonly string[] };
+  'users.show': { tab?: string };
+  products: { tags?: readonly string[] };
   blocked: {};
 }
 
@@ -19,6 +21,7 @@ export interface RouteHash {
   root: never;
   home: never;
   'users.show': 'profile' | 'settings' | 'security';
+  products: never;
   blocked: never;
 }
 
@@ -26,6 +29,7 @@ export interface RouteMeta {
   root: {};
   home: { title?: string };
   'users.show': { title?: string; requiresAuth?: boolean };
+  products: { title?: string };
   blocked: { requiresAuth?: boolean };
 }
 
@@ -33,6 +37,7 @@ export interface RoutePaths {
   root: '/';
   home: '/';
   'users.show': '/users/{id:int}';
+  products: '/products';
   blocked: '/blocked';
 }
 
@@ -40,14 +45,16 @@ export interface RouteOutletContext {
   root: {};
   home: {};
   'users.show': {};
+  products: {};
   blocked: {};
 }
 
-export const routeIds = ['root', 'home', 'users.show', 'blocked'] as const;
+export const routeIds = ['root', 'home', 'users.show', 'products', 'blocked'] as const;
 export const routePaths = {
   root: '/',
   home: '/',
   'users.show': '/users/{id:int}',
+  products: '/products',
   blocked: '/blocked',
 } as const;
 

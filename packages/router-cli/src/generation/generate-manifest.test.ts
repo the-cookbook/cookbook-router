@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createConstraint } from '@cookbook/router';
 import { sampleRoutes } from '../test-helpers';
 import { generateManifest, serializeManifest } from './generate-manifest';
 
@@ -13,6 +14,20 @@ describe('generateManifest', () => {
     });
   });
 
+  it('preserves route-level URL options in manifest entries', () => {
+    expect(
+      generateManifest([
+        {
+          id: 'products',
+          path: '/products',
+          url: { arrayFormat: 'comma' },
+        },
+      ]),
+    ).toEqual({
+      routes: [{ id: 'products', path: '/products', index: false, url: { arrayFormat: 'comma' } }],
+    });
+  });
+
   it('serializes generated manifest with a trailing newline', () => {
     const serialized = serializeManifest({ routes: [{ id: 'home', path: '/', index: true }] });
 
@@ -23,11 +38,11 @@ describe('generateManifest', () => {
   it('generates manifest with custom path constraints from defineRoutes options', () => {
     const manifest = generateManifest([{ id: 'post.show', path: '/posts/{slug:slug}' }], {
       pathConstraints: {
-        slug: {
+        slug: createConstraint({
           parse: () => undefined,
           verify: () => undefined,
           toRegExp: () => '[a-z0-9-]+',
-        },
+        }),
       },
     } as never);
 

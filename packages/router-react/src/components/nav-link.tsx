@@ -3,24 +3,15 @@ import type { HrefOptions, InterceptInput, RouteId } from '@cookbook/router';
 import { Link } from './link';
 import { useLocation } from '../hooks/use-location';
 import { useRouter } from '../hooks/use-router';
+import { resolveLinkHrefOptions } from './resolve-link-href';
+import { resolveNavLinkState } from './resolve-nav-link-state';
+import type { NavLinkEnd } from './resolve-nav-link-state';
+export type { NavLinkEnd, NavLinkEndOptions } from './resolve-nav-link-state';
 
 /** Render props supplied to `NavLink` children. */
 export interface NavLinkRenderProps {
   readonly isActive: boolean;
 }
-
-/** Fine-grained active matching options for `NavLink.end`. */
-export interface NavLinkEndOptions {
-  readonly search?: 'all' | 'ignore';
-}
-
-/**
- * Active matching mode for `NavLink`.
- *
- * `false` allows prefix path matches. `true` requires the full href. Object form
- * can ignore search while still comparing pathname and hash.
- */
-export type NavLinkEnd = boolean | NavLinkEndOptions;
 
 /** Props for a route-aware link that exposes active state. */
 export interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
@@ -33,6 +24,8 @@ export interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly params?: HrefOptions<Route>['params'];
   readonly search?: HrefOptions<Route>['search'];
   readonly hash?: HrefOptions<Route>['hash'];
+  /** Per-component URLKit options overriding route-level and router-level defaults. */
+  readonly url?: HrefOptions<Route>['url'];
   readonly replace?: boolean;
   readonly intercept?: InterceptInput;
   readonly context?: HrefOptions<Route>['context'];
@@ -53,6 +46,7 @@ export function NavLink<Route extends RouteId = RouteId>(props: NavLinkProps<Rou
     params,
     search,
     hash,
+    url,
     href: explicitHref,
     end,
     children,
@@ -68,10 +62,10 @@ export function NavLink<Route extends RouteId = RouteId>(props: NavLinkProps<Rou
   }
 
   const router = useRouter();
-  const href =
-    explicitHref ?? router.href(routeId as Route, createHrefOptions<Route>(params, search, hash));
+  const routeHrefOptions = resolveLinkHrefOptions<Route>({ params, search, hash, url });
+  const href = explicitHref ?? router.href(routeId as Route, routeHrefOptions);
   const location = useLocation();
-  const isActive = isNavLinkActive(location.href, location.pathname, href, end);
+  const { isActive } = resolveNavLinkState(location.href, location.pathname, href, end);
   const renderedChildren = typeof children === 'function' ? children({ isActive }) : children;
 
   return (
@@ -79,107 +73,18 @@ export function NavLink<Route extends RouteId = RouteId>(props: NavLinkProps<Rou
       {...linkProps}
       {...(routeId ? { route: routeId } : {})}
       {...(explicitHref ? { href: explicitHref } : {})}
-      {...createLinkOptions<Route>(params, search, hash, intercept, context, preventScrollReset)}
+      {...resolveLinkHrefOptions<Route>({
+        params,
+        search,
+        hash,
+        url,
+        intercept,
+        context,
+        preventScrollReset,
+      })}
       aria-current={isActive ? 'page' : linkProps['aria-current']}
     >
       {renderedChildren}
     </Link>
   );
-}
-
-function createHrefOptions<Route extends RouteId>(
-  params: HrefOptions<Route>['params'] | undefined,
-  search: HrefOptions<Route>['search'] | undefined,
-  hash: HrefOptions<Route>['hash'] | undefined,
-): HrefOptions<Route> {
-  return {
-    ...(params === undefined ? {} : { params }),
-    ...(search === undefined ? {} : { search }),
-    ...(hash === undefined ? {} : { hash }),
-  } as HrefOptions<Route>;
-}
-
-function isNavLinkActive(
-  currentHref: string,
-  currentPathname: string,
-  targetHref: string,
-  end: NavLinkEnd | undefined,
-): boolean {
-  const normalizedTargetHref = normalizeActiveHref(targetHref);
-
-  if (normalizedTargetHref === undefined) {
-    return false;
-  }
-
-  if (!end) {
-    return (
-      currentHref === normalizedTargetHref ||
-      currentPathname.startsWith(withoutSearchOrHash(normalizedTargetHref))
-    );
-  }
-
-  if (typeof end === 'object' && end.search === 'ignore') {
-    return stripSearch(currentHref) === stripSearch(normalizedTargetHref);
-  }
-
-  return currentHref === normalizedTargetHref;
-}
-
-function normalizeActiveHref(href: string): string | undefined {
-  if (!href) {
-    return undefined;
-  }
-
-  if (!href.startsWith('http://') && !href.startsWith('https://')) {
-    return href;
-  }
-
-  if (typeof window === 'undefined') {
-    return undefined;
-  }
-
-  const url = new URL(href, window.location.href);
-
-  if (url.origin !== window.location.origin) {
-    return undefined;
-  }
-
-  return `${url.pathname}${url.search}${url.hash}`;
-}
-
-function withoutSearchOrHash(href: string): string {
-  return href.split(/[?#]/, 1)[0] || '/';
-}
-
-function stripSearch(href: string): string {
-  const hashIndex = href.indexOf('#');
-  const pathAndSearch = hashIndex === -1 ? href : href.slice(0, hashIndex);
-  const hash = hashIndex === -1 ? '' : href.slice(hashIndex);
-  const searchIndex = pathAndSearch.indexOf('?');
-
-  return `${searchIndex === -1 ? pathAndSearch : pathAndSearch.slice(0, searchIndex)}${hash}`;
-}
-
-function createLinkOptions<Route extends RouteId>(
-  params: HrefOptions<Route>['params'] | undefined,
-  search: HrefOptions<Route>['search'] | undefined,
-  hash: HrefOptions<Route>['hash'] | undefined,
-  intercept: InterceptInput | undefined,
-  context: HrefOptions<Route>['context'] | undefined,
-  preventScrollReset: boolean | undefined,
-): Pick<
-  NavLinkProps<Route>,
-  'params' | 'search' | 'hash' | 'intercept' | 'context' | 'preventScrollReset'
-> {
-  return {
-    ...(params === undefined ? {} : { params }),
-    ...(search === undefined ? {} : { search }),
-    ...(hash === undefined ? {} : { hash }),
-    ...(intercept === undefined ? {} : { intercept }),
-    ...(context === undefined ? {} : { context }),
-    ...(preventScrollReset === undefined ? {} : { preventScrollReset }),
-  } as Pick<
-    NavLinkProps<Route>,
-    'params' | 'search' | 'hash' | 'intercept' | 'context' | 'preventScrollReset'
-  >;
 }

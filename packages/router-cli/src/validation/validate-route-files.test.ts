@@ -385,6 +385,26 @@ export const routes = defineRoutes([
     expect(sources[0]?.routes[0]?.meta).toEqual({ title: "It's quoted" });
   });
 
+  it('rejects unsupported URLKit runtime builders in static route files', async () => {
+    const fs = createMemoryFileSystem({
+      'routes.tsx': `import { defineRoutes } from '@cookbook/router';
+import { int } from '@cookbook/urlkit';
+
+export const routes = defineRoutes([
+  {
+    id: 'products',
+    path: '/products',
+    search: { page: int().default(1) },
+  },
+] as const);
+`,
+    });
+
+    await expect(loadRouteFiles({ routeFiles: ['routes.tsx'], fs })).rejects.toThrow(
+      'URLKit runtime builders',
+    );
+  });
+
   it('reports unsupported non-object defineRoutes options clearly', async () => {
     const fs = createMemoryFileSystem({
       'routes.tsx': `import { defineRoutes } from '@cookbook/router';

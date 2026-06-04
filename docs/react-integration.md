@@ -1,6 +1,6 @@
 # React integration
 
-`@cookbook/router-react` renders route matches from a core router instance. Matching, href generation, middleware, lifecycle, slots, redirects, and intercepts remain owned by `@cookbook/router`.
+`@cookbook/router-react` renders route matches from a core router instance. Matching, href generation, middleware, lifecycle, slots, redirects, and intercepts remain owned by `@cookbook/router`. Params, search, hash parsing, normalization, and href URL building are URLKit-backed in the core router state consumed by React.
 
 ## Table of contents
 
@@ -58,16 +58,24 @@ Use `StaticRouterProvider` with `createStaticRouter()` during SSR.
 ```tsx
 import { Link, NavLink } from '@cookbook/router-react';
 
-<Link to="users.show" params={{ id: '42' }}>
+<Link to="users.show" params={{ id: 42 }}>
   User 42
 </Link>
 
-<NavLink to="users.show" params={{ id: '42' }} end>
+<NavLink to="users.show" params={{ id: 42 }} end>
   {({ isActive }) => <span data-active={isActive}>User 42</span>}
 </NavLink>
 ```
 
 Both components render anchors. `NavLink` adds active-state calculation and `aria-current` handling.
+
+Route-id links forward `url` options to the core router. Hook/component URL options override route-level and router-level defaults.
+
+```tsx
+<Link to="products" search={{ tags: ['router', 'typescript'] }} url={{ arrayFormat: 'comma' }}>
+  Products
+</Link>
+```
 
 ## Outlets
 
@@ -193,7 +201,7 @@ Returns `router.navigate`.
 
 ```tsx
 const navigate = useNavigate();
-await navigate.to({ route: 'users.show', params: { id: '42' } });
+await navigate.to({ route: 'users.show', params: { id: 42 } });
 ```
 
 ### `useHref()`
@@ -201,7 +209,7 @@ await navigate.to({ route: 'users.show', params: { id: '42' } });
 Generates a typed href.
 
 ```tsx
-const href = useHref('users.show', { params: { id: '42' } });
+const href = useHref('users.show', { params: { id: 42 } });
 ```
 
 ### `useLocation()`
@@ -230,23 +238,28 @@ const navigation = useNavigation();
 
 ### `useParams()`
 
-Reads params from the current match or a route in the active branch.
+Reads URLKit-parsed params from the current match or a route in the active branch. Built-in numeric constraints parse to numbers, so `{id:int}` exposes `params.id` as `number`. Custom constraints expose `string` unless the generated contract says otherwise.
 
 ```tsx
 const params = useParams('users.show');
+// params.id is a number for `/users/{id:int}`
 ```
 
-### `useSearchParams()`
+### `useSearchParams()` / `useSearch()`
 
-Parses the current query string into an object.
+Reads URLKit-parsed search state from the active match. Pass `options.url` to override URL options such as `arrayFormat` for this read.
 
 ```tsx
-const search = useSearchParams('articles.index');
+const search = useSearchParams('products', {
+  url: { arrayFormat: 'repeat' },
+});
 ```
 
-### `useHashParams()`
+Per-hook options override route-level `url`, which overrides router-level `url`, which overrides URLKit defaults. `RouterProvider` does not define separate URL defaults; configure framework-agnostic defaults on the core router.
 
-Returns the current hash without the leading `#`, or `null`.
+### `useHashParams()` / `useHash()`
+
+Reads URLKit-parsed hash state from the active match, or `null` when no hash is present.
 
 ```tsx
 const section = useHashParams('articles.show');
@@ -309,7 +322,7 @@ The component rendered in the slot receives the destination route context, so `u
 
 ## Blocking navigation
 
-`useBlocker()` blocks in-app router navigation while `when` is true and also attaches a browser `beforeunload` handler.
+`useBlocker()` blocks in-app router navigation while `when` is true and also attaches a browser `beforeunload` handler. Browsers control unload confirmation text; custom browser unload messages are not guaranteed.
 
 ```tsx
 const blocker = useBlocker({
@@ -320,7 +333,7 @@ const blocker = useBlocker({
 blocker.blocked; // boolean
 ```
 
-When `message` is provided in the browser, the hook asks for confirmation before allowing router navigation. A cancelled confirmation keeps the current route active and sets router navigation state to `blocked`.
+When `message` is provided in the browser, the hook asks for confirmation before allowing in-app router navigation. A cancelled confirmation keeps the current route active and sets router navigation state to `blocked`.
 
 ## Testing React routes
 

@@ -152,6 +152,38 @@ describe('NavLink', () => {
     expect(getByText('ignored search').getAttribute('aria-current')).toBe('page');
   });
 
+  it('forwards URL options while preserving active matching', async () => {
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        {
+          id: 'products',
+          path: '/products',
+          search: { tags: { value: 'string', type: 'many', optional: true } },
+          component: Page,
+        },
+      ] as const),
+      initialEntries: ['/products?tags=router%2Ctypescript'],
+      url: { arrayFormat: 'repeat' },
+    });
+    await router.resolveCurrent();
+
+    const { getByText } = render(
+      <RouterProvider router={router}>
+        <NavLink
+          route="products"
+          search={{ tags: ['router', 'typescript'] }}
+          url={{ arrayFormat: 'comma' }}
+          end
+        >
+          products
+        </NavLink>
+      </RouterProvider>,
+    );
+
+    expect(getByText('products').getAttribute('href')).toBe('/products?tags=router%2Ctypescript');
+    expect(getByText('products').getAttribute('aria-current')).toBe('page');
+  });
+
   it('passes preventScrollReset to Link navigation', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([

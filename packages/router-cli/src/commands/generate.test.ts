@@ -116,7 +116,7 @@ export const routes = defineRoutes([
 
       expect(result.ok).toBe(true);
       const contracts = await readFile(join(outDir, 'contracts.ts'), 'utf8');
-      expect(contracts).toContain("'users.show': { id: string };");
+      expect(contracts).toContain("'users.show': { id: number };");
       expect(contracts).toContain('tab?: string');
       expect(contracts).toContain("'profile' | 'settings' | 'security'");
       await expect(readFile(join(outDir, 'register.d.ts'), 'utf8')).resolves.toContain(
@@ -187,7 +187,42 @@ export const routes = defineRoutes([
     );
   });
 
-  it('keeps built-in constraint generation unchanged', async () => {
+  it('generates URLKit static search types and route URL options from route files', async () => {
+    const fs = createMemoryFileSystem({
+      'routes.tsx': `import { defineRoutes } from '@cookbook/router';
+
+export const routes = defineRoutes([
+  {
+    id: 'products.show',
+    path: '/products/{price:number}',
+    search: {
+      page: { value: 'int', default: 1 },
+      tags: { value: 'string', type: 'many' },
+      sort: { value: { type: 'enum', values: ['new', 'top'] }, optional: true },
+    },
+    hash: { type: 'enum', values: ['details', 'reviews'], optional: true },
+    url: { arrayFormat: 'comma' },
+  },
+] as const);
+`,
+    });
+
+    const result = await generateCommand({ routeFiles: ['routes.tsx'], fs });
+
+    expect(result.ok).toBe(true);
+    expect(fs.files.get('.cookbook-router/contracts.ts')).toContain(
+      "'products.show': { price: number };",
+    );
+    expect(fs.files.get('.cookbook-router/contracts.ts')).toContain(
+      "'products.show': { page: number; tags: readonly string[]; sort?: 'new' | 'top' };",
+    );
+    expect(fs.files.get('.cookbook-router/contracts.ts')).toContain(
+      "'products.show': 'details' | 'reviews' | undefined;",
+    );
+    expect(fs.files.get('.cookbook-router/manifest.json')).toContain('"arrayFormat": "comma"');
+  });
+
+  it('generates built-in URLKit constraint params as parsed numbers', async () => {
     const fs = createMemoryFileSystem({
       'routes.tsx': `import { defineRoutes } from '@cookbook/router';
 
@@ -201,7 +236,7 @@ export const routes = defineRoutes([
 
     expect(result.ok).toBe(true);
     expect(fs.files.get('.cookbook-router/contracts.ts')).toContain(
-      "'users.show': { id: string };",
+      "'users.show': { id: number };",
     );
   });
 });

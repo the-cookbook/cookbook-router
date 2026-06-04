@@ -1,0 +1,54 @@
+import { describe, expect, it } from 'vitest';
+import { normalizeRoutes } from '../matching/normalize-routes';
+import { defineRoutes } from '../routes/define-routes';
+import { createRouteHref } from './create-href';
+import { createRouteLookup } from './create-route-lookup';
+
+describe('createRouteHref', () => {
+  it('builds typed numeric params with URLKit', () => {
+    const routes = normalizeRoutes(defineRoutes([{ id: 'user', path: '/users/{id:int}' }]));
+    const lookup = createRouteLookup(routes);
+
+    expect(
+      createRouteHref({ routeId: 'user', options: { params: { id: 42 } }, routes: lookup }),
+    ).toBe('/users/42');
+    expect(() =>
+      createRouteHref({ routeId: 'user', options: { params: { id: 'abc' } }, routes: lookup }),
+    ).toThrow('expected param "id"');
+  });
+
+  it('applies route-level and per-call URL options while building search', () => {
+    const routes = normalizeRoutes(
+      defineRoutes([
+        {
+          id: 'products',
+          path: '/products',
+          search: { tags: { type: 'many', optional: true } },
+          url: { arrayFormat: 'comma' },
+        },
+      ]),
+    );
+    const lookup = createRouteLookup(routes);
+
+    expect(
+      createRouteHref({
+        routeId: 'products',
+        options: { search: { tags: ['router', 'typescript'] } },
+        routes: lookup,
+        routerUrl: { arrayFormat: 'repeat' },
+      }),
+    ).toBe('/products?tags=router%2Ctypescript');
+
+    expect(
+      createRouteHref({
+        routeId: 'products',
+        options: {
+          search: { tags: ['router', 'typescript'] },
+          url: { arrayFormat: 'repeat' },
+        },
+        routes: lookup,
+        routerUrl: { arrayFormat: 'comma' },
+      }),
+    ).toBe('/products?tags=router&tags=typescript');
+  });
+});

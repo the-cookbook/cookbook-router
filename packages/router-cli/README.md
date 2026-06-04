@@ -88,7 +88,26 @@ export const routes = defineRoutes([
 ] as const);
 ```
 
-The extractor expects a static `defineRoutes([...])` call or a static `routes = [...]` array. Avoid runtime-generated route trees in files consumed by the CLI.
+The extractor expects a static `defineRoutes([...])` call or a static `routes = [...]` array. Avoid runtime-generated route trees in files consumed by the CLI. URL state descriptors must also stay static: use route `path`, `search`, `hash`, and `url` objects rather than URLKit runtime builders.
+
+Generated contracts are URLKit-backed. Built-in parsed path constraints such as `{id:int}` and `{price:number}` generate `number` params, while custom constraints generate `string` params unless URLKit exposes typed static inference for those constraints.
+
+```tsx
+export const routes = defineRoutes([
+  {
+    id: 'products.show',
+    path: '/products/{price:number}',
+    search: {
+      page: { value: 'int', default: 1 },
+      tags: { value: 'string', type: 'many' },
+    },
+    hash: ['details', 'reviews'],
+    url: { arrayFormat: 'comma' },
+  },
+] as const);
+```
+
+This generates params like `{ price: number }`, search like `{ page: number; tags: readonly string[] }`, and preserves route-level URL options in `manifest.json` for manifest-based runtimes. Unsupported runtime builders such as `int().default(1)` are rejected in CLI-consumed static route files; use `{ value: 'int', default: 1 }` instead.
 
 When route paths use custom path constraints, declare them in the second `defineRoutes` argument. The CLI reads `pathConstraints` from the route file, so no `--constraints` flag is needed. Custom-constrained params are emitted as `string` in generated contracts.
 
@@ -128,7 +147,7 @@ Include generated files in the app `tsconfig.json`:
 }
 ```
 
-`contracts.ts` contains route-specific types and route constants. `register.d.ts` augments `@cookbook/router`. `manifest.json` contains a tooling-friendly route list.
+`contracts.ts` contains route-specific types and route constants. Path params, search values, and hash values follow URLKit static parsing semantics. `register.d.ts` augments `@cookbook/router`. `manifest.json` contains a tooling-friendly route list and includes route-level `url` options such as `arrayFormat` when configured.
 
 ## Programmatic API
 
@@ -226,6 +245,7 @@ interface ManifestRoute {
   readonly path?: string;
   readonly parentId?: string;
   readonly index: boolean;
+  readonly url?: RouterUrlOptions;
 }
 
 interface RouteManifest {
@@ -291,7 +311,7 @@ The package also exports `runCli(argv, runnerOptions?)` and `shouldRunCli(module
 
 ## Troubleshooting
 
-- If a route file cannot be evaluated, simplify the route declaration into a static array.
+- If a route file cannot be evaluated, simplify the route declaration into a static array and replace URLKit runtime builders with static descriptors.
 - If contracts are stale, rerun `generate` once to see diagnostics, then use `watch` during development.
 - If generated types are not visible, include generated files in `tsconfig.json`.
 - If a slot fallback ID is not generated, that is expected; fallbacks are not navigable routes.

@@ -1,4 +1,4 @@
-import { registerPathConstraints } from '@cookbook/router';
+import { registerUrlPathConstraints } from '@cookbook/router';
 import type { DefineRoutesOptions, RouteDefinition } from '@cookbook/router';
 import { generateContracts } from '../generation/generate-contracts';
 import { generateManifest, serializeManifest } from '../generation/generate-manifest';
@@ -30,7 +30,7 @@ export async function generateCommand(options: GenerateOptions): Promise<Command
     const routeFile = await resolveRouteInput(options);
     const { outDir, contractsPath, manifestPath, registerPath } = output;
 
-    registerPathConstraints(routeFile.routeOptions?.pathConstraints);
+    registerUrlPathConstraints(routeFile.routeOptions?.pathConstraints);
     await fs.mkdir(outDir, { recursive: true });
     await fs.writeFile(
       contractsPath,

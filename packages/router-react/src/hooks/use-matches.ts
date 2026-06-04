@@ -4,8 +4,8 @@ import { useRouterContext } from '../context/router-context';
 /**
  * Subscribes to the active matched branch.
  *
- * Returned params are raw string params for each branch entry. Use `useParams`
- * when you want generated contract-aware params.
+ * Returned params are URLKit-parsed values for each branch entry. Built-in
+ * numeric constraints such as `{id:int}` are exposed as numbers.
  */
 export function useMatches(): readonly MatchedRoute[] {
   return useRouterContext().state.match?.branch ?? [];

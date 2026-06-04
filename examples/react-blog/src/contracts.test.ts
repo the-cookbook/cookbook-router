@@ -31,10 +31,10 @@ describe('react-blog generated contracts', () => {
 
       expectTypeOf(params).toEqualTypeOf<{ slug: string }>();
       expectTypeOf(search).toEqualTypeOf<{
-        ref?: string | readonly string[];
-        filters?: string | readonly string[];
+        ref?: string;
+        filters?: readonly string[];
       }>();
-      expectTypeOf(loginSearch).toEqualTypeOf<{ redirect?: string | readonly string[] }>();
+      expectTypeOf(loginSearch).toEqualTypeOf<{ redirect?: string }>();
       expectTypeOf(hash).toEqualTypeOf<'comments' | 'share' | null>();
     }
 

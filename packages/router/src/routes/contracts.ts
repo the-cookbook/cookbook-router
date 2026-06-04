@@ -1,6 +1,8 @@
 import type { RouterLocation } from '../history/memory-history';
+import type { StaticHashDescriptor, StaticSearchField } from '@cookbook/urlkit/static';
 import type { RouterPathOptions } from '../pathkit/pathkit';
-import type { RouteHashInput, RouteId, RouteParams, RouteSearch } from '../contracts';
+import type { RouterUrlOptions } from '../url/contracts';
+import type { RouteHash, RouteId, RouteParams, RouteSearch } from '../contracts';
 
 /**
  * Component-like value consumed by router integrations.
@@ -18,29 +20,40 @@ export type RouteComponent = unknown;
  */
 export type RouteMeta = Record<string, unknown>;
 /**
- * Declares whether a search parameter accepts a single value or repeated values.
+ * Legacy cardinality marker for static search descriptors.
+ *
+ * Prefer URLKit-compatible descriptors such as `{ value: 'string' }` and
+ * `{ value: 'string', type: 'many' }` in new route definitions.
  */
 export type RouteSearchValueType = 'one' | 'many';
 
 /**
+ * Static URLKit-backed search value descriptor accepted in route definitions.
+ */
+export type RouteSearchStaticValue = StaticSearchField;
+
+/**
  * Schema entry for one search parameter in an authored route.
  *
- * `type: 'one'` reads the first value as a string. `type: 'many'` keeps all
- * repeated values as an array. Required entries are validated during href
- * generation when generated contracts are available.
+ * `value` follows URLKit static descriptor semantics, so `int` and
+ * `number` parse to `number`, `boolean` parses to `boolean`, date descriptors
+ * parse to `Date`, and enum descriptors parse to their string literal union.
+ * `type: 'many'` reads repeated values as an array. `default` makes the parsed value present while allowing href/navigation
+ * builders to omit the field. Runtime URLKit builders are intentionally not
+ * part of this static descriptor model so CLI extraction stays analyzable.
  */
-export interface RouteSearchValueSchema {
-  readonly type: RouteSearchValueType;
-  readonly optional?: boolean;
-}
+export type RouteSearchValueSchema = StaticSearchField;
 
 /**
  * Search schema keyed by query-string parameter name.
  *
- * The CLI uses this to generate typed `search` contracts for links, hrefs, and
- * navigation calls.
+ * The CLI uses this URLKit-compatible static descriptor to generate typed
+ * `search` contracts for links, hrefs, navigation calls, and parsed match state.
  */
 export type RouteSearchSchema = Readonly<Record<string, RouteSearchValueSchema>>;
+
+/** URLKit-compatible static hash descriptor accepted in route definitions. */
+export type RouteHashSchema = StaticHashDescriptor;
 export type { RouterPathOptions };
 
 /**
@@ -163,8 +176,10 @@ export interface RouteDefinition {
   readonly redirect?: RouteRedirect;
   /** Search parameter schema used by generated contracts and href validation. */
   readonly search?: RouteSearchSchema;
-  /** Allowed hash fragments for this route in generated contracts. */
-  readonly hash?: readonly string[];
+  /** Route-level URLKit options that override router-level URL defaults. */
+  readonly url?: RouterUrlOptions;
+  /** URLKit-compatible static hash descriptor for this route. */
+  readonly hash?: RouteHashSchema;
   /** User-defined metadata copied into normalized routes and matches. */
   readonly meta?: RouteMeta;
   /**
@@ -289,13 +304,13 @@ export interface RankedRoute extends NormalizedRoute {
 /**
  * One route entry in a matched branch.
  *
- * `params` are raw string values parsed from the URL for that branch entry. Use
- * `RouteMatch.params` when you need the merged, generated contract-aware params.
+ * `params` are URLKit-parsed values for that branch entry. Built-in typed
+ * constraints such as `{id:int}` are exposed as numbers.
  */
 export interface MatchedRoute {
   readonly id: string;
   readonly route: NormalizedRoute;
-  readonly params: Record<string, string>;
+  readonly params: Record<string, unknown>;
 }
 
 /**
@@ -317,7 +332,7 @@ export interface ResolvedSlot {
   readonly match?: MatchedRoute;
   readonly branch?: readonly MatchedRoute[];
   readonly fallback?: NormalizedRouteSlotFallback;
-  readonly params: Record<string, string>;
+  readonly params: Record<string, unknown>;
   readonly meta?: RouteMeta;
   readonly component?: RouteComponent;
 }
@@ -332,23 +347,25 @@ export type ResolvedSlots = Readonly<Record<string, Readonly<Record<string, Reso
  */
 export type ParsedRouteSearch = Record<string, string | readonly string[]>;
 
+/** Parsed hash fragment value when no generated hash contract is available. */
+export type ParsedRouteHash = string | undefined;
+
 /**
  * Public matched route state for the current or requested location.
  *
  * When generated contracts are registered, `params`, `search`, and `hash` are
- * narrowed for the matched route id. `branch` keeps the raw matched route entries
- * and raw string params for each level.
+ * narrowed for the matched route id. `branch` keeps the matched route entries
+ * and URLKit-parsed params for each level.
  */
 export interface RouteMatch<Route extends string = string> {
   readonly id: Route;
   readonly pathname: string;
   readonly search: Route extends RouteId ? RouteSearch<Route> : ParsedRouteSearch;
-  readonly hash: Route extends RouteId ? RouteHashInput<Route> : string;
+  readonly hash: Route extends RouteId ? RouteHash<Route> : ParsedRouteHash;
   readonly href: string;
   readonly route: NormalizedRoute;
   readonly branch: readonly MatchedRoute[];
-  readonly params: (Route extends RouteId ? RouteParams<Route> : Record<string, unknown>) &
-    Record<string, string>;
+  readonly params: Route extends RouteId ? RouteParams<Route> : Record<string, unknown>;
   readonly slots: ResolvedSlots;
   readonly intercepted?: ResolvedInterceptedRoute;
 }
@@ -384,7 +401,9 @@ export interface ResolvedInterceptedRoute {
 export interface MiddlewareContext {
   readonly route: MatchedRoute;
   readonly location: RouterLocation;
-  readonly params: Record<string, string>;
+  readonly params: Record<string, unknown>;
+  readonly search: ParsedRouteSearch | Record<string, unknown>;
+  readonly hash: ParsedRouteHash | unknown;
   redirect: (to: string) => MiddlewareResult;
   rewrite: (to: string) => MiddlewareResult;
   cancel: () => MiddlewareResult;
@@ -429,6 +448,9 @@ export interface RouteLifecycleContext {
   readonly from: RouteMatch | null;
   readonly to: RouteMatch | null;
   readonly location: RouterLocation;
+  readonly params: Record<string, unknown>;
+  readonly search: ParsedRouteSearch | Record<string, unknown>;
+  readonly hash: ParsedRouteHash | unknown;
 }
 
 /**

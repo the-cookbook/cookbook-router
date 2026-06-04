@@ -2,7 +2,7 @@
 
 > **Status:** Cookbook Router is currently under active development. APIs, generated contracts, and route manifest formats may change before a stable release.
 
-Cookbook Router is a typed, SSR-ready routing framework built on top of `@cookbook/pathkit`. The repository contains a framework-agnostic runtime, React bindings, and a CLI that generates TypeScript contracts and route manifests from route definitions.
+Cookbook Router is a typed, SSR-ready routing framework backed by `@cookbook/urlkit` for URL state and `@cookbook/pathkit` beneath URLKit for path-pattern primitives. The repository contains a framework-agnostic runtime, React bindings, and a CLI that generates TypeScript contracts and route manifests from static route definitions.
 
 **Live Example**: [https://the-cookbook.github.io/cookbook-router/overview](https://the-cookbook.github.io/cookbook-router/overview)
 
@@ -71,7 +71,7 @@ pnpm add @cookbook/router-react react react-dom
 pnpm add -D @cookbook/router-cli
 ```
 
-For non-React usage, install only `@cookbook/router`. `@cookbook/pathkit` is installed transitively by `@cookbook/router`.
+For non-React usage, install only `@cookbook/router`. `@cookbook/urlkit` and `@cookbook/pathkit` are installed transitively by `@cookbook/router`.
 
 ## Quick start
 
@@ -98,7 +98,7 @@ export const routes = defineRoutes([
         id: 'users.show',
         path: 'users/{id:int}',
         search: {
-          tab: 'string',
+          tab: { value: 'string', optional: true },
         },
         hash: ['profile', 'settings'],
         component: UserPage,
@@ -134,7 +134,7 @@ import { Link, useParams } from '@cookbook/router-react';
 
 export function UserLink() {
   return (
-    <Link to="users.show" params={{ id: '42' }} search={{ tab: 'settings' }} hash="profile">
+    <Link to="users.show" params={{ id: 42 }} search={{ tab: 'settings' }} hash="profile">
       Open user
     </Link>
   );
@@ -142,13 +142,14 @@ export function UserLink() {
 
 export function UserPage() {
   const params = useParams('users.show');
+  // params.id is number because `{id:int}` is parsed by URLKit.
   return <h1>User {params.id}</h1>;
 }
 ```
 
 ## Custom path constraints
 
-`@cookbook/router` re-exports `@cookbook/pathkit`'s `createConstraint()`. Register custom constraints in `defineRoutes(..., { pathConstraints })` when route definitions use custom constraint names, because `defineRoutes()` validates immediately.
+`@cookbook/router` re-exports `@cookbook/pathkit`'s `createConstraint()`. Register custom constraints in `defineRoutes(..., { pathConstraints })` when route definitions use custom constraint names, because the router forwards those constraints to URLKit before validation and URL contract compilation.
 
 ```ts
 import { createConstraint, createRouter, defineRoutes } from '@cookbook/router';
@@ -180,7 +181,7 @@ export const router = createRouter({
 
 ## Generate contracts
 
-The CLI reads route definitions and generates contract files used for route ID, params, search, hash, metadata, and path inference.
+The CLI reads statically analyzable route definitions and generates contract files used for route ID, parsed params, parsed search, parsed hash, metadata, and path inference.
 
 ```sh
 cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router
@@ -206,8 +207,10 @@ Include the generated files in your TypeScript program:
 ## Core concepts
 
 - **Route IDs are the public navigation API.** Paths declare URL matching; route IDs drive links, programmatic navigation, href generation, redirects, and type inference.
-- **Path params are strings.** Constraints such as `{id:int}` validate URL shape but generated param values are typed as `string`.
-- **Search schemas drive generated optional fields.** Runtime parsing is URL-faithful: one query key occurrence becomes a string, repeated occurrences become `readonly string[]`. Descriptors are not runtime validators.
+- **URL state is URLKit-backed.** URLKit owns path param parsing, search/hash parsing and building, URL normalization, matching, and href construction. Cookbook Router owns route IDs, route trees, middleware, lifecycle, redirects, slots, intercepts, histories, React rendering, and CLI workflows.
+- **Built-in numeric params are numbers.** `{id:int}` and `{value:number}` parse to `number` in router state, React hooks, middleware, lifecycle, and generated contracts. Custom constraints remain `string` unless URLKit adds typed static inference for them.
+- **Search and hash are parsed through URLKit.** Static descriptors such as `{ value: 'int', default: 1 }`, `{ value: 'string', type: 'many' }`, and hash unions drive parsed runtime state and generated contracts.
+- **URL options are configurable.** `url.arrayFormat` can be configured on the router, on a route, or per call/hook/component. `url.invalidSearch` and `url.invalidHash` control whether malformed URL state recovers, rejects the route as a no-match, or becomes route error state. Precedence is per-call, then route-level, then router-level, then URLKit defaults.
 - **Layouts render child routes through `<Outlet />`.** Layout slots render parallel UI regions through `<Slot name="..." />`.
 - **Intercepts preserve the current branch while rendering a destination into a slot.** Direct visits to the same destination URL render the canonical full page.
 - **Route redirects are first-class.** Use `redirect: { route: 'target' }` for internal route redirects and `redirect: 'https://example.com'` for external redirects.
@@ -303,6 +306,6 @@ See [Releasing](docs/releasing.md) for the full maintainer workflow, release gat
 ## Development notes
 
 - Tests for package source live next to the source file they cover.
-- Generated files under `.cookbook-router/` should be regenerated after route definition changes.
+- Generated files under `.cookbook-router/` should be regenerated after route definition changes. Route definitions consumed by the CLI must stay statically analyzable; use static `path`, `search`, `hash`, and `url` descriptors rather than URLKit runtime builders.
 - Build package outputs before running examples against recently changed package code: `pnpm build:packages`.
 - Do not deep import from package internals; public APIs are exported from package roots.

@@ -1,5 +1,5 @@
 import { defineRoutes } from '@cookbook/router';
-import { BlockedPage, HomePage, RootLayout, UserPage } from './pages';
+import { BlockedPage, HomePage, ProductsPage, RootLayout, UserPage } from './pages';
 
 export const lifecycleEvents: string[] = [];
 
@@ -23,7 +23,7 @@ export const routes = defineRoutes([
         id: 'users.show',
         path: 'users/{id:int}',
         search: {
-          tab: { type: 'one', optional: true },
+          tab: { value: 'string', optional: true },
         },
         hash: ['profile', 'settings', 'security'],
         component: UserPage,
@@ -38,6 +38,20 @@ export const routes = defineRoutes([
           afterEnter: () => {
             lifecycleEvents.push('users.afterEnter');
           },
+        },
+      },
+      {
+        id: 'products',
+        path: 'products',
+        search: {
+          tags: { value: 'string', type: 'many', optional: true },
+        },
+        url: {
+          arrayFormat: 'comma',
+        },
+        component: ProductsPage,
+        meta: {
+          title: 'Products',
         },
       },
       {

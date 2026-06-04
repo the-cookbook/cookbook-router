@@ -970,4 +970,36 @@ describe('RouterProvider scroll restoration', () => {
 
     scrollTo.mockRestore();
   });
+  it('renders route error fallback for strict invalid search state', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    function ProductsPage() {
+      return <p>products</p>;
+    }
+
+    function ProductsErrorFallback(props: RouteErrorFallbackProps) {
+      return <p>route url error:{props.route.id}</p>;
+    }
+
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        {
+          id: 'products',
+          path: '/products',
+          component: ProductsPage,
+          error: ProductsErrorFallback,
+          search: { page: { value: 'number', optional: true } },
+        },
+      ] as const),
+      initialEntries: ['/products?page=a'],
+      url: { invalidSearch: 'error' },
+    });
+    await router.resolveCurrent();
+
+    const { getByText, queryByText } = render(<RouterProvider router={router} />);
+
+    expect(getByText('route url error:products')).toBeTruthy();
+    expect(queryByText('products')).toBeNull();
+    consoleError.mockRestore();
+  });
 });

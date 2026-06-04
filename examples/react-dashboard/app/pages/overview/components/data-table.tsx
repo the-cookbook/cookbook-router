@@ -113,10 +113,6 @@ export const schema = z.object({
   reviewer: z.string(),
 });
 
-const parseSearchToInt = (value: string | undefined): number | undefined => {
-  return !value || isNaN(+value) ? undefined : +value;
-};
-
 // Create a separate component for the drag handle
 function DragHandle({ id }: { id: number }) {
   const { attributes, listeners } = useSortable({
@@ -354,8 +350,8 @@ export function DataTable({
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pagination, setPagination] = React.useState({
-    pageIndex: parseSearchToInt(toArray(search.page)[0]) ?? 0,
-    pageSize: parseSearchToInt(toArray(search.pageSize)[0]) ?? 10,
+    pageIndex: search.page,
+    pageSize: search.pageSize ?? 10,
   });
 
   const sortableId = React.useId();
@@ -383,8 +379,8 @@ export function DataTable({
           navigate.to('overview', {
             search: {
               ...search,
-              page: nextPagination.pageIndex.toString(),
-              pageSize: nextPagination.pageSize.toString(),
+              page: nextPagination.pageIndex + 1,
+              pageSize: nextPagination.pageSize,
             },
             preventScrollReset: true,
           });

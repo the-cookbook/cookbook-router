@@ -98,6 +98,27 @@ Writes only `manifest.json`.
 
 The CLI expects statically extractable route declarations. Keep codegen-relevant fields inline and literal when possible: `id`, `path`, `index`, `search`, `hash`, `meta`, `children`, `layout.slots`, and `redirect`. Imported components are supported because the extractor replaces component-bearing fields with placeholders, but imported constants for route IDs, search schemas, or metadata may not be understood by static extraction.
 
+Generated contracts follow URLKit static descriptor semantics. Built-in parsed path constraints such as `{id:int}` and `{price:number}` generate `number` params. Custom path constraints declared through `defineRoutes(routes, { pathConstraints })` generate `string` params unless URLKit exposes typed static custom inference.
+
+Use static URL descriptors in CLI-consumed route files:
+
+```tsx
+export const routes = defineRoutes([
+  {
+    id: 'products.show',
+    path: '/products/{price:number}',
+    search: {
+      page: { value: 'int', default: 1 },
+      tags: { value: 'string', type: 'many' },
+    },
+    hash: ['details', 'reviews'],
+    url: { arrayFormat: 'comma' },
+  },
+] as const);
+```
+
+Do not use URLKit runtime builders such as `int().default(1)` in static route files unless the extractor explicitly supports them. Use `{ value: 'int', default: 1 }` instead. Route-level `url` options are included in `manifest.json` so manifest-based runtimes can preserve array-format behavior.
+
 If generation fails on a complex route file, simplify the route declaration or move codegen-relevant values inline before rerunning `generate`.
 
 ## Watch mode
@@ -218,7 +239,7 @@ Registers generated contracts through `@cookbook/router` module augmentation.
 
 ### `manifest.json`
 
-Contains route IDs and paths for tooling.
+Contains route IDs, paths, and route-level URL options such as `arrayFormat` when configured.
 
 ## Static extraction rules
 
@@ -230,6 +251,8 @@ Keep route files codegen-friendly:
 - avoid computed IDs and computed paths
 - avoid route arrays assembled through runtime loops
 - keep route config serializable where possible
+- use static URLKit-compatible `search`, `hash`, and `url` descriptors
+- register custom path constraints in the second `defineRoutes` argument so the CLI can register them before validation and generation
 - keep complex runtime logic outside route declarations
 
 ## Safety checks
@@ -242,6 +265,7 @@ The CLI validates:
 - duplicate IDs
 - duplicate full paths
 - invalid path patterns
+- unsupported URLKit runtime builders in static route files
 - invalid slot definitions
 - malformed redirects
 - invalid configured intercept targets

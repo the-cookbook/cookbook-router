@@ -56,7 +56,7 @@ describe('validateRoutes', () => {
 
   it('rejects empty paths and invalid pathkit patterns', () => {
     expect(() => validateRoutes([{ id: 'empty', path: '' }])).toThrow('empty path');
-    expect(() => validateRoutes([{ id: 'bad', path: '/users/{id:number}' }])).toThrow(
+    expect(() => validateRoutes([{ id: 'bad', path: '/users/{id:unknown}' }])).toThrow(
       'Unknown constraint type',
     );
   });
@@ -208,7 +208,7 @@ it('rejects invalid slot object and routes configuration', () => {
           component: {},
           slots: {
             sidebar: {
-              routes: [{ id: 'bad.slot', path: '/bad/{id:number}' }],
+              routes: [{ id: 'bad.slot', path: '/bad/{id:unknown}' }],
             },
           },
         },
@@ -353,7 +353,7 @@ it('requires renderable and redirect routes to declare path or index', () => {
   ).not.toThrow();
 });
 
-it('validates search param cardinality descriptors', () => {
+it('validates URLKit static search descriptors', () => {
   expect(() =>
     validateRoutes([
       {
@@ -363,18 +363,25 @@ it('validates search param cardinality descriptors', () => {
           query: { type: 'one', optional: true },
           filters: { type: 'many', optional: true },
           requiredToken: { type: 'one' },
+          page: { value: 'int', default: 1 },
+          visible: { value: 'boolean', optional: true },
+          sort: { value: { type: 'enum', values: ['new', 'top'] }, optional: true },
         },
       },
     ]),
   ).not.toThrow();
 
   expect(() =>
-    validateRoutes([{ id: 'bad', path: '/', search: { query: 'string' } } as never]),
-  ).toThrow('must use');
+    validateRoutes([{ id: 'direct', path: '/', search: { query: 'string' } } as never]),
+  ).not.toThrow();
 
   expect(() =>
     validateRoutes([{ id: 'bad', path: '/', search: { query: { type: 'string' } } } as never]),
-  ).toThrow('type must be "one" or "many"');
+  ).toThrow('type must be "one", "many", "date", or "enum"');
+
+  expect(() =>
+    validateRoutes([{ id: 'bad', path: '/', search: { query: { value: 'object' } } } as never]),
+  ).toThrow('not a supported URLKit static value');
 
   expect(() =>
     validateRoutes([

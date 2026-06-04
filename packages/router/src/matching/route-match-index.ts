@@ -36,7 +36,7 @@ export function getRouteMatchIndex(routes: readonly NormalizedRoute[]): RouteMat
 export function createMatchedBranch(
   route: NormalizedRoute,
   index: Pick<RouteMatchIndex, 'routesById'>,
-  params: Record<string, string>,
+  params: Record<string, unknown>,
 ): readonly MatchedRoute[] {
   const branch: MatchedRoute[] = [];
   let current: NormalizedRoute | undefined = route;
@@ -50,10 +50,10 @@ export function createMatchedBranch(
 }
 
 function pickParams(
-  params: Record<string, string>,
+  params: Record<string, unknown>,
   definitions: NormalizedRoute['params'],
-): Record<string, string> {
-  const selected: Record<string, string> = {};
+): Record<string, unknown> {
+  const selected: Record<string, unknown> = {};
 
   for (const definition of definitions) {
     const value = params[definition.name];

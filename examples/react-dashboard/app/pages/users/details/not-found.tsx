@@ -18,7 +18,7 @@ export function UserNotFound({ slug, username }: UserNotFoundProps) {
   }, [navigate]);
 
   const handleOnUsersClick = React.useCallback(() => {
-    navigate.to('users');
+    navigate.to('users.index');
   }, [navigate]);
 
   return (

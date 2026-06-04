@@ -14,7 +14,7 @@ describe('matchRoutes', () => {
       id: 'users.dynamic',
       pathname: '/users/42',
       route: { id: 'users.dynamic' },
-      params: { id: '42' },
+      params: { id: 42 },
     });
   });
 
@@ -43,7 +43,7 @@ describe('matchRoutes', () => {
     ]);
     expect(match?.params).toEqual({
       organizationId: '123e4567-e89b-12d3-a456-426614174000',
-      userId: '7',
+      userId: 7,
     });
   });
 

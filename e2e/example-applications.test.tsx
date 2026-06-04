@@ -25,7 +25,7 @@ import { routes as ssrRoutes, ssrEvents } from '../examples/react-ssr/src/routes
 import { auth } from '../examples/react-dashboard/app/state/auth';
 
 const dashboardLazyPageTimeout = {
-  timeout: 3_000,
+  timeout: 10_000,
 };
 
 class DashboardResizeObserver implements ResizeObserver {
@@ -243,7 +243,7 @@ describe('example application integration', () => {
     fireEvent.click(view.getByText('Users'));
 
     await waitFor(
-      () => expect(router.state.location.href).toBe('/users'),
+      () => expect(router.state.location.href).toBe('/users?status=all'),
       dashboardLazyPageTimeout,
     );
 

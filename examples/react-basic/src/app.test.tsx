@@ -5,7 +5,7 @@ import { createTestRouter } from './router';
 import { lifecycleEvents } from './routes';
 
 interface ExpectedParams {
-  id: string;
+  id: number;
 }
 
 describe('react-basic example', () => {
@@ -19,12 +19,31 @@ describe('react-basic example', () => {
     expect(getByText('/users/42?tab=settings#profile')).toBeTruthy();
     expect(
       router.href('users.show', {
-        params: { id: '42' },
+        params: { id: 42 },
         search: { tab: 'settings' },
         hash: 'security',
       }),
     ).toBe('/users/42?tab=settings#security');
-    expectTypeOf<{ id: string }>().toEqualTypeOf<ExpectedParams>();
+    expect(router.href('products', { search: { tags: ['router', 'typescript'] } })).toBe(
+      '/products?tags=router%2Ctypescript',
+    );
+    expect(
+      router.href('products', {
+        search: { tags: ['router', 'typescript'] },
+        url: { arrayFormat: 'repeat' },
+      }),
+    ).toBe('/products?tags=router&tags=typescript');
+    expectTypeOf<{ id: number }>().toEqualTypeOf<ExpectedParams>();
+  });
+
+  it('renders URLKit array format overrides from React calls', async () => {
+    const router = createTestRouter(['/products?tags=router&tags=typescript']);
+    await router.resolveCurrent();
+
+    const { getByText } = render(<App router={router} />);
+
+    expect(getByText('Products')).toBeTruthy();
+    expect(getByText('Tags: router, typescript')).toBeTruthy();
   });
 
   it('runs middleware and lifecycle around navigation', async () => {

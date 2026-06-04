@@ -54,7 +54,7 @@ Requirements:
 
 - Node.js `>=18`
 - ESM package with CommonJS build output available through package exports
-- `@cookbook/pathkit` is installed transitively
+- `@cookbook/urlkit` and `@cookbook/pathkit` are installed transitively
 
 ### Route definition APIs
 
@@ -74,7 +74,7 @@ interface DefineRoutesOptions {
 }
 ```
 
-Use `pathConstraints` here when route paths reference custom pathkit constraints. `defineRoutes()` validates immediately, so constraints must be registered before validation.
+Use `pathConstraints` here when route paths reference custom constraints. `defineRoutes()` validates immediately, so constraints must be registered before validation and URLKit route contract compilation.
 
 ```tsx
 import { createConstraint, defineRoutes } from '@cookbook/router';
@@ -120,7 +120,8 @@ interface RouteDefinition {
   readonly intercepts?: RouteIntercepts;
   readonly redirect?: RouteRedirect;
   readonly search?: RouteSearchSchema;
-  readonly hash?: readonly string[];
+  readonly hash?: RouteHashSchema;
+  readonly url?: RouterUrlOptions;
   readonly meta?: RouteMeta;
   readonly loading?: RouteComponent;
   readonly errorFallback?: RouteComponent;
@@ -129,23 +130,24 @@ interface RouteDefinition {
 }
 ```
 
-| Field           | Purpose                                                                                                                   |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `id`            | Stable public route ID used by links, hrefs, navigation, redirects, generated contracts, and tests.                       |
-| `path`          | Local path segment or absolute path. Index routes must not define `path`.                                                 |
-| `index`         | Marks the route as the default child for its parent path.                                                                 |
-| `component`     | Route component or framework-owned render value. The core package treats it as `unknown`.                                 |
-| `layout`        | Layout component and named slot definitions.                                                                              |
-| `children`      | Primary child routes.                                                                                                     |
-| `intercepts`    | Configured route interception targets for named slots.                                                                    |
-| `redirect`      | Internal route redirect object or literal href string.                                                                    |
-| `search`        | Search key schema used by generated contracts. `type: 'one'` is a single value; `type: 'many'` is a repeated query param. |
-| `hash`          | Allowed hash values used by generated contracts.                                                                          |
-| `meta`          | Arbitrary route metadata.                                                                                                 |
-| `loading`       | Route-level React Suspense fallback component for loading route subtrees.                                                 |
-| `errorFallback` | Route-level React error-boundary fallback component for render errors in route subtrees.                                  |
-| `lifecycle`     | Route lifecycle hooks.                                                                                                    |
-| `middleware`    | Route-specific middleware pipeline.                                                                                       |
+| Field           | Purpose                                                                                             |
+| --------------- | --------------------------------------------------------------------------------------------------- |
+| `id`            | Stable public route ID used by links, hrefs, navigation, redirects, generated contracts, and tests. |
+| `path`          | Local path segment or absolute path. Index routes must not define `path`.                           |
+| `index`         | Marks the route as the default child for its parent path.                                           |
+| `component`     | Route component or framework-owned render value. The core package treats it as `unknown`.           |
+| `layout`        | Layout component and named slot definitions.                                                        |
+| `children`      | Primary child routes.                                                                               |
+| `intercepts`    | Configured route interception targets for named slots.                                              |
+| `redirect`      | Internal route redirect object or literal href string.                                              |
+| `search`        | URLKit-compatible static search descriptor used by parsed state and generated contracts.            |
+| `hash`          | URLKit-compatible static hash descriptor or allowed hash values.                                    |
+| `url`           | Route-level URLKit options such as `arrayFormat`, `invalidSearch`, and `invalidHash`.               |
+| `meta`          | Arbitrary route metadata.                                                                           |
+| `loading`       | Route-level React Suspense fallback component for loading route subtrees.                           |
+| `errorFallback` | Route-level React error-boundary fallback component for render errors in route subtrees.            |
+| `lifecycle`     | Route lifecycle hooks.                                                                              |
+| `middleware`    | Route-specific middleware pipeline.                                                                 |
 
 Related: [Routing](routing.md), [Search and hash](search-and-hash.md), [Middleware](middleware.md), [Lifecycle](lifecycle.md).
 
@@ -305,7 +307,7 @@ Prefer object-form navigation for new code because it is easier to refactor and 
 ```ts
 await router.navigate.to({
   route: 'users.show',
-  params: { id: '42' },
+  params: { id: 42 },
   search: { tab: 'settings' },
   hash: 'profile',
 });
@@ -334,6 +336,7 @@ interface HrefOptions<Route extends string> {
   readonly hash?: RouteHashInput<Route>;
   readonly intercept?: InterceptInput;
   readonly context?: unknown;
+  readonly url?: RouterUrlOptions;
 }
 
 interface NavigateOptions<Route extends string> extends HrefOptions<Route> {
@@ -494,7 +497,7 @@ Related: [SSR](ssr.md).
 
 ### Path constraint APIs
 
-`@cookbook/router` re-exports selected `@cookbook/pathkit` constraint helpers.
+`@cookbook/router` re-exports selected `@cookbook/pathkit` constraint helpers. Registered constraints are forwarded to URLKit before route validation, matching, href generation, CLI generation, and SSR/static router workflows.
 
 ```ts
 function createConstraint(definition: ConstraintDefinition): RouterPathConstraint;
@@ -544,22 +547,22 @@ Use these only when implementing integrations that need consistent router errors
 
 Important exported types include:
 
-| Type                                                           | Purpose                                                                           |
-| -------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `RouteId`                                                      | Registered route ID union. Falls back to `string` before contracts are generated. |
-| `RouteParams<Route>`                                           | Params for a registered route.                                                    |
-| `RouteSearch<Route>`                                           | Search object for a registered route.                                             |
-| `RouteHash<Route>`                                             | Hash value for a registered route.                                                |
-| `RouteHashInput<Route>`                                        | Input accepted for route hash generation.                                         |
-| `RouteMeta<Route>` / `RegisteredRouteMeta<Route>`              | Metadata for a registered route.                                                  |
-| `RouteOutletContext<Route>`                                    | Outlet context type for a registered route.                                       |
-| `RouteUrlOptions<Route>`                                       | Route URL params/search/hash options.                                             |
-| `RouterContracts`                                              | Generated contract container.                                                     |
-| `Register`                                                     | Module augmentation target.                                                       |
-| `RouterNavigationState`                                        | Navigation state union.                                                           |
-| `RouteMatch`, `MatchedRoute`, `NormalizedRoute`, `RankedRoute` | Matching and normalized route structures.                                         |
-| `Middleware`, `MiddlewareContext`, `MiddlewareResult`          | Middleware API.                                                                   |
-| `RouteLifecycle`, `GlobalLifecycle`, `RouteLifecycleContext`   | Lifecycle API.                                                                    |
+| Type                                                           | Purpose                                                                                                                     |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `RouteId`                                                      | Registered route ID union. Falls back to `string` before contracts are generated.                                           |
+| `RouteParams<Route>`                                           | URLKit-parsed params for a registered route. `{id:int}` and `{value:number}` are `number`; custom constraints are `string`. |
+| `RouteSearch<Route>`                                           | URLKit-parsed search object for a registered route.                                                                         |
+| `RouteHash<Route>`                                             | URLKit-parsed hash value for a registered route.                                                                            |
+| `RouteHashInput<Route>`                                        | Input accepted for route hash generation.                                                                                   |
+| `RouteMeta<Route>` / `RegisteredRouteMeta<Route>`              | Metadata for a registered route.                                                                                            |
+| `RouteOutletContext<Route>`                                    | Outlet context type for a registered route.                                                                                 |
+| `RouteUrlOptions<Route>`                                       | Route URL params/search/hash options.                                                                                       |
+| `RouterContracts`                                              | Generated contract container.                                                                                               |
+| `Register`                                                     | Module augmentation target.                                                                                                 |
+| `RouterNavigationState`                                        | Navigation state union.                                                                                                     |
+| `RouteMatch`, `MatchedRoute`, `NormalizedRoute`, `RankedRoute` | Matching and normalized route structures.                                                                                   |
+| `Middleware`, `MiddlewareContext`, `MiddlewareResult`          | Middleware API.                                                                                                             |
+| `RouteLifecycle`, `GlobalLifecycle`, `RouteLifecycleContext`   | Lifecycle API.                                                                                                              |
 
 ## `@cookbook/router-react`
 
@@ -640,8 +643,10 @@ interface LinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly params?: HrefOptions<Route>['params'];
   readonly search?: HrefOptions<Route>['search'];
   readonly hash?: HrefOptions<Route>['hash'];
+  readonly url?: HrefOptions<Route>['url'];
   readonly intercept?: InterceptInput;
   readonly context?: HrefOptions<Route>['context'];
+  readonly preventScrollReset?: boolean;
   readonly replace?: boolean;
   readonly children?: ReactNode;
 }
@@ -649,11 +654,19 @@ interface LinkProps<Route extends RouteId = RouteId> extends Omit<
 function Link<Route extends RouteId = RouteId>(props: LinkProps<Route>): JSX.Element;
 ```
 
-Use `to` for internal typed navigation and `href` for literal links.
+Use `to` for internal typed navigation and `href` for literal links. Params, search, and hash are URLKit-backed; `{id:int}` params are numbers. `url` accepts per-component URLKit options such as `arrayFormat`, `invalidSearch`, and `invalidHash`.
 
 ```tsx
-<Link to="users.show" params={{ id: '42' }} search={{ tab: 'settings' }} hash="profile">
+<Link to="users.show" params={{ id: 42 }} search={{ tab: 'settings' }} hash="profile">
   Open user
+</Link>
+
+<Link
+  to="products"
+  search={{ tags: ['router', 'typescript'] }}
+  url={{ arrayFormat: 'comma' }}
+>
+  Products
 </Link>
 ```
 
@@ -675,10 +688,12 @@ interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly params?: HrefOptions<Route>['params'];
   readonly search?: HrefOptions<Route>['search'];
   readonly hash?: HrefOptions<Route>['hash'];
+  readonly url?: HrefOptions<Route>['url'];
   readonly replace?: boolean;
   readonly intercept?: InterceptInput;
   readonly context?: HrefOptions<Route>['context'];
-  readonly end?: boolean;
+  readonly preventScrollReset?: boolean;
+  readonly end?: boolean | { readonly search?: 'all' | 'ignore' };
   readonly children?: ReactNode | ((props: NavLinkRenderProps) => ReactNode);
 }
 
@@ -686,7 +701,7 @@ function NavLink<Route extends RouteId = RouteId>(props: NavLinkProps<Route>): J
 ```
 
 ```tsx
-<NavLink to="users.show" params={{ id: '42' }} end>
+<NavLink to="users.show" params={{ id: 42 }} end>
   {({ isActive }) => <span data-active={isActive}>User</span>}
 </NavLink>
 ```
@@ -728,8 +743,10 @@ Renders a named layout slot. A slot can render a matched slot route, fallback, i
 | `useMatches`       | `() => readonly MatchedRoute[]`                                                                                 | Read the active matched branch.                           |
 | `useNavigation`    | `() => RouterNavigationState`                                                                                   | Read transition state.                                    |
 | `useParams`        | `(routeId?) => RouteParams<Route>`                                                                              | Read current or route-specific params.                    |
-| `useSearchParams`  | `(routeId?) => RouteSearch<Route>`                                                                              | Read parsed search params.                                |
-| `useHashParams`    | `(routeId?) => RouteHash<Route> \| null`                                                                        | Read hash without `#`.                                    |
+| `useSearchParams`  | `(routeId?, options?) => RouteSearch<Route>`                                                                    | Read URLKit-parsed search params.                         |
+| `useSearch`        | `(routeId?, options?) => RouteSearch<Route>`                                                                    | Alias for `useSearchParams`.                              |
+| `useHashParams`    | `(routeId?, options?) => RouteHash<Route> \| null`                                                              | Read URLKit-parsed hash.                                  |
+| `useHash`          | `(routeId?, options?) => RouteHash<Route> \| null`                                                              | Alias for `useHashParams`.                                |
 | `useOutletContext` | `() => unknown`, `<Route>(routeId, options?) => RouteOutletContext<Route>`, or `<Context>(options?) => Context` | Read nearest outlet/slot context.                         |
 | `useBlocker`       | `(options: UseBlockerOptions) => BlockerState`                                                                  | Block in-app navigation and browser unload while enabled. |
 
@@ -760,7 +777,7 @@ interface BlockerState {
 }
 ```
 
-When enabled, this registers a router navigation blocker and a browser unload blocker. Returning/cancelling the confirmation keeps the current route active and sets navigation state to `blocked`.
+When enabled, this registers a router navigation blocker and a browser unload blocker. Returning/cancelling the in-app confirmation keeps the current route active and sets navigation state to `blocked`. Browsers control unload confirmation text; custom browser unload messages are not guaranteed.
 
 ### React contexts and render helpers
 

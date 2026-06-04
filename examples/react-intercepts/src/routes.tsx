@@ -42,7 +42,7 @@ export const routes = defineRoutes([
     id: 'photos.show',
     path: '/photos/{id:int}',
     search: {
-      source: { type: 'one', optional: true },
+      source: { value: 'string', optional: true },
     },
     hash: ['details', 'comments'],
     component: PhotoPage,

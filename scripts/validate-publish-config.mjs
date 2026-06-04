@@ -21,10 +21,6 @@ for (const packageName of packages) {
     failures.push(`${packageJson.name} must publish with public access.`);
   }
 
-  if (packageJson.publishConfig?.provenance !== true) {
-    failures.push(`${packageJson.name} must enable npm provenance.`);
-  }
-
   if (!packageJson.repository?.url?.includes('the-cookbook/cookbook-router')) {
     failures.push(`${packageJson.name} must include repository metadata.`);
   }

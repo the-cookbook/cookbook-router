@@ -3,40 +3,30 @@
 
 export interface RouteParams {
   root: {};
-  'root.sidebar.user': {
-    id: string;
-  };
   home: {};
-  'users.show': {
-    id: string;
-  };
+  'users.show': { id: number };
   login: {};
   'private.dashboard': {};
   blog: {};
   'blog.index': {};
-  'blog.posts.show': {
-    slug: string;
-  };
+  'blog.posts.show': { slug: string };
+  'root.sidebar.user': { id: number };
 }
 
 export interface RouteSearch {
   root: {};
-  'root.sidebar.user': {};
   home: {};
-  'users.show': {
-    tab?: string;
-    preview?: string;
-  };
+  'users.show': { tab?: string; preview?: string };
   login: {};
   'private.dashboard': {};
   blog: {};
   'blog.index': {};
   'blog.posts.show': {};
+  'root.sidebar.user': {};
 }
 
 export interface RouteHash {
   root: never;
-  'root.sidebar.user': never;
   home: never;
   'users.show': 'profile' | 'settings';
   login: never;
@@ -44,39 +34,23 @@ export interface RouteHash {
   blog: never;
   'blog.index': never;
   'blog.posts.show': never;
+  'root.sidebar.user': never;
 }
 
 export interface RouteMeta {
   root: {};
-  'root.sidebar.user': {
-    title?: string;
-  };
-  home: {
-    title?: string;
-  };
-  'users.show': {
-    title?: string;
-    requiresAuth?: boolean;
-  };
-  login: {
-    title?: string;
-  };
-  'private.dashboard': {
-    title?: string;
-    requiresAuth?: boolean;
-  };
+  home: { title?: string };
+  'users.show': { title?: string; requiresAuth?: boolean };
+  login: { title?: string };
+  'private.dashboard': { title?: string; requiresAuth?: boolean };
   blog: {};
-  'blog.index': {
-    title?: string;
-  };
-  'blog.posts.show': {
-    title?: string;
-  };
+  'blog.index': { title?: string };
+  'blog.posts.show': { title?: string };
+  'root.sidebar.user': { title?: string };
 }
 
 export interface RoutePaths {
   root: '/';
-  'root.sidebar.user': '/users/{id:int}';
   home: '/';
   'users.show': '/users/{id:int}';
   login: '/login';
@@ -84,28 +58,24 @@ export interface RoutePaths {
   blog: '/blog';
   'blog.index': '/blog';
   'blog.posts.show': '/blog/{slug:regex([a-z0-9-]+)}';
+  'root.sidebar.user': '/users/{id:int}';
 }
 
 export interface RouteOutletContext {
   root: {};
-  'root.sidebar.user': {
-    source: 'root-sidebar';
-  };
   home: {};
   'users.show': {};
   login: {};
   'private.dashboard': {};
   blog: {};
   'blog.index': {};
-  'blog.posts.show': {
-    source: 'blog-modal';
-  };
+  'blog.posts.show': {};
+  'root.sidebar.user': {};
 }
 
-export const routeIds = ['root', 'root.sidebar.user', 'home', 'users.show', 'login', 'private.dashboard', 'blog', 'blog.index', 'blog.posts.show'] as const;
+export const routeIds = ['root', 'home', 'users.show', 'login', 'private.dashboard', 'blog', 'blog.index', 'blog.posts.show', 'root.sidebar.user'] as const;
 export const routePaths = {
   root: '/',
-  'root.sidebar.user': '/users/{id:int}',
   home: '/',
   'users.show': '/users/{id:int}',
   login: '/login',
@@ -113,6 +83,7 @@ export const routePaths = {
   blog: '/blog',
   'blog.index': '/blog',
   'blog.posts.show': '/blog/{slug:regex([a-z0-9-]+)}',
+  'root.sidebar.user': '/users/{id:int}',
 } as const;
 
 export interface RouterContracts {
@@ -123,4 +94,5 @@ export interface RouterContracts {
   paths: RoutePaths;
   outletContext: RouteOutletContext;
 }
+
 /* eslint-enable */

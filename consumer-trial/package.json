@@ -8,7 +8,7 @@
     "generate": "cookbook-router generate --routes ./src/route-config.json --out-dir ./.cookbook-router",
     "validate:routes": "cookbook-router validate --routes ./src/route-config.json",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --environment jsdom",
+    "test": "vitest run --environment jsdom --reporter=dot --pool=forks --maxWorkers=1 --no-file-parallelism",
     "build": "pnpm generate && pnpm validate:routes && pnpm typecheck && vite build",
     "validate:no-deep-imports": "node ./scripts/validate-no-deep-imports.mjs",
     "validate:trial": "pnpm validate:no-deep-imports && pnpm build && pnpm test"

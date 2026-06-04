@@ -4,6 +4,7 @@ import {
   validatePathPattern,
   type RouterPathOptions,
 } from '../pathkit/pathkit';
+import { registerUrlPathConstraints } from '../url/register-url-path-constraints';
 import type {
   RouteDefinition,
   RouteMeta,
@@ -30,6 +31,8 @@ export function validateRoutes(
   if (!Array.isArray(routes)) {
     throw new Error('Router routes must be an array.');
   }
+
+  registerUrlPathConstraints();
 
   const context: ValidationContext = {
     ids: new Set<string>(),
@@ -152,29 +155,7 @@ function validateRouteShape(route: RouteDefinition): void {
     throw new Error(`Route "${route.id}" layout must be an object.`);
   }
 
-  if (route.hash !== undefined) {
-    if (!Array.isArray(route.hash)) {
-      throw new Error(`Route "${route.id}" hash configuration must be an array.`);
-    }
-
-    const seen = new Set<string>();
-
-    for (const hash of route.hash) {
-      if (typeof hash !== 'string' || !hash) {
-        throw new Error(`Route "${route.id}" defines an empty or non-string hash value.`);
-      }
-
-      if (hash.startsWith('#')) {
-        throw new Error(`Route "${route.id}" hash value "${hash}" must not include a leading #.`);
-      }
-
-      if (seen.has(hash)) {
-        throw new Error(`Route "${route.id}" defines duplicate hash value "${hash}".`);
-      }
-
-      seen.add(hash);
-    }
-  }
+  validateHashSchema(route);
 
   if (
     route.search !== undefined &&
@@ -219,22 +200,186 @@ function validateSearchSchema(route: RouteDefinition): void {
     return;
   }
 
-  for (const [key, value] of Object.entries(route.search)) {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  for (const [key, field] of Object.entries(route.search)) {
+    validateStaticSearchField(route.id, key, field);
+  }
+}
+
+function validateStaticSearchField(routeId: string, key: string, field: unknown): void {
+  if (typeof field === 'string') {
+    validateStaticSearchValue(routeId, key, field);
+    return;
+  }
+
+  if (!field || typeof field !== 'object' || Array.isArray(field)) {
+    throw new Error(
+      `Route "${routeId}" search param "${key}" must use a URLKit static search descriptor.`,
+    );
+  }
+
+  const descriptor = field as {
+    readonly type?: unknown;
+    readonly optional?: unknown;
+    readonly value?: unknown;
+    readonly default?: unknown;
+    readonly values?: unknown;
+    readonly format?: unknown;
+  };
+
+  if (descriptor.type !== undefined && descriptor.type !== 'one' && descriptor.type !== 'many') {
+    if (descriptor.type !== 'date' && descriptor.type !== 'enum') {
       throw new Error(
-        `Route "${route.id}" search param "${key}" must use { type: 'one' | 'many', optional?: boolean }.`,
+        `Route "${routeId}" search param "${key}" type must be "one", "many", "date", or "enum".`,
+      );
+    }
+  }
+
+  if (descriptor.optional !== undefined && typeof descriptor.optional !== 'boolean') {
+    throw new Error(
+      `Route "${routeId}" search param "${key}" optional must be a boolean when provided.`,
+    );
+  }
+
+  validateStaticSearchValue(routeId, key, descriptor.value ?? inferStaticObjectSearchValue(field));
+}
+
+function inferStaticObjectSearchValue(field: unknown): unknown {
+  if (!field || typeof field !== 'object' || Array.isArray(field)) {
+    return 'string';
+  }
+
+  const descriptor = field as { readonly type?: unknown };
+  return descriptor.type === 'date' || descriptor.type === 'enum' ? field : 'string';
+}
+
+function validateStaticSearchValue(routeId: string, key: string, value: unknown): void {
+  if (typeof value === 'string') {
+    if (isBuiltInStaticSearchValue(value)) {
+      return;
+    }
+
+    throw new Error(
+      `Route "${routeId}" search param "${key}" value "${value}" is not a supported URLKit static value.`,
+    );
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(
+      `Route "${routeId}" search param "${key}" value must be a URLKit static value descriptor.`,
+    );
+  }
+
+  const descriptor = value as {
+    readonly type?: unknown;
+    readonly values?: unknown;
+    readonly format?: unknown;
+  };
+
+  if (descriptor.type === 'date') {
+    if (
+      descriptor.format !== undefined &&
+      descriptor.format !== 'date' &&
+      descriptor.format !== 'date-time' &&
+      descriptor.format !== 'unix-seconds' &&
+      descriptor.format !== 'unix-ms'
+    ) {
+      throw new Error(`Route "${routeId}" search param "${key}" date format is not supported.`);
+    }
+
+    return;
+  }
+
+  if (descriptor.type === 'enum') {
+    if (
+      !Array.isArray(descriptor.values) ||
+      !descriptor.values[0] ||
+      descriptor.values.some((entry) => typeof entry !== 'string' || !entry)
+    ) {
+      throw new Error(
+        `Route "${routeId}" search param "${key}" enum values must be non-empty strings.`,
       );
     }
 
-    if (value.type !== 'one' && value.type !== 'many') {
-      throw new Error(`Route "${route.id}" search param "${key}" type must be "one" or "many".`);
+    return;
+  }
+
+  throw new Error(`Route "${routeId}" search param "${key}" value descriptor is not supported.`);
+}
+
+function isBuiltInStaticSearchValue(value: string): boolean {
+  return (
+    value === 'string' ||
+    value === 'number' ||
+    value === 'int' ||
+    value === 'boolean' ||
+    value === 'date' ||
+    value === 'date-time' ||
+    value === 'unix-seconds' ||
+    value === 'unix-ms'
+  );
+}
+
+function validateHashSchema(route: RouteDefinition): void {
+  if (route.hash === undefined) {
+    return;
+  }
+
+  if (Array.isArray(route.hash)) {
+    validateHashValues(route.id, route.hash);
+    return;
+  }
+
+  if (!route.hash || typeof route.hash !== 'object') {
+    throw new Error(
+      `Route "${route.id}" hash configuration must use a URLKit static hash descriptor.`,
+    );
+  }
+
+  const descriptor = route.hash as {
+    readonly type?: unknown;
+    readonly values?: unknown;
+    readonly optional?: unknown;
+    readonly default?: unknown;
+  };
+
+  if (descriptor.type !== 'string' && descriptor.type !== 'enum') {
+    throw new Error(`Route "${route.id}" hash type must be "string" or "enum".`);
+  }
+
+  if (descriptor.optional !== undefined && typeof descriptor.optional !== 'boolean') {
+    throw new Error(`Route "${route.id}" hash optional must be a boolean when provided.`);
+  }
+
+  if (descriptor.default !== undefined && typeof descriptor.default !== 'string') {
+    throw new Error(`Route "${route.id}" hash default must be a string when provided.`);
+  }
+
+  if (descriptor.type === 'enum') {
+    if (!Array.isArray(descriptor.values)) {
+      throw new Error(`Route "${route.id}" hash enum values must be an array.`);
     }
 
-    if (value.optional !== undefined && typeof value.optional !== 'boolean') {
-      throw new Error(
-        `Route "${route.id}" search param "${key}" optional must be a boolean when provided.`,
-      );
+    validateHashValues(route.id, descriptor.values);
+  }
+}
+
+function validateHashValues(routeId: string, values: readonly unknown[]): void {
+  const seen = new Set<string>();
+
+  for (const hash of values) {
+    if (typeof hash !== 'string' || !hash) {
+      throw new Error(`Route "${routeId}" defines an empty or non-string hash value.`);
     }
+
+    if (hash.startsWith('#')) {
+      throw new Error(`Route "${routeId}" hash value "${hash}" must not include a leading #.`);
+    }
+
+    if (seen.has(hash)) {
+      throw new Error(`Route "${routeId}" defines duplicate hash value "${hash}".`);
+    }
+
+    seen.add(hash);
   }
 }
 

@@ -23,7 +23,7 @@ export const routes = defineRoutes([
         id: 'articles.show',
         path: 'articles/{slug:regex([a-z0-9-]+)}',
         search: {
-          preview: { type: 'one', optional: true },
+          preview: { value: 'string', optional: true },
         },
         hash: ['comments', 'summary'],
         component: ArticlePage,
@@ -35,7 +35,7 @@ export const routes = defineRoutes([
         id: 'ssr.users.show',
         path: '/ssr/users/{id:int}',
         search: {
-          tab: { type: 'one', optional: true },
+          tab: { value: 'string', optional: true },
         },
         component: UserPage,
         meta: {

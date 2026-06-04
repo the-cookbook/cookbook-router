@@ -18,6 +18,15 @@
       "index": false
     },
     {
+      "id": "products",
+      "path": "/products",
+      "parentId": "root",
+      "index": false,
+      "url": {
+        "arrayFormat": "comma"
+      }
+    },
+    {
       "id": "blocked",
       "path": "/blocked",
       "parentId": "root",

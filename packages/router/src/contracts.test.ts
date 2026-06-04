@@ -14,11 +14,11 @@ declare module './contracts' {
     contracts: {
       params: {
         home: {};
-        'users.show': { id: string };
+        'users.show': { id: number };
       };
       search: {
         home: {};
-        'users.show': { tab?: string; filters?: string | readonly string[] };
+        'users.show': { tab?: string; filters?: readonly string[] };
       };
       hash: {
         home: never;
@@ -42,10 +42,10 @@ declare module './contracts' {
 describe('registered contracts', () => {
   it('narrows route IDs and route-specific values', () => {
     expectTypeOf<RouteId>().toEqualTypeOf<'home' | 'users.show'>();
-    expectTypeOf<RouteParams<'users.show'>>().toEqualTypeOf<{ id: string }>();
+    expectTypeOf<RouteParams<'users.show'>>().toEqualTypeOf<{ id: number }>();
     expectTypeOf<RouteSearch<'users.show'>>().toEqualTypeOf<{
       tab?: string;
-      filters?: string | readonly string[];
+      filters?: readonly string[];
     }>();
     expectTypeOf<RouteHashInput<'users.show'>>().toEqualTypeOf<
       'profile' | 'settings' | '#profile' | '#settings' | null
@@ -56,8 +56,8 @@ describe('registered contracts', () => {
 
   it('exposes a reusable URL options type for lower-boilerplate consumer APIs', () => {
     expectTypeOf<RouteUrlOptions<'users.show'>>().toEqualTypeOf<{
-      readonly params?: { id: string };
-      readonly search?: { tab?: string; filters?: string | readonly string[] };
+      readonly params?: { id: number };
+      readonly search?: { tab?: string; filters?: readonly string[] };
       readonly hash?: 'profile' | 'settings' | '#profile' | '#settings' | null;
     }>();
   });

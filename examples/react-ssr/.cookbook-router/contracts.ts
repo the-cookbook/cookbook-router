@@ -5,7 +5,7 @@ export interface RouteParams {
   root: {};
   home: {};
   'articles.show': { slug: string };
-  'ssr.users.show': { id: string };
+  'ssr.users.show': { id: number };
 }
 
 export interface RouteSearch {

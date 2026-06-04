@@ -63,5 +63,8 @@ function createContext(options: RunLifecycleOptions): RouteLifecycleContext {
     from: options.from,
     to: options.to,
     location: options.location,
+    params: options.to?.params ?? {},
+    search: (options.to?.search ?? {}) as never,
+    hash: options.to?.hash,
   };
 }

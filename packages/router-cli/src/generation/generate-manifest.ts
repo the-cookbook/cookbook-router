@@ -1,10 +1,11 @@
-import { normalizeRoutes, registerPathConstraints, validateRoutes } from '@cookbook/router';
+import { normalizeRoutes, registerUrlPathConstraints, validateRoutes } from '@cookbook/router';
 import type {
   DefineRoutesOptions,
-  NormalizedRoute,
   RouteDefinition,
   RouterPathOptions,
+  RouterUrlOptions,
 } from '@cookbook/router';
+import { flattenNormalizedRoutes } from './flatten-normalized-routes';
 
 /** Serialized route entry written to `manifest.json`. */
 export interface ManifestRoute {
@@ -12,6 +13,8 @@ export interface ManifestRoute {
   readonly path?: string;
   readonly parentId?: string;
   readonly index: boolean;
+  /** Route-level URLKit options required by manifest-based runtimes. */
+  readonly url?: RouterUrlOptions;
 }
 
 /** Complete route manifest generated for tooling and diagnostics. */
@@ -34,6 +37,7 @@ export function generateManifest(
       ...(route.fullPath === undefined ? {} : { path: route.fullPath }),
       ...(route.parentId === undefined ? {} : { parentId: route.parentId }),
       index: route.index,
+      ...(route.route.url === undefined ? {} : { url: route.route.url }),
     })),
   };
 }
@@ -43,25 +47,15 @@ export function serializeManifest(manifest: RouteManifest): string {
   return `${JSON.stringify(manifest, null, 2)}\n`;
 }
 
-function flattenNormalizedRoutes(routes: readonly NormalizedRoute[]): readonly NormalizedRoute[] {
-  const flattened: NormalizedRoute[] = [];
-
-  for (const route of routes) {
-    flattened.push(route);
-    flattened.push(...flattenNormalizedRoutes(route.children));
-  }
-
-  return flattened;
-}
-
 function resolveGenerationPathOptions(
   options: DefineRoutesOptions | RouterPathOptions,
 ): RouterPathOptions {
   if (isDefineRoutesOptions(options)) {
-    registerPathConstraints(options.pathConstraints);
+    registerUrlPathConstraints(options.pathConstraints);
     return options.pathOptions ?? {};
   }
 
+  registerUrlPathConstraints();
   return options;
 }
 

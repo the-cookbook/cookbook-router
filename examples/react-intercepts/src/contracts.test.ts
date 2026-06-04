@@ -9,7 +9,7 @@ import type {
 
 describe('react-intercepts generated contracts', () => {
   it('exposes generated route IDs, params, hash values, and paths', () => {
-    expectTypeOf<RouteParams['photos.show']>().toEqualTypeOf<{ id: string }>();
+    expectTypeOf<RouteParams['photos.show']>().toEqualTypeOf<{ id: number }>();
     expectTypeOf<RouteHash['photos.show']>().toEqualTypeOf<'details' | 'comments'>();
     expectTypeOf<RoutePaths['photos.show']>().toEqualTypeOf<'/photos/{id:int}'>();
     expectTypeOf<RouterContracts['paths']>().toExtend<RoutePaths>();
@@ -21,8 +21,8 @@ describe('react-intercepts generated contracts', () => {
       const search = useSearchParams('photos.show');
       const hash = useHashParams('photos.show');
 
-      expectTypeOf(params).toEqualTypeOf<{ id: string }>();
-      expectTypeOf(search).toEqualTypeOf<{ source?: string | readonly string[] }>();
+      expectTypeOf(params).toEqualTypeOf<{ id: number }>();
+      expectTypeOf(search).toEqualTypeOf<{ source?: string }>();
       expectTypeOf(hash).toEqualTypeOf<'details' | 'comments' | null>();
     }
 

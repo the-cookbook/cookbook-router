@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { createMemoryRouter, defineRoutes } from '@cookbook/router';
+import { createConstraint, createMemoryRouter, defineRoutes } from '@cookbook/router';
 import { describe, expect, it, expectTypeOf } from 'vitest';
 import { RouterProvider } from '../components/router-provider';
 import { useParams } from './use-params';
@@ -21,8 +21,39 @@ describe('useParams', () => {
 
     const { result } = renderHook(() => useParams('user'), { wrapper });
 
-    expect(result.current).toEqual({ id: '42' });
+    expect(result.current).toEqual({ id: 42 });
     expectTypeOf(result.current.id).toEqualTypeOf<number>();
+  });
+
+  it('returns string params for custom constraints', async () => {
+    const slug = createConstraint({
+      parse(_paramName, value) {
+        if (!/^[a-z0-9-]+$/.test(String(value))) {
+          throw new Error('Invalid slug.');
+        }
+      },
+      verify(_paramName, params) {
+        if (params) {
+          throw new Error('slug does not accept parameters.');
+        }
+      },
+      toRegExp: () => '[a-z0-9-]+',
+    });
+    const router = createMemoryRouter({
+      routes: defineRoutes(
+        [{ id: 'article', path: '/articles/{slug:slug}', component: Page }] as const,
+        { pathConstraints: { slug } },
+      ),
+      initialEntries: ['/articles/urlkit-react'],
+    });
+    await router.resolveCurrent();
+    const wrapper = ({ children }: { children: import('react').ReactNode }) => (
+      <RouterProvider router={router}>{children}</RouterProvider>
+    );
+
+    const { result } = renderHook(() => useParams('article'), { wrapper });
+
+    expect(result.current).toEqual({ slug: 'urlkit-react' });
   });
 
   it('infers params for slot route IDs', () => {

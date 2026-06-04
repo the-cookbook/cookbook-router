@@ -20,6 +20,8 @@ export async function renderRequest(url: string | Request) {
   });
 
   await router.resolveCurrent();
+
   const appHtml = renderToString(<App router={router} staticRender />);
+
   return `<!doctype html><html><head><title>Cookbook Router SSR</title><link rel="stylesheet" href="/src/styles.css"></head><body><div id="root">${appHtml}</div><script>window.__COOKBOOK_ROUTER__=${stringifyRouterState(router)}</script><script type="module" src="/src/main.tsx"></script></body></html>`;
 }

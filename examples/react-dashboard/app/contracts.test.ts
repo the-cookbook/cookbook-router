@@ -13,9 +13,9 @@ describe('react-dashboard generated contracts', () => {
       slug: string;
     }>();
     expectTypeOf<RouteSearch['overview']>().toEqualTypeOf<{
-      page?: string | readonly string[];
-      pageSize?: string | readonly string[];
-      visitors?: string | readonly string[];
+      page: number;
+      pageSize?: number;
+      visitors?: string;
     }>();
     expectTypeOf<
       RoutePaths['users.details']
@@ -31,9 +31,9 @@ describe('react-dashboard generated contracts', () => {
 
       expectTypeOf(params).toEqualTypeOf<{ slug: string }>();
       expectTypeOf(search).toEqualTypeOf<{
-        page?: string | readonly string[];
-        pageSize?: string | readonly string[];
-        visitors?: string | readonly string[];
+        page: number;
+        pageSize?: number;
+        visitors?: string;
       }>();
     }
 

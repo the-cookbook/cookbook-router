@@ -74,10 +74,6 @@ interface DashboardUser {
   lastActive: string;
 }
 
-const parseSearchToInt = (value: string | undefined): number | undefined => {
-  return !value || isNaN(+value) ? undefined : +value;
-};
-
 function getInitials(name: string) {
   return name
     .split(' ')
@@ -365,8 +361,8 @@ export function UsersDataTable({ data }: { data: DashboardUser[] }) {
   const [rowSelection, setRowSelection] = React.useState({});
 
   const [pagination, setPagination] = React.useState<PaginationState>({
-    pageIndex: parseSearchToInt(toArray(search.page)[0]) ?? 0,
-    pageSize: parseSearchToInt(toArray(search.pageSize)[0]) ?? 10,
+    pageIndex: search.page ?? 0,
+    pageSize: search.pageSize ?? 10,
   });
 
   const navigateWithSearch = React.useCallback(
@@ -392,8 +388,8 @@ export function UsersDataTable({ data }: { data: DashboardUser[] }) {
               : updater;
 
           navigateWithSearch({
-            page: nextPagination.pageIndex.toString(),
-            pageSize: nextPagination.pageSize.toString(),
+            page: nextPagination.pageIndex,
+            pageSize: nextPagination.pageSize,
           });
 
           return nextPagination;
@@ -451,7 +447,7 @@ export function UsersDataTable({ data }: { data: DashboardUser[] }) {
 
       navigateWithSearch({
         status,
-        page: '0',
+        page: 1,
       });
     },
     [table, resetPagination, navigateWithSearch]
@@ -467,7 +463,7 @@ export function UsersDataTable({ data }: { data: DashboardUser[] }) {
 
       navigateWithSearch({
         role,
-        page: '0',
+        page: 1,
       });
     },
     [table, resetPagination, navigateWithSearch]
@@ -482,7 +478,7 @@ export function UsersDataTable({ data }: { data: DashboardUser[] }) {
 
         navigateWithSearch({
           q: value,
-          page: '0',
+          page: 1,
         });
       }),
     [table, resetPagination, navigateWithSearch]

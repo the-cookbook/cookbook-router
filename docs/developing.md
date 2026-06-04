@@ -143,15 +143,15 @@ export const routes = defineRoutes([
     id: 'articles.show',
     path: '/articles/{slug}',
     search: {
-      ref: { type: 'one', optional: true },
-      filters: { type: 'many', optional: true },
+      ref: { value: 'string', optional: true },
+      filters: { value: 'string', type: 'many', optional: true },
     },
     component: ArticlePage,
   },
 ] as const);
 ```
 
-Avoid relying on imported constants or computed expressions for fields the generator must read, such as `id`, `path`, `index`, `search`, `hash`, `meta`, `children`, `layout.slots`, and `redirect`.
+Avoid relying on imported constants or computed expressions for fields the generator must read, such as `id`, `path`, `index`, `search`, `hash`, `url`, `meta`, `children`, `layout.slots`, and `redirect`. Use static URLKit-compatible descriptors and do not use URLKit runtime builders in CLI-consumed route files unless static extraction explicitly supports them.
 
 ## Tests and coverage
 

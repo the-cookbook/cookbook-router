@@ -21,6 +21,32 @@ describe('create-router hardening', () => {
     expect(String(router.state.error)).toContain('Hydration data was created for "/server"');
   });
 
+  it('allows client-only hash differences during hydration and syncs them after creation', async () => {
+    const routes = defineRoutes([
+      { id: 'article', path: '/articles/{slug}', hash: ['summary'] },
+    ] as const);
+    const history = createMemoryHistory({
+      initialEntries: ['/articles/typed-routing?preview=true#summary'],
+    });
+    const router = createRouter({
+      routes,
+      history,
+      hydrationData: {
+        location: createMemoryHistory({
+          initialEntries: ['/articles/typed-routing?preview=true'],
+        }).location,
+        navigation: 'idle',
+      },
+    });
+
+    expect(router.state.error).toBeUndefined();
+    expect(router.state.location.href).toBe('/articles/typed-routing?preview=true');
+
+    await waitForRouterHref(router, '/articles/typed-routing?preview=true#summary');
+
+    expect(router.state.match?.hash).toBe('summary');
+  });
+
   it('ignores stale async navigation commits when a later navigation wins', async () => {
     let releaseFirstNavigation!: () => void;
     const firstNavigation = new Promise<void>((resolve) => {
@@ -81,7 +107,7 @@ describe('create-router hardening', () => {
     const router = createRouter({ routes });
 
     const hrefs = Array.from({ length: 1_000 }, () =>
-      router.href('users.show', { params: { id: '42' } }),
+      router.href('users.show', { params: { id: 42 } }),
     );
 
     expect(new Set(hrefs)).toEqual(new Set(['/users/42']));
@@ -93,7 +119,7 @@ describe('create-router hardening', () => {
 
     expect(
       router.href('users.show', {
-        params: { id: '42' },
+        params: { id: 42 },
         search: { tab: 'settings', filter: 'active' } as never,
         hash: 'profile',
       }),
@@ -106,7 +132,7 @@ describe('create-router hardening', () => {
     const hrefs: string[] = [];
 
     for (let index = 0; index < 2_000; index++) {
-      hrefs.push(router.href('users.show', { params: { id: String(index % 10) } }));
+      hrefs.push(router.href('users.show', { params: { id: index % 10 } }));
     }
 
     expect(hrefs[0]).toBe('/users/0');
@@ -129,3 +155,29 @@ describe('create-router hardening', () => {
     ).toThrow('Duplicate route path "/app/settings"');
   });
 });
+
+async function waitForRouterHref(
+  router: ReturnType<typeof createRouter>,
+  href: string,
+): Promise<void> {
+  if (router.state.location.href === href) {
+    return;
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    let unsubscribe = (): void => {};
+    const timeout = globalThis.setTimeout(() => {
+      unsubscribe();
+      reject(new Error(`Timed out waiting for router href "${href}".`));
+    }, 50);
+    unsubscribe = router.subscribe((state) => {
+      if (state.location.href !== href) {
+        return;
+      }
+
+      globalThis.clearTimeout(timeout);
+      unsubscribe();
+      resolve();
+    });
+  });
+}

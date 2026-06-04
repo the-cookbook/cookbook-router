@@ -22,7 +22,7 @@ pnpm add @cookbook/router @cookbook/router-react react react-dom
 pnpm add -D @cookbook/router-cli
 ```
 
-`@cookbook/router-react` declares React as a peer dependency, so the app must install `react` and `react-dom`. `@cookbook/pathkit` is installed transitively by `@cookbook/router`.
+`@cookbook/router-react` declares React as a peer dependency, so the app must install `react` and `react-dom`. `@cookbook/urlkit` and `@cookbook/pathkit` are installed transitively by `@cookbook/router`.
 
 ## Define routes
 
@@ -49,7 +49,7 @@ export const routes = defineRoutes([
         id: 'users.show',
         path: 'users/{id:int}',
         search: {
-          tab: { type: 'one', optional: true },
+          tab: { value: 'string', optional: true },
         },
         hash: ['profile', 'settings', 'security'],
         component: UserPage,
@@ -63,7 +63,7 @@ export const routes = defineRoutes([
 ] as const);
 ```
 
-Use `as const` so route IDs, paths, hash values, and metadata remain literal enough for the CLI to generate useful contracts.
+Use `as const` so route IDs, paths, hash values, URL options, and metadata remain literal enough for the CLI to generate useful contracts. Route files consumed by the CLI should use static descriptors, not URLKit runtime builders.
 
 ## Create pages and layout
 
@@ -77,7 +77,7 @@ export function RootLayout() {
     <main>
       <nav>
         <Link to="home">Home</Link>
-        <Link to="users.show" params={{ id: '42' }} search={{ tab: 'settings' }} hash="profile">
+        <Link to="users.show" params={{ id: 42 }} search={{ tab: 'settings' }} hash="profile">
           User 42
         </Link>
       </nav>
@@ -165,7 +165,7 @@ Add the generated files to `tsconfig.json`.
 }
 ```
 
-After registration, route IDs, params, search fields, hash values, metadata, and paths are inferred through the public package types.
+After registration, route IDs, URLKit-parsed params, search fields, hash values, metadata, and paths are inferred through the public package types. `{id:int}` is `number`; custom constraints remain `string`.
 
 ## Use typed navigation
 
@@ -181,7 +181,7 @@ export function OpenSettingsButton() {
       onClick={() => {
         void navigate.to({
           route: 'users.show',
-          params: { id: '42' },
+          params: { id: 42 },
           search: { tab: 'settings' },
           hash: 'security',
         });
@@ -197,7 +197,7 @@ The two-argument form is also supported:
 
 ```ts
 await navigate.to('users.show', {
-  params: { id: '42' },
+  params: { id: 42 },
 });
 ```
 

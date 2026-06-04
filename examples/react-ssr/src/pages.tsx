@@ -28,7 +28,7 @@ export function HomePage() {
         Read typed routing
       </Link>
 
-      <Link to="ssr.users.show" params={{ id: '1' }} search={{ tab: 'true' }}>
+      <Link to="ssr.users.show" params={{ id: 1 }} search={{ tab: 'true' }}>
         User route
       </Link>
     </section>

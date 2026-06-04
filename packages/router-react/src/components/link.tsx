@@ -1,6 +1,7 @@
 import type { AnchorHTMLAttributes, MouseEvent, ReactNode } from 'react';
 import type { HrefOptions, InterceptInput, RouteId } from '@cookbook/router';
 import { useRouter } from '../hooks/use-router';
+import { resolveLinkHrefOptions } from './resolve-link-href';
 
 /**
  * Props for a router-aware anchor.
@@ -19,6 +20,8 @@ export interface LinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly params?: HrefOptions<Route>['params'];
   readonly search?: HrefOptions<Route>['search'];
   readonly hash?: HrefOptions<Route>['hash'];
+  /** Per-component URLKit options overriding route-level and router-level defaults. */
+  readonly url?: HrefOptions<Route>['url'];
   readonly intercept?: InterceptInput;
   readonly context?: HrefOptions<Route>['context'];
   readonly preventScrollReset?: boolean;
@@ -39,6 +42,7 @@ export function Link<Route extends RouteId = RouteId>(props: LinkProps<Route>) {
     params,
     search,
     hash,
+    url,
     intercept,
     context,
     preventScrollReset,
@@ -48,14 +52,15 @@ export function Link<Route extends RouteId = RouteId>(props: LinkProps<Route>) {
     ...anchorProps
   } = props;
   const routeId = route ?? to;
-  const hrefOptions = createHrefOptions<Route>(
+  const hrefOptions = resolveLinkHrefOptions<Route>({
     params,
     search,
     hash,
+    url,
     intercept,
     context,
     preventScrollReset,
-  );
+  });
   const router = useRouter();
   const routeHref = routeId ? router.href(routeId, hrefOptions) : undefined;
   const href = explicitHref ?? routeHref ?? '';
@@ -138,22 +143,4 @@ function isExternalHref(href: string): boolean {
   }
 
   return new URL(href, window.location.href).origin !== window.location.origin;
-}
-
-function createHrefOptions<Route extends RouteId>(
-  params: HrefOptions<Route>['params'] | undefined,
-  search: HrefOptions<Route>['search'] | undefined,
-  hash: HrefOptions<Route>['hash'] | undefined,
-  intercept: InterceptInput | undefined,
-  context: HrefOptions<Route>['context'] | undefined,
-  preventScrollReset: boolean | undefined,
-): HrefOptions<Route> {
-  return {
-    ...(params === undefined ? {} : { params }),
-    ...(search === undefined ? {} : { search }),
-    ...(hash === undefined ? {} : { hash }),
-    ...(intercept === undefined ? {} : { intercept }),
-    ...(context === undefined ? {} : { context }),
-    ...(preventScrollReset === undefined ? {} : { preventScrollReset }),
-  } as HrefOptions<Route>;
 }

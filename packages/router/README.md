@@ -2,7 +2,7 @@
 
 Framework-agnostic typed routing runtime for Cookbook Router.
 
-Use this package for route definitions, matching, href generation, navigation, middleware, lifecycle hooks, SSR router state, histories, slots, intercepts, redirects, and generated contract types.
+Use this package for route definitions, matching, href generation, navigation, middleware, lifecycle hooks, SSR router state, histories, slots, intercepts, redirects, and generated contract types. URL state is backed by `@cookbook/urlkit`; routing behavior remains owned by Cookbook Router.
 
 ## Table of contents
 
@@ -35,7 +35,7 @@ pnpm add @cookbook/router @cookbook/router-react react react-dom
 pnpm add -D @cookbook/router-cli
 ```
 
-`@cookbook/pathkit` is installed transitively by `@cookbook/router`.
+`@cookbook/urlkit` and `@cookbook/pathkit` are installed transitively by `@cookbook/router`. PathKit remains external and is used beneath URLKit for path-pattern primitives.
 
 ## Requirements
 
@@ -59,7 +59,7 @@ const routes = defineRoutes([
     id: 'users.show',
     path: '/users/{id:int}',
     search: {
-      tab: { type: 'one', optional: true },
+      tab: { value: 'string', optional: true },
     },
     hash: ['profile', 'settings'],
     component: UserPage,
@@ -71,14 +71,14 @@ await router.resolveCurrent();
 
 const href = router.href({
   route: 'users.show',
-  params: { id: '42' },
+  params: { id: 42 },
   search: { tab: 'settings' },
   hash: 'profile',
 });
 
 await router.navigate.to({
   route: 'users.show',
-  params: { id: '42' },
+  params: { id: 42 },
 });
 ```
 
@@ -117,19 +117,20 @@ interface DefineRoutesOptions {
 
 Common route fields:
 
-| Field        | Purpose                                      |
-| ------------ | -------------------------------------------- |
-| `id`         | Stable public route ID.                      |
-| `path`       | URL path segment or absolute path.           |
-| `index`      | Default child route for a parent path.       |
-| `component`  | Framework-owned render value.                |
-| `layout`     | Layout component and slot configuration.     |
-| `children`   | Primary child routes.                        |
-| `redirect`   | Internal route redirect or literal href.     |
-| `search`     | Search key schema for generated contracts.   |
-| `hash`       | Allowed hash values for generated contracts. |
-| `middleware` | Route-specific middleware.                   |
-| `lifecycle`  | Route-specific lifecycle hooks.              |
+| Field        | Purpose                                                                                     |
+| ------------ | ------------------------------------------------------------------------------------------- |
+| `id`         | Stable public route ID.                                                                     |
+| `path`       | URL path segment or absolute path.                                                          |
+| `index`      | Default child route for a parent path.                                                      |
+| `component`  | Framework-owned render value.                                                               |
+| `layout`     | Layout component and slot configuration.                                                    |
+| `children`   | Primary child routes.                                                                       |
+| `redirect`   | Internal route redirect or literal href.                                                    |
+| `search`     | URLKit-compatible static search descriptor for parsed search state and generated contracts. |
+| `hash`       | URLKit-compatible static hash descriptor for parsed hash state and generated contracts.     |
+| `url`        | Route-level URLKit options such as `arrayFormat`, `invalidSearch`, and `invalidHash`.       |
+| `middleware` | Route-specific middleware.                                                                  |
+| `lifecycle`  | Route-specific lifecycle hooks.                                                             |
 
 See [Routing](../../docs/routing.md) for the full route shape.
 
@@ -155,6 +156,7 @@ interface CreateRouterOptions {
   readonly pathConstraints?: RouterPathConstraints;
   readonly maxRedirectDepth?: number;
   readonly maxRedirectionDepth?: number;
+  readonly url?: RouterUrlOptions;
 }
 ```
 
@@ -170,9 +172,9 @@ Important router members:
 
 ```ts
 router.href(routeId, options);
-router.href({ route, params, search, hash });
+router.href({ route, params, search, hash, url });
 router.resolve(routeId, options);
-router.resolve({ route, params, search, hash });
+router.resolve({ route, params, search, hash, url });
 router.match(href);
 
 const matched = router.match('/login?redirect=%2Foverview');
@@ -184,8 +186,8 @@ if (matched) {
   });
 }
 router.navigate.to(routeId, options);
-router.navigate.to({ route, params, search, hash });
-router.navigate.replace({ route, params, search, hash });
+router.navigate.to({ route, params, search, hash, url });
+router.navigate.replace({ route, params, search, hash, url });
 router.navigate.back();
 router.navigate.forward();
 router.navigate.go(delta);
@@ -209,12 +211,17 @@ await router.navigate.to({
 });
 ```
 
-Use `router.href()` when rendering links outside React:
+Use `router.href()` when rendering links outside React. Path params, search, and hash are parsed/built by URLKit, so `{id:int}` and `{value:number}` params use numbers:
 
 ```ts
 const href = router.href({
   route: 'articles.show',
   params: { slug: 'typed-routing' },
+});
+
+const products = router.href('products', {
+  search: { tags: ['router', 'typescript'] },
+  url: { arrayFormat: 'comma' },
 });
 ```
 
@@ -279,7 +286,7 @@ The core package exports contract utility types:
 - `RouterContracts`
 - `Register`
 
-They become app-specific after `@cookbook/router-cli` generates `contracts.ts` and `register.d.ts`.
+They become app-specific after `@cookbook/router-cli` generates `contracts.ts` and `register.d.ts`. Generated params/search/hash follow URLKit parsing semantics: `{id:int}` and `{value:number}` become `number`; custom constraints remain `string`; URLKit-compatible search/hash descriptors produce parsed value types.
 
 See [Contracts](../../docs/contracts.md) and [Code generation](../../docs/codegen.md).
 
@@ -303,6 +310,9 @@ const slug = createConstraint({
 const routes = defineRoutes([{ id: 'posts.show', path: '/posts/{slug:slug}' }] as const, {
   pathConstraints: { slug },
 });
+
+// The generated param type for `slug` remains string. Built-in `{id:int}` and
+// `{value:number}` constraints parse to number.
 ```
 
 Also exported:
@@ -327,7 +337,7 @@ Internal middleware runners, transition runners, slot resolvers, and intercept r
 
 ## Troubleshooting
 
-- If custom constraints are unknown, pass them to `defineRoutes(..., { pathConstraints })`.
+- If custom constraints are unknown, pass them to `defineRoutes(..., { pathConstraints })` or `createRouter({ pathConstraints })` for raw route arrays so URLKit can validate and compile route contracts.
 - If redirects do not run before first render, call `await router.resolveCurrent()` before rendering.
 - If route types are too broad, run `@cookbook/router-cli generate` and include generated files in `tsconfig.json`.
 - If tests need navigation, use `createMemoryRouter()` instead of mocking internals.

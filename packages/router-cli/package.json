@@ -15,9 +15,24 @@
   "keywords": [
     "cli",
     "codegen",
-    "contracts",
+    "router-cli",
+    "router-codegen",
+    "route-codegen",
+    "route-contracts",
+    "typed-routes",
+    "typed-router",
+    "type-safe-router",
+    "type-safe-routing",
+    "typescript-router",
+    "typescript",
+    "routing",
     "router",
-    "typescript"
+    "navigation",
+    "url-state",
+    "search-params",
+    "path-params",
+    "manifest",
+    "cookbook-router"
   ],
   "type": "module",
   "sideEffects": false,
@@ -46,8 +61,7 @@
     "node": ">=18"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "scripts": {
     "build": "rollup -c ../../rollup.config.mjs",

@@ -12,6 +12,18 @@ Use this guide when routing behavior, generated contracts, examples, SSR, or tes
 - [Call-site intercept throws `DataCloneError`](#call-site-intercept-throws-datacloneerror)
 - [Slot fallback IDs are missing from contracts](#slot-fallback-ids-are-missing-from-contracts)
 - [Generated contracts are stale](#generated-contracts-are-stale)
+- [`useParams()` returns `number` for `{id:int}`](#useparams-returns-number-for-idint)
+- [Custom constraint params remain `string`](#custom-constraint-params-remain-string)
+- [Invalid path params fail during URLKit-backed validation](#invalid-path-params-fail-during-urlkit-backed-validation)
+- [Search params parse differently after URLKit integration](#search-params-parse-differently-after-urlkit-integration)
+- [Invalid optional search params break a page](#invalid-optional-search-params-break-a-page)
+- [Repeated search params and `arrayFormat`](#repeated-search-params-and-arrayformat)
+- [Unknown search params behavior](#unknown-search-params-behavior)
+- [Hash validation failures](#hash-validation-failures)
+- [Generated contracts do not match expected URL state](#generated-contracts-do-not-match-expected-url-state)
+- [Custom path constraints are not registered during CLI generation](#custom-path-constraints-are-not-registered-during-cli-generation)
+- [Static extraction does not support URLKit runtime builders](#static-extraction-does-not-support-urlkit-runtime-builders)
+- [JSDoc hovers are broad with generic `defineRoutes`](#jsdoc-hovers-are-broad-with-generic-defineroutes)
 - [Type inference does not work](#type-inference-does-not-work)
 - [SSR returns an empty root](#ssr-returns-an-empty-root)
 - [SSR page has no styles](#ssr-page-has-no-styles)
@@ -25,7 +37,7 @@ Check:
 - the route has an `id`
 - index routes do not define `path`
 - nested child paths are composed with their parent path, even when the child path starts with `/`
-- constrained params satisfy the pathkit constraint
+- constrained params satisfy the registered URLKit/PathKit constraint
 - `basename` is configured when the app is mounted under a URL prefix
 - `pathOptions.prune` is not set to `false` when you expect slash cleanup
 
@@ -104,7 +116,7 @@ const routes = defineRoutes([{ id: 'posts.show', path: '/posts/{slug:slug}' }] a
 createRouter({ routes });
 ```
 
-For SSR, use the same custom-constraint setup in the route module used by both the server and client.
+For SSR, use the same custom-constraint setup in the route module used by both the server and client. `defineRoutes(..., { pathConstraints })` and `createRouter({ pathConstraints })` both forward constraints to URLKit before route URL contracts are used.
 
 ## Basename routes do not work
 
@@ -180,6 +192,157 @@ In development, use watch mode. It generates once, keeps running, and regenerate
 ```sh
 cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router --watch
 ```
+
+## `useParams()` returns `number` for `{id:int}`
+
+This is expected v1 URLKit-backed behavior.
+
+```tsx
+{
+  id: 'users.show',
+  path: '/users/{id:int}',
+}
+```
+
+```ts
+const params = useParams('users.show');
+params.id; // number
+```
+
+Use numeric params in links, hrefs, navigation, tests, middleware assumptions, and generated-contract assertions:
+
+```tsx
+<Link to="users.show" params={{ id: 42 }} />
+```
+
+`{value:number}` also parses to `number`.
+
+## Custom constraint params remain `string`
+
+Custom constraints validate shape but generate and expose `string` params unless URLKit supports typed static inference for that custom constraint.
+
+```tsx
+{
+  id: 'posts.show',
+  path: '/posts/{slug:slug}',
+}
+```
+
+```ts
+const params = useParams('posts.show');
+params.slug; // string
+```
+
+## Invalid path params fail during URLKit-backed validation
+
+Href generation, matching, resolving, and navigation now pass path params through URLKit-backed route URL contracts. Invalid values fail before the route is committed.
+
+```ts
+router.href('users.show', { params: { id: 'abc' } }); // throws for {id:int}
+router.match('/users/abc'); // null for {id:int}
+```
+
+If the path uses a custom constraint, confirm the constraint is registered before route validation and router creation.
+
+## Search params parse differently after URLKit integration
+
+Search values now follow the route's URLKit-compatible static descriptors.
+
+```ts
+search: {
+  page: { value: 'int', default: 1 },
+  tags: { value: 'string', type: 'many', optional: true },
+}
+```
+
+`page` is a `number`, and `tags` is a `readonly string[]` when present. Update UI code that previously normalized every search value as `string | readonly string[]`.
+
+## Invalid optional search params break a page
+
+Use `invalidSearch` when optional query-string state should not take down a route. This is usually the right behavior for dashboards, tables, filters, and pagination.
+
+```ts
+const router = createRouter({
+  routes,
+  url: {
+    arrayFormat: 'repeat',
+    invalidSearch: 'recover',
+  },
+});
+```
+
+For this route:
+
+```ts
+search: {
+  page: { value: 'number', default: 1, optional: true },
+  pageSize: { value: 'number', optional: true },
+}
+```
+
+`/overview?page=a&pageSize=10` parses as `{ page: 1, pageSize: 10 }` with the default `invalidSearch: 'recover'`, because `page` has a descriptor default. Invalid fields without defaults are treated as missing.
+
+Use `invalidSearch: 'error'` for strict apps that should render route error fallbacks for malformed declared search params. Use `invalidSearch: 'no-match'` when malformed search should reject that route candidate and continue fallback/not-found matching.
+
+## Repeated search params and `arrayFormat`
+
+`arrayFormat` controls repeated values.
+
+```ts
+createRouter({ routes, url: { arrayFormat: 'repeat' } });
+```
+
+`repeat` reads and writes `?tags=a&tags=b`. `comma` reads `?tags=a,b` and writes `?tags=a%2Cb`. Precedence is per-call/hook/component, then route-level `url`, then router-level `url`, then URLKit defaults.
+
+## Unknown search params behavior
+
+Only declared route `search` keys are part of generated contracts. Unknown keys are not typed. URLKit-backed runtime behavior depends on the URLKit options intentionally exposed through the router API. The current public router URL option model exposes `arrayFormat`, `invalidSearch`, and `invalidHash`; do not rely on untyped unknown search keys for application state.
+
+## Hash validation failures
+
+When a route declares hash values, generated hrefs and route state are URLKit-backed.
+
+```ts
+hash: ['comments', 'share'];
+```
+
+Use `hash: 'comments'` or `hash: '#comments'`. A hash outside the declared descriptor fails through URLKit-backed validation or does not match the route's declared hash contract.
+
+## Generated contracts do not match expected URL state
+
+Regenerate after changing `path`, `search`, `hash`, custom constraints, or route-level `url` options:
+
+```sh
+cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router
+```
+
+Generated contracts should show `{id:int}` and `{value:number}` params as `number`, custom constraints as `string`, URLKit-compatible search descriptors as parsed types, and route-level `url` options in `manifest.json` when configured.
+
+## Custom path constraints are not registered during CLI generation
+
+Declare custom constraints in the second `defineRoutes` argument so the CLI can extract and register them before validation and generation.
+
+```ts
+export const routes = defineRoutes([{ id: 'posts.show', path: '/posts/{slug:slug}' }], {
+  pathConstraints: { slug },
+});
+```
+
+Avoid registering constraints only through side effects in files the CLI cannot statically evaluate.
+
+## Static extraction does not support URLKit runtime builders
+
+CLI-consumed route files must remain statically analyzable. Do not use runtime builders like `int().default(1)` in static route definitions unless the CLI explicitly supports them. Use static descriptors instead:
+
+```ts
+search: {
+  page: { value: 'int', default: 1 },
+}
+```
+
+## JSDoc hovers are broad with generic `defineRoutes`
+
+Generic `defineRoutes([...])` calls can show broad hover text because TypeScript displays the generic route-definition surface instead of the narrowed generated contract. Run the CLI and include `.cookbook-router/register.d.ts` in `tsconfig.json`; use generated `RouteParams`, `RouteSearch`, and hook/router call sites for precise app-specific types.
 
 ## Type inference does not work
 

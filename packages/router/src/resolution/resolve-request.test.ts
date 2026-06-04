@@ -9,7 +9,7 @@ describe('resolveRequest', () => {
 
     expect(result.url.search).toBe('?tab=settings');
     expect(result.match?.route.id).toBe('users.show');
-    expect(result.match?.params).toEqual({ id: '42' });
+    expect(result.match?.params).toEqual({ id: 42 });
   });
 
   it('rejects unsafe request protocols', () => {

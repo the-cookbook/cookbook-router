@@ -22,7 +22,7 @@ export function UserDetailHeader({ user }: UserDetailHeaderProps) {
 
   const handleOnGoBack = React.useCallback(() => {
     if (!window.history.state) {
-      navigate.to('users');
+      navigate.to('users.index');
 
       return;
     }

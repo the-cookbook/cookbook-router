@@ -1,5 +1,5 @@
 import { extname } from 'node:path';
-import { createConstraint, registerPathConstraints, validateRoutes } from '@cookbook/router';
+import { createConstraint, registerUrlPathConstraints, validateRoutes } from '@cookbook/router';
 import type { CliFileSystem, CliRouteSource, LoadRouteFilesOptions, RouteFile } from '../contracts';
 import type { DefineRoutesOptions, RouterPathConstraints } from '@cookbook/router';
 import { assertSafeRouteFilePaths } from '../security/safe-paths';
@@ -20,7 +20,7 @@ export async function loadRouteFiles(
 
   for (const path of options.routeFiles) {
     const parsed = await loadRouteFile(path, fs);
-    registerPathConstraints(parsed.routeOptions?.pathConstraints);
+    registerUrlPathConstraints(parsed.routeOptions?.pathConstraints);
     validateRoutes(parsed.routes, parsed.routeOptions?.pathOptions);
     sources.push({
       path,
@@ -82,6 +82,7 @@ function parseJsonRouteFile(path: string, contents: string): RouteFile {
 
 function parseStaticRouteModule(path: string, contents: string): RouteFile {
   const literals = extractRouteModuleLiterals(path, contents);
+  assertNoUnsupportedRuntimeUrlKitBuilders(path, literals.routesLiteral);
   const sanitized = sanitizeRoutesLiteral(literals.routesLiteral);
   let routes: unknown;
 
@@ -539,6 +540,23 @@ function extractBalancedArray(path: string, contents: string, start: number): st
   }
 
   throw new Error(`Route file "${path}" contains an unterminated routes array.`);
+}
+
+function assertNoUnsupportedRuntimeUrlKitBuilders(path: string, routesLiteral: string): void {
+  const runtimeBuilderPattern =
+    /\b(?:string|number|int|boolean|date|dateTime|enumOf)\s*\(\s*\)(?:\s*\.\s*(?:optional|required|default)\s*\([^)]*\))*|\benumOf\s*\(/;
+
+  if (!runtimeBuilderPattern.test(routesLiteral)) {
+    return;
+  }
+
+  throw new Error(
+    [
+      `Route file "${path}" uses URLKit runtime builders in a static route declaration.`,
+      "The CLI only supports static URL descriptors such as { value: 'int', default: 1 } for search and hash generation.",
+      'Move runtime URL builders out of CLI-consumed route files or replace them with static descriptors.',
+    ].join(' '),
+  );
 }
 
 function sanitizeRoutesLiteral(source: string): string {

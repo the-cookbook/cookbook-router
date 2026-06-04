@@ -57,7 +57,9 @@ for (const [name, tarball] of tarballs) {
 await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
 
 run('pnpm', ['install', '--frozen-lockfile=false', '--ignore-workspace'], appDir);
-run('pnpm', ['validate:trial'], appDir);
+run('pnpm', ['validate:no-deep-imports'], appDir);
+run('pnpm', ['build'], appDir);
+run('pnpm', ['test'], appDir);
 
 function run(command, args, cwd) {
   const result = spawnSync(command, args, {

@@ -42,7 +42,7 @@ describe('release candidate repository state', () => {
       expect(packageJson.types).toBe(rootExport.types);
       expect(packageJson.sideEffects).toBe(false);
       expect(packageJson.files).toContain('dist');
-      expect(packageJson.publishConfig).toEqual({ access: 'public', provenance: true });
+      expect(packageJson.publishConfig).toEqual({ access: 'public' });
 
       if (packageDirectory === 'packages/router-cli') {
         expect(packageJson.bin).toEqual({

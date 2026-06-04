@@ -1,4 +1,4 @@
-import { registerPathConstraints } from '@cookbook/router';
+import { registerUrlPathConstraints } from '@cookbook/router';
 import { generateManifest, serializeManifest } from '../generation/generate-manifest';
 import { resolveRouteInput } from './generate';
 import type { CliFileSystem, CliRouteOptions, CommandResult } from '../contracts';
@@ -22,7 +22,7 @@ export async function manifestCommand(options: ManifestOptions): Promise<Command
     const routeFile = await resolveRouteInput(options);
     const { outDir, manifestPath } = output;
 
-    registerPathConstraints(routeFile.routeOptions?.pathConstraints);
+    registerUrlPathConstraints(routeFile.routeOptions?.pathConstraints);
     await fs.mkdir(outDir, { recursive: true });
     await fs.writeFile(
       manifestPath,

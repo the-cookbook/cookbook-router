@@ -13,12 +13,29 @@
     "url": "https://github.com/the-cookbook/cookbook-router/issues"
   },
   "keywords": [
-    "hooks",
     "react",
+    "react-router",
+    "react-routing",
     "router",
     "routing",
+    "typed-router",
+    "type-safe-router",
+    "type-safe-routing",
+    "typed-routes",
+    "typescript-router",
+    "typescript",
+    "hooks",
+    "react-hooks",
+    "link",
+    "navigation",
     "ssr",
-    "typescript"
+    "hydration",
+    "url-state",
+    "search-params",
+    "path-params",
+    "route-params",
+    "middleware",
+    "cookbook-router"
   ],
   "type": "module",
   "sideEffects": false,
@@ -43,8 +60,7 @@
     "node": ">=18"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "scripts": {
     "build": "rollup -c ../../rollup.config.mjs",

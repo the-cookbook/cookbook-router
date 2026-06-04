@@ -75,7 +75,7 @@ const router = createMemoryRouter({
 });
 
 await router.resolveCurrent();
-await router.navigate.to({ route: 'users.show', params: { id: '42' } });
+await router.navigate.to({ route: 'users.show', params: { id: 42 } });
 
 expect(router.state.location.href).toBe('/users/42');
 ```

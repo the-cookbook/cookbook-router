@@ -54,13 +54,15 @@ Global and route-level middleware both run as part of the navigation pipeline.
 interface MiddlewareContext {
   readonly route: MatchedRoute;
   readonly location: RouterLocation;
-  readonly params: Record<string, string>;
+  readonly params: Record<string, unknown>;
+  readonly search: Record<string, unknown>;
+  readonly hash: unknown;
   redirect: (to: string) => MiddlewareResult;
   cancel: () => MiddlewareResult;
 }
 ```
 
-`route` is the destination matched route. Runtime metadata is available at:
+`route` is the destination matched route. `params`, `search`, and `hash` are URLKit-parsed values from the active match, so `{id:int}` params are numbers and custom constraints remain strings. Runtime metadata is available at:
 
 ```ts
 route.route.route.meta;

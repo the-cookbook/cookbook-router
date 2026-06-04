@@ -23,13 +23,25 @@ const authMiddleware: Middleware = ({ route, location, redirect }) => {
 };
 
 export function createAppRouter() {
-  return createRouter({ routes, basename: basePath });
+  return createRouter({
+    routes,
+    basename: basePath,
+    url: {
+      arrayFormat: 'repeat',
+      invalidSearch: 'recover',
+      invalidHash: 'recover',
+    },
+  });
 }
 
 export function createTestRouter(
   initialEntries: readonly string[] = ['/overview']
 ) {
-  return createMemoryRouter({ routes, initialEntries });
+  return createMemoryRouter({
+    routes,
+    initialEntries,
+    url: { arrayFormat: 'repeat', invalidSearch: 'recover' },
+  });
 }
 
 export function App({ router }: { readonly router: Router }) {

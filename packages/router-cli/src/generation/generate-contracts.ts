@@ -1,12 +1,15 @@
-import { normalizeRoutes, registerPathConstraints, validateRoutes } from '@cookbook/router';
+import { normalizeRoutes, registerUrlPathConstraints, validateRoutes } from '@cookbook/router';
 import type {
   DefineRoutesOptions,
   NormalizedRoute,
-  NormalizedRouteSlotConfig,
   RouteDefinition,
   RouterPathOptions,
-  RouteParamDefinition,
 } from '@cookbook/router';
+import { flattenNormalizedRoutes } from './flatten-normalized-routes';
+import { renderRouteHash } from './generate-route-hash';
+import { renderRouteParams } from './generate-route-params';
+import { renderRouteSearch } from './generate-route-search';
+import { quote, quoteProperty, renderInterface, renderObject } from './render-types';
 
 interface GeneratedRouteContract {
   readonly id: string;
@@ -22,7 +25,8 @@ interface GeneratedRouteContract {
  *
  * The generated output includes params, search, hash, meta, paths, outlet
  * context, route ids, and route paths. Custom path constraints supplied through
- * `defineRoutes` options are registered before validation.
+ * `defineRoutes` options are registered with URLKit before validation so the
+ * generated params/search/hash state follows URLKit parsing semantics.
  */
 export function generateContracts(
   routes: readonly RouteDefinition[],
@@ -91,53 +95,12 @@ export function generateContracts(
 function toGeneratedRouteContract(route: NormalizedRoute): GeneratedRouteContract {
   return {
     id: route.id,
-    params: renderParams(route.params),
-    search: renderSearch(route.route.search),
-    hash: renderHash(route.route.hash),
+    params: renderRouteParams(route.params),
+    search: renderRouteSearch(route.route.search),
+    hash: renderRouteHash(route.route.hash),
     meta: renderMeta(route.route.meta),
     path: route.fullPath === undefined ? 'never' : quote(route.fullPath),
   };
-}
-
-function renderInterface(name: string, entries: readonly (readonly [string, string])[]): string {
-  const lines = [`export interface ${name} {`];
-
-  for (const [id, value] of entries) {
-    lines.push(`  ${quoteProperty(id)}: ${value};`);
-  }
-
-  lines.push('}');
-  return lines.join('\n');
-}
-
-function renderParams(params: readonly RouteParamDefinition[]): string {
-  const entries = params.map((param) => `${quoteProperty(param.name)}: string`);
-  return renderObject(entries);
-}
-
-function renderSearch(search: RouteDefinition['search']): string {
-  if (!search) {
-    return '{}';
-  }
-
-  const entries = Object.entries(search).map(([key, value]) => {
-    const optional = value.optional ? '?' : '';
-    return `${quoteProperty(key)}${optional}: ${renderSearchValue()}`;
-  });
-
-  return renderObject(entries);
-}
-
-function renderSearchValue(): string {
-  return 'string | readonly string[]';
-}
-
-function renderHash(hash: RouteDefinition['hash']): string {
-  if (!hash) {
-    return 'never';
-  }
-
-  return hash[0] ? hash.map(quote).join(' | ') : 'never';
 }
 
 function renderMeta(meta: RouteDefinition['meta']): string {
@@ -151,70 +114,15 @@ function renderMeta(meta: RouteDefinition['meta']): string {
   return renderObject(entries);
 }
 
-function renderObject(entries: readonly string[]): string {
-  return entries[0] ? `{ ${entries.join('; ')} }` : '{}';
-}
-
-function quote(value: string): string {
-  const escaped = value.replaceAll('\\', '\\\\').replaceAll("'", "\\'");
-  return `'${escaped}'`;
-}
-
-function quoteProperty(value: string): string {
-  return /^[A-Za-z_$][\w$]*$/.test(value) ? value : quote(value);
-}
-
-function flattenNormalizedRoutes(routes: readonly NormalizedRoute[]): readonly NormalizedRoute[] {
-  const flattened: NormalizedRoute[] = [];
-  const stack = [...routes].reverse();
-
-  while (stack.length) {
-    const route = stack.pop();
-
-    if (!route) {
-      continue;
-    }
-
-    flattened.push(route);
-
-    const slots = Object.values(route.layout?.slots ?? {}) as readonly NormalizedRouteSlotConfig[];
-
-    for (let index = slots.length - 1; index >= 0; index--) {
-      const slot = slots[index];
-
-      if (!slot) {
-        continue;
-      }
-
-      for (let routeIndex = slot.routes.length - 1; routeIndex >= 0; routeIndex--) {
-        const slotRoute = slot.routes[routeIndex];
-
-        if (slotRoute) {
-          stack.push(slotRoute);
-        }
-      }
-    }
-
-    for (let index = route.children.length - 1; index >= 0; index--) {
-      const child = route.children[index];
-
-      if (child) {
-        stack.push(child);
-      }
-    }
-  }
-
-  return flattened;
-}
-
 function resolveGenerationPathOptions(
   options: DefineRoutesOptions | RouterPathOptions,
 ): RouterPathOptions {
   if (isDefineRoutesOptions(options)) {
-    registerPathConstraints(options.pathConstraints);
+    registerUrlPathConstraints(options.pathConstraints);
     return options.pathOptions ?? {};
   }
 
+  registerUrlPathConstraints();
   return options;
 }
 

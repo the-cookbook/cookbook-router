@@ -88,6 +88,6 @@ describe('run-middleware', () => {
       location: createMemoryHistory({ initialEntries: ['/users/1'] }).location,
     });
 
-    expect(seen).toEqual(['1', '/users/1', 'users.show']);
+    expect(seen).toEqual([1, '/users/1', 'users.show']);
   });
 });

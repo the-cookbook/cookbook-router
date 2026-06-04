@@ -27,7 +27,7 @@ describe('generated contracts in the consumer trial', () => {
       | 'blog.index'
       | 'blog.posts.show'
     >();
-    expectTypeOf<RouteParams<'users.show'>>().toEqualTypeOf<{ id: string }>();
+    expectTypeOf<RouteParams<'users.show'>>().toEqualTypeOf<{ id: number }>();
     expectTypeOf<RouteSearch<'users.show'>>().toEqualTypeOf<{ tab?: string; preview?: string }>();
     expectTypeOf<RouteHashInput<'users.show'>>().toEqualTypeOf<
       'profile' | 'settings' | '#profile' | '#settings' | null

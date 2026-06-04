@@ -21,7 +21,7 @@ describe('production release readiness', () => {
       expect(exports['./package.json']).toBe('./package.json');
       expect(packageJson.sideEffects).toBe(false);
       expect(packageJson.license).toBe('MIT');
-      expect(packageJson.publishConfig).toEqual({ access: 'public', provenance: true });
+      expect(packageJson.publishConfig).toEqual({ access: 'public' });
       expect(packageJson.repository).toEqual({
         type: 'git',
         url: 'https://github.com/the-cookbook/cookbook-router.git',

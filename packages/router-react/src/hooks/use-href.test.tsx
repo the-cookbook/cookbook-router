@@ -39,4 +39,33 @@ describe('useHref', () => {
 
     expect(result.current).toBe('/users/4');
   });
+
+  it('forwards URL options to href generation', async () => {
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        {
+          id: 'products',
+          path: '/products',
+          search: { tags: { value: 'string', type: 'many', optional: true } },
+          component: Page,
+        },
+      ] as const),
+      url: { arrayFormat: 'repeat' },
+    });
+    await router.resolveCurrent();
+    const wrapper = ({ children }: { children: import('react').ReactNode }) => (
+      <RouterProvider router={router}>{children}</RouterProvider>
+    );
+
+    const { result } = renderHook(
+      () =>
+        useHref('products', {
+          search: { tags: ['router', 'typescript'] },
+          url: { arrayFormat: 'comma' },
+        }),
+      { wrapper },
+    );
+
+    expect(result.current).toBe('/products?tags=router%2Ctypescript');
+  });
 });

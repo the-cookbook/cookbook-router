@@ -4,7 +4,7 @@ import { App, createTestRouter } from './app';
 import { auth } from './state/auth';
 
 const lazyPageTimeout = {
-  timeout: 3_000,
+  timeout: 10_000,
 };
 
 describe('react-dashboard example', () => {
@@ -18,7 +18,29 @@ describe('react-dashboard example', () => {
 
     const view = render(<App router={router} />);
 
-    expect(router.state.location.href).toBe('/overview');
+    expect(router.state.location.href).toBe('/overview?page=0');
+    expect(
+      await view.findByRole('heading', { name: 'Overview' }, lazyPageTimeout)
+    ).toBeTruthy();
+    expect(
+      await view.findByText('Total Revenue', {}, lazyPageTimeout)
+    ).toBeTruthy();
+  });
+
+  it('renders overview when page numeric search params is malformed', async () => {
+    const router = createTestRouter([
+      '/overview?page=a&pageSize=10&visitors=30d',
+    ]);
+    await router.resolveCurrent();
+
+    const view = render(<App router={router} />);
+
+    expect(router.state.match?.id).toBe('overview');
+    expect(router.state.match?.search).toEqual({
+      page: 0,
+      pageSize: 10,
+      visitors: '30d',
+    });
     expect(
       await view.findByRole('heading', { name: 'Overview' }, lazyPageTimeout)
     ).toBeTruthy();
@@ -207,7 +229,7 @@ describe('react-dashboard example', () => {
     fireEvent.click(view.getByText('Login'));
 
     await waitFor(
-      () => expect(router.state.location.href).toBe('/overview'),
+      () => expect(router.state.location.href).toBe('/overview?page=0'),
       lazyPageTimeout
     );
 

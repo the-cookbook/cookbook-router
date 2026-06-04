@@ -9,12 +9,9 @@ import { matchRoutes } from '../matching/match-routes';
 import { normalizeRoutes } from '../matching/normalize-routes';
 import { rankRoutes } from '../matching/rank-routes';
 import {
-  compilePathPattern,
-  matchPathPattern,
   normalizePathOptions,
   prunePathname,
-  registerPathConstraints,
-  type PathkitCompileParams,
+  type RouterPathConstraints,
   type RouterPathOptions,
 } from '../pathkit/pathkit';
 import { validateRoutes } from '../validation/validate-routes';
@@ -44,26 +41,21 @@ import type {
 } from '../routes/contracts';
 import type { RouteId, RouteUrlOptions } from '../contracts';
 import { getDefineRoutesOptions } from '../routes/define-routes';
-import {
-  createGeneratedHrefMismatchError,
-  createHydrationMismatchError,
-  createInvalidParamError,
-  createMissingParamError,
-  createMissingPathError,
-  createUnknownRouteError,
-} from '../diagnostics/router-errors';
-import {
-  assertSerializedRouterState,
-  parseSerializedRouterState,
-  stringifySerializedRouterState,
-} from '../security/serialized-state';
+import { createHydrationMismatchError } from '../diagnostics/router-errors';
+import { buildRoutePath, registerUrlPathConstraints, type RouterUrlOptions } from '../url';
+import { createRouteHref } from './create-href';
+import { createRouteLookup } from './create-route-lookup';
+import { matchLocationResult, type MatchLocationResult } from './match-location';
+import { applyBasename, stripBasename } from './pathname';
 
 /**
  * Options for creating a router runtime.
  *
  * Routes are validated and normalized immediately. `defineRoutes` options such
  * as custom path constraints are respected before path validation. Hydration
- * data must describe the same href as the active history location.
+ * data must describe the same pathname and search string as the active history
+ * location. Hash fragments are client-only and may differ during browser SSR
+ * hydration because fragments are not sent in HTTP requests.
  */
 export interface CreateRouterOptions {
   readonly routes: readonly RouteDefinition[];
@@ -73,6 +65,9 @@ export interface CreateRouterOptions {
   readonly hydrationData?: SerializedRouterState;
   readonly history?: RouterHistory;
   readonly pathOptions?: RouterPathOptions;
+  readonly pathConstraints?: RouterPathConstraints;
+  /** Router-level URLKit defaults used by URL contract parsing and building. */
+  readonly url?: RouterUrlOptions;
   readonly maxRedirectDepth?: number;
   readonly maxRedirectionDepth?: number;
 }
@@ -85,6 +80,8 @@ export interface CreateRouterOptions {
  * them. `context` is carried to intercepted rendering state.
  */
 export interface HrefOptions<Route extends string> extends RouteUrlOptions<Route> {
+  /** Per-call URLKit options that override route-level and router-level defaults. */
+  readonly url?: RouterUrlOptions;
   readonly intercept?: InterceptInput;
   readonly context?: unknown;
   readonly preventScrollReset?: boolean;
@@ -95,6 +92,12 @@ export interface HrefOptions<Route extends string> extends RouteUrlOptions<Route
  */
 export interface NavigateOptions<Route extends string> extends HrefOptions<Route> {
   readonly route: Route;
+}
+
+/** Options used when matching an arbitrary href. */
+export interface MatchOptions {
+  /** Per-call URLKit options used while parsing search arrays and route URL state. */
+  readonly url?: RouterUrlOptions;
 }
 
 /**
@@ -130,8 +133,9 @@ export interface RouterState {
 /**
  * Minimal serializable state used for SSR hydration.
  *
- * The serialized location must match the client history location when a browser
- * router is created with `hydrationData`.
+ * The serialized location must match the client history pathname and search
+ * string when a browser router is created with `hydrationData`. Hash fragments
+ * are client-only and may differ on direct SSR entries.
  */
 export interface SerializedRouterState {
   readonly location: RouterLocation;
@@ -147,6 +151,7 @@ interface ScrollHistoryState {
 interface ActiveNavigation {
   readonly href: string;
   readonly mode: 'push' | 'replace';
+  readonly url?: RouterUrlOptions;
   readonly intercept?: InterceptInput;
   readonly context?: unknown;
   readonly preventScrollReset?: boolean;
@@ -178,13 +183,16 @@ export interface Router {
   href<Route extends string>(routeId: Route, options?: HrefOptions<Route>): string;
   href<Route extends RouteId>(options: NavigateOptions<Route>): string;
   href<Route extends string>(options: NavigateOptions<Route>): string;
-  /** Resolves a route id into a parsed location without changing history. */
-  resolve<Route extends RouteId>(routeId: Route, options?: HrefOptions<Route>): RouterLocation;
-  resolve<Route extends string>(routeId: Route, options?: HrefOptions<Route>): RouterLocation;
-  resolve<Route extends RouteId>(options: NavigateOptions<Route>): RouterLocation;
-  resolve<Route extends string>(options: NavigateOptions<Route>): RouterLocation;
-  /** Matches an arbitrary href against the ranked routes and returns match state. */
-  match(href: string): RegisteredRouteMatch | null;
+  /** Resolves a route id into URLKit-parsed match state without changing history. */
+  resolve<Route extends RouteId>(
+    routeId: Route,
+    options?: HrefOptions<Route>,
+  ): RegisteredRouteMatch;
+  resolve<Route extends string>(routeId: Route, options?: HrefOptions<Route>): RegisteredRouteMatch;
+  resolve<Route extends RouteId>(options: NavigateOptions<Route>): RegisteredRouteMatch;
+  resolve<Route extends string>(options: NavigateOptions<Route>): RegisteredRouteMatch;
+  /** Matches an arbitrary href against the ranked routes and returns URLKit-parsed match state. */
+  match(href: string, options?: MatchOptions): RegisteredRouteMatch | null;
   /** Programmatic navigation methods. */
   navigate: {
     /** Pushes a new history entry and resolves the transition. */
@@ -243,7 +251,11 @@ export function createRouterRuntime(
   options: Required<Pick<CreateRouterOptions, 'history'>> & CreateRouterOptions,
 ): Router {
   const definedRouteOptions = getDefineRoutesOptions(options.routes);
-  registerPathConstraints(definedRouteOptions?.pathConstraints);
+  const pathConstraints = mergePathConstraints(
+    definedRouteOptions?.pathConstraints,
+    options.pathConstraints,
+  );
+  registerUrlPathConstraints(pathConstraints);
   const pathOptions = normalizePathOptions(options.pathOptions ?? definedRouteOptions?.pathOptions);
   const maxRedirectDepth = normalizeMaxRedirectDepth(options);
   validateRoutes(options.routes, pathOptions);
@@ -251,7 +263,6 @@ export function createRouterRuntime(
   validateInterceptTargets(normalizedRoutes);
   const rankedRoutes = rankRoutes(normalizedRoutes);
   const routeLookup = createRouteLookup(normalizedRoutes);
-  const compileCachedRoutePath = createRoutePathCompiler(pathOptions);
   const listeners = new Set<(state: RouterState) => void>();
   const blockers = new Set<RouterBlocker>();
   const runtimeMiddleware = new Set<Middleware>();
@@ -270,24 +281,32 @@ export function createRouterRuntime(
         routeOrOptions as string | NavigateOptions<string>,
         hrefOptions as HrefOptions<string> | undefined,
       );
-      return createHref(
-        target.route,
-        target.options,
-        routeLookup,
-        compileCachedRoutePath,
-        options.basename,
-        pathOptions,
-      );
+      return createRouteHref({
+        routeId: target.route,
+        ...(target.options === undefined ? {} : { options: target.options }),
+        routes: routeLookup,
+        ...(options.basename === undefined ? {} : { basename: options.basename }),
+        ...(options.url === undefined ? {} : { routerUrl: options.url }),
+        ...(pathConstraints === undefined ? {} : { pathConstraints }),
+      });
     },
     resolve(routeOrOptions: string | NavigateOptions<string>, hrefOptions?: HrefOptions<string>) {
       const target = normalizeNavigateTarget(
         routeOrOptions as string | NavigateOptions<string>,
         hrefOptions as HrefOptions<string> | undefined,
       );
-      return parseHref(router.href(target.route, target.options));
+      const match = router.match(router.href(target.route, target.options), {
+        ...(target.options?.url === undefined ? {} : { url: target.options.url }),
+      });
+
+      if (!match) {
+        throw new Error(`Resolved route "${target.route}" did not match its generated href.`);
+      }
+
+      return match;
     },
-    match(href) {
-      return matchHref(href) as RegisteredRouteMatch | null;
+    match(href, matchOptions) {
+      return matchHref(href, matchOptions?.url) as RegisteredRouteMatch | null;
     },
     navigate: {
       to(routeOrOptions: string | NavigateOptions<string>, hrefOptions?: HrefOptions<string>) {
@@ -301,6 +320,7 @@ export function createRouterRuntime(
           target.options?.intercept,
           target.options?.context,
           target.options?.preventScrollReset,
+          target.options?.url,
         );
       },
       replace(routeOrOptions: string | NavigateOptions<string>, hrefOptions?: HrefOptions<string>) {
@@ -314,6 +334,7 @@ export function createRouterRuntime(
           target.options?.intercept,
           target.options?.context,
           target.options?.preventScrollReset,
+          target.options?.url,
         );
       },
       back() {
@@ -368,40 +389,67 @@ export function createRouterRuntime(
   });
 
   if (options.hydrationData) {
-    const hydrationError =
-      options.history.location.href === options.hydrationData.location.href
-        ? undefined
-        : createHydrationMismatchError(
-            options.hydrationData.location.href,
-            options.history.location.href,
-          );
+    const historyLocation = options.history.location;
+    const hydrationError = isHydrationPathSearchMatch(
+      options.hydrationData.location,
+      historyLocation,
+    )
+      ? undefined
+      : createHydrationMismatchError(options.hydrationData.location.href, historyLocation.href);
 
-    state = {
-      location: options.hydrationData.location,
-      match: router.match(options.hydrationData.location.href),
-      navigation: options.hydrationData.navigation,
-      ...(hydrationError === undefined ? {} : { error: hydrationError }),
-    };
-  }
-
-  function matchHref(href: string): RouteMatch | null {
-    const location = parseHref(href);
-    const match = matchRoutes(
-      normalizedRoutes,
-      stripBasename(location.pathname, options.basename),
-      pathOptions,
+    state = createState(
+      options.hydrationData.location,
+      options.hydrationData.navigation,
+      hydrationError,
     );
 
-    if (!match) {
+    if (
+      hydrationError === undefined &&
+      options.hydrationData.location.hash !== historyLocation.hash
+    ) {
+      scheduleHydrationHashSync(options.hydrationData.location);
+    }
+  }
+
+  function scheduleHydrationHashSync(hydratedLocation: RouterLocation): void {
+    scheduleMacrotask(() => {
+      if (state.location.href !== hydratedLocation.href) {
+        return;
+      }
+
+      const historyLocation = options.history.location;
+
+      if (
+        !isHydrationPathSearchMatch(hydratedLocation, historyLocation) ||
+        hydratedLocation.hash === historyLocation.hash
+      ) {
+        return;
+      }
+
+      void transitionTo(historyLocation, 'replace', false);
+    });
+  }
+
+  function matchHref(href: string, callUrl?: RouterUrlOptions): RouteMatch | null {
+    const result = matchHrefResult(href, callUrl);
+
+    if (result.status === 'no-match') {
       return null;
     }
 
-    return {
-      ...match,
-      search: parseSearch(location.search),
-      hash: location.hash,
-      href: location.href,
-    };
+    return result.match;
+  }
+
+  function matchHrefResult(href: string, callUrl?: RouterUrlOptions): MatchLocationResult {
+    return matchLocationResult({
+      routes: normalizedRoutes,
+      location: parseHref(href),
+      ...(options.basename === undefined ? {} : { basename: options.basename }),
+      pathOptions,
+      ...(options.url === undefined ? {} : { routerUrl: options.url }),
+      ...(callUrl === undefined ? {} : { callUrl }),
+      ...(pathConstraints === undefined ? {} : { pathConstraints }),
+    });
   }
 
   function createState(
@@ -410,8 +458,10 @@ export function createRouterRuntime(
     error?: unknown,
     intercepted?: ResolvedInterceptedRoute,
     previousLocation?: RouterLocation,
+    callUrl?: RouterUrlOptions,
   ): RouterState {
-    const baseMatch = matchHref(location.href);
+    const baseMatchResult = matchHrefResult(location.href, callUrl);
+    const baseMatch = baseMatchResult.status === 'no-match' ? null : baseMatchResult.match;
     const match = intercepted && baseMatch ? { ...baseMatch, intercepted } : baseMatch;
     const next: RouterState = {
       location,
@@ -419,9 +469,11 @@ export function createRouterRuntime(
       navigation,
       ...(previousLocation === undefined ? {} : { previousLocation }),
     };
+    const stateError =
+      error ?? (baseMatchResult.status === 'error' ? baseMatchResult.error : undefined);
 
-    if (error !== undefined) {
-      return { ...next, error };
+    if (stateError !== undefined) {
+      return { ...next, error: stateError };
     }
 
     return next;
@@ -443,11 +495,13 @@ export function createRouterRuntime(
     intercept?: InterceptInput,
     context?: unknown,
     preventScrollReset?: boolean,
+    callUrl?: RouterUrlOptions,
   ): Promise<RouterState> {
     if (
       activeNavigation &&
       activeNavigation.href === href &&
       activeNavigation.mode === mode &&
+      activeNavigation.url === callUrl &&
       activeNavigation.intercept === intercept &&
       activeNavigation.context === context &&
       activeNavigation.preventScrollReset === preventScrollReset
@@ -460,11 +514,21 @@ export function createRouterRuntime(
       href,
       navigationState === undefined ? {} : { state: navigationState },
     );
-    const promise = transitionTo(location, mode, true, 0, intercept, context, preventScrollReset);
+    const promise = transitionTo(
+      location,
+      mode,
+      true,
+      0,
+      intercept,
+      context,
+      preventScrollReset,
+      callUrl,
+    );
     const navigation: ActiveNavigation = {
       href,
       mode,
       promise,
+      ...(callUrl === undefined ? {} : { url: callUrl }),
       ...(intercept === undefined ? {} : { intercept }),
       ...(context === undefined ? {} : { context }),
       ...(preventScrollReset === undefined ? {} : { preventScrollReset }),
@@ -488,6 +552,7 @@ export function createRouterRuntime(
     interceptInput?: InterceptInput,
     context?: unknown,
     preventScrollReset?: boolean,
+    callUrl?: RouterUrlOptions,
   ): Promise<RouterState> {
     const currentTransitionVersion = ++transitionVersion;
 
@@ -502,19 +567,30 @@ export function createRouterRuntime(
     }
 
     const fromMatch = state.match;
-    const canonicalized = canonicalizeLocation(location);
+    const canonicalized = canonicalizeLocation(location, callUrl);
     const transitionLocation = canonicalized.location;
     const nextMatch = canonicalized.match;
+
+    if (canonicalized.error !== undefined) {
+      return setState(
+        createState(
+          transitionLocation,
+          'error',
+          canonicalized.error,
+          undefined,
+          undefined,
+          callUrl,
+        ),
+      );
+    }
+
     const routeRedirect = resolveMatchedRouteRedirect(nextMatch);
 
     if (routeRedirect) {
-      const redirectHref = createRouteRedirectHref(
-        routeRedirect,
-        routeLookup,
-        compileCachedRoutePath,
-        options.basename,
-        pathOptions,
-      );
+      const redirectHref = createRouteRedirectHref(routeRedirect, routeLookup, options.basename, {
+        ...(options.url === undefined ? {} : { routerUrl: options.url }),
+        ...(pathConstraints === undefined ? {} : { pathConstraints }),
+      });
 
       if (isExternalHref(redirectHref)) {
         if (!options.history.redirectExternal) {
@@ -707,7 +783,7 @@ export function createRouterRuntime(
       ? createInterceptedRoute(navigationIntercept, nextMatch)
       : undefined;
     const committed = setState(
-      createState(transitionLocation, 'idle', undefined, intercepted, previousLocation),
+      createState(transitionLocation, 'idle', undefined, intercepted, previousLocation, callUrl),
     );
     try {
       await completeTransition({
@@ -719,7 +795,7 @@ export function createRouterRuntime(
       });
     } catch (error) {
       return setState(
-        createState(transitionLocation, 'error', error, intercepted, previousLocation),
+        createState(transitionLocation, 'error', error, intercepted, previousLocation, callUrl),
       );
     }
 
@@ -750,13 +826,18 @@ export function createRouterRuntime(
     return false;
   }
 
-  function canonicalizeLocation(location: RouterLocation): {
+  function canonicalizeLocation(
+    location: RouterLocation,
+    callUrl?: RouterUrlOptions,
+  ): {
     readonly location: RouterLocation;
     readonly match: RouteMatch | null;
     readonly replaced: boolean;
+    readonly error?: unknown;
   } {
     let nextLocation = location;
-    let nextMatch = router.match(nextLocation.href);
+    let nextMatchResult = matchHrefResult(nextLocation.href, callUrl);
+    let nextMatch = nextMatchResult.status === 'no-match' ? null : nextMatchResult.match;
 
     if (!nextMatch) {
       const prunedPathname = prunePathname(nextLocation.pathname, pathOptions);
@@ -766,10 +847,13 @@ export function createRouterRuntime(
           ...(nextLocation.state === undefined ? {} : { state: nextLocation.state }),
           key: nextLocation.key,
         });
-        const candidateMatch = router.match(candidate.href);
+        const candidateMatchResult = matchHrefResult(candidate.href, callUrl);
+        const candidateMatch =
+          candidateMatchResult.status === 'no-match' ? null : candidateMatchResult.match;
 
         if (candidateMatch) {
           nextLocation = candidate;
+          nextMatchResult = candidateMatchResult;
           nextMatch = candidateMatch;
         }
       }
@@ -779,8 +863,20 @@ export function createRouterRuntime(
       return { location: nextLocation, match: nextMatch, replaced: false };
     }
 
+    if (nextMatchResult.status === 'error') {
+      return {
+        location: nextLocation,
+        match: nextMatch,
+        replaced: false,
+        error: nextMatchResult.error,
+      };
+    }
+
     const canonicalPathname = applyBasename(
-      compileCachedRoutePath(nextMatch.route, nextMatch.params),
+      buildRoutePath(nextMatch.route, nextMatch.params, {
+        ...(options.url === undefined ? {} : { routerUrl: options.url }),
+        ...(pathConstraints === undefined ? {} : { pathConstraints }),
+      }),
       options.basename,
     );
     const canonicalHref = `${canonicalPathname}${nextLocation.search}${nextLocation.hash}`;
@@ -794,10 +890,13 @@ export function createRouterRuntime(
       key: nextLocation.key,
     });
 
+    const canonicalMatchResult = matchHrefResult(canonicalLocation.href, callUrl);
+
     return {
       location: canonicalLocation,
-      match: router.match(canonicalLocation.href),
+      match: canonicalMatchResult.status === 'no-match' ? null : canonicalMatchResult.match,
       replaced: options.history.mode !== 'static',
+      ...(canonicalMatchResult.status === 'error' ? { error: canonicalMatchResult.error } : {}),
     };
   }
 
@@ -850,59 +949,44 @@ function resolveMatchedRouteRedirect(match: RouteMatch | null): RouteRedirect | 
   return match.route.route.redirect;
 }
 
+interface RouteRedirectHrefOptions {
+  readonly routerUrl?: RouterUrlOptions;
+  readonly pathConstraints?: RouterPathConstraints;
+}
+
 function createRouteRedirectHref(
   redirect: RouteRedirect,
   routes: ReadonlyMap<string, NormalizedRoute>,
-  compileCachedRoutePath: (route: NormalizedRoute, params: unknown) => string,
   basename: string | undefined,
-  pathOptions: RouterPathOptions,
+  options: RouteRedirectHrefOptions,
 ): string {
   if (typeof redirect === 'string') {
     return redirect;
   }
 
-  return createHref(
-    redirect.route,
-    {
+  return createRouteHref({
+    routeId: redirect.route,
+    options: {
       ...(redirect.params === undefined ? {} : { params: redirect.params }),
       ...(redirect.search === undefined ? {} : { search: redirect.search }),
       ...(redirect.hash === undefined ? {} : { hash: redirect.hash }),
     },
     routes,
-    compileCachedRoutePath,
-    basename,
-    pathOptions,
-  );
+    ...(basename === undefined ? {} : { basename }),
+    ...(options.routerUrl === undefined ? {} : { routerUrl: options.routerUrl }),
+    ...(options.pathConstraints === undefined ? {} : { pathConstraints: options.pathConstraints }),
+  });
 }
 
 function isExternalHref(href: string): boolean {
   return /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(href);
 }
 
-/**
- * Extracts the router state needed to hydrate a matching client router.
- */
-export function serializeRouterState(router: Pick<Router, 'serialize'>): SerializedRouterState {
-  return assertSerializedRouterState(router.serialize());
-}
-
-/**
- * Serializes router hydration state to a JSON string with validation hardening.
- */
-export function stringifyRouterState(router: Pick<Router, 'serialize'>): string {
-  return stringifySerializedRouterState(router.serialize());
-}
-
-/**
- * Parses serialized hydration state and validates the expected router-state shape.
- */
-export function deserializeRouterState(
-  state: SerializedRouterState | string,
-): SerializedRouterState {
-  return typeof state === 'string'
-    ? parseSerializedRouterState(state)
-    : assertSerializedRouterState(state);
-}
+export {
+  deserializeRouterState,
+  serializeRouterState,
+  stringifyRouterState,
+} from './serialize-router-state';
 
 function normalizeNavigateTarget<Route extends string>(
   routeOrOptions: Route | NavigateOptions<Route>,
@@ -916,6 +1000,25 @@ function normalizeNavigateTarget<Route extends string>(
   return { route: routeOrOptions as Route, ...(options === undefined ? {} : { options }) };
 }
 
+function isHydrationPathSearchMatch(
+  serverLocation: RouterLocation,
+  clientLocation: RouterLocation,
+): boolean {
+  return (
+    serverLocation.pathname === clientLocation.pathname &&
+    serverLocation.search === clientLocation.search
+  );
+}
+
+function scheduleMacrotask(callback: () => void): void {
+  if (typeof globalThis.setTimeout === 'function') {
+    globalThis.setTimeout(callback, 0);
+    return;
+  }
+
+  callback();
+}
+
 function createDefaultHistory(initialHref?: string): RouterHistory {
   if (typeof globalThis.window === 'undefined') {
     return createMemoryHistory({ initialEntries: [initialHref ?? '/'] });
@@ -924,258 +1027,19 @@ function createDefaultHistory(initialHref?: string): RouterHistory {
   return createBrowserHistory();
 }
 
-function createHref<Route extends string>(
-  routeId: Route,
-  options: HrefOptions<Route> | undefined,
-  routes: ReadonlyMap<string, NormalizedRoute>,
-  compileCachedRoutePath: (route: NormalizedRoute, params: unknown) => string,
-  basename: string | undefined,
-  pathOptions: RouterPathOptions,
-): string {
-  const route = routes.get(routeId);
-
-  if (!route) {
-    throw createUnknownRouteError(routeId);
+function mergePathConstraints(
+  left?: RouterPathConstraints,
+  right?: RouterPathConstraints,
+): RouterPathConstraints | undefined {
+  if (!left) {
+    return right;
   }
 
-  if (!route.fullPath) {
-    throw createMissingPathError(routeId);
+  if (!right) {
+    return left;
   }
 
-  const pathname = applyBasename(compileCachedRoutePath(route, options?.params), basename);
-  const search = serializeSearch(options?.search);
-  const hash = serializeHash(options?.hash);
-  const href = `${pathname}${search}${hash}`;
-
-  if (!matchPathPattern(route.fullPath, stripBasename(pathname, basename), pathOptions)) {
-    throw createGeneratedHrefMismatchError(routeId, href, route.fullPath);
-  }
-
-  return href;
-}
-
-function createRoutePathCompiler(
-  pathOptions: RouterPathOptions,
-): (route: NormalizedRoute, params: unknown) => string {
-  const cache = new WeakMap<NormalizedRoute, Map<string, string>>();
-
-  return (route, params) => {
-    const values = asParamRecord(params);
-    const key = createParamCacheKey(route, values);
-    let routeCache = cache.get(route);
-
-    if (!routeCache) {
-      routeCache = new Map<string, string>();
-      cache.set(route, routeCache);
-    }
-
-    const cached = routeCache.get(key);
-
-    if (cached) {
-      return cached;
-    }
-
-    const compiled = compileRoutePath(route, values, pathOptions);
-    routeCache.set(key, compiled);
-    return compiled;
-  };
-}
-
-function createParamCacheKey(route: NormalizedRoute, params: Record<string, unknown>): string {
-  if (!route.params.length) {
-    return '';
-  }
-
-  return route.params.map((param) => `${param.name}:${String(params[param.name])}`).join('|');
-}
-
-function compileRoutePath(
-  route: NormalizedRoute,
-  params: unknown,
-  pathOptions: RouterPathOptions,
-): string {
-  assertRequiredPathParams(route, params);
-
-  try {
-    return compilePathPattern(route.fullPath ?? '/', asPathkitParams(params), pathOptions);
-  } catch (error) {
-    throw mapPathkitCompileError(route, params, error);
-  }
-}
-
-function assertRequiredPathParams(route: NormalizedRoute, params: unknown): void {
-  const values = asParamRecord(params);
-
-  for (const param of route.params) {
-    const value = values[param.name];
-
-    if (value === undefined || value === null || value === '') {
-      throw createMissingParamError(route.id, param.name, param.token, value);
-    }
-  }
-}
-
-function asPathkitParams(params: unknown): PathkitCompileParams | undefined {
-  if (!params || typeof params !== 'object') {
-    return undefined;
-  }
-
-  return params as PathkitCompileParams;
-}
-
-function mapPathkitCompileError(route: NormalizedRoute, params: unknown, error: unknown): Error {
-  const message = error instanceof Error ? error.message : String(error);
-  const missing = /^\[Compile\] Missing required parameter: (.+)$/.exec(message);
-
-  if (missing?.[1]) {
-    const param = route.params.find((candidate) => candidate.name === missing[1]);
-    return createMissingParamError(
-      route.id,
-      missing[1],
-      param?.token ?? `{${missing[1]}}`,
-      asParamRecord(params)[missing[1]],
-    );
-  }
-
-  const invalid = route.params.find((candidate) =>
-    message.includes(`Parameter "${candidate.name}"`),
-  );
-
-  if (invalid) {
-    return createInvalidParamError(
-      route.id,
-      invalid.name,
-      invalid.token,
-      asParamRecord(params)[invalid.name],
-    );
-  }
-
-  return error instanceof Error ? error : new Error(message);
-}
-
-function serializeSearch(search: unknown): string {
-  if (!search || typeof search !== 'object') {
-    return '';
-  }
-
-  const params = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(search as Record<string, unknown>).sort(
-    ([left], [right]) => left.localeCompare(right),
-  )) {
-    if (value === undefined || value === null) {
-      continue;
-    }
-
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        params.append(key, String(item));
-      }
-      continue;
-    }
-
-    params.set(key, String(value));
-  }
-
-  const serialized = params.toString();
-  return serialized ? `?${serialized}` : '';
-}
-
-function serializeHash(hash: unknown): string {
-  if (!hash) {
-    return '';
-  }
-
-  const value = String(hash);
-  return value.startsWith('#') ? value : `#${value}`;
-}
-
-function createRouteLookup(
-  routes: readonly NormalizedRoute[],
-): ReadonlyMap<string, NormalizedRoute> {
-  const lookup = new Map<string, NormalizedRoute>();
-  appendRoutesToLookup(routes, lookup);
-  return lookup;
-}
-
-function appendRoutesToLookup(
-  routes: readonly NormalizedRoute[],
-  lookup: Map<string, NormalizedRoute>,
-): void {
-  for (const route of routes) {
-    lookup.set(route.id, route);
-    appendRoutesToLookup(route.children, lookup);
-
-    for (const slot of Object.values(route.layout?.slots ?? {})) {
-      appendRoutesToLookup(slot.routes, lookup);
-    }
-  }
-}
-
-function asParamRecord(params: unknown): Record<string, unknown> {
-  if (!params || typeof params !== 'object') {
-    return {};
-  }
-
-  return params as Record<string, unknown>;
-}
-
-function applyBasename(pathname: string, basename?: string): string {
-  const normalizedBasename = normalizeBasename(basename);
-  return normalizedBasename ? `${normalizedBasename}${pathname === '/' ? '' : pathname}` : pathname;
-}
-
-function parseSearch(search: string): Record<string, string | readonly string[]> {
-  if (!search) {
-    return {};
-  }
-
-  const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
-  const parsed: Record<string, string | string[]> = {};
-
-  for (const [key, value] of params) {
-    const current = parsed[key];
-
-    if (current === undefined) {
-      parsed[key] = value;
-      continue;
-    }
-
-    if (Array.isArray(current)) {
-      current.push(value);
-      continue;
-    }
-
-    parsed[key] = [current, value];
-  }
-
-  return parsed;
-}
-
-function stripBasename(pathname: string, basename?: string): string {
-  const normalizedBasename = normalizeBasename(basename);
-
-  if (!normalizedBasename) {
-    return pathname;
-  }
-
-  if (pathname === normalizedBasename) {
-    return '/';
-  }
-
-  if (!pathname.startsWith(`${normalizedBasename}/`)) {
-    return pathname;
-  }
-
-  return pathname.slice(normalizedBasename.length) || '/';
-}
-
-function normalizeBasename(basename?: string): string {
-  if (!basename || basename === '/') {
-    return '';
-  }
-
-  return basename.startsWith('/') ? basename.replace(/\/$/, '') : `/${basename.replace(/\/$/, '')}`;
+  return { ...left, ...right };
 }
 
 interface ResolveNavigationInterceptOptions {
@@ -1249,7 +1113,7 @@ function resolveActiveInterceptSource(
 
   return matchRoutes(
     routes,
-    stripBasename(fromMatch.intercepted.previousHref, basename),
+    stripBasename(parseHref(fromMatch.intercepted.previousHref).pathname, basename),
     pathOptions,
   );
 }

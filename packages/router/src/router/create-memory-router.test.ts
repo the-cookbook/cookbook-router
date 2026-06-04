@@ -23,14 +23,14 @@ describe('create-memory-router', () => {
 
     expect(router.state.location.href).toBe('/users/42?tab=settings#profile');
     expect(router.state.match?.id).toBe('users.show');
-    expect(router.state.match?.params).toEqual({ id: '42' });
+    expect(router.state.match?.params).toEqual({ id: 42 });
   });
 
   it('preserves registered href option inference', () => {
     const router = createMemoryRouter({ routes });
 
     expectTypeOf(
-      router.href('users.show', { params: { id: '1' }, search: { tab: 'x' }, hash: 'profile' }),
+      router.href('users.show', { params: { id: 1 }, search: { tab: 'x' }, hash: 'profile' }),
     ).toEqualTypeOf<string>();
   });
 
@@ -39,12 +39,12 @@ describe('create-memory-router', () => {
 
     expect(
       router.href('users.show', {
-        params: { id: '42' },
+        params: { id: 42 },
         search: { filters: ['hello', 'world'], tab: 'settings' },
         hash: 'profile',
       }),
     ).toBe('/app/users/42?filters=hello&filters=world&tab=settings#profile');
-    expect(router.href('users.show', { params: { id: '1' }, hash: '#settings' })).toBe(
+    expect(router.href('users.show', { params: { id: 1 }, hash: '#settings' })).toBe(
       '/app/users/1#settings',
     );
     expect(router.href('files', { params: { path: 'docs/read me.md' } })).toBe(
@@ -55,12 +55,12 @@ describe('create-memory-router', () => {
   it('matches routes by stripping basename', () => {
     const router = createMemoryRouter({ routes, basename: '/app' });
 
-    expect(router.match('/app/users/5')?.params).toEqual({ id: '5' });
+    expect(router.match('/app/users/5')?.params).toEqual({ id: 5 });
 
     const match = router.match('/app/users/5?tab=settings#profile');
-    expect(match?.params).toEqual({ id: '5' });
+    expect(match?.params).toEqual({ id: 5 });
     expect(match?.search).toEqual({ tab: 'settings' });
-    expect(match?.hash).toBe('#profile');
+    expect(match?.hash).toBe('profile');
     expect(match?.href).toBe('/app/users/5?tab=settings#profile');
 
     expect(router.match('/other/users/5')).toBeNull();
@@ -73,9 +73,9 @@ describe('create-memory-router', () => {
       states.push(`${state.navigation}:${state.location.href}`),
     );
 
-    await router.navigate.to('users.show', { params: { id: '2' } });
+    await router.navigate.to('users.show', { params: { id: 2 } });
     expect(router.state.location.href).toBe('/users/2');
-    await router.navigate.replace('users.show', { params: { id: '3' } });
+    await router.navigate.replace('users.show', { params: { id: 3 } });
     expect(router.state.location.href).toBe('/users/3');
     router.navigate.back();
     await flushNavigation();
@@ -125,8 +125,10 @@ describe('create-memory-router', () => {
 
     expect(() => router.href('missing')).toThrow('not registered');
     expect(() => router.href('users.show')).toThrow('expected param "id"');
-    expect(() => router.href('users.show', { params: { id: '' } })).toThrow('expected param "id"');
-    expect(() => router.href('users.show', { params: { id: 'abc' } })).toThrow(
+    expect(() => router.href('users.show', { params: { id: '' } } as never)).toThrow(
+      'expected param "id"',
+    );
+    expect(() => router.href('users.show', { params: { id: 'abc' } } as never)).toThrow(
       'expected param "id"',
     );
   });
@@ -137,7 +139,7 @@ describe('create-memory-router', () => {
       middleware: [({ cancel }) => cancel()],
     });
 
-    await router.navigate.to('users.show', { params: { id: '1' } });
+    await router.navigate.to('users.show', { params: { id: 1 } });
 
     expect(router.state.navigation).toBe('blocked');
     expect(router.state.location.href).toBe('/');
@@ -192,7 +194,7 @@ describe('create-memory-router', () => {
       ],
     });
 
-    await router.navigate.to('users.show', { params: { id: '1' } });
+    await router.navigate.to('users.show', { params: { id: 1 } });
 
     expect(router.state.location.href).toBe('/');
     expect(router.state.navigation).toBe('idle');
@@ -243,7 +245,7 @@ describe('create-memory-router', () => {
       middleware: [({ redirect }) => redirect('/users/1')],
     });
 
-    await router.navigate.to('users.show', { params: { id: '1' } });
+    await router.navigate.to('users.show', { params: { id: 1 } });
 
     expect(router.state.navigation).toBe('error');
     expect((router.state.error as Error).message).toBe(
@@ -291,7 +293,7 @@ describe('create-memory-router', () => {
       routes,
       middleware: [() => new Response('unauthorized')],
     });
-    await responseRouter.navigate.to('users.show', { params: { id: '1' } });
+    await responseRouter.navigate.to('users.show', { params: { id: 1 } });
     expect(responseRouter.state.navigation).toBe('error');
     expect(responseRouter.state.error).toBeInstanceOf(Response);
 
@@ -303,20 +305,20 @@ describe('create-memory-router', () => {
         },
       },
     });
-    await errorRouter.navigate.to('users.show', { params: { id: '1' } });
+    await errorRouter.navigate.to('users.show', { params: { id: 1 } });
     expect(errorRouter.state.navigation).toBe('error');
     expect((errorRouter.state.error as Error).message).toBe('explode');
   });
 
   it('serializes and hydrates router state', async () => {
     const router = createMemoryRouter({ routes });
-    await router.navigate.to('users.show', { params: { id: '9' }, search: { tab: 'profile' } });
+    await router.navigate.to('users.show', { params: { id: 9 }, search: { tab: 'profile' } });
 
     const hydrated = createMemoryRouter({ routes, hydrationData: router.serialize() });
 
     expect(hydrated.state.location.href).toBe('/users/9?tab=profile');
     expect(hydrated.state.match?.id).toBe('users.show');
-    expect(hydrated.state.match?.params).toEqual({ id: '9' });
+    expect(hydrated.state.match?.params).toEqual({ id: 9 });
   });
 
   it('uses hydration location before explicit initial entries', async () => {

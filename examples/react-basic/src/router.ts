@@ -11,6 +11,9 @@ export function createAppRouter() {
   return createRouter({
     routes,
     middleware: [authMiddleware],
+    url: {
+      arrayFormat: 'repeat',
+    },
     lifecycle: {
       beforeNavigate: () => {
         lifecycleEvents.push('global.beforeNavigate');
@@ -27,6 +30,9 @@ export function createTestRouter(initialEntries: readonly string[] = ['/']) {
     routes,
     initialEntries,
     middleware: [authMiddleware],
+    url: {
+      arrayFormat: 'repeat',
+    },
     lifecycle: {
       beforeNavigate: () => {
         lifecycleEvents.push('global.beforeNavigate');

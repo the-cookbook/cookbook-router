@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 import type { MatchedRoute, ResolvedSlots, Router, RouterState } from '@cookbook/router';
 import { createMissingProviderError } from '@cookbook/router';
-import type { RenderMatchesOptions } from '../components/router-provider';
+import type { RenderMatchesOptions } from '../rendering/render-route-branch';
 
 export interface RouterContextValue {
   readonly router: Router;

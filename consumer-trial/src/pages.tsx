@@ -20,7 +20,7 @@ export function RootLayout() {
         <Link to="home">Home</Link>{' '}
         <Link
           to="users.show"
-          params={{ id: '42' }}
+          params={{ id: 42 }}
           search={{ tab: 'settings', preview: 'true' }}
           hash="profile"
         >
