@@ -42,6 +42,9 @@ export async function runMiddleware(options: RunMiddlewareOptions): Promise<RunM
       location: options.location,
       params: options.match.params,
       search: options.match.search as never,
+      ...(options.match.unknownSearch === undefined
+        ? {}
+        : { unknownSearch: options.match.unknownSearch }),
       hash: options.match.hash,
       redirect: (to) => normalizeMiddlewareTarget(to, 'redirect'),
       rewrite: (to) => normalizeMiddlewareTarget(to, 'rewrite'),

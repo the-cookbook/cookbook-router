@@ -82,7 +82,7 @@ export function UserPage() {
 }
 
 export function ProductsPage() {
-  const search = useSearchParams('products', { url: { arrayFormat: 'repeat' } });
+  const search = useSearchParams('products');
   const tags = Array.isArray(search.tags) ? search.tags.join(', ') : 'none';
 
   return (

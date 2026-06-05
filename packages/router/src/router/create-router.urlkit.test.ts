@@ -83,7 +83,7 @@ describe('create-router URLKit runtime integration', () => {
           hash: ['grid', 'list'],
         },
       ]),
-      url: { arrayFormat: 'repeat' },
+      url: { arrayFormat: 'repeat', unknownSearch: 'preserve' },
     });
 
     expect(
@@ -207,6 +207,51 @@ describe('create-router URLKit runtime integration', () => {
     expect(router.match('/overview?page=a')?.id).toBe('overview');
   });
 
+  it('applies unknownSearch policies during route resolution', () => {
+    const routes = defineRoutes([
+      {
+        id: 'products',
+        path: '/products',
+        search: { page: { value: 'number', optional: true } },
+      },
+    ]);
+
+    const defaultRouter = createRouter({ routes });
+    expect(defaultRouter.match('/products?page=1&debug=true')?.search).toEqual({ page: 1 });
+
+    const preserveRouter = createRouter({ routes, url: { unknownSearch: 'preserve' } });
+    const preserveMatch = preserveRouter.match('/products?page=1&debug=true');
+    expect(preserveMatch?.search).toEqual({ page: 1 });
+    expect(preserveMatch?.unknownSearch).toEqual({ debug: 'true' });
+
+    const errorRouter = createRouter({
+      routes,
+      history: createMemoryHistory({ initialEntries: ['/products?page=1&debug=true'] }),
+      url: { unknownSearch: 'error' },
+    });
+    expect(errorRouter.state.match?.id).toBe('products');
+    expect(errorRouter.state.error).toBeDefined();
+  });
+
+  it('lets route-level unknownSearch override router-level unknownSearch', () => {
+    const router = createRouter({
+      routes: defineRoutes([
+        {
+          id: 'products',
+          path: '/products',
+          search: { page: { value: 'number', optional: true } },
+          url: { unknownSearch: 'strip' },
+        },
+      ]),
+      history: createMemoryHistory({ initialEntries: ['/products?page=1&debug=true'] }),
+      url: { unknownSearch: 'error' },
+    });
+
+    expect(router.state.error).toBeUndefined();
+    expect(router.state.match?.search).toEqual({ page: 1 });
+    expect(router.state.match?.unknownSearch).toBeUndefined();
+  });
+
   it('supports recover, no-match, and error policies for invalid hash', () => {
     const routes = defineRoutes([
       { id: 'products', path: '/products', hash: ['grid', 'list'] },
@@ -263,13 +308,13 @@ describe('create-router URLKit runtime integration', () => {
       ]),
       url: { arrayFormat: 'comma' },
       middleware: [
-        ({ params, search, hash }) => {
-          seen.push({ source: 'middleware', params, search, hash });
+        ({ params, search, hash, unknownSearch }) => {
+          seen.push({ source: 'middleware', params, search, hash, unknownSearch });
         },
       ],
       lifecycle: {
-        beforeNavigate: ({ params, search, hash }) => {
-          seen.push({ source: 'lifecycle', params, search, hash });
+        beforeNavigate: ({ params, search, hash, unknownSearch }) => {
+          seen.push({ source: 'lifecycle', params, search, hash, unknownSearch });
         },
       },
     });

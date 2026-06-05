@@ -1,8 +1,12 @@
 import type { RouterLocation } from '../history/memory-history';
 import { matchRouteCandidates } from '../matching/match-routes';
 import type { RouterPathConstraints, RouterPathOptions } from '../pathkit/pathkit';
-import type { NormalizedRoute, RouteMatch } from '../routes/contracts';
-import { parseRouteHash, parseRouteSearch, resolveRouteUrlOptions } from '../url/route-url-state';
+import type { NormalizedRoute, RouteMatch, RouteSearchSchema } from '../routes/contracts';
+import {
+  parseRouteHash,
+  parseRouteSearchState,
+  resolveRouteUrlOptions,
+} from '../url/route-url-state';
 import type { RouterUrlOptions } from '../url';
 import { stripBasename } from './pathname';
 
@@ -62,11 +66,36 @@ function parseCandidateUrlState(
   options: MatchLocationOptions,
 ): MatchLocationResult {
   let search: unknown;
+  let unknownSearch: unknown;
 
   try {
-    search = parseRouteSearch(match.route, options.location.search, options);
+    const searchState = parseRouteSearchState(
+      match.route,
+      match.pathname,
+      options.location.search,
+      options,
+    );
+    search = searchState.search;
+    unknownSearch = searchState.unknownSearch;
   } catch (error) {
-    const policy = resolveRouteUrlOptions(match.route, options).invalidSearch ?? 'recover';
+    const urlOptions = resolveRouteUrlOptions(match.route, options);
+    const policy = urlOptions.invalidSearch ?? 'recover';
+
+    if (
+      urlOptions.unknownSearch === 'error' &&
+      isUnknownSearchError(error, match.route.route.search)
+    ) {
+      return {
+        status: 'error',
+        error,
+        match: {
+          ...match,
+          search: {} as never,
+          hash: undefined as never,
+          href: options.location.href,
+        },
+      };
+    }
 
     if (policy === 'no-match') {
       return { status: 'no-match' };
@@ -90,6 +119,7 @@ function parseCandidateUrlState(
       match: {
         ...match,
         search: search as never,
+        ...(unknownSearch === undefined ? {} : { unknownSearch: unknownSearch as never }),
         hash: parseRouteHash(match.route, options.location.hash, options) as never,
         href: options.location.href,
       },
@@ -107,9 +137,29 @@ function parseCandidateUrlState(
       match: {
         ...match,
         search: search as never,
+        ...(unknownSearch === undefined ? {} : { unknownSearch: unknownSearch as never }),
         hash: undefined as never,
         href: options.location.href,
       },
     };
   }
+}
+
+function isUnknownSearchError(error: unknown, schema: RouteSearchSchema | undefined): boolean {
+  if (
+    !error ||
+    typeof error !== 'object' ||
+    !('code' in error) ||
+    error.code !== 'invalid-search'
+  ) {
+    return false;
+  }
+
+  if (!('path' in error) || !Array.isArray(error.path)) {
+    return false;
+  }
+
+  const [pathHead] = error.path;
+
+  return typeof pathHead === 'string' && !(pathHead in (schema ?? {}));
 }

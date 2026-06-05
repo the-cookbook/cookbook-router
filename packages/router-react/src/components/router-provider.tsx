@@ -26,8 +26,10 @@ export type RouterScrollBehavior = ScrollBehavior;
  *
  * The provider subscribes to router state, renders the active branch, registers
  * runtime middleware, handles scroll restoration, and coordinates Suspense/error
- * boundaries. URL behavior is owned by the router; React call-site URL options
- * on hooks and link components override route-level and router-level defaults.
+ * boundaries. URL behavior is owned by the router. React call-site URL build options on
+ * href/navigation APIs and link components override route-level and router-level
+ * build defaults. State-reading hooks use already-resolved router state and do
+ * not accept URL options.
  */
 export interface RouterProviderProps {
   readonly router: Router;

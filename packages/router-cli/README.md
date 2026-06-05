@@ -147,7 +147,7 @@ Include generated files in the app `tsconfig.json`:
 }
 ```
 
-`contracts.ts` contains route-specific types and route constants. Path params, search values, and hash values follow URLKit static parsing semantics. `register.d.ts` augments `@cookbook/router`. `manifest.json` contains a tooling-friendly route list and includes route-level `url` options such as `arrayFormat` when configured.
+`contracts.ts` contains route-specific types and route constants. Path params, search values, and hash values follow URLKit static parsing semantics. `register.d.ts` augments `@cookbook/router`. `manifest.json` contains a tooling-friendly route list and includes route-level `url` options such as `arrayFormat`, `invalidSearch`, `invalidHash`, and `unknownSearch` when configured.
 
 ## Programmatic API
 

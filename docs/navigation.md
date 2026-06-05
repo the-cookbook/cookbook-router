@@ -150,7 +150,7 @@ Undefined and null search values are omitted from generated URLs. Search and has
 
 ### URL options
 
-URL options can be configured globally on the router, per route, or per call/hook/component. Supported public options include `arrayFormat`, `invalidSearch`, and `invalidHash`.
+URL options can be configured globally on the router, per route, or on URL-building call sites. Route-resolution options include `arrayFormat`, `invalidSearch`, `invalidHash`, and `unknownSearch`. URL-building APIs such as `router.href()`, `router.navigate.to()`, `useHref()`, `Link`, and `NavLink` accept build options such as `arrayFormat`.
 
 ```ts
 const router = createRouter({
@@ -164,9 +164,9 @@ const href = router.href('products', {
 });
 ```
 
-Precedence is per-call, then route-level `url`, then router-level `url`, then URLKit defaults. `repeat` writes `?tags=router&tags=typescript`; `comma` writes `?tags=router%2Ctypescript`.
+For URL building, precedence is call-site `url`, then route-level `url`, then router-level `url`, then URLKit defaults. `repeat` writes `?tags=router&tags=typescript`; `comma` writes `?tags=router%2Ctypescript`.
 
-`invalidSearch` and `invalidHash` support `'recover'`, `'no-match'`, and `'error'`. The default is `'recover'`: invalid search/hash values are treated as missing, and descriptor defaults apply when declared. `'no-match'` rejects the route candidate and continues fallback/not-found matching. `'error'` keeps the path route matched and exposes the parse failure through router error state.
+`invalidSearch` and `invalidHash` support `'recover'`, `'no-match'`, and `'error'`. The default is `'recover'`: invalid search/hash values are treated as missing, and descriptor defaults apply when declared. `'no-match'` rejects the route candidate and continues fallback/not-found matching. `'error'` keeps the path route matched and exposes the parse failure through router error state. `unknownSearch` supports `'strip'`, `'preserve'`, and `'error'`; its default is `'strip'`. Use `'preserve'` when undeclared query keys should remain available as `unknownSearch` on the match.
 
 ## Redirects
 

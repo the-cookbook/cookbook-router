@@ -76,6 +76,23 @@ describe('createRouteUrlContract', () => {
     );
   });
 
+  it('forwards unknownSearch to URLKit contracts', () => {
+    const contract = createRouteUrlContract({
+      path: '/products',
+      search: {
+        page: { value: 'number', optional: true },
+      },
+      url: { unknownSearch: 'error' },
+    });
+
+    expect(() => contract.parseSearch('?page=1&debug=true')).toThrow(
+      'Unknown search parameter is not allowed',
+    );
+    expect(contract.parseSearch('?page=1&debug=true', { unknownSearch: 'strip' })).toEqual({
+      page: 1,
+    });
+  });
+
   it('uses per-call URL options over route-level URL options', () => {
     const contract = createRouteUrlContract(
       {

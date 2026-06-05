@@ -117,20 +117,33 @@ interface DefineRoutesOptions {
 
 Common route fields:
 
-| Field        | Purpose                                                                                     |
-| ------------ | ------------------------------------------------------------------------------------------- |
-| `id`         | Stable public route ID.                                                                     |
-| `path`       | URL path segment or absolute path.                                                          |
-| `index`      | Default child route for a parent path.                                                      |
-| `component`  | Framework-owned render value.                                                               |
-| `layout`     | Layout component and slot configuration.                                                    |
-| `children`   | Primary child routes.                                                                       |
-| `redirect`   | Internal route redirect or literal href.                                                    |
-| `search`     | URLKit-compatible static search descriptor for parsed search state and generated contracts. |
-| `hash`       | URLKit-compatible static hash descriptor for parsed hash state and generated contracts.     |
-| `url`        | Route-level URLKit options such as `arrayFormat`, `invalidSearch`, and `invalidHash`.       |
-| `middleware` | Route-specific middleware.                                                                  |
-| `lifecycle`  | Route-specific lifecycle hooks.                                                             |
+| Field       | Purpose                                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------ |
+| `id`        | Stable public route ID.                                                                                |
+| `path`      | URL path segment or absolute path.                                                                     |
+| `index`     | Default child route for a parent path.                                                                 |
+| `component` | Framework-owned render value.                                                                          |
+| `layout`    | Layout component and slot configuration.                                                               |
+| `children`  | Primary child routes.                                                                                  |
+| `redirect`  | Internal route redirect or literal href.                                                               |
+| `search`    | URLKit-compatible static search descriptor for parsed search state and generated contracts.            |
+| `hash`      | URLKit-compatible static hash descriptor for parsed hash state and generated contracts.                |
+| `url`       | Route-level URLKit options such as `arrayFormat`, `invalidSearch`, `invalidHash`, and `unknownSearch`. |
+
+When `unknownSearch` is `preserve`, URLKit keeps undeclared query keys as a sibling `unknownSearch` object on the matched route. Declared typed search remains in `match.search`.
+
+```ts
+const match = router.match('/overview?page=0&utm_source=website');
+
+match?.search;
+// { page: 0 }
+
+match?.unknownSearch;
+// { utm_source: 'website' }
+```
+
+| `middleware` | Route-specific middleware. |
+| `lifecycle` | Route-specific lifecycle hooks. |
 
 See [Routing](../../docs/routing.md) for the full route shape.
 

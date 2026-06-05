@@ -161,7 +161,7 @@ interface LinkProps<Route extends RouteId = RouteId> extends Omit<
 }
 ```
 
-Use `to` for typed internal routes and `href` for literal anchor URLs. Params, search, and hash are URLKit-backed; `{id:int}` params are numbers. `url` accepts per-component URLKit options such as `arrayFormat`, `invalidSearch`, and `invalidHash`, overriding route-level and router-level defaults.
+Use `to` for typed internal routes and `href` for literal anchor URLs. Params, search, and hash are URLKit-backed; `{id:int}` params are numbers. `url` accepts build-time URLKit options such as `arrayFormat`. Route-resolution policies such as `invalidSearch`, `invalidHash`, and `unknownSearch` belong on the core router, route definition, explicit match calls, or static router creation.
 
 ```tsx
 <Link to="articles.show" params={{ slug: 'typed-routing' }} hash="comments">
@@ -260,10 +260,11 @@ A slot can render a matched slot route, fallback, intercepted destination, route
 | `useMatches()`                                  | Return the current matched branch.                        |
 | `useNavigation()`                               | Return the navigation state.                              |
 | `useParams(routeId?)`                           | Read route params.                                        |
-| `useSearchParams(routeId?, options?)`           | Read URLKit-parsed search params.                         |
-| `useSearch(routeId?, options?)`                 | Alias for `useSearchParams`.                              |
-| `useHashParams(routeId?, options?)`             | Read URLKit-parsed hash, or `null`.                       |
-| `useHash(routeId?, options?)`                   | Alias for `useHashParams`.                                |
+| `useSearchParams(routeId?)`                     | Read declared URLKit-parsed search params.                |
+| `useSearch(routeId?)`                           | Alias for `useSearchParams`.                              |
+| `useUnknownSearchParams()`                      | Read URLKit-preserved unknown search params.              |
+| `useHashParams(routeId?)`                       | Read URLKit-parsed hash, or `null`.                       |
+| `useHash(routeId?)`                             | Alias for `useHashParams`.                                |
 | `useOutletContext()`                            | Read nearest outlet or slot context.                      |
 | `useBlocker({ when, message? })`                | Block in-app navigation and browser unload while enabled. |
 
@@ -291,7 +292,7 @@ function ArticleToolbar() {
 }
 ```
 
-URL options can be overridden per hook/component call. Precedence is: per-call hook/component options, then route-level `url`, then router-level `url`, then URLKit defaults. `RouterProvider` does not define separate URL defaults; configure framework-agnostic defaults on the core router.
+URL build options can be overridden on href-building APIs such as `useHref`, `Link`, `NavLink`, and navigation calls. Precedence is: per-call build options, then route-level `url`, then router-level `url`, then URLKit defaults. State-reading hooks such as `useSearchParams`, `useHashParams`, and `useParams` read already-resolved router state and do not accept `url` options. When URLKit preserves undeclared query keys with `unknownSearch: 'preserve'`, read them with `useUnknownSearchParams()`.
 
 ```tsx
 const href = useHref('products', {
@@ -299,9 +300,8 @@ const href = useHref('products', {
   url: { arrayFormat: 'comma' },
 });
 
-const search = useSearchParams('products', {
-  url: { arrayFormat: 'repeat' },
-});
+const search = useSearchParams('products');
+const unknownSearch = useUnknownSearchParams();
 ```
 
 `useBlocker()` blocks in-app router transitions and browser unload while enabled. Browsers control the unload confirmation text; do not rely on custom browser unload messages.

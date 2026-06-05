@@ -35,6 +35,23 @@ describe('createStaticRouter', () => {
     expect(createStaticRouter({ routes, request }).state.location.href).toBe('/users/42');
   });
 
+  it('applies routerUrl unknownSearch during static route resolution', () => {
+    const router = createStaticRouter({
+      routes: defineRoutes([
+        {
+          id: 'products',
+          path: '/products',
+          search: { page: { value: 'number', optional: true } },
+        },
+      ]),
+      url: '/products?page=1&debug=true',
+      routerUrl: { unknownSearch: 'error' },
+    });
+
+    expect(router.state.match?.id).toBe('products');
+    expect(router.state.error).toBeDefined();
+  });
+
   it('rejects non-HTTP protocols for SSR request safety', () => {
     expect(() => createStaticRouter({ routes, url: 'javascript:alert(1)' })).toThrow(
       'Static router URL must use http, https',

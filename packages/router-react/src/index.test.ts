@@ -14,6 +14,7 @@ describe('package entrypoint', () => {
     expect(module.useHashParams).toBeTypeOf('function');
     expect(module.useHash).toBeTypeOf('function');
     expect(module.useSearchParams).toBeTypeOf('function');
+    expect(module.useUnknownSearchParams).toBeTypeOf('function');
     expect(module.useSearch).toBeTypeOf('function');
   });
 });

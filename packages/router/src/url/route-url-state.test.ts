@@ -7,6 +7,7 @@ import {
   parseRouteHash,
   parseRoutePathParams,
   parseRouteSearch,
+  parseRouteSearchState,
   parseRouteUrlState,
 } from './route-url-state';
 
@@ -111,6 +112,39 @@ describe('route URL state helpers', () => {
     expect(() =>
       parseRouteSearch(route, '?page=a', { callUrl: { invalidSearch: 'no-match' } }),
     ).toThrow('Expected a finite number value');
+  });
+
+  it('forwards unknownSearch to URLKit search parsing', () => {
+    const route = normalizedRoute({
+      id: 'products',
+      path: '/products',
+      search: {
+        page: { value: 'number', optional: true },
+      },
+    });
+
+    expect(parseRouteSearch(route, '?page=1&debug=true')).toEqual({ page: 1 });
+    expect(
+      parseRouteSearch(route, '?page=1&debug=true', { callUrl: { unknownSearch: 'preserve' } }),
+    ).toEqual({ page: 1 });
+    expect(
+      parseRouteSearchState(route, '/products', '?page=1&debug=true', {
+        callUrl: { unknownSearch: 'preserve' },
+      }),
+    ).toEqual({ search: { page: 1 }, unknownSearch: { debug: 'true' } });
+    expect(
+      parseRouteUrlState(route, '/products', '?page=1&debug=true', '', {
+        callUrl: { unknownSearch: 'preserve' },
+      }),
+    ).toEqual({
+      params: {},
+      search: { page: 1 },
+      unknownSearch: { debug: 'true' },
+      hash: undefined,
+    });
+    expect(() =>
+      parseRouteSearch(route, '?page=1&debug=true', { callUrl: { unknownSearch: 'error' } }),
+    ).toThrow('Unknown search parameter is not allowed');
   });
 
   it('recovers invalid hash values by default and can keep strict hash validation', () => {

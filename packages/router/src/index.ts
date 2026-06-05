@@ -45,6 +45,9 @@ export type {
   RouterRouteUrlDescriptor,
   RouterInvalidUrlStatePolicy,
   RouterUrlArrayFormat,
+  RouterUrlBuildOptions,
+  RouterUnknownSearchPolicy,
+  RouterUnknownSearchParams,
   RouterUrlOptions,
 } from './url';
 export type {

@@ -65,6 +65,7 @@ function createContext(options: RunLifecycleOptions): RouteLifecycleContext {
     location: options.location,
     params: options.to?.params ?? {},
     search: (options.to?.search ?? {}) as never,
+    ...(options.to?.unknownSearch === undefined ? {} : { unknownSearch: options.to.unknownSearch }),
     hash: options.to?.hash,
   };
 }

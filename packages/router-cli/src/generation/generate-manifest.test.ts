@@ -20,11 +20,18 @@ describe('generateManifest', () => {
         {
           id: 'products',
           path: '/products',
-          url: { arrayFormat: 'comma' },
+          url: { arrayFormat: 'comma', unknownSearch: 'preserve' },
         },
       ]),
     ).toEqual({
-      routes: [{ id: 'products', path: '/products', index: false, url: { arrayFormat: 'comma' } }],
+      routes: [
+        {
+          id: 'products',
+          path: '/products',
+          index: false,
+          url: { arrayFormat: 'comma', unknownSearch: 'preserve' },
+        },
+      ],
     });
   });
 

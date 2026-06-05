@@ -76,30 +76,10 @@ describe('useSearchParams', () => {
     expect(result.current).toEqual({ tags: ['router', 'typescript'] });
   });
 
-  it('uses hook-level URL options over route-level and router-level arrayFormat', async () => {
-    const router = createMemoryRouter({
-      routes: defineRoutes([
-        {
-          id: 'products',
-          path: '/products',
-          search: { tags: { value: 'string', type: 'many', optional: true } },
-          url: { arrayFormat: 'comma' },
-          component: Page,
-        },
-      ] as const),
-      initialEntries: ['/products?tags=router&tags=typescript'],
-      url: { arrayFormat: 'comma' },
-    });
-    await router.resolveCurrent();
-    const wrapper = ({ children }: { children: import('react').ReactNode }) => (
-      <RouterProvider router={router}>{children}</RouterProvider>
-    );
-
-    const { result } = renderHook(
-      () => useSearchParams('products', { url: { arrayFormat: 'repeat' } }),
-      { wrapper },
-    );
-
-    expect(result.current).toEqual({ tags: ['router', 'typescript'] });
+  it('does not accept hook-level URL options', () => {
+    if (false) {
+      // @ts-expect-error useSearchParams reads already-resolved router state.
+      useSearchParams('products', { url: { arrayFormat: 'repeat' } });
+    }
   });
 });

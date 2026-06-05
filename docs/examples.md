@@ -41,7 +41,7 @@ Shows:
 - URLKit-parsed route params, including numeric `{id:int}` values
 - URLKit-parsed search params
 - URLKit-parsed hash values
-- router, route, and React call-site `arrayFormat` behavior
+- router, route, and URL-building call-site `arrayFormat` behavior
 - middleware redirects
 - lifecycle hooks
 - generated contracts

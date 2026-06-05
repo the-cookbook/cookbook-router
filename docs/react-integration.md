@@ -247,15 +247,20 @@ const params = useParams('users.show');
 
 ### `useSearchParams()` / `useSearch()`
 
-Reads URLKit-parsed search state from the active match. Pass `options.url` to override URL options such as `arrayFormat` for this read.
+Reads declared URLKit-parsed search state from the active match. This hook consumes already-resolved router state and does not accept `url` options. Configure route-resolution policies such as `invalidSearch`, `unknownSearch`, and `invalidHash` on the core router, the route definition, explicit match calls, or static router creation.
 
 ```tsx
-const search = useSearchParams('products', {
-  url: { arrayFormat: 'repeat' },
-});
+const search = useSearchParams('products');
 ```
 
-Per-hook options override route-level `url`, which overrides router-level `url`, which overrides URLKit defaults. `RouterProvider` does not define separate URL defaults; configure framework-agnostic defaults on the core router.
+When `unknownSearch: 'preserve'` is configured, unknown query keys are exposed separately through `useUnknownSearchParams()` instead of being merged into declared typed search.
+
+```tsx
+const search = useSearchParams('overview');
+const unknownSearch = useUnknownSearchParams();
+```
+
+`RouterProvider` does not define separate URL defaults; configure framework-agnostic defaults on the core router.
 
 ### `useHashParams()` / `useHash()`
 
@@ -264,6 +269,19 @@ Reads URLKit-parsed hash state from the active match, or `null` when no hash is 
 ```tsx
 const section = useHashParams('articles.show');
 ```
+
+### `useUnknownSearchParams()`
+
+Reads URLKit-preserved unknown search params from the active match. This returns keys that were present in the URL but not declared by the active route's `search` descriptor when the effective URL policy is `unknownSearch: 'preserve'`.
+
+```tsx
+const unknownSearch = useUnknownSearchParams();
+
+unknownSearch.utm_source;
+// string | readonly string[] | undefined
+```
+
+It returns an empty object when no unknown search params were preserved.
 
 ### `useOutletContext()`
 

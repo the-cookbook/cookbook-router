@@ -195,7 +195,7 @@ cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router --wa
 
 ## `useParams()` returns `number` for `{id:int}`
 
-This is expected v1 URLKit-backed behavior.
+This is expected URLKit-backed behavior.
 
 ```tsx
 {
@@ -292,11 +292,72 @@ Use `invalidSearch: 'error'` for strict apps that should render route error fall
 createRouter({ routes, url: { arrayFormat: 'repeat' } });
 ```
 
-`repeat` reads and writes `?tags=a&tags=b`. `comma` reads `?tags=a,b` and writes `?tags=a%2Cb`. Precedence is per-call/hook/component, then route-level `url`, then router-level `url`, then URLKit defaults.
+`repeat` reads and writes `?tags=a&tags=b`. `comma` reads `?tags=a,b` and writes `?tags=a%2Cb`. For URL building, precedence is call-site `url`, then route-level `url`, then router-level `url`, then URLKit defaults. State-reading hooks consume already-resolved router state and do not accept `url` options.
 
 ## Unknown search params behavior
 
-Only declared route `search` keys are part of generated contracts. Unknown keys are not typed. URLKit-backed runtime behavior depends on the URLKit options intentionally exposed through the router API. The current public router URL option model exposes `arrayFormat`, `invalidSearch`, and `invalidHash`; do not rely on untyped unknown search keys for application state.
+Only declared route `search` keys are part of generated contracts. Unknown keys are query-string keys that are not declared by the matched route. The effective `unknownSearch` policy controls them.
+
+```ts
+createRouter({
+  routes,
+  url: {
+    unknownSearch: 'strip',
+  },
+});
+```
+
+Supported modes are:
+
+| Mode         | Behavior                                                                                     |
+| ------------ | -------------------------------------------------------------------------------------------- |
+| `'strip'`    | Default. Route matches and unknown keys are omitted from router state.                       |
+| `'preserve'` | Route matches and unknown keys are exposed separately as `unknownSearch`.                    |
+| `'error'`    | Path route remains matched and the unknown-key failure is exposed through route error state. |
+
+For `/overview?page=0&utm_source=website`, with `unknownSearch: 'preserve'`, declared search and unknown search are separate:
+
+```ts
+match.search;
+// { page: 0 }
+
+match.unknownSearch;
+// { utm_source: 'website' }
+```
+
+## `useSearchParams()` does not show unknown query params
+
+`useSearchParams()` returns only declared, typed route search. It does not merge preserved unknown keys into the declared search contract.
+
+```tsx
+const search = useSearchParams('overview');
+const unknownSearch = useUnknownSearchParams();
+
+search;
+// { page: 0 }
+
+unknownSearch;
+// { utm_source: 'website' }
+```
+
+Declare a key in the route `search` descriptor when it is application state. Use `useUnknownSearchParams()` for URLKit-preserved pass-through keys.
+
+## Hook-level URL options do not change matching
+
+State-reading hooks such as `useParams()`, `useSearchParams()`, and `useHashParams()` consume already-resolved router state. They do not accept `url` options and cannot change route matching, error fallback behavior, or not-found behavior.
+
+Configure route-resolution policies on the router, route definition, explicit match calls, or static router creation:
+
+```ts
+createRouter({
+  routes,
+  url: {
+    invalidSearch: 'recover',
+    unknownSearch: 'preserve',
+    invalidHash: 'recover',
+  },
+});
+```
 
 ## Hash validation failures
 

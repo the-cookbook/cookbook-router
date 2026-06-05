@@ -1,5 +1,9 @@
 import React from 'react';
-import { useNavigate, useSearchParams } from '@cookbook/router-react';
+import {
+  useNavigate,
+  useSearchParams,
+  useUnknownSearchParams,
+} from '@cookbook/router-react';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +20,6 @@ import { ChartAreaInteractive } from './components/chart-area-interactive';
 import { DataTable } from './components/data-table';
 import { SectionCards } from './components/section-cards';
 import data from './data.json';
-import { toArray } from '@/lib/utils';
 
 export function OverviewLayoutHeader() {
   return <h1 className="text-base font-medium">Overview</h1>;
@@ -53,7 +56,10 @@ export function OverviewCreateModal() {
 }
 
 export function OverviewPage() {
-  const search = useSearchParams('overview');
+  const searchParams = useSearchParams('overview');
+  const unknownSearchParams = useUnknownSearchParams();
+
+  console.log({ searchParams, unknownSearchParams });
 
   return (
     <div className="flex flex-1 flex-col">
@@ -61,7 +67,7 @@ export function OverviewPage() {
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
           <SectionCards />
           <div className="px-4 lg:px-6">
-            <ChartAreaInteractive timeRange={toArray(search.visitors)[0]} />
+            <ChartAreaInteractive timeRange={searchParams.visitors} />
           </div>
           <DataTable data={data} />
         </div>

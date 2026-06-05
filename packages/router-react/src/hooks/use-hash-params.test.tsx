@@ -68,4 +68,11 @@ describe('useHashParams', () => {
 
     expect(result.current).toBeNull();
   });
+
+  it('does not accept hook-level URL options', () => {
+    if (false) {
+      // @ts-expect-error useHashParams reads already-resolved router state.
+      useHashParams('user', { url: { invalidHash: 'error' } });
+    }
+  });
 });

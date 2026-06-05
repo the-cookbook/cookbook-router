@@ -3,6 +3,7 @@ import type { StaticHashDescriptor, StaticSearchField } from '@cookbook/urlkit/s
 import type { RouterPathOptions } from '../pathkit/pathkit';
 import type { RouterUrlOptions } from '../url/contracts';
 import type { RouteHash, RouteId, RouteParams, RouteSearch } from '../contracts';
+import type { RouterUnknownSearchParams } from '../url/contracts';
 
 /**
  * Component-like value consumed by router integrations.
@@ -347,6 +348,9 @@ export type ResolvedSlots = Readonly<Record<string, Readonly<Record<string, Reso
  */
 export type ParsedRouteSearch = Record<string, string | readonly string[]>;
 
+/** Preserved undeclared query-string values when `unknownSearch` is `preserve`. */
+export type ParsedUnknownRouteSearch = RouterUnknownSearchParams;
+
 /** Parsed hash fragment value when no generated hash contract is available. */
 export type ParsedRouteHash = string | undefined;
 
@@ -361,6 +365,7 @@ export interface RouteMatch<Route extends string = string> {
   readonly id: Route;
   readonly pathname: string;
   readonly search: Route extends RouteId ? RouteSearch<Route> : ParsedRouteSearch;
+  readonly unknownSearch?: ParsedUnknownRouteSearch;
   readonly hash: Route extends RouteId ? RouteHash<Route> : ParsedRouteHash;
   readonly href: string;
   readonly route: NormalizedRoute;
@@ -403,6 +408,7 @@ export interface MiddlewareContext {
   readonly location: RouterLocation;
   readonly params: Record<string, unknown>;
   readonly search: ParsedRouteSearch | Record<string, unknown>;
+  readonly unknownSearch?: ParsedUnknownRouteSearch;
   readonly hash: ParsedRouteHash | unknown;
   redirect: (to: string) => MiddlewareResult;
   rewrite: (to: string) => MiddlewareResult;
@@ -450,6 +456,7 @@ export interface RouteLifecycleContext {
   readonly location: RouterLocation;
   readonly params: Record<string, unknown>;
   readonly search: ParsedRouteSearch | Record<string, unknown>;
+  readonly unknownSearch?: ParsedUnknownRouteSearch;
   readonly hash: ParsedRouteHash | unknown;
 }
 

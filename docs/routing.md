@@ -89,25 +89,25 @@ type RouteIntercepts = Readonly<Record<string, RouteInterceptConfig>>;
 
 ## Field reference
 
-| Field              | Purpose                                                                                                                            |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `id`               | Required stable route ID. Used for navigation, contracts, diagnostics, and metadata lookup.                                        |
-| `path`             | URL pattern. Child paths are relative unless they start with `/`.                                                                  |
-| `index`            | Marks a child as the default route for its parent path. Index routes must not define `path`.                                       |
-| `component`        | Page component rendered for this route.                                                                                            |
-| `layout.component` | Layout wrapper component. Layouts render child branches through `<Outlet />`.                                                      |
-| `layout.slots`     | Named layout regions rendered through `<Slot name="..." />`.                                                                       |
-| `children`         | Primary child route branch.                                                                                                        |
-| `intercepts`       | Configured source-route interception rules keyed by target slot name.                                                              |
-| `redirect`         | Internal or external redirect target. Redirect-only routes do not need components.                                                 |
-| `search`           | URLKit-compatible static search descriptor for parsed search state and generated contracts.                                        |
-| `hash`             | URLKit-compatible static hash descriptor or allowed hash fragment values.                                                          |
-| `url`              | Route-level URL options such as `arrayFormat`, `invalidSearch`, and `invalidHash`; overrides router-level defaults for this route. |
-| `meta`             | Arbitrary metadata preserved in generated contracts and runtime route definitions.                                                 |
-| `loading`          | Route-level React Suspense fallback component rendered while the route subtree is loading.                                         |
-| `errorFallback`    | Route-level React error fallback component rendered when the route subtree throws during rendering.                                |
-| `lifecycle`        | Route-level transition hooks.                                                                                                      |
-| `middleware`       | Route-level middleware.                                                                                                            |
+| Field              | Purpose                                                                                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | Required stable route ID. Used for navigation, contracts, diagnostics, and metadata lookup.                                                         |
+| `path`             | URL pattern. Child paths are relative unless they start with `/`.                                                                                   |
+| `index`            | Marks a child as the default route for its parent path. Index routes must not define `path`.                                                        |
+| `component`        | Page component rendered for this route.                                                                                                             |
+| `layout.component` | Layout wrapper component. Layouts render child branches through `<Outlet />`.                                                                       |
+| `layout.slots`     | Named layout regions rendered through `<Slot name="..." />`.                                                                                        |
+| `children`         | Primary child route branch.                                                                                                                         |
+| `intercepts`       | Configured source-route interception rules keyed by target slot name.                                                                               |
+| `redirect`         | Internal or external redirect target. Redirect-only routes do not need components.                                                                  |
+| `search`           | URLKit-compatible static search descriptor for parsed search state and generated contracts.                                                         |
+| `hash`             | URLKit-compatible static hash descriptor or allowed hash fragment values.                                                                           |
+| `url`              | Route-level URL options such as `arrayFormat`, `invalidSearch`, `invalidHash`, and `unknownSearch`; overrides router-level defaults for this route. |
+| `meta`             | Arbitrary metadata preserved in generated contracts and runtime route definitions.                                                                  |
+| `loading`          | Route-level React Suspense fallback component rendered while the route subtree is loading.                                                          |
+| `errorFallback`    | Route-level React error fallback component rendered when the route subtree throws during rendering.                                                 |
+| `lifecycle`        | Route-level transition hooks.                                                                                                                       |
+| `middleware`       | Route-level middleware.                                                                                                                             |
 
 ## Path composition
 
@@ -247,6 +247,7 @@ Search contracts are generated from URLKit-compatible static `search` descriptor
   },
   url: {
     arrayFormat: 'comma',
+    unknownSearch: 'strip',
   },
   component: ArticlesPage,
 }
@@ -262,7 +263,9 @@ type ArticlesSearch = {
 };
 ```
 
-`url.arrayFormat` controls repeated search param parsing and building. Router-level defaults can be set on `createRouter({ url })`; route-level `url` overrides router defaults; per-call, hook, and component `url` options override both.
+`url.arrayFormat` controls repeated search param parsing and building. `url.unknownSearch` controls undeclared query keys and defaults to `'strip'`. Router-level defaults can be set on `createRouter({ url })`; route-level `url` overrides router defaults; URL-building call-site options such as `router.href()`, `router.navigate.to()`, `useHref()`, `Link`, and `NavLink` can override build options such as `arrayFormat`.
+
+When `unknownSearch: 'preserve'` is active, declared search remains typed and unknown keys are exposed separately on the match as `unknownSearch`.
 
 Hash values become a string union:
 

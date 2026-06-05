@@ -7,12 +7,14 @@ describe('URL contract types', () => {
       arrayFormat: 'comma',
       invalidSearch: 'recover',
       invalidHash: 'error',
+      unknownSearch: 'preserve',
     };
 
     expect(options).toEqual({
       arrayFormat: 'comma',
       invalidSearch: 'recover',
       invalidHash: 'error',
+      unknownSearch: 'preserve',
     });
   });
 });

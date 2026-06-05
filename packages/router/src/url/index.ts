@@ -5,6 +5,9 @@ export type {
   RouterRouteUrlDescriptor,
   RouterInvalidUrlStatePolicy,
   RouterUrlArrayFormat,
+  RouterUrlBuildOptions,
+  RouterUnknownSearchPolicy,
+  RouterUnknownSearchParams,
   RouterUrlOptions,
   UrlContractRouteDescriptor,
 } from './contracts';
@@ -18,7 +21,12 @@ export {
   parseRouteHash,
   parseRoutePathParams,
   parseRouteSearch,
+  parseRouteSearchState,
   parseRouteUrlState,
   resolveRouteUrlOptions,
 } from './route-url-state';
-export type { ParsedRouteUrlState, RouteUrlStateOptions } from './route-url-state';
+export type {
+  ParsedRouteSearchState,
+  ParsedRouteUrlState,
+  RouteUrlStateOptions,
+} from './route-url-state';

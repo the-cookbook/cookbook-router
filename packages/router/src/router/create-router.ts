@@ -42,7 +42,12 @@ import type {
 import type { RouteId, RouteUrlOptions } from '../contracts';
 import { getDefineRoutesOptions } from '../routes/define-routes';
 import { createHydrationMismatchError } from '../diagnostics/router-errors';
-import { buildRoutePath, registerUrlPathConstraints, type RouterUrlOptions } from '../url';
+import {
+  buildRoutePath,
+  registerUrlPathConstraints,
+  type RouterUrlBuildOptions,
+  type RouterUrlOptions,
+} from '../url';
 import { createRouteHref } from './create-href';
 import { createRouteLookup } from './create-route-lookup';
 import { matchLocationResult, type MatchLocationResult } from './match-location';
@@ -80,8 +85,8 @@ export interface CreateRouterOptions {
  * them. `context` is carried to intercepted rendering state.
  */
 export interface HrefOptions<Route extends string> extends RouteUrlOptions<Route> {
-  /** Per-call URLKit options that override route-level and router-level defaults. */
-  readonly url?: RouterUrlOptions;
+  /** Per-call URLKit build options that override route-level and router-level defaults. */
+  readonly url?: RouterUrlBuildOptions;
   readonly intercept?: InterceptInput;
   readonly context?: unknown;
   readonly preventScrollReset?: boolean;
@@ -151,7 +156,7 @@ interface ScrollHistoryState {
 interface ActiveNavigation {
   readonly href: string;
   readonly mode: 'push' | 'replace';
-  readonly url?: RouterUrlOptions;
+  readonly url?: RouterUrlBuildOptions;
   readonly intercept?: InterceptInput;
   readonly context?: unknown;
   readonly preventScrollReset?: boolean;
@@ -458,7 +463,7 @@ export function createRouterRuntime(
     error?: unknown,
     intercepted?: ResolvedInterceptedRoute,
     previousLocation?: RouterLocation,
-    callUrl?: RouterUrlOptions,
+    callUrl?: RouterUrlBuildOptions,
   ): RouterState {
     const baseMatchResult = matchHrefResult(location.href, callUrl);
     const baseMatch = baseMatchResult.status === 'no-match' ? null : baseMatchResult.match;
@@ -495,7 +500,7 @@ export function createRouterRuntime(
     intercept?: InterceptInput,
     context?: unknown,
     preventScrollReset?: boolean,
-    callUrl?: RouterUrlOptions,
+    callUrl?: RouterUrlBuildOptions,
   ): Promise<RouterState> {
     if (
       activeNavigation &&
@@ -552,7 +557,7 @@ export function createRouterRuntime(
     interceptInput?: InterceptInput,
     context?: unknown,
     preventScrollReset?: boolean,
-    callUrl?: RouterUrlOptions,
+    callUrl?: RouterUrlBuildOptions,
   ): Promise<RouterState> {
     const currentTransitionVersion = ++transitionVersion;
 

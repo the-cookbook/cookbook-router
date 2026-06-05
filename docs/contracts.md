@@ -32,7 +32,7 @@ Output:
   manifest.json
 ```
 
-`contracts.ts` contains route-specific interfaces and constants. `register.d.ts` augments `@cookbook/router`. `manifest.json` is a tooling-friendly route list and preserves route-level `url` options such as `arrayFormat` when present.
+`contracts.ts` contains route-specific interfaces and constants. `register.d.ts` augments `@cookbook/router`. `manifest.json` is a tooling-friendly route list and preserves route-level `url` options such as `arrayFormat`, `invalidSearch`, `invalidHash`, and `unknownSearch` when present.
 
 ## Register contracts
 

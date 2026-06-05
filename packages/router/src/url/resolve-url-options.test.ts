@@ -34,4 +34,14 @@ describe('resolveUrlOptions', () => {
       }),
     ).toEqual({ invalidSearch: 'recover' });
   });
+
+  it('resolves unknownSearch with the same precedence model', () => {
+    expect(
+      resolveUrlOptions({
+        router: { unknownSearch: 'strip' },
+        route: { unknownSearch: 'preserve' },
+        call: { unknownSearch: 'error' },
+      }),
+    ).toEqual({ unknownSearch: 'error' });
+  });
 });

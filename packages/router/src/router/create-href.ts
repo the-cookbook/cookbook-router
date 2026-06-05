@@ -13,14 +13,14 @@ import {
   buildRouteSearch,
   parseRoutePathParams,
 } from '../url/route-url-state';
-import type { RouterUrlOptions } from '../url';
+import type { RouterUrlBuildOptions, RouterUrlOptions } from '../url';
 import { applyBasename, stripBasename } from './pathname';
 
 export interface CreateHrefOptions {
   readonly params?: unknown;
   readonly search?: unknown;
   readonly hash?: unknown;
-  readonly url?: RouterUrlOptions;
+  readonly url?: RouterUrlBuildOptions;
 }
 
 export interface CreateRouteHrefOptions<Route extends string = string> {

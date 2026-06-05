@@ -6,7 +6,11 @@ import {
 } from '@cookbook/urlkit/router-runtime';
 import { matchPathPattern, type RouterPathConstraints } from '../pathkit/pathkit';
 import type { NormalizedRoute, RouteHashSchema, RouteSearchSchema } from '../routes/contracts';
-import type { RouterUrlOptions } from './contracts';
+import type {
+  RouterUnknownSearchParams,
+  RouterUrlBuildOptions,
+  RouterUrlOptions,
+} from './contracts';
 import { createRouteUrlContract } from './create-route-url-contract';
 import { resolveUrlOptions } from './resolve-url-options';
 
@@ -16,9 +20,13 @@ export interface RouteUrlStateOptions {
   readonly pathConstraints?: RouterPathConstraints;
 }
 
-export interface ParsedRouteUrlState {
-  readonly params: Record<string, unknown>;
+export interface ParsedRouteSearchState {
   readonly search: Record<string, unknown>;
+  readonly unknownSearch?: RouterUnknownSearchParams;
+}
+
+export interface ParsedRouteUrlState extends ParsedRouteSearchState {
+  readonly params: Record<string, unknown>;
   readonly hash: unknown;
 }
 
@@ -30,9 +38,14 @@ export function parseRouteUrlState(
   hash: string,
   options: RouteUrlStateOptions = {},
 ): ParsedRouteUrlState {
+  const searchState = parseRouteSearchState(route, pathname, search, options);
+
   return {
     params: parseRoutePathParamsOrThrow(route, pathname, options),
-    search: parseRouteSearch(route, search, options),
+    search: searchState.search,
+    ...(searchState.unknownSearch === undefined
+      ? {}
+      : { unknownSearch: searchState.unknownSearch }),
     hash: parseRouteHash(route, hash, options),
   };
 }
@@ -86,7 +99,34 @@ export function parseRouteSearch(
     return parseSchemaRouteSearch(route, search, options, urlOptions);
   }
 
-  return parseUrlKitSearch(search, toUrlKitSearchOptions(urlOptions)) as Record<string, unknown>;
+  return parseUrlKitSearch(search, toUrlKitSearchParseOptions(urlOptions)) as Record<
+    string,
+    unknown
+  >;
+}
+
+/**
+ * Parses route search and preserves URLKit's sibling `unknownSearch` state when
+ * the effective policy is `unknownSearch: 'preserve'`.
+ */
+export function parseRouteSearchState(
+  route: NormalizedRoute,
+  pathname: string,
+  search: string,
+  options: RouteUrlStateOptions = {},
+): ParsedRouteSearchState {
+  const urlOptions = resolveRouteUrlOptions(route, options);
+
+  if (route.route.search) {
+    return parseSchemaRouteSearchState(route, pathname, search, options, urlOptions);
+  }
+
+  return {
+    search: parseUrlKitSearch(search, toUrlKitSearchParseOptions(urlOptions)) as Record<
+      string,
+      unknown
+    >,
+  };
 }
 
 /** Builds route search with URLKit, using the route schema when one exists. */
@@ -96,7 +136,7 @@ export function buildRouteSearch(
   options: RouteUrlStateOptions = {},
 ): string {
   const urlOptions = {
-    ...toUrlKitSearchOptions(resolveRouteUrlOptions(route, options)),
+    ...toUrlKitSearchBuildOptions(resolveRouteUrlOptions(route, options)),
     sortKeys: true,
   };
 
@@ -167,7 +207,7 @@ function parseSchemaRouteSearch(
   urlOptions: RouterUrlOptions,
 ): Record<string, unknown> {
   const invalidSearch = urlOptions.invalidSearch ?? 'recover';
-  const urlKitOptions = toUrlKitSearchOptions(urlOptions);
+  const urlKitOptions = toUrlKitSearchParseOptions(urlOptions);
 
   if (invalidSearch !== 'recover') {
     return createNormalizedRouteUrlContract(route, options).parseSearch(
@@ -183,7 +223,7 @@ function parseRecoverableRouteSearch(
   route: NormalizedRoute,
   search: string,
   options: RouteUrlStateOptions,
-  urlKitOptions: Pick<RouterUrlOptions, 'arrayFormat'>,
+  urlKitOptions: Pick<RouterUrlOptions, 'arrayFormat' | 'unknownSearch'>,
 ): Record<string, unknown> {
   const schema = route.route.search;
   const invalidKeys = new Set<string>();
@@ -209,6 +249,63 @@ function parseRecoverableRouteSearch(
   return contract.parseSearch(currentSearch, urlKitOptions) as Record<string, unknown>;
 }
 
+function parseSchemaRouteSearchState(
+  route: NormalizedRoute,
+  pathname: string,
+  search: string,
+  options: RouteUrlStateOptions,
+  urlOptions: RouterUrlOptions,
+): ParsedRouteSearchState {
+  const invalidSearch = urlOptions.invalidSearch ?? 'recover';
+  const urlKitOptions = toUrlKitSearchParseOptions(urlOptions);
+
+  if (invalidSearch !== 'recover') {
+    return toParsedRouteSearchState(
+      createNormalizedRouteUrlContract(route, options).parse(
+        createUrlInput(pathname, search),
+        urlKitOptions,
+      ),
+    );
+  }
+
+  return parseRecoverableRouteSearchState(route, pathname, search, options, urlKitOptions);
+}
+
+function parseRecoverableRouteSearchState(
+  route: NormalizedRoute,
+  pathname: string,
+  search: string,
+  options: RouteUrlStateOptions,
+  urlKitOptions: Pick<RouterUrlOptions, 'arrayFormat' | 'unknownSearch'>,
+): ParsedRouteSearchState {
+  const schema = route.route.search;
+  const invalidKeys = new Set<string>();
+  let currentSearch = search;
+  const maxAttempts = Object.keys(schema ?? {}).length + 1;
+  const contract = createRecoverableSearchContract(route, options);
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      return toParsedRouteSearchState(
+        contract.parse(createUrlInput(pathname, currentSearch), urlKitOptions),
+      );
+    } catch (error) {
+      const invalidKey = getRecoverableInvalidSearchKey(error, schema);
+
+      if (!invalidKey || invalidKeys.has(invalidKey)) {
+        throw error;
+      }
+
+      invalidKeys.add(invalidKey);
+      currentSearch = removeSearchKey(currentSearch, invalidKey);
+    }
+  }
+
+  return toParsedRouteSearchState(
+    contract.parse(createUrlInput(pathname, currentSearch), urlKitOptions),
+  );
+}
+
 function createRecoverableSearchContract(route: NormalizedRoute, options: RouteUrlStateOptions) {
   const recoverableSearch = makeSearchSchemaRecoverable(route.route.search);
 
@@ -227,6 +324,22 @@ function createRecoverableSearchContract(route: NormalizedRoute, options: RouteU
         : { pathConstraints: options.pathConstraints }),
     },
   );
+}
+
+function createUrlInput(pathname: string, search: string): string {
+  return `${pathname}${search}`;
+}
+
+function toParsedRouteSearchState(parsed: unknown): ParsedRouteSearchState {
+  const state = parsed as {
+    readonly search?: Record<string, unknown>;
+    readonly unknownSearch?: RouterUnknownSearchParams;
+  };
+
+  return {
+    search: state.search ?? {},
+    ...(state.unknownSearch === undefined ? {} : { unknownSearch: state.unknownSearch }),
+  };
 }
 
 function makeSearchSchemaRecoverable(
@@ -295,7 +408,16 @@ function getHashDefault(hash: RouteHashSchema): unknown {
   return hash.default;
 }
 
-function toUrlKitSearchOptions(options: RouterUrlOptions): Pick<RouterUrlOptions, 'arrayFormat'> {
+function toUrlKitSearchParseOptions(
+  options: RouterUrlOptions,
+): Pick<RouterUrlOptions, 'arrayFormat' | 'unknownSearch'> {
+  return {
+    ...(options.arrayFormat === undefined ? {} : { arrayFormat: options.arrayFormat }),
+    ...(options.unknownSearch === undefined ? {} : { unknownSearch: options.unknownSearch }),
+  };
+}
+
+function toUrlKitSearchBuildOptions(options: RouterUrlOptions): RouterUrlBuildOptions {
   return {
     ...(options.arrayFormat === undefined ? {} : { arrayFormat: options.arrayFormat }),
   };

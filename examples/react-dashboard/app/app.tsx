@@ -30,6 +30,7 @@ export function createAppRouter() {
       arrayFormat: 'repeat',
       invalidSearch: 'recover',
       invalidHash: 'recover',
+      unknownSearch: 'strip',
     },
   });
 }
@@ -40,7 +41,12 @@ export function createTestRouter(
   return createMemoryRouter({
     routes,
     initialEntries,
-    url: { arrayFormat: 'repeat', invalidSearch: 'recover' },
+    url: {
+      arrayFormat: 'repeat',
+      invalidSearch: 'recover',
+      invalidHash: 'recover',
+      unknownSearch: 'strip',
+    },
   });
 }
 

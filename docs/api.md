@@ -130,24 +130,24 @@ interface RouteDefinition {
 }
 ```
 
-| Field           | Purpose                                                                                             |
-| --------------- | --------------------------------------------------------------------------------------------------- |
-| `id`            | Stable public route ID used by links, hrefs, navigation, redirects, generated contracts, and tests. |
-| `path`          | Local path segment or absolute path. Index routes must not define `path`.                           |
-| `index`         | Marks the route as the default child for its parent path.                                           |
-| `component`     | Route component or framework-owned render value. The core package treats it as `unknown`.           |
-| `layout`        | Layout component and named slot definitions.                                                        |
-| `children`      | Primary child routes.                                                                               |
-| `intercepts`    | Configured route interception targets for named slots.                                              |
-| `redirect`      | Internal route redirect object or literal href string.                                              |
-| `search`        | URLKit-compatible static search descriptor used by parsed state and generated contracts.            |
-| `hash`          | URLKit-compatible static hash descriptor or allowed hash values.                                    |
-| `url`           | Route-level URLKit options such as `arrayFormat`, `invalidSearch`, and `invalidHash`.               |
-| `meta`          | Arbitrary route metadata.                                                                           |
-| `loading`       | Route-level React Suspense fallback component for loading route subtrees.                           |
-| `errorFallback` | Route-level React error-boundary fallback component for render errors in route subtrees.            |
-| `lifecycle`     | Route lifecycle hooks.                                                                              |
-| `middleware`    | Route-specific middleware pipeline.                                                                 |
+| Field           | Purpose                                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------------------ |
+| `id`            | Stable public route ID used by links, hrefs, navigation, redirects, generated contracts, and tests.    |
+| `path`          | Local path segment or absolute path. Index routes must not define `path`.                              |
+| `index`         | Marks the route as the default child for its parent path.                                              |
+| `component`     | Route component or framework-owned render value. The core package treats it as `unknown`.              |
+| `layout`        | Layout component and named slot definitions.                                                           |
+| `children`      | Primary child routes.                                                                                  |
+| `intercepts`    | Configured route interception targets for named slots.                                                 |
+| `redirect`      | Internal route redirect object or literal href string.                                                 |
+| `search`        | URLKit-compatible static search descriptor used by parsed state and generated contracts.               |
+| `hash`          | URLKit-compatible static hash descriptor or allowed hash values.                                       |
+| `url`           | Route-level URLKit options such as `arrayFormat`, `invalidSearch`, `invalidHash`, and `unknownSearch`. |
+| `meta`          | Arbitrary route metadata.                                                                              |
+| `loading`       | Route-level React Suspense fallback component for loading route subtrees.                              |
+| `errorFallback` | Route-level React error-boundary fallback component for render errors in route subtrees.               |
+| `lifecycle`     | Route lifecycle hooks.                                                                                 |
+| `middleware`    | Route-specific middleware pipeline.                                                                    |
 
 Related: [Routing](routing.md), [Search and hash](search-and-hash.md), [Middleware](middleware.md), [Lifecycle](lifecycle.md).
 
@@ -169,10 +169,24 @@ interface CreateRouterOptions {
   readonly history?: RouterHistory;
   readonly pathOptions?: RouterPathOptions;
   readonly pathConstraints?: RouterPathConstraints;
+  readonly url?: RouterUrlOptions;
   readonly maxRedirectDepth?: number;
   readonly maxRedirectionDepth?: number;
 }
+
+interface RouterUrlOptions {
+  readonly arrayFormat?: 'repeat' | 'comma';
+  readonly invalidSearch?: 'recover' | 'no-match' | 'error';
+  readonly invalidHash?: 'recover' | 'no-match' | 'error';
+  readonly unknownSearch?: 'strip' | 'preserve' | 'error';
+}
+
+interface RouterUrlBuildOptions {
+  readonly arrayFormat?: 'repeat' | 'comma';
+}
 ```
+
+`unknownSearch` defaults to `'strip'`, inherited from URLKit. Use `'preserve'` when undeclared query keys should remain available separately as `match.unknownSearch`.
 
 ```ts
 import { createRouter } from '@cookbook/router';
@@ -198,6 +212,7 @@ await router.resolveCurrent();
 | `history`             | Browser or memory history | Custom history implementation.                                                                    |
 | `pathOptions`         |        `{ prune: 'all' }` | Pathkit behavior.                                                                                 |
 | `pathConstraints`     |               `undefined` | Custom constraints for unvalidated route arrays. Prefer `defineRoutes(..., { pathConstraints })`. |
+| `url`                 |           URLKit defaults | Router-level URL options. `unknownSearch` defaults to `'strip'`.                                  |
 | `maxRedirectDepth`    |    Implementation default | Redirect loop guard.                                                                              |
 | `maxRedirectionDepth` |                     Alias | Backward-compatible alias for `maxRedirectDepth`.                                                 |
 
@@ -336,7 +351,7 @@ interface HrefOptions<Route extends string> {
   readonly hash?: RouteHashInput<Route>;
   readonly intercept?: InterceptInput;
   readonly context?: unknown;
-  readonly url?: RouterUrlOptions;
+  readonly url?: RouterUrlBuildOptions;
 }
 
 interface NavigateOptions<Route extends string> extends HrefOptions<Route> {
@@ -451,7 +466,7 @@ Rules:
 
 ### Middleware and lifecycle APIs
 
-Middleware and lifecycle hooks are configured through `createRouter()` and route definitions. The package root does not expose the internal middleware, lifecycle, or transition runner functions as public v1 APIs.
+Middleware and lifecycle hooks are configured through `createRouter()` and route definitions. The package root does not expose the internal middleware, lifecycle, or transition runner functions as public APIs.
 
 Related: [Middleware](middleware.md), [Lifecycle](lifecycle.md).
 
@@ -467,7 +482,7 @@ function getResolvedSlot(
 ): ResolvedSlot | undefined;
 ```
 
-Intercept configuration is part of route definitions and navigation options. The package root exposes the intercept input types, but not the internal intercept resolver helpers as public v1 APIs.
+Intercept configuration is part of route definitions and navigation options. The package root exposes the intercept input types, but not the internal intercept resolver helpers as public APIs.
 
 Related: [Routing slots](routing.md#layout-slots), [Navigation interception](navigation.md#interception), [React slots](react-integration.md#slots).
 
@@ -654,7 +669,7 @@ interface LinkProps<Route extends RouteId = RouteId> extends Omit<
 function Link<Route extends RouteId = RouteId>(props: LinkProps<Route>): JSX.Element;
 ```
 
-Use `to` for internal typed navigation and `href` for literal links. Params, search, and hash are URLKit-backed; `{id:int}` params are numbers. `url` accepts per-component URLKit options such as `arrayFormat`, `invalidSearch`, and `invalidHash`.
+Use `to` for internal typed navigation and `href` for literal links. Params, search, and hash are URLKit-backed; `{id:int}` params are numbers. `url` accepts URL-building options such as `arrayFormat`. Route-resolution policies such as `invalidSearch`, `invalidHash`, and `unknownSearch` belong on the core router, route definitions, explicit match calls, or static router creation.
 
 ```tsx
 <Link to="users.show" params={{ id: 42 }} search={{ tab: 'settings' }} hash="profile">

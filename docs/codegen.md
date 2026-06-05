@@ -239,7 +239,7 @@ Registers generated contracts through `@cookbook/router` module augmentation.
 
 ### `manifest.json`
 
-Contains route IDs, paths, and route-level URL options such as `arrayFormat` when configured.
+Contains route IDs, paths, and route-level URL options such as `arrayFormat`, `invalidSearch`, `invalidHash`, and `unknownSearch` when configured.
 
 ## Static extraction rules
 

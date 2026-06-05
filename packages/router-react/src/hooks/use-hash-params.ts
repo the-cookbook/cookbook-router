@@ -1,35 +1,22 @@
-import type { MatchOptions, RouteHash, RouteId } from '@cookbook/router';
+import type { RouteHash, RouteId } from '@cookbook/router';
 import { useRouterContext } from '../context/router-context';
-
-/** Options for reading URLKit-parsed hash state from the active route. */
-export interface UseHashParamsOptions {
-  /** Per-hook URLKit options overriding route-level and router-level defaults. */
-  readonly url?: MatchOptions['url'];
-}
 
 /**
  * Returns the URLKit-parsed current hash fragment.
  *
  * When generated contracts are registered, passing a route id narrows the hash
- * value to that route's allowed hash union. Per-hook `url` options are accepted
- * for parity with search reads and future URLKit hash options.
+ * value to that route's allowed hash union. The hook reads already-resolved
+ * router state and does not accept URL options; configure URL resolution
+ * policies at router, route, match, or static-router level instead.
  */
 export function useHashParams<Route extends RouteId = RouteId>(
   routeId?: Route,
-  options?: UseHashParamsOptions,
 ): RouteHash<Route> | null;
-export function useHashParams(options?: UseHashParamsOptions): RouteHash<RouteId> | null;
 export function useHashParams<Route extends RouteId = RouteId>(
-  routeOrOptions?: Route | UseHashParamsOptions,
-  options?: UseHashParamsOptions,
+  routeId?: Route,
 ): RouteHash<Route> | RouteHash<RouteId> | null {
-  const { router, state } = useRouterContext();
-  const routeId = typeof routeOrOptions === 'string' ? routeOrOptions : undefined;
-  const hookOptions = typeof routeOrOptions === 'string' ? options : routeOrOptions;
-  const match =
-    hookOptions?.url === undefined
-      ? state.match
-      : router.match(state.location.href, { url: hookOptions.url });
+  const { state } = useRouterContext();
+  const match = state.match;
 
   if (!match) {
     return null;

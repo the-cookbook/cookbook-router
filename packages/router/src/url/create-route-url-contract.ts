@@ -41,9 +41,12 @@ export function createRouteUrlContract(
   }) as RouterRouteUrlContract;
 }
 
-function toUrlKitContractOptions(options: RouterUrlOptions): Pick<RouterUrlOptions, 'arrayFormat'> {
+function toUrlKitContractOptions(
+  options: RouterUrlOptions,
+): Pick<RouterUrlOptions, 'arrayFormat' | 'unknownSearch'> {
   return {
     ...(options.arrayFormat === undefined ? {} : { arrayFormat: options.arrayFormat }),
+    ...(options.unknownSearch === undefined ? {} : { unknownSearch: options.unknownSearch }),
   };
 }
 

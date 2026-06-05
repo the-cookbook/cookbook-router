@@ -10,6 +10,7 @@ Search and hash declarations describe URL state for runtime parsing, href/naviga
 - [Array format](#array-format)
 - [Invalid search params](#invalid-search-params)
 - [Unknown search params](#unknown-search-params)
+- [Read preserved unknown search params](#read-preserved-unknown-search-params)
 - [Declare hash values](#declare-hash-values)
 - [Generate hash URLs](#generate-hash-urls)
 - [Read hash values](#read-hash-values)
@@ -82,11 +83,11 @@ export function ArticlesPage() {
 }
 ```
 
-`useSearchParams()` and `useSearch()` read URLKit-parsed search state from the current router match. Router middleware, lifecycle hooks, `router.match()`, and `router.resolve()` receive the same parsed values.
+`useSearchParams()` and `useSearch()` read the declared URLKit-parsed search state from the current router match. They do not accept `url` options and do not re-parse the URL with different matching policies. Router middleware, lifecycle hooks, `router.match()`, and `router.resolve()` receive the same declared parsed values.
 
 ## Array format
 
-Configure `arrayFormat` globally, per route, or per call/hook/component.
+Configure `arrayFormat` globally, per route, or on URL-building call sites such as `router.href()`, `router.navigate.to()`, `useHref()`, `Link`, and `NavLink`.
 
 ```ts
 const router = createRouter({
@@ -114,7 +115,7 @@ const router = createRouter({
 
 Precedence is:
 
-1. per-call, hook, or component `url`
+1. URL-building call-site `url` for href/navigation/link creation
 2. route-level `url`
 3. router-level `url`
 4. URLKit default
@@ -179,7 +180,82 @@ With `recover`, invalid hash values are treated as missing and descriptor defaul
 
 ## Unknown search params
 
-Route `search` descriptors define the route-owned search state. Unknown search params are not part of the generated route contract. URLKit-backed parsing may reject, ignore, or preserve unknown values depending on the URLKit options currently exposed by the router. The v1 public router option model exposes `arrayFormat`, `invalidSearch`, and `invalidHash`; add support for additional URLKit options only when the router API intentionally supports them.
+Route `search` descriptors define the route-owned search state. Unknown search params are query-string keys that are present in the URL but not declared by the matched route. URLKit controls them with `unknownSearch`.
+
+```ts
+createRouter({
+  routes,
+  url: {
+    unknownSearch: 'strip',
+  },
+});
+```
+
+Supported modes are:
+
+| Mode         | Behavior                                                                                                                |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `'strip'`    | Default. Keep the route matched and omit unknown keys from router state.                                                |
+| `'preserve'` | Keep the route matched and expose unknown keys separately as `unknownSearch`. Declared `search` remains strongly typed. |
+| `'error'`    | Keep the path route matched and surface the unknown-key failure through router error state.                             |
+
+The default is `'strip'`, inherited from URLKit.
+
+For this route:
+
+```ts
+{
+  id: 'overview',
+  path: '/overview',
+  search: {
+    page: { value: 'number', default: 1, optional: true },
+  },
+  url: {
+    unknownSearch: 'preserve',
+  },
+}
+```
+
+This URL:
+
+```txt
+/overview?page=0&utm_source=website
+```
+
+produces declared search and preserved unknown search as separate values:
+
+```ts
+match.search;
+// { page: 0 }
+
+match.unknownSearch;
+// { utm_source: 'website' }
+```
+
+`unknownSearch` is different from `invalidSearch`: `invalidSearch` handles malformed values for declared keys, while `unknownSearch` handles undeclared keys.
+
+## Read preserved unknown search params
+
+`useSearchParams()` returns only declared route search. When `unknownSearch: 'preserve'` is configured, use `useUnknownSearchParams()` to read URLKit-preserved unknown keys from the active match.
+
+```tsx
+import { useSearchParams, useUnknownSearchParams } from '@cookbook/router-react';
+
+export function OverviewPage() {
+  const search = useSearchParams('overview');
+  const unknownSearch = useUnknownSearchParams();
+
+  search.page;
+  // number
+
+  unknownSearch.utm_source;
+  // string | readonly string[] | undefined
+
+  return null;
+}
+```
+
+Use declared search fields for application state. Use preserved unknown search params for pass-through values such as tracking, debugging, or integration query params.
 
 ## Declare hash values
 
@@ -266,4 +342,5 @@ Do not use URLKit runtime builders such as `int().default(1)` in CLI-consumed ro
 - Use params for required path identity and search for optional filters/sorting.
 - Use hash for in-page sections, tabs, or share anchors.
 - Prefer static URL descriptors so runtime, generated contracts, and CLI workflows stay aligned.
-- Configure `arrayFormat` once at the router level when possible; override at route or call sites only when a route has a different URL contract.
+- Configure `arrayFormat` once at the router level when possible; override at route or URL-building call sites only when a route has a different URL contract.
+- Configure `unknownSearch: 'preserve'` only when callers need access to undeclared query keys through `match.unknownSearch` or `useUnknownSearchParams()`.

@@ -1,3 +1,4 @@
+import type { UnknownSearchBehavior, UnknownSearchParams } from '@cookbook/urlkit';
 import type { RouterPathConstraints } from '../pathkit/pathkit';
 import type { RouteDefinition, RouteHashSchema, RouteSearchSchema } from '../routes/contracts';
 
@@ -8,6 +9,12 @@ import type { RouteDefinition, RouteHashSchema, RouteSearchSchema } from '../rou
  * `repeat` writes `?tag=a&tag=b`. `comma` writes `?tag=a,b`.
  */
 export type RouterUrlArrayFormat = 'repeat' | 'comma';
+
+/** Controls how URLKit handles undeclared query-string params. */
+export type RouterUnknownSearchPolicy = UnknownSearchBehavior;
+
+/** Unknown query-string keys preserved by URLKit when `unknownSearch` is `preserve`. */
+export type RouterUnknownSearchParams = UnknownSearchParams;
 
 /**
  * Controls how invalid declared search or hash URL state is handled after the
@@ -28,8 +35,11 @@ export type RouterInvalidUrlStatePolicy = 'recover' | 'no-match' | 'error';
 export type RouterInvalidSearchBehavior = RouterInvalidUrlStatePolicy;
 
 /**
- * URL-state options shared by router-level defaults, route-level overrides, and
- * per-call/hook/component overrides.
+ * URL-state options used by route resolution.
+ *
+ * These options may affect route matching, fallback behavior, or route error
+ * state and should only be used by router-level defaults, route-level
+ * overrides, and explicit matching/static-resolution APIs.
  */
 export interface RouterUrlOptions {
   /** Controls how repeated search params are parsed and serialized by URLKit. */
@@ -45,6 +55,22 @@ export interface RouterUrlOptions {
    * matching search-param behavior.
    */
   readonly invalidHash?: RouterInvalidUrlStatePolicy;
+  /**
+   * Controls undeclared search params. URLKit defaults to `strip`, meaning
+   * unknown query-string keys are omitted from typed parsed search state.
+   */
+  readonly unknownSearch?: RouterUnknownSearchPolicy;
+}
+
+/**
+ * URL options supported by href-building APIs.
+ *
+ * Build-time options must not expose route-resolution policies because they do
+ * not decide whether the current location matches a route.
+ */
+export interface RouterUrlBuildOptions {
+  /** Controls how repeated search params are serialized by URLKit. */
+  readonly arrayFormat?: RouterUrlArrayFormat;
 }
 
 /**
@@ -85,11 +111,11 @@ export interface RouterRouteUrlContract {
   readonly pattern: string | undefined;
   parse(input: string | URL, options?: RouterUrlOptions): unknown;
   match(input: string | URL, options?: RouterUrlOptions): boolean;
-  build(input: unknown, options?: RouterUrlOptions): string;
+  build(input: unknown, options?: RouterUrlBuildOptions): string;
   parsePathname: ((pathname: string) => unknown) | never;
   buildPath: ((params: unknown) => string) | never;
   parseSearch(input: string | URLSearchParams, options?: RouterUrlOptions): unknown;
-  buildSearch(search: unknown, options?: RouterUrlOptions): string;
+  buildSearch(search: unknown, options?: RouterUrlBuildOptions): string;
   parseHash(input: unknown): unknown;
   buildHash(hash?: unknown): string;
 }

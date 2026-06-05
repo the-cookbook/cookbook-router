@@ -9,5 +9,8 @@ export type {
   RouteParams,
   RouteSearch,
   RouteUrlOptions,
+  RouterUrlBuildOptions,
+  RouterUnknownSearchPolicy,
+  RouterUnknownSearchParams,
   RouterContracts,
 } from '@cookbook/router';
