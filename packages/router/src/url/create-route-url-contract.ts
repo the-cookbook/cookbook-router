@@ -19,7 +19,7 @@ interface UrlKitStaticRouteDescriptor {
  * Compiles the URLKit contract for a router route descriptor.
  *
  * Params are compiled in parsed mode so built-in URLKit path constraints such as
- * `{id:int}` and `{value:number}` produce numbers instead of raw strings.
+ * `{id:int}` and `{value:range(1,10)}` produce numbers instead of raw strings.
  */
 export function createRouteUrlContract(
   route: RouterRouteUrlDescriptor,

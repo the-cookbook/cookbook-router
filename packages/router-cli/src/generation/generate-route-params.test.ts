@@ -4,11 +4,11 @@ import { renderParamType, renderRouteParams } from './generate-route-params';
 describe('generate-route-params', () => {
   it('renders URLKit numeric built-in constraints as numbers', () => {
     expect(renderParamType({ name: 'id', constraint: 'int', token: '{id:int}' })).toBe('number');
-    expect(renderParamType({ name: 'value', constraint: 'number', token: '{value:number}' })).toBe(
+    expect(renderParamType({ name: 'price', constraint: 'decimal', token: '{price:decimal' })).toBe(
       'number',
     );
     expect(
-      renderParamType({ name: 'quantity', constraint: 'range', token: '{value:range(1,10)}' }),
+      renderParamType({ name: 'quantity', constraint: 'range', token: '{quantity:range(1,10)}' }),
     ).toBe('number');
   });
 
@@ -25,8 +25,10 @@ describe('generate-route-params', () => {
     expect(
       renderRouteParams([
         { name: 'id', constraint: 'int', token: '{id:int}' },
+        { name: 'price', constraint: 'decimal', token: '{price:decimal}' },
+        { name: 'quantity', constraint: 'range', token: '{quantity:range(1,10)}' },
         { name: 'bad-key', constraint: 'string', token: '{bad-key}' },
       ]),
-    ).toBe("{ id: number; 'bad-key': string }");
+    ).toBe("{ id: number; price: number; quantity: number; 'bad-key': string }");
   });
 });

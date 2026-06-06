@@ -223,7 +223,7 @@ Generated params and runtime match state use parsed URLKit values:
 | `{id}`                     | `string`              | Captures a segment.                  |
 | `{id:string}`              | `string`              | Captures a string segment.           |
 | `{id:int}`                 | `number`              | Parses an integer-shaped URL value.  |
-| `{value:number}`           | `number`              | Parses a numeric URL value.          |
+| `{value:range(1,10)}`      | `number`              | Parses a numeric URL value.          |
 | `{slug:regex([a-z0-9-]+)}` | `string`              | Matches the configured regex.        |
 | `{slug:slug}`              | `string`              | Uses a registered custom constraint. |
 | `{*path}`                  | `string`              | Captures wildcard path data.         |

@@ -194,7 +194,7 @@ export const routes = defineRoutes([
 export const routes = defineRoutes([
   {
     id: 'products.show',
-    path: '/products/{price:number}',
+    path: '/products/{price:int}',
     search: {
       page: { value: 'int', default: 1 },
       tags: { value: 'string', type: 'many' },

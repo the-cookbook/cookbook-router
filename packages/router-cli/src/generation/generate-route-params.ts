@@ -9,7 +9,11 @@ export function renderRouteParams(params: readonly RouteParamDefinition[]): stri
 
 /** Maps a PathKit/URLKit path constraint name to its generated parsed value type. */
 export function renderParamType(param: RouteParamDefinition): string {
-  if (param.constraint === 'int' || param.constraint === 'number' || param.constraint === 'range') {
+  if (
+    param.constraint === 'int' ||
+    param.constraint === 'decimal' ||
+    param.constraint === 'range'
+  ) {
     return 'number';
   }
 

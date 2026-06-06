@@ -29,7 +29,7 @@ export function registerUrlPathConstraints(constraints?: RouterPathConstraints):
 
 function ensureUrlKitBuiltInPathConstraints(): void {
   createUrlKitRouteUrlContract(
-    { path: '/__cookbook_urlkit/{value:number}' },
+    { path: '/__cookbook_urlkit/{value:int}' },
     {
       params: 'parsed',
     },

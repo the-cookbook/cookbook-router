@@ -215,7 +215,7 @@ Use numeric params in links, hrefs, navigation, tests, middleware assumptions, a
 <Link to="users.show" params={{ id: 42 }} />
 ```
 
-`{value:number}` also parses to `number`.
+`{value:range(1,10)}` also parses to `number`.
 
 ## Custom constraint params remain `string`
 
@@ -377,7 +377,7 @@ Regenerate after changing `path`, `search`, `hash`, custom constraints, or route
 cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router
 ```
 
-Generated contracts should show `{id:int}`, `{value:number}` and `{value:range}` params as `number`, custom constraints as `string`, URLKit-compatible search descriptors as parsed types, and route-level `url` options in `manifest.json` when configured.
+Generated contracts should show `{id:int}`, `{price:decimal}` and `{value:range}` params as `number`, custom constraints as `string`, URLKit-compatible search descriptors as parsed types, and route-level `url` options in `manifest.json` when configured.
 
 ## Custom path constraints are not registered during CLI generation
 

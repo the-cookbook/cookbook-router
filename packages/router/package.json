@@ -71,7 +71,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@cookbook/pathkit": "v0.2.1",
-    "@cookbook/urlkit": "^1.0.0"
+    "@cookbook/pathkit": "v0.3.1",
+    "@cookbook/urlkit": "^1.1.0"
   }
 }

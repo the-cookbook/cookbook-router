@@ -100,7 +100,7 @@ URLKit parses built-in numeric constraints. Pass numbers when navigating:
 </Link>
 ```
 
-`{value:number}` also generates `number`. Custom constraints such as `{slug:slug}` generate `string` unless URLKit supports typed static inference for that custom constraint.
+`{value:range(1,100)}` also generates `number`. Custom constraints such as `{slug:slug}` generate `string` unless URLKit supports typed static inference for that custom constraint.
 
 ## Search
 
@@ -246,4 +246,4 @@ const context = useOutletContext<{ user: string }>();
 
 ### Params are numbers instead of strings
 
-This is expected for built-in numeric constraints. `{id:int}`, `{value:number}` and `{value:range}` parse to `number` in generated contracts and runtime state. Custom constraints remain `string` unless URLKit supports typed static inference for them.
+This is expected for built-in numeric constraints. `{id:int}`, `{price:decimal}` and `{value:range}` parse to `number` in generated contracts and runtime state. Custom constraints remain `string` unless URLKit supports typed static inference for them.

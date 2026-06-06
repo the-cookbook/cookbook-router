@@ -208,7 +208,7 @@ Include the generated files in your TypeScript program:
 
 - **Route IDs are the public navigation API.** Paths declare URL matching; route IDs drive links, programmatic navigation, href generation, redirects, and type inference.
 - **URL state is URLKit-backed.** URLKit owns path param parsing, search/hash parsing and building, URL normalization, matching, and href construction. Cookbook Router owns route IDs, route trees, middleware, lifecycle, redirects, slots, intercepts, histories, React rendering, and CLI workflows.
-- **Built-in numeric params are numbers.** `{id:int}` and `{value:number}` parse to `number` in router state, React hooks, middleware, lifecycle, and generated contracts. Custom constraints remain `string` unless URLKit adds typed static inference for them.
+- **Built-in numeric params are numbers.** `{id:int}`, `{price:decimal}` and `{value:range(1,10)}` parse to `number` in router state, React hooks, middleware, lifecycle, and generated contracts. Custom constraints remain `string` unless URLKit adds typed static inference for them.
 - **Search and hash are parsed through URLKit.** Static descriptors such as `{ value: 'int', default: 1 }`, `{ value: 'string', type: 'many' }`, and hash unions drive parsed runtime state and generated contracts.
 - **URL options are configurable.** `url.arrayFormat` can be configured on the router, on a route, or per call/hook/component. `url.invalidSearch` and `url.invalidHash` control whether malformed URL state recovers, rejects the route as a no-match, or becomes route error state. Precedence is per-call, then route-level, then router-level, then URLKit defaults.
 - **Layouts render child routes through `<Outlet />`.** Layout slots render parallel UI regions through `<Slot name="..." />`.

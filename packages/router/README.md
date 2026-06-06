@@ -224,7 +224,7 @@ await router.navigate.to({
 });
 ```
 
-Use `router.href()` when rendering links outside React. Path params, search, and hash are parsed/built by URLKit, so `{id:int}` and `{value:number}` params use numbers:
+Use `router.href()` when rendering links outside React. Path params, search, and hash are parsed/built by URLKit, so `{id:int}`, `{price:decimal}` and `{value:range(1,10)}` params use numbers:
 
 ```ts
 const href = router.href({
@@ -299,7 +299,7 @@ The core package exports contract utility types:
 - `RouterContracts`
 - `Register`
 
-They become app-specific after `@cookbook/router-cli` generates `contracts.ts` and `register.d.ts`. Generated params/search/hash follow URLKit parsing semantics: `{id:int}` and `{value:number}` become `number`; custom constraints remain `string`; URLKit-compatible search/hash descriptors produce parsed value types.
+They become app-specific after `@cookbook/router-cli` generates `contracts.ts` and `register.d.ts`. Generated params/search/hash follow URLKit parsing semantics: `{id:int}`, `{price:decimal}` and `{value:range(1,10)}` become `number`; custom constraints remain `string`; URLKit-compatible search/hash descriptors produce parsed value types.
 
 See [Contracts](../../docs/contracts.md) and [Code generation](../../docs/codegen.md).
 
@@ -325,7 +325,7 @@ const routes = defineRoutes([{ id: 'posts.show', path: '/posts/{slug:slug}' }] a
 });
 
 // The generated param type for `slug` remains string. Built-in `{id:int}` and
-// `{value:number}` constraints parse to number.
+// `{value:range(1,10)}` constraints parse to number.
 ```
 
 Also exported:

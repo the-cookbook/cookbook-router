@@ -90,13 +90,13 @@ export const routes = defineRoutes([
 
 The extractor expects a static `defineRoutes([...])` call or a static `routes = [...]` array. Avoid runtime-generated route trees in files consumed by the CLI. URL state descriptors must also stay static: use route `path`, `search`, `hash`, and `url` objects rather than URLKit runtime builders.
 
-Generated contracts are URLKit-backed. Built-in parsed path constraints such as `{id:int}` and `{price:number}` generate `number` params, while custom constraints generate `string` params unless URLKit exposes typed static inference for those constraints.
+Generated contracts are URLKit-backed. Built-in parsed path constraints such as `{id:int}`, `{price:decimal}` and `{price:number}` generate `number` params, while custom constraints generate `string` params unless URLKit exposes typed static inference for those constraints.
 
 ```tsx
 export const routes = defineRoutes([
   {
     id: 'products.show',
-    path: '/products/{price:number}',
+    path: '/products/{price:int}',
     search: {
       page: { value: 'int', default: 1 },
       tags: { value: 'string', type: 'many' },

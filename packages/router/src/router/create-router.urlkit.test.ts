@@ -14,7 +14,7 @@ describe('create-router URLKit runtime integration', () => {
     const router = createRouter({
       routes: defineRoutes([
         { id: 'int', path: '/users/{id:int}' },
-        { id: 'number', path: '/prices/{value:number}' },
+        { id: 'number', path: '/prices/{value:decimal}' },
       ]),
       history: createMemoryHistory({ initialEntries: ['/users/42'] }),
     });

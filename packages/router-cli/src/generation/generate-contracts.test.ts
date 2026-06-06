@@ -68,7 +68,7 @@ describe('generateContracts', () => {
     const output = generateContracts([
       {
         id: 'products.show',
-        path: '/products/{price:number}',
+        path: '/products/{price:int}',
         search: {
           page: { value: 'int', default: 1 },
           featured: { value: 'boolean', optional: true },

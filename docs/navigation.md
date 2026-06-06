@@ -36,7 +36,7 @@ Generated URL:
 /users/42?tab=settings#profile
 ```
 
-`{id:int}` and `{value:number}` params use numbers in generated contracts and router state. Custom constraints remain strings unless URLKit supports typed static inference for the custom constraint.
+`{id:int}`, `{price:decimal}` and `{value:range(1,10)}` params use numbers in generated contracts and router state. Custom constraints remain strings unless URLKit supports typed static inference for the custom constraint.
 
 The two-argument form is also supported:
 
