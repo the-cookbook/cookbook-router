@@ -5,6 +5,7 @@ describe('URL contract types', () => {
   it('keeps router URL options as a namespaced object shape', () => {
     const options: RouterUrlOptions = {
       arrayFormat: 'comma',
+      defaults: 'omit',
       invalidSearch: 'recover',
       invalidHash: 'error',
       unknownSearch: 'preserve',
@@ -12,6 +13,7 @@ describe('URL contract types', () => {
 
     expect(options).toEqual({
       arrayFormat: 'comma',
+      defaults: 'omit',
       invalidSearch: 'recover',
       invalidHash: 'error',
       unknownSearch: 'preserve',

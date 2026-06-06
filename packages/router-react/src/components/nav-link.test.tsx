@@ -158,7 +158,7 @@ describe('NavLink', () => {
         {
           id: 'products',
           path: '/products',
-          search: { tags: { value: 'string', type: 'many', optional: true } },
+          search: { tags: { type: 'string', many: true, optional: true } },
           component: Page,
         },
       ] as const),
@@ -182,6 +182,32 @@ describe('NavLink', () => {
 
     expect(getByText('products').getAttribute('href')).toBe('/products?tags=router%2Ctypescript');
     expect(getByText('products').getAttribute('aria-current')).toBe('page');
+  });
+
+  it('forwards default serialization options while preserving active matching', async () => {
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        {
+          id: 'listing',
+          path: '/listing',
+          search: { page: { type: 'int', default: 1 } },
+          component: Page,
+        },
+      ] as const),
+      initialEntries: ['/listing'],
+    });
+    await router.resolveCurrent();
+
+    const { getByText } = render(
+      <RouterProvider router={router}>
+        <NavLink route="listing" search={{ page: 1 }} url={{ defaults: 'omit' }} end>
+          listing
+        </NavLink>
+      </RouterProvider>,
+    );
+
+    expect(getByText('listing').getAttribute('href')).toBe('/listing');
+    expect(getByText('listing').getAttribute('aria-current')).toBe('page');
   });
 
   it('passes preventScrollReset to Link navigation', async () => {

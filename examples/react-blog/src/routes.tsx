@@ -75,7 +75,7 @@ export const routes = defineRoutes([
         index: true,
         component: BlogHomePage,
         search: {
-          query: { value: 'string', optional: true },
+          query: { type: 'string', optional: true },
         },
         meta: {
           title: 'Home',
@@ -86,7 +86,7 @@ export const routes = defineRoutes([
         path: 'articles',
         component: ArticlesPage,
         search: {
-          query: { value: 'string', optional: true },
+          query: { type: 'string', optional: true },
         },
         layout: {
           slots: {
@@ -105,10 +105,10 @@ export const routes = defineRoutes([
         loading: ArticleLoading,
         error: ArticleErrorFallback,
         search: {
-          ref: { value: 'string', optional: true },
-          filters: { value: 'string', type: 'many', optional: true },
+          ref: { type: 'string', optional: true },
+          filters: { type: 'string', many: true, optional: true },
         },
-        hash: ['comments', 'share'],
+        hash: { type: 'enum', values: ['comments', 'share'], optional: true },
         meta: {
           title: 'Article',
         },
@@ -136,7 +136,7 @@ export const routes = defineRoutes([
         path: 'login',
         component: LoginPage,
         search: {
-          redirect: { value: 'string', optional: true },
+          redirect: { type: 'string', optional: true },
         },
         meta: {
           title: 'Login',

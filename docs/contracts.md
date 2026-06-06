@@ -32,7 +32,7 @@ Output:
   manifest.json
 ```
 
-`contracts.ts` contains route-specific interfaces and constants. `register.d.ts` augments `@cookbook/router`. `manifest.json` is a tooling-friendly route list and preserves route-level `url` options such as `arrayFormat`, `invalidSearch`, `invalidHash`, and `unknownSearch` when present.
+`contracts.ts` contains route-specific interfaces and constants. `register.d.ts` augments `@cookbook/router`. `manifest.json` is a tooling-friendly route list and preserves route-level `url` options such as `arrayFormat`, `defaults`, `invalidSearch`, `invalidHash`, and `unknownSearch` when present.
 
 ## Register contracts
 
@@ -100,20 +100,22 @@ URLKit parses built-in numeric constraints. Pass numbers when navigating:
 </Link>
 ```
 
-`{value:range(1,100)}` also generates `number`. Custom constraints such as `{slug:slug}` generate `string` unless URLKit supports typed static inference for that custom constraint.
+`{value:range(1,100)}` also generates `number`. Custom constraints such as `{slug:slug}` generate `string` unless URLKit supports typed static inference for that custom constraint. See [Path routes and constraints](path-routes.md) for the complete built-in constraint list.
 
 ## Search
 
-Search fields are generated from URLKit-compatible static `search` descriptors.
+Search fields are generated from URLKit-backed Router static `search` descriptors.
 
 ```tsx
 {
   id: 'blog.articles',
   path: '/blog/articles',
   search: {
-    query: { value: 'string', optional: true },
-    page: { value: 'int', default: 1 },
-    filters: { value: 'string', type: 'many', optional: true },
+    query: { type: 'string', optional: true },
+    page: { type: 'int', default: 1 },
+    filters: { type: 'string', many: true, optional: true },
+    publishedOn: { type: 'date', format: 'dd-MM-yyyy', optional: true },
+    startsAt: { type: 'date-time', format: 'dd-MM-yyyy HH:mm:ss', optional: true },
   },
   component: ArticlesPage,
 }
@@ -123,7 +125,13 @@ Generated contract:
 
 ```ts
 export interface RouteSearch {
-  'blog.articles': { query?: string; page: number; filters?: readonly string[] };
+  'blog.articles': {
+    query?: string;
+    page: number;
+    filters?: readonly string[];
+    publishedOn?: Date;
+    startsAt?: Date;
+  };
 }
 ```
 
@@ -137,7 +145,7 @@ Hash values generate a union.
 {
   id: 'articles.show',
   path: '/articles/{slug}',
-  hash: ['comments', 'share'],
+  hash: { type: 'enum', values: ['comments', 'share'], optional: true },
   component: ArticlePage,
 }
 ```
@@ -210,7 +218,9 @@ Use route-ID overloads only when the generated or augmented contracts actually i
 
 ## Static extraction requirements
 
-The CLI must be able to statically read route definitions. Keep `id`, `path`, `search`, `hash`, `url`, `children`, slots, redirects, and custom `pathConstraints` in static route declarations. Do not use URLKit runtime builders such as `int().default(1)` in CLI-consumed route files unless the CLI explicitly supports them. Use static descriptors such as `{ value: 'int', default: 1 }` instead.
+The CLI must be able to statically read route definitions. Keep `id`, `path`, `search`, `hash`, `url`, `children`, slots, redirects, and custom `pathConstraints` in static route declarations. Do not use URLKit runtime builders such as `int().default(1)` or `date({ format: 'dd-MM-yyyy' })` in CLI-consumed route files unless the CLI explicitly supports them. Use static descriptors such as `{ type: 'int', default: 1 }` and `{ type: 'date', format: 'dd-MM-yyyy', optional: true }` instead.
+
+Router route descriptors support date and date-time format strings as static data. URLKit parses and serializes these values with UTC semantics: date-only values use UTC calendar fields, date-time values are UTC instants, and static format strings read/write UTC fields. Use `toISOString()` or UTC getters when testing parsed `Date` values. Static route descriptors do not support custom runtime parse/serialize codec functions in route definitions.
 
 ## Runtime limitations
 

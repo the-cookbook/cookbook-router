@@ -59,9 +59,9 @@ const routes = defineRoutes([
     id: 'users.show',
     path: '/users/{id:int}',
     search: {
-      tab: { value: 'string', optional: true },
+      tab: { type: 'string', optional: true },
     },
-    hash: ['profile', 'settings'],
+    hash: { type: 'enum', values: ['profile', 'settings'], optional: true },
     component: UserPage,
   },
 ] as const);
@@ -117,18 +117,18 @@ interface DefineRoutesOptions {
 
 Common route fields:
 
-| Field       | Purpose                                                                                                |
-| ----------- | ------------------------------------------------------------------------------------------------------ |
-| `id`        | Stable public route ID.                                                                                |
-| `path`      | URL path segment or absolute path.                                                                     |
-| `index`     | Default child route for a parent path.                                                                 |
-| `component` | Framework-owned render value.                                                                          |
-| `layout`    | Layout component and slot configuration.                                                               |
-| `children`  | Primary child routes.                                                                                  |
-| `redirect`  | Internal route redirect or literal href.                                                               |
-| `search`    | URLKit-compatible static search descriptor for parsed search state and generated contracts.            |
-| `hash`      | URLKit-compatible static hash descriptor for parsed hash state and generated contracts.                |
-| `url`       | Route-level URLKit options such as `arrayFormat`, `invalidSearch`, `invalidHash`, and `unknownSearch`. |
+| Field       | Purpose                                                                                                            |
+| ----------- | ------------------------------------------------------------------------------------------------------------------ |
+| `id`        | Stable public route ID.                                                                                            |
+| `path`      | URL path segment or absolute path.                                                                                 |
+| `index`     | Default child route for a parent path.                                                                             |
+| `component` | Framework-owned render value.                                                                                      |
+| `layout`    | Layout component and slot configuration.                                                                           |
+| `children`  | Primary child routes.                                                                                              |
+| `redirect`  | Internal route redirect or literal href.                                                                           |
+| `search`    | URLKit-compatible static search descriptor for parsed search state and generated contracts.                        |
+| `hash`      | URLKit-compatible static hash descriptor for parsed hash state and generated contracts.                            |
+| `url`       | Route-level URLKit options such as `arrayFormat`, `defaults`, `invalidSearch`, `invalidHash`, and `unknownSearch`. |
 
 When `unknownSearch` is `preserve`, URLKit keeps undeclared query keys as a sibling `unknownSearch` object on the matched route. Declared typed search remains in `match.search`.
 
@@ -299,7 +299,7 @@ The core package exports contract utility types:
 - `RouterContracts`
 - `Register`
 
-They become app-specific after `@cookbook/router-cli` generates `contracts.ts` and `register.d.ts`. Generated params/search/hash follow URLKit parsing semantics: `{id:int}`, `{price:decimal}` and `{value:range(1,10)}` become `number`; custom constraints remain `string`; URLKit-compatible search/hash descriptors produce parsed value types.
+They become app-specific after `@cookbook/router-cli` generates `contracts.ts` and `register.d.ts`. Generated params/search/hash follow URLKit parsing semantics: `{id:int}`, `{price:decimal}` and `{value:range(1,10)}` become `number`; custom constraints remain `string`; URLKit-compatible search/hash descriptors produce parsed value types. Static `date` and `date-time` search fields parse to `Date` with UTC semantics.
 
 See [Contracts](../../docs/contracts.md) and [Code generation](../../docs/codegen.md).
 

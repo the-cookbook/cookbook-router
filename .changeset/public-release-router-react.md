@@ -12,3 +12,4 @@ Prepare `@cookbook/router-react` for the first public release with finalized v1-
 - clarify route-level versus layout-level error handling behavior in public JSDoc
 - improve typed React hooks for route params, search, hash, href generation, navigation, matches, outlet context, and router state access
 - add JSDoc across public and semi-public React APIs
+- forward URLKit `defaults` build options through React href/link APIs while keeping state-reading hooks tied to resolved router state

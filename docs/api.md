@@ -6,16 +6,19 @@ Use this page with the package guides:
 
 - [Getting started](getting-started.md)
 - [Routing](routing.md)
+- [Path routes and constraints](path-routes.md)
 - [Navigation](navigation.md)
 - [React integration](react-integration.md)
 - [Code generation](codegen.md)
 - [SSR](ssr.md)
 - [Troubleshooting](troubleshooting.md)
+- [Route validation errors](route-validation-errors.md)
 
 ## Table of contents
 
 - [`@cookbook/router`](#cookbookrouter)
   - [Route definition APIs](#route-definition-apis)
+  - [Path route pattern APIs](#path-route-pattern-apis)
   - [Router creation APIs](#router-creation-apis)
   - [Router instance API](#router-instance-api)
   - [Matching, validation, and normalization APIs](#matching-validation-and-normalization-apis)
@@ -124,32 +127,452 @@ interface RouteDefinition {
   readonly url?: RouterUrlOptions;
   readonly meta?: RouteMeta;
   readonly loading?: RouteComponent;
-  readonly errorFallback?: RouteComponent;
+  readonly error?: RouteComponent;
   readonly lifecycle?: RouteLifecycle;
   readonly middleware?: readonly Middleware[];
 }
 ```
 
-| Field           | Purpose                                                                                                |
-| --------------- | ------------------------------------------------------------------------------------------------------ |
-| `id`            | Stable public route ID used by links, hrefs, navigation, redirects, generated contracts, and tests.    |
-| `path`          | Local path segment or absolute path. Index routes must not define `path`.                              |
-| `index`         | Marks the route as the default child for its parent path.                                              |
-| `component`     | Route component or framework-owned render value. The core package treats it as `unknown`.              |
-| `layout`        | Layout component and named slot definitions.                                                           |
-| `children`      | Primary child routes.                                                                                  |
-| `intercepts`    | Configured route interception targets for named slots.                                                 |
-| `redirect`      | Internal route redirect object or literal href string.                                                 |
-| `search`        | URLKit-compatible static search descriptor used by parsed state and generated contracts.               |
-| `hash`          | URLKit-compatible static hash descriptor or allowed hash values.                                       |
-| `url`           | Route-level URLKit options such as `arrayFormat`, `invalidSearch`, `invalidHash`, and `unknownSearch`. |
-| `meta`          | Arbitrary route metadata.                                                                              |
-| `loading`       | Route-level React Suspense fallback component for loading route subtrees.                              |
-| `errorFallback` | Route-level React error-boundary fallback component for render errors in route subtrees.               |
-| `lifecycle`     | Route lifecycle hooks.                                                                                 |
-| `middleware`    | Route-specific middleware pipeline.                                                                    |
+| Field        | Purpose                                                                                                            |
+| ------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `id`         | Stable public route ID used by links, hrefs, navigation, redirects, generated contracts, and tests.                |
+| `path`       | Local path segment or absolute path. Index routes must not define `path`.                                          |
+| `index`      | Marks the route as the default child for its parent path.                                                          |
+| `component`  | Route component or framework-owned render value. The core package treats it as `unknown`.                          |
+| `layout`     | Layout component and named slot definitions.                                                                       |
+| `children`   | Primary child routes.                                                                                              |
+| `intercepts` | Configured route interception targets for named slots.                                                             |
+| `redirect`   | Internal route redirect object or literal href string.                                                             |
+| `search`     | URLKit-backed Router static search descriptor used by parsed state and generated contracts.                        |
+| `hash`       | URLKit-backed static hash object descriptor for parsed hash state and generated contracts.                         |
+| `url`        | Route-level URLKit options such as `arrayFormat`, `defaults`, `invalidSearch`, `invalidHash`, and `unknownSearch`. |
+| `meta`       | Arbitrary route metadata.                                                                                          |
+| `loading`    | Route-level React Suspense fallback component for loading route subtrees.                                          |
+| `error`      | Route-level React error-boundary fallback component for render errors in route subtrees.                           |
+| `lifecycle`  | Route lifecycle hooks.                                                                                             |
+| `middleware` | Route-specific middleware pipeline.                                                                                |
 
 Related: [Routing](routing.md), [Search and hash](search-and-hash.md), [Middleware](middleware.md), [Lifecycle](lifecycle.md).
+
+##### Static search descriptors
+
+`search` uses URLKit-backed Router Static descriptors. Route definitions must stay analyzable by the CLI, so use plain data instead of URLKit runtime builders.
+
+```ts
+search: {
+  query: { type: 'string', optional: true },
+  page: { type: 'int', default: 1 },
+  score: { type: 'number', optional: true },
+  featured: { type: 'boolean', optional: true },
+  tags: { type: 'string', many: true, optional: true },
+  sort: {
+    type: 'enum',
+    values: ['newest', 'popular'],
+    default: 'newest',
+  },
+  publishedOn: {
+    type: 'date',
+    format: 'dd-MM-yyyy',
+    optional: true,
+  },
+  startsAt: {
+    type: 'date-time',
+    format: "dd-MM-yyyy'T'HH:mm:ss'Z'",
+    optional: true,
+  },
+  createdAt: {
+    type: 'date',
+    format: 'unix-seconds',
+    optional: true,
+  },
+}
+```
+
+Every search field is an object with a value `type`. `type` always means the parsed value kind. Repeated values use `many: true`.
+
+```ts
+interface RouteSearchSchema {
+  readonly [key: string]: RouteSearchField;
+}
+
+type RouteSearchField =
+  | RouteStringSearchField
+  | RouteNumberSearchField
+  | RouteIntSearchField
+  | RouteBooleanSearchField
+  | RouteDateSearchField
+  | RouteDateTimeSearchField
+  | RouteEnumSearchField;
+
+interface RouteSearchFieldBase {
+  readonly many?: true;
+  readonly optional?: true;
+  readonly default?: unknown;
+}
+
+interface RouteStringSearchField extends RouteSearchFieldBase {
+  readonly type: 'string';
+}
+
+interface RouteNumberSearchField extends RouteSearchFieldBase {
+  readonly type: 'number';
+}
+
+interface RouteIntSearchField extends RouteSearchFieldBase {
+  readonly type: 'int';
+}
+
+interface RouteBooleanSearchField extends RouteSearchFieldBase {
+  readonly type: 'boolean';
+}
+
+interface RouteDateSearchField extends RouteSearchFieldBase {
+  readonly type: 'date';
+  readonly format?: 'date' | 'date-time' | 'unix-seconds' | 'unix-ms' | string;
+}
+
+interface RouteDateTimeSearchField extends RouteSearchFieldBase {
+  readonly type: 'date-time';
+  readonly format?: 'date-time' | string;
+}
+
+interface RouteEnumSearchField extends RouteSearchFieldBase {
+  readonly type: 'enum';
+  readonly values: readonly string[];
+}
+```
+
+Supported forms:
+
+| Descriptor                                                  | Parsed value                | Build value                 | Notes                                                                                        |
+| ----------------------------------------------------------- | --------------------------- | --------------------------- | -------------------------------------------------------------------------------------------- |
+| `{ type: 'string' }`                                        | `string`                    | `string`                    | Required exact string.                                                                       |
+| `{ type: 'string', optional: true }`                        | `string \| undefined`       | `string \| undefined`       | Missing value is valid.                                                                      |
+| `{ type: 'string', default: 'all' }`                        | `string`                    | `string \| undefined`       | Missing value normalizes to the default.                                                     |
+| `{ type: 'number' }`                                        | `number`                    | `number`                    | Finite decimal number.                                                                       |
+| `{ type: 'int' }`                                           | `number`                    | `number`                    | Finite integer.                                                                              |
+| `{ type: 'boolean' }`                                       | `boolean`                   | `boolean`                   | Serialized values must be exactly `true` or `false`.                                         |
+| `{ type: 'date' }`                                          | `Date`                      | `Date`                      | UTC date-only, serialized as `YYYY-MM-DD`.                                                   |
+| `{ type: 'date', format: 'date-time' }`                     | `Date`                      | `Date`                      | Strict UTC instant using the built-in date-time serializer.                                  |
+| `{ type: 'date', format: 'unix-seconds' }`                  | `Date`                      | `Date`                      | Unix epoch seconds.                                                                          |
+| `{ type: 'date', format: 'unix-ms' }`                       | `Date`                      | `Date`                      | Unix epoch milliseconds.                                                                     |
+| `{ type: 'date', format: 'dd-MM-yyyy' }`                    | `Date`                      | `Date`                      | Static format string using URLKit's UTC token subset.                                        |
+| `{ type: 'date-time' }`                                     | `Date`                      | `Date`                      | Strict UTC instant, serialized as `YYYY-MM-DDTHH:mm:ss.sssZ`.                                |
+| `{ type: 'date-time', format: "dd-MM-yyyy'T'HH:mm:ss'Z'" }` | `Date`                      | `Date`                      | Static date-time format string using UTC fields.                                             |
+| `{ type: 'enum', values: ['newest', 'popular'] }`           | `'newest' \| 'popular'`     | `'newest' \| 'popular'`     | `values` must be a non-empty readonly string array.                                          |
+| `{ type: T, many: true }`                                   | `readonly T[]`              | `readonly T[]`              | Repeated query params. Missing values are invalid unless the field is optional or defaulted. |
+| `{ type: T, many: true, optional: true }`                   | `readonly T[] \| undefined` | `readonly T[] \| undefined` | Optional repeated query params.                                                              |
+| `{ type: T, many: true, default: [...] }`                   | `readonly T[]`              | `readonly T[] \| undefined` | Missing values normalize to the default array.                                               |
+
+Properties:
+
+| Property   | Applies to          | Required | Description                                                                                                                                                |
+| ---------- | ------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`     | All search fields   | Yes      | Parsed value kind. Supported values are `string`, `number`, `int`, `boolean`, `date`, `date-time`, and `enum`.                                             |
+| `many`     | All search fields   | No       | Use literal `true` for repeated query params. Omit it for single-value fields. `false` is invalid.                                                         |
+| `optional` | All search fields   | No       | Use literal `true` when a missing value is valid. Omit it for required/defaulted fields. `false` is invalid.                                               |
+| `default`  | All search fields   | No       | Normalized value used when the field is missing. Cannot be combined with `optional: true`. Defaults are validated by URLKit during descriptor compilation. |
+| `values`   | `enum`              | Yes      | Non-empty readonly string array. Defaults must be one of these values.                                                                                     |
+| `format`   | `date`, `date-time` | No       | Built-in format or static format string. Runtime codec objects are invalid in Router route definitions.                                                    |
+
+Validation rules:
+
+- `type` always means value kind; it is not cardinality.
+- `many: true` is the only supported repeated-value marker.
+- `optional: true` and `default` are mutually exclusive because a defaulted field is present after parse/normalize.
+- Static descriptors reject runtime URLKit builders such as `int().default(1)`.
+- Static descriptors reject runtime date codecs such as `{ parse, serialize }`.
+- Static date defaults must be serialized values, not `Date` instances.
+- Unknown search keys are controlled by `unknownSearch`, not by the descriptor itself.
+
+Date and date-time descriptors support static format strings. URLKit parses and serializes date/date-time fields with UTC semantics: `date` is a UTC calendar date, `date-time` is a strict UTC instant, Unix formats use epoch seconds/milliseconds, and custom static format strings read/write UTC fields. Unsupported, ambiguous, and unquoted format tokens are rejected by URLKit and reported with Router route/search-param context. For example, `DD-MM-yyyy` is invalid; use `dd-MM-yyyy` for a two-digit UTC day. Use `toISOString()` or UTC getters when asserting parsed `Date` values because local display methods can show timezone-adjusted values.
+
+```ts
+// Bad for router route definitions: runtime builder, not static data.
+search: {
+  from: date({ format: 'dd-MM-yyyy' }),
+}
+```
+
+```ts
+// Bad for router route definitions: runtime codec object.
+search: {
+  from: {
+    type: 'date',
+    format: {
+      parse(value) {
+        return new Date(value);
+      },
+      serialize(value) {
+        return value.toISOString();
+      },
+    },
+  },
+}
+```
+
+Router forwards supported static descriptors to URLKit. URLKit owns strict format-string parsing, default validation, and descriptor validation.
+
+##### Static hash descriptors
+
+`hash` uses URLKit-backed Static hash object descriptors. Do not use array shorthand.
+
+```ts
+hash: {
+  type: 'enum',
+  values: ['comments', 'share'],
+  optional: true,
+}
+```
+
+```ts
+interface RouteHashDescriptorBase {
+  readonly optional?: true;
+}
+
+interface RouteStringHashDescriptor extends RouteHashDescriptorBase {
+  readonly type: 'string';
+  readonly default?: string;
+}
+
+interface RouteEnumHashDescriptor extends RouteHashDescriptorBase {
+  readonly type: 'enum';
+  readonly values: readonly string[];
+  readonly default?: string;
+}
+
+type RouteHashSchema = RouteStringHashDescriptor | RouteEnumHashDescriptor;
+```
+
+Supported forms:
+
+| Descriptor                                                                | Parsed value                         | Build value                             | Notes                                        |
+| ------------------------------------------------------------------------- | ------------------------------------ | --------------------------------------- | -------------------------------------------- |
+| `{ type: 'string' }`                                                      | `string`                             | `string`                                | Required hash value without the leading `#`. |
+| `{ type: 'string', optional: true }`                                      | `string \| undefined`                | `string \| undefined`                   | Missing hash is valid.                       |
+| `{ type: 'string', default: 'overview' }`                                 | `string`                             | `string \| undefined`                   | Missing hash normalizes to the default.      |
+| `{ type: 'enum', values: ['comments', 'share'] }`                         | `'comments' \| 'share'`              | `'comments' \| 'share'`                 | Hash must be one of the declared values.     |
+| `{ type: 'enum', values: ['comments', 'share'], optional: true }`         | `'comments' \| 'share' \| undefined` | `'comments' \| 'share' \| undefined`    | Missing hash is valid.                       |
+| `{ type: 'enum', values: ['overview', 'comments'], default: 'overview' }` | `'overview' \| 'comments'`           | `'overview' \| 'comments' \| undefined` | Default must be in `values`.                 |
+
+Properties:
+
+| Property   | Applies to           | Required | Description                                                                                                    |
+| ---------- | -------------------- | -------- | -------------------------------------------------------------------------------------------------------------- |
+| `type`     | All hash descriptors | Yes      | Hash value kind. Supported values are `string` and `enum`.                                                     |
+| `optional` | All hash descriptors | No       | Use literal `true` when missing hash is valid. Omit it for required/defaulted hash values. `false` is invalid. |
+| `default`  | All hash descriptors | No       | Normalized value used when the hash is missing. Cannot be combined with `optional: true`.                      |
+| `values`   | `enum`               | Yes      | Non-empty readonly string array. Defaults must be one of these values.                                         |
+
+Descriptor values must be bare values such as `'comments'`, not `'#comments'`. Router normalizes generated URLs to include one leading `#`. `defaults: 'omit'` also applies to defaulted hashes when building URLs.
+
+### Path route pattern APIs
+
+Router path patterns use `@cookbook/pathkit` syntax under URLKit route-runtime contracts. The full guide is [Path routes and constraints](path-routes.md).
+
+#### Path syntax
+
+| Syntax                    | Purpose                                         | Example                        |
+| ------------------------- | ----------------------------------------------- | ------------------------------ |
+| Static segment            | Match an exact pathname segment.                | `/settings/profile`            |
+| `{name}`                  | Capture one unconstrained string segment.       | `/articles/{slug}`             |
+| `{name?}`                 | Capture one optional segment.                   | `/search/{term?}`              |
+| `{*name}`                 | Capture the rest of the path.                   | `/files/{*path}`               |
+| `{*name?}`                | Capture an optional rest-of-path wildcard.      | `/files/{*path?}`              |
+| `{name:constraint}`       | Capture and validate a segment.                 | `/users/{id:int}`              |
+| `{name:constraint(args)}` | Capture and validate with constraint arguments. | `/pages/{page:range(1,100)}`   |
+| `{name:a:b(args)}`        | Apply multiple constraints.                     | `/users/{id:int:range(1,100)}` |
+
+There is no built-in `{param:number}` or `{param:string}` constraint. Use `{param:decimal}` for decimal numbers, `{param:int}` for integers, and `{param}` for unconstrained strings.
+
+#### Built-in path constraints
+
+PathKit provides these built-in constraints, which Router forwards to URLKit for route validation, matching, href generation, static router workflows, and generated contracts.
+
+| Constraint | Syntax                             | Valid examples             | Invalid examples            | Runtime/generated type |
+| ---------- | ---------------------------------- | -------------------------- | --------------------------- | ---------------------- |
+| `decimal`  | `{price:decimal}`                  | `1`, `1.5`, `42`, `200.99` | `abc`, `foo-1`              | `number`               |
+| `int`      | `{id:int}`                         | `1`, `42`, `9000`          | `abc`, `1.5`, `foo-1`       | `number`               |
+| `range`    | `{page:range(1,100)}`              | `1`, `50`, `100`           | `0`, `101`, `abc`           | `number`               |
+| `list`     | `{view:list(grid\|list\|details)}` | `grid`, `list`, `details`  | `table`, `detail`           | `string`               |
+| `regex`    | `{slug:regex([a-z0-9-]+)}`         | `hello-world`, `post-123`  | `HelloWorld`, `hello_world` | `string`               |
+
+Numeric built-ins parse to `number` in router state, React hooks, middleware, lifecycle hooks, and generated contracts. `list`, `regex`, unconstrained params, wildcards, and custom constraints expose `string` unless generated contracts are extended with custom typed inference.
+
+```tsx
+const routes = defineRoutes([
+  { id: 'users.show', path: '/users/{id:int}', component: UserPage },
+  { id: 'prices.show', path: '/prices/{price:decimal}', component: PricePage },
+  { id: 'pages.show', path: '/pages/{page:range(1,100)}', component: PageRoute },
+  { id: 'search.view', path: '/search/{view:list(grid|list|details)}', component: SearchPage },
+  { id: 'posts.show', path: '/posts/{slug:regex([a-z0-9-]+)}', component: PostPage },
+] as const);
+```
+
+#### Path options
+
+```ts
+interface RouterPathOptions {
+  readonly prune?: 'all' | 'duplication' | 'trailing' | false;
+}
+```
+
+| Value           | Behavior                                                                   |
+| --------------- | -------------------------------------------------------------------------- |
+| `'all'`         | Remove duplicated delimiters and trailing delimiters. This is the default. |
+| `'duplication'` | Remove duplicated delimiters only.                                         |
+| `'trailing'`    | Remove trailing delimiters only.                                           |
+| `false`         | Preserve authored/generated pathnames exactly.                             |
+
+`pathOptions` can be passed to `defineRoutes()`, `createRouter()`, `createMemoryRouter()`, and `createStaticRouter()`.
+
+#### Custom path constraints
+
+Use `createConstraint()` for reusable validation rules that are not covered by the built-ins.
+
+```ts
+import { createConstraint, defineRoutes } from '@cookbook/router';
+
+const slug = createConstraint({
+  parse(paramName, value) {
+    if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
+      throw new Error(`Parameter "${paramName}" must be a valid slug.`);
+    }
+  },
+  verify(_paramName, params) {
+    if (params.trim()) {
+      throw new Error('slug does not accept parameters.');
+    }
+  },
+  toRegExp() {
+    return '[a-z0-9-]+';
+  },
+});
+
+export const routes = defineRoutes(
+  [{ id: 'posts.show', path: '/posts/{slug:slug}', component: PostPage }] as const,
+  { pathConstraints: { slug } },
+);
+```
+
+`defineRoutes()` validates immediately, so register custom constraints through the second `defineRoutes()` argument before the route path is checked. `createRouter({ pathConstraints })` is supported for raw route arrays that were not already validated. Register the same constraints in server, client, tests, and CLI route-loading environments.
+
+### URLKit bridge APIs
+
+These APIs are exported for advanced integrations, tests, and Router internals. Most application code should prefer `createRouter()`, `router.href()`, `router.match()`, and React hooks.
+
+#### `createRouteUrlContract(route, options?)`
+
+Creates the URLKit route-runtime contract for one Router route descriptor. Router forwards the cleaned Static descriptor shape directly to URLKit; it does not translate legacy search/hash forms.
+
+```ts
+function createRouteUrlContract(
+  route: RouterRouteUrlDescriptor,
+  options?: CreateRouterRouteUrlContractOptions,
+): RouterRouteUrlContract;
+
+interface RouterRouteUrlDescriptor {
+  readonly path?: string;
+  readonly search?: RouteSearchSchema;
+  readonly hash?: RouteHashSchema;
+  readonly url?: RouterUrlOptions;
+}
+
+interface CreateRouterRouteUrlContractOptions {
+  readonly routerUrl?: RouterUrlOptions;
+  readonly callUrl?: RouterUrlOptions;
+  readonly pathConstraints?: RouterPathConstraints;
+  readonly routeId?: string;
+}
+```
+
+```ts
+const contract = createRouteUrlContract(
+  {
+    path: '/articles/{id:int}',
+    search: {
+      page: { type: 'int', default: 1 },
+      tag: { type: 'string', many: true, optional: true },
+      startsAt: {
+        type: 'date-time',
+        format: "dd-MM-yyyy'T'HH:mm:ss'Z'",
+        optional: true,
+      },
+    },
+    hash: { type: 'enum', values: ['comments', 'share'], optional: true },
+  },
+  { routeId: 'articles.show' },
+);
+
+const state = contract.parse('/articles/42?page=2#comments');
+const href = contract.build({ params: { id: 42 }, search: { page: 2 }, hash: 'comments' });
+```
+
+`routeId` is diagnostic-only. If URLKit rejects a descriptor, Router preserves the `UrlKitError` code/path and adds route context.
+
+#### `RouterRouteUrlContract`
+
+Router intentionally exposes a narrow URLKit route-contract surface.
+
+```ts
+interface RouterRouteUrlContract {
+  readonly pattern: string | undefined;
+  parse(input: string | URL, options?: RouterRouteSearchParseOptions): unknown;
+  match(input: string | URL, options?: RouterRouteSearchParseOptions): boolean;
+  build(input: unknown, options?: RouterUrlBuildOptions): string;
+  parsePathname: ((pathname: string) => unknown) | never;
+  buildPath: ((params: unknown) => string) | never;
+  parseSearch(input: string | URLSearchParams, options?: RouterRouteSearchParseOptions): unknown;
+  buildSearch(search: unknown, options?: RouterUrlBuildOptions): string;
+  parseHash(input: unknown): unknown;
+  buildHash(hash?: unknown, options?: RouterUrlBuildOptions): string;
+}
+
+interface RouterRouteSearchParseOptions {
+  readonly arrayFormat?: 'repeat' | 'comma';
+  readonly unknownSearch?: 'strip' | 'preserve' | 'error';
+  readonly invalidSearch?: 'error' | 'omit';
+}
+```
+
+| Method          | Purpose                                                        | Notes                                                                     |
+| --------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `pattern`       | Original path pattern or `undefined` for pathless descriptors. | Mirrors URLKit route-runtime.                                             |
+| `parse`         | Parse serialized URL input into URLKit state.                  | Used when Router needs search, hash, params, and unknown search together. |
+| `match`         | Return whether serialized URL input satisfies the contract.    | URLKit validation failures return `false`.                                |
+| `build`         | Serialize structured state to a canonical URL string.          | Accepts `arrayFormat` and `defaults`.                                     |
+| `parsePathname` | Parse path params from a pathname.                             | Path-mode routes only. Router uses parsed params.                         |
+| `buildPath`     | Build a pathname from params.                                  | Path-mode routes only.                                                    |
+| `parseSearch`   | Parse search input through the route search schema.            | Accepts `arrayFormat`, `unknownSearch`, and `invalidSearch`.              |
+| `buildSearch`   | Build a search suffix from typed search state.                 | Accepts `arrayFormat` and `defaults`.                                     |
+| `parseHash`     | Parse hash input through the route hash descriptor.            | Returns the bare hash value.                                              |
+| `buildHash`     | Build a hash suffix.                                           | Accepts `defaults`; generated suffix includes `#` when non-empty.         |
+
+#### `resolveUrlOptions(input)`
+
+Resolves URL options with Router precedence.
+
+```ts
+function resolveUrlOptions(input: ResolveUrlOptionsInput): RouterUrlOptions;
+
+interface ResolveUrlOptionsInput {
+  readonly router?: RouterUrlOptions;
+  readonly route?: RouterUrlOptions;
+  readonly call?: RouterUrlOptions;
+}
+```
+
+Precedence is call-site, then route-level, then router-level. This helper is useful for tests and integrations that need to inspect the effective URL policy without creating a full router.
+
+#### `registerUrlPathConstraints(constraints?)`
+
+Registers Router custom path constraints with URLKit before descriptor compilation.
+
+```ts
+function registerUrlPathConstraints(constraints?: RouterPathConstraints): void;
+```
+
+Use this only when building lower-level integrations. Normal applications should pass constraints through `defineRoutes(routes, { pathConstraints })` or `createRouter({ pathConstraints })`.
 
 ### Router creation APIs
 
@@ -176,6 +599,7 @@ interface CreateRouterOptions {
 
 interface RouterUrlOptions {
   readonly arrayFormat?: 'repeat' | 'comma';
+  readonly defaults?: 'include' | 'omit';
   readonly invalidSearch?: 'recover' | 'no-match' | 'error';
   readonly invalidHash?: 'recover' | 'no-match' | 'error';
   readonly unknownSearch?: 'strip' | 'preserve' | 'error';
@@ -183,10 +607,21 @@ interface RouterUrlOptions {
 
 interface RouterUrlBuildOptions {
   readonly arrayFormat?: 'repeat' | 'comma';
+  readonly defaults?: 'include' | 'omit';
 }
 ```
 
-`unknownSearch` defaults to `'strip'`, inherited from URLKit. Use `'preserve'` when undeclared query keys should remain available separately as `match.unknownSearch`.
+Router URL options are resolved in this order: call-site options, then route-level `url`, then router-level `url`, then URLKit defaults.
+
+| Option          | Scope            | Purpose                                                                                      |
+| --------------- | ---------------- | -------------------------------------------------------------------------------------------- |
+| `arrayFormat`   | parse/build      | Controls repeated search params: `repeat` or `comma`.                                        |
+| `defaults`      | build            | Controls whether URLKit serializes values equal to descriptor defaults: `include` or `omit`. |
+| `invalidSearch` | route resolution | Controls malformed declared search values: `recover`, `no-match`, or `error`.                |
+| `invalidHash`   | route resolution | Controls malformed declared hash values: `recover`, `no-match`, or `error`.                  |
+| `unknownSearch` | route resolution | Controls undeclared search keys: `strip`, `preserve`, or `error`.                            |
+
+`unknownSearch` defaults to `'strip'`, inherited from URLKit. `invalidSearch` and `invalidHash` default to Router's recover policy, which maps to URLKit's omit behavior for invalid optional/defaulted fields. Required invalid fields still propagate as errors.
 
 ```ts
 import { createRouter } from '@cookbook/router';
@@ -202,19 +637,19 @@ const router = createRouter({
 await router.resolveCurrent();
 ```
 
-| Option                |                   Default | Purpose                                                                                           |
-| --------------------- | ------------------------: | ------------------------------------------------------------------------------------------------- |
-| `routes`              |                  Required | Route tree.                                                                                       |
-| `basename`            |               `undefined` | URL prefix stripped during matching and added during href generation.                             |
-| `middleware`          |                      `[]` | Global middleware.                                                                                |
-| `lifecycle`           |                      `{}` | Global lifecycle hooks.                                                                           |
-| `hydrationData`       |               `undefined` | State from SSR serialization.                                                                     |
-| `history`             | Browser or memory history | Custom history implementation.                                                                    |
-| `pathOptions`         |        `{ prune: 'all' }` | Pathkit behavior.                                                                                 |
-| `pathConstraints`     |               `undefined` | Custom constraints for unvalidated route arrays. Prefer `defineRoutes(..., { pathConstraints })`. |
-| `url`                 |           URLKit defaults | Router-level URL options. `unknownSearch` defaults to `'strip'`.                                  |
-| `maxRedirectDepth`    |    Implementation default | Redirect loop guard.                                                                              |
-| `maxRedirectionDepth` |                     Alias | Backward-compatible alias for `maxRedirectDepth`.                                                 |
+| Option                |                   Default | Purpose                                                                                                                            |
+| --------------------- | ------------------------: | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `routes`              |                  Required | Route tree.                                                                                                                        |
+| `basename`            |               `undefined` | URL prefix stripped during matching and added during href generation.                                                              |
+| `middleware`          |                      `[]` | Global middleware.                                                                                                                 |
+| `lifecycle`           |                      `{}` | Global lifecycle hooks.                                                                                                            |
+| `hydrationData`       |               `undefined` | State from SSR serialization.                                                                                                      |
+| `history`             | Browser or memory history | Custom history implementation.                                                                                                     |
+| `pathOptions`         |        `{ prune: 'all' }` | Pathkit behavior.                                                                                                                  |
+| `pathConstraints`     |               `undefined` | Custom constraints for unvalidated route arrays. Prefer `defineRoutes(..., { pathConstraints })`.                                  |
+| `url`                 |           URLKit defaults | Router-level URL options. `unknownSearch` defaults to `'strip'`; `invalidSearch`/`invalidHash` default to Router recover behavior. |
+| `maxRedirectDepth`    |    Implementation default | Redirect loop guard.                                                                                                               |
+| `maxRedirectionDepth` |                     Alias | Backward-compatible alias for `maxRedirectDepth`.                                                                                  |
 
 #### `createMemoryRouter(options)`
 
@@ -283,12 +718,15 @@ interface Router {
   href<Route extends RouteId>(options: NavigateOptions<Route>): string;
   href<Route extends string>(options: NavigateOptions<Route>): string;
 
-  resolve<Route extends RouteId>(routeId: Route, options?: HrefOptions<Route>): RouterLocation;
-  resolve<Route extends string>(routeId: Route, options?: HrefOptions<Route>): RouterLocation;
-  resolve<Route extends RouteId>(options: NavigateOptions<Route>): RouterLocation;
-  resolve<Route extends string>(options: NavigateOptions<Route>): RouterLocation;
+  resolve<Route extends RouteId>(
+    routeId: Route,
+    options?: HrefOptions<Route>,
+  ): RegisteredRouteMatch;
+  resolve<Route extends string>(routeId: Route, options?: HrefOptions<Route>): RegisteredRouteMatch;
+  resolve<Route extends RouteId>(options: NavigateOptions<Route>): RegisteredRouteMatch;
+  resolve<Route extends string>(options: NavigateOptions<Route>): RegisteredRouteMatch;
 
-  match(href: string): RouteMatch<RouteId> | null;
+  match(href: string, options?: MatchOptions): RegisteredRouteMatch | null;
 
   navigate: {
     to<Route extends RouteId>(routeId: Route, options?: HrefOptions<Route>): Promise<RouterState>;
@@ -312,6 +750,7 @@ interface Router {
 
   subscribe(listener: (state: RouterState) => void): () => void;
   block(blocker: RouterBlocker): () => void;
+  useMiddleware(middleware: readonly Middleware[]): () => void;
   resolveCurrent(): Promise<RouterState>;
   serialize(): SerializedRouterState;
 }
@@ -357,7 +796,13 @@ interface HrefOptions<Route extends string> {
 interface NavigateOptions<Route extends string> extends HrefOptions<Route> {
   readonly route: Route;
 }
+
+interface MatchOptions {
+  readonly url?: RouterUrlOptions;
+}
 ```
+
+`HrefOptions.url` and `NavigateOptions.url` are build-only options. They accept `arrayFormat` and `defaults`. `MatchOptions.url` is a route-resolution override and accepts the full `RouterUrlOptions` policy set.
 
 #### `RouterState`
 
@@ -375,11 +820,11 @@ interface RouterState {
 
 These lower-level helpers are public for tests, tooling, and advanced integrations. Most app code should use a `Router` instance instead.
 
-| API               | Signature                                                                                                               | Use case                                                 |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `validateRoutes`  | `(routes: readonly RouteDefinition[], pathOptions?: RouterPathOptions) => void`                                         | Validate route tree shape and throw on invalid config.   |
-| `normalizeRoutes` | `(routes: readonly RouteDefinition[], pathOptions?: RouterPathOptions) => readonly NormalizedRoute[]`                   | Convert route definitions into normalized route records. |
-| `matchRoutes`     | `(routes: readonly NormalizedRoute[], pathname: string, pathOptions?: RouterPathOptions) => RouteMatch<string> \| null` | Match a pathname against normalized routes.              |
+| API               | Signature                                                                                                               | Use case                                                                                                          |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `validateRoutes`  | `(routes: readonly RouteDefinition[], pathOptions?: RouterPathOptions) => void`                                         | Validate route tree shape and throw on invalid config. See [Route validation errors](route-validation-errors.md). |
+| `normalizeRoutes` | `(routes: readonly RouteDefinition[], pathOptions?: RouterPathOptions) => readonly NormalizedRoute[]`                   | Convert route definitions into normalized route records.                                                          |
+| `matchRoutes`     | `(routes: readonly NormalizedRoute[], pathname: string, pathOptions?: RouterPathOptions) => RouteMatch<string> \| null` | Match a pathname against normalized routes.                                                                       |
 
 ```ts
 import { matchRoutes, normalizeRoutes } from '@cookbook/router';
@@ -426,7 +871,7 @@ function parseHref(
     readonly state?: unknown;
     readonly key?: string;
   },
-): RouterLocation;
+): RegisteredRouteMatch;
 ```
 
 #### `RouterHistory`
@@ -512,17 +957,38 @@ Related: [SSR](ssr.md).
 
 ### Path constraint APIs
 
-`@cookbook/router` re-exports selected `@cookbook/pathkit` constraint helpers. Registered constraints are forwarded to URLKit before route validation, matching, href generation, CLI generation, and SSR/static router workflows.
+`@cookbook/router` re-exports selected `@cookbook/pathkit` helpers for custom route params. Registered constraints are forwarded to URLKit before route validation, matching, href generation, CLI generation, and SSR/static router workflows.
 
 ```ts
-function createConstraint(definition: ConstraintDefinition): RouterPathConstraint;
-function registerPathConstraints(constraints: RouterPathConstraints): void;
+function createConstraint(definition: {
+  readonly parse: (
+    paramName: string,
+    value: string | number | boolean | undefined,
+    params: string,
+  ) => void;
+  readonly verify: (paramName: string, params: string) => void;
+  readonly toRegExp: (params: string) => string;
+}): RouterPathConstraint;
+
+function registerPathConstraints(constraints?: RouterPathConstraints): void;
 function hasConstraint(name: string): boolean;
 function getConstraint(name: string): RouterPathConstraint | undefined;
 function unregisterConstraint(name: string): void;
+
+interface RouterPathConstraints {
+  readonly [name: string]: RouterPathConstraint;
+}
 ```
 
-Use custom constraints when route params need non-default matching rules:
+| API                         | Purpose                                                                                                                              |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `createConstraint()`        | Create a custom PathKit-compatible constraint with `parse`, `verify`, and `toRegExp`.                                                |
+| `registerPathConstraints()` | Register custom constraints globally and clear Router path caches. Prefer `defineRoutes(..., { pathConstraints })` in route modules. |
+| `hasConstraint()`           | Check whether a constraint is registered.                                                                                            |
+| `getConstraint()`           | Read a registered constraint for diagnostics or tests.                                                                               |
+| `unregisterConstraint()`    | Remove a registered constraint, mainly for isolated tests.                                                                           |
+
+Built-in PathKit constraints available in route paths are `decimal`, `int`, `range`, `list`, and `regex`. See [Path routes and constraints](path-routes.md) for syntax, examples, parsed types, and custom-constraint guidance.
 
 ```ts
 const uuid = createConstraint({
@@ -531,7 +997,11 @@ const uuid = createConstraint({
       throw new Error(`${paramName} must be a UUID.`);
     }
   },
-  verify() {},
+  verify(_paramName, params) {
+    if (params.trim()) {
+      throw new Error('uuid does not accept parameters.');
+    }
+  },
   toRegExp() {
     return '[0-9a-fA-F-]{36}';
   },
@@ -669,7 +1139,7 @@ interface LinkProps<Route extends RouteId = RouteId> extends Omit<
 function Link<Route extends RouteId = RouteId>(props: LinkProps<Route>): JSX.Element;
 ```
 
-Use `to` for internal typed navigation and `href` for literal links. Params, search, and hash are URLKit-backed; `{id:int}` params are numbers. `url` accepts URL-building options such as `arrayFormat`. Route-resolution policies such as `invalidSearch`, `invalidHash`, and `unknownSearch` belong on the core router, route definitions, explicit match calls, or static router creation.
+Use `to` for internal typed navigation and `href` for literal links. Params, search, and hash are URLKit-backed; `{id:int}` params are numbers, and static `date` / `date-time` search fields are parsed as UTC `Date` values. `url` accepts URL-building options such as `arrayFormat` and `defaults`. Route-resolution policies such as `invalidSearch`, `invalidHash`, and `unknownSearch` belong on the core router, route definitions, explicit match calls, or static router creation.
 
 ```tsx
 <Link to="users.show" params={{ id: 42 }} search={{ tab: 'settings' }} hash="profile">
@@ -758,10 +1228,10 @@ Renders a named layout slot. A slot can render a matched slot route, fallback, i
 | `useMatches`       | `() => readonly MatchedRoute[]`                                                                                 | Read the active matched branch.                           |
 | `useNavigation`    | `() => RouterNavigationState`                                                                                   | Read transition state.                                    |
 | `useParams`        | `(routeId?) => RouteParams<Route>`                                                                              | Read current or route-specific params.                    |
-| `useSearchParams`  | `(routeId?, options?) => RouteSearch<Route>`                                                                    | Read URLKit-parsed search params.                         |
-| `useSearch`        | `(routeId?, options?) => RouteSearch<Route>`                                                                    | Alias for `useSearchParams`.                              |
-| `useHashParams`    | `(routeId?, options?) => RouteHash<Route> \| null`                                                              | Read URLKit-parsed hash.                                  |
-| `useHash`          | `(routeId?, options?) => RouteHash<Route> \| null`                                                              | Alias for `useHashParams`.                                |
+| `useSearchParams`  | `(routeId?) => RouteSearch<Route>`                                                                              | Read already-resolved URLKit-parsed search params.        |
+| `useSearch`        | `(routeId?) => RouteSearch<Route>`                                                                              | Alias for `useSearchParams`.                              |
+| `useHashParams`    | `(routeId?) => RouteHash<Route> \| null`                                                                        | Read already-resolved URLKit-parsed hash.                 |
+| `useHash`          | `(routeId?) => RouteHash<Route> \| null`                                                                        | Alias for `useHashParams`.                                |
 | `useOutletContext` | `() => unknown`, `<Route>(routeId, options?) => RouteOutletContext<Route>`, or `<Context>(options?) => Context` | Read nearest outlet/slot context.                         |
 | `useBlocker`       | `(options: UseBlockerOptions) => BlockerState`                                                                  | Block in-app navigation and browser unload while enabled. |
 
@@ -1092,6 +1562,7 @@ Related: [Contracts](contracts.md), [Code generation](codegen.md).
 
 - [Getting started](getting-started.md)
 - [Routing](routing.md)
+- [Path routes and constraints](path-routes.md)
 - [Navigation](navigation.md)
 - [React integration](react-integration.md)
 - [Code generation](codegen.md)
@@ -1100,3 +1571,4 @@ Related: [Contracts](contracts.md), [Code generation](codegen.md).
 - [Lifecycle](lifecycle.md)
 - [SSR](ssr.md)
 - [Troubleshooting](troubleshooting.md)
+- [Route validation errors](route-validation-errors.md)

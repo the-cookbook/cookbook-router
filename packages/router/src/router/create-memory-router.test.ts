@@ -8,7 +8,11 @@ const routes = defineRoutes([
     path: '/',
     children: [
       { id: 'home', index: true },
-      { id: 'users.show', path: 'users/{id:int}', hash: ['profile', 'settings'] },
+      {
+        id: 'users.show',
+        path: 'users/{id:int}',
+        hash: { type: 'enum', values: ['profile', 'settings'], optional: true },
+      },
       { id: 'files', path: 'files/{*path}' },
     ],
   },

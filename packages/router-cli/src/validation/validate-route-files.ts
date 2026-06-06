@@ -543,8 +543,7 @@ function extractBalancedArray(path: string, contents: string, start: number): st
 }
 
 function assertNoUnsupportedRuntimeUrlKitBuilders(path: string, routesLiteral: string): void {
-  const runtimeBuilderPattern =
-    /\b(?:string|number|int|boolean|date|dateTime|enumOf)\s*\(\s*\)(?:\s*\.\s*(?:optional|required|default)\s*\([^)]*\))*|\benumOf\s*\(/;
+  const runtimeBuilderPattern = /\b(?:string|number|int|boolean|date|dateTime)\s*\(|\benumOf\s*\(/;
 
   if (!runtimeBuilderPattern.test(routesLiteral)) {
     return;
@@ -553,7 +552,7 @@ function assertNoUnsupportedRuntimeUrlKitBuilders(path: string, routesLiteral: s
   throw new Error(
     [
       `Route file "${path}" uses URLKit runtime builders in a static route declaration.`,
-      "The CLI only supports static URL descriptors such as { value: 'int', default: 1 } for search and hash generation.",
+      "The CLI only supports cleaned static URL descriptors such as { type: 'int', default: 1 }, { type: 'string', many: true }, and object hash descriptors for generation.",
       'Move runtime URL builders out of CLI-consumed route files or replace them with static descriptors.',
     ].join(' '),
   );

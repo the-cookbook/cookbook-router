@@ -23,9 +23,9 @@ export const routes = defineRoutes([
         id: 'articles.show',
         path: 'articles/{slug:regex([a-z0-9-]+)}',
         search: {
-          preview: { value: 'string', optional: true },
+          preview: { type: 'string', optional: true },
         },
-        hash: ['comments', 'summary'],
+        hash: { type: 'enum', values: ['comments', 'summary'], optional: true },
         component: ArticlePage,
         meta: {
           title: 'Article',
@@ -35,7 +35,7 @@ export const routes = defineRoutes([
         id: 'ssr.users.show',
         path: '/ssr/users/{id:int}',
         search: {
-          tab: { value: 'string', optional: true },
+          tab: { type: 'string', optional: true },
         },
         component: UserPage,
         meta: {

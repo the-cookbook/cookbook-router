@@ -16,9 +16,15 @@ function createRouter() {
       { id: 'home', path: '/', component: LocationView },
       { id: 'user', path: '/users/{id:int}', component: LocationView },
       {
+        id: 'listing',
+        path: '/listing',
+        search: { page: { type: 'int', default: 1 } },
+        component: LocationView,
+      },
+      {
         id: 'products',
         path: '/products',
-        search: { tags: { value: 'string', type: 'many', optional: true } },
+        search: { tags: { type: 'string', many: true, optional: true } },
         component: LocationView,
       },
     ] as const),
@@ -68,6 +74,21 @@ describe('Link', () => {
         url: { arrayFormat: 'comma' },
       }),
     );
+  });
+
+  it('forwards default serialization options to href generation', async () => {
+    const router = createRouter();
+    await router.resolveCurrent();
+
+    const { getByText } = render(
+      <RouterProvider router={router}>
+        <Link route="listing" search={{ page: 1 }} url={{ defaults: 'omit' }}>
+          listing
+        </Link>
+      </RouterProvider>,
+    );
+
+    expect(getByText('listing').getAttribute('href')).toBe('/listing');
   });
 
   it('supports the to alias for lower-boilerplate links', async () => {

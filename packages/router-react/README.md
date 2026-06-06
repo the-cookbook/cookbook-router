@@ -161,7 +161,7 @@ interface LinkProps<Route extends RouteId = RouteId> extends Omit<
 }
 ```
 
-Use `to` for typed internal routes and `href` for literal anchor URLs. Params, search, and hash are URLKit-backed; `{id:int}` params are numbers. `url` accepts build-time URLKit options such as `arrayFormat`. Route-resolution policies such as `invalidSearch`, `invalidHash`, and `unknownSearch` belong on the core router, route definition, explicit match calls, or static router creation.
+Use `to` for typed internal routes and `href` for literal anchor URLs. Params, search, and hash are URLKit-backed; `{id:int}` params are numbers, and static `date` / `date-time` search fields are parsed as UTC `Date` values. `url` accepts build-time URLKit options such as `arrayFormat` and `defaults`. Route-resolution policies such as `invalidSearch`, `invalidHash`, and `unknownSearch` belong on the core router, route definition, explicit match calls, or static router creation.
 
 ```tsx
 <Link to="articles.show" params={{ slug: 'typed-routing' }} hash="comments">

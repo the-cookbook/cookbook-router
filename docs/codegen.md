@@ -98,7 +98,7 @@ Writes only `manifest.json`.
 
 The CLI expects statically extractable route declarations. Keep codegen-relevant fields inline and literal when possible: `id`, `path`, `index`, `search`, `hash`, `meta`, `children`, `layout.slots`, and `redirect`. Imported components are supported because the extractor replaces component-bearing fields with placeholders, but imported constants for route IDs, search schemas, or metadata may not be understood by static extraction.
 
-Generated contracts follow URLKit static descriptor semantics. Built-in parsed path constraints such as `{id:int}`, `{price:decimal}` and `{value:range}` generate `number` params. Custom path constraints declared through `defineRoutes(routes, { pathConstraints })` generate `string` params unless URLKit exposes typed static custom inference.
+Generated contracts follow URLKit static descriptor semantics. Built-in parsed path constraints such as `{id:int}`, `{price:decimal}` and `{value:range}` generate `number` params. Built-in `list` and `regex` constraints generate `string` params. Custom path constraints declared through `defineRoutes(routes, { pathConstraints })` generate `string` params unless URLKit exposes typed static custom inference. See [Path routes and constraints](path-routes.md) for the complete path constraint surface.
 
 Use static URL descriptors in CLI-consumed route files:
 
@@ -108,16 +108,28 @@ export const routes = defineRoutes([
     id: 'products.show',
     path: '/products/{price:int}',
     search: {
-      page: { value: 'int', default: 1 },
-      tags: { value: 'string', type: 'many' },
+      page: { type: 'int', default: 1 },
+      tags: { type: 'string', many: true },
+      publishedOn: {
+        type: 'date',
+        format: 'dd-MM-yyyy',
+        optional: true,
+      },
+      startsAt: {
+        type: 'date-time',
+        format: 'dd-MM-yyyy HH:mm:ss',
+        optional: true,
+      },
     },
-    hash: ['details', 'reviews'],
+    hash: { type: 'enum', values: ['details', 'reviews'], optional: true },
     url: { arrayFormat: 'comma' },
   },
 ] as const);
 ```
 
-Do not use URLKit runtime builders such as `int().default(1)` in static route files unless the extractor explicitly supports them. Use `{ value: 'int', default: 1 }` instead. Route-level `url` options are included in `manifest.json` so manifest-based runtimes can preserve array-format behavior.
+Do not use URLKit runtime builders such as `int().default(1)` or `date({ format: 'dd-MM-yyyy' })` in static route files unless the extractor explicitly supports them. Use static descriptors such as `{ type: 'int', default: 1 }` and `{ type: 'date', format: 'dd-MM-yyyy', optional: true }` instead. Route-level `url` options are included in `manifest.json` so manifest-based runtimes can preserve array-format and default-serialization behavior.
+
+Router route descriptors support date and date-time format strings as plain static data. URLKit treats static date/date-time values as UTC: date-only formats use UTC calendar fields, date-time formats are UTC instants, and custom static format strings serialize from UTC fields. They do not support custom runtime parse/serialize codec functions in route definitions because the CLI must be able to analyze route files without executing arbitrary URLKit builders.
 
 If generation fails on a complex route file, simplify the route declaration or move codegen-relevant values inline before rerunning `generate`.
 
@@ -239,7 +251,7 @@ Registers generated contracts through `@cookbook/router` module augmentation.
 
 ### `manifest.json`
 
-Contains route IDs, paths, and route-level URL options such as `arrayFormat`, `invalidSearch`, `invalidHash`, and `unknownSearch` when configured.
+Contains route IDs, paths, and route-level URL options such as `arrayFormat`, `defaults`, `invalidSearch`, `invalidHash`, and `unknownSearch` when configured.
 
 ## Static extraction rules
 

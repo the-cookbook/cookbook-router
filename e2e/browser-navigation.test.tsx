@@ -40,8 +40,8 @@ const routes = defineRoutes([
       {
         id: 'user',
         path: 'users/{id:int}',
-        search: { tab: { type: 'one', optional: true } },
-        hash: ['top'],
+        search: { tab: { type: 'string', optional: true } },
+        hash: { type: 'enum', values: ['top'], optional: true },
         component: UserPage,
       },
     ],

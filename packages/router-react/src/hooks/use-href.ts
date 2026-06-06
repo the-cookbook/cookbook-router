@@ -6,7 +6,7 @@ import { useRouter } from './use-router';
  *
  * Params, search, and hash are inferred from generated contracts when `Register`
  * is augmented. `options.url` forwards per-call URLKit options such as
- * `arrayFormat`, overriding route-level and router-level defaults.
+ * `arrayFormat` and `defaults`, overriding route-level and router-level defaults.
  */
 export function useHref<Route extends RouteId>(
   routeId: Route,

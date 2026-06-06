@@ -285,9 +285,9 @@ export const routes = defineRoutes(
             },
           },
           search: {
-            page: { value: 'number', default: 0, optional: true },
-            pageSize: { value: 'number', optional: true },
-            visitors: { value: 'string', optional: true },
+            page: { type: 'number', default: 0 },
+            pageSize: { type: 'number', optional: true },
+            visitors: { type: 'string', optional: true },
           },
         },
         {
@@ -305,11 +305,14 @@ export const routes = defineRoutes(
               index: true,
               component: AsyncUsersPage,
               search: {
-                page: { value: 'number', optional: true },
-                pageSize: { value: 'number', optional: true },
-                status: { value: 'string', default: 'all', optional: true },
-                role: { value: 'string', optional: true },
-                q: { value: 'string', optional: true },
+                page: { type: 'number', optional: true },
+                pageSize: { type: 'number', optional: true },
+                status: { type: 'string', default: 'all' },
+                role: {
+                  type: 'string',
+                  optional: true,
+                },
+                q: { type: 'string', optional: true },
               },
             },
             {
@@ -419,7 +422,7 @@ export const routes = defineRoutes(
       },
       component: LoginPage,
       search: {
-        redirect: { value: 'string', optional: true },
+        redirect: { type: 'string', optional: true },
       },
       meta: {
         access: 'public',

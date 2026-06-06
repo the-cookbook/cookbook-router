@@ -21,7 +21,7 @@ describe('defineRoutes', () => {
           {
             id: 'users.show',
             path: 'users/{id:int}',
-            hash: ['profile', 'settings'],
+            hash: { type: 'enum', values: ['profile', 'settings'], optional: true },
           },
         ],
       },
@@ -30,7 +30,7 @@ describe('defineRoutes', () => {
     expect(routes[0]?.id).toBe('root');
     expectTypeOf<(typeof routes)[0]['id']>().toEqualTypeOf<'root'>();
     expectTypeOf<(typeof routes)[0]['children'][1]['id']>().toEqualTypeOf<'users.show'>();
-    expectTypeOf<(typeof routes)[0]['children'][1]['hash'][number]>().toEqualTypeOf<
+    expectTypeOf<(typeof routes)[0]['children'][1]['hash']['values'][number]>().toEqualTypeOf<
       'profile' | 'settings'
     >();
   });

@@ -369,8 +369,8 @@ importers:
         specifier: v0.3.1
         version: 0.3.1
       '@cookbook/urlkit':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: file:../../../urlkit
+        version: file:../urlkit
 
   packages/router-cli:
     dependencies:
@@ -688,8 +688,8 @@ packages:
     resolution: {integrity: sha512-T+e/axRwpbjYPCfd77X4jJ1oIhXCek0N7j0+YEJ3Cids9kRhfqh9HBIYjlBOzeKqRUjxCOV0XgdjoHW4GmnP2Q==}
     engines: {node: '>=20.0.0'}
 
-  '@cookbook/urlkit@1.1.0':
-    resolution: {integrity: sha512-OtXOymwH4yMpj8Ye7cZqnEvMZdSXHHk4KK7RVGACt9r1xjr6UHBlK6OW31rHmYitRYSVOWzTulIgZeDwBxQtgg==}
+  '@cookbook/urlkit@file:../urlkit':
+    resolution: {directory: ../urlkit, type: directory}
 
   '@csstools/color-helpers@6.0.2':
     resolution: {integrity: sha512-LMGQLS9EuADloEFkcTBR3BwV/CGHV7zyDxVRtVDTwdI2Ca4it0CCVTT9wCkxSgokjE5Ho41hEPgb8OEUwoXr6Q==}
@@ -5259,7 +5259,7 @@ snapshots:
 
   '@cookbook/pathkit@0.3.1': {}
 
-  '@cookbook/urlkit@1.1.0':
+  '@cookbook/urlkit@file:../urlkit':
     dependencies:
       '@cookbook/pathkit': 0.3.1
 

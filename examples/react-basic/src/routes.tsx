@@ -23,9 +23,9 @@ export const routes = defineRoutes([
         id: 'users.show',
         path: 'users/{id:int}',
         search: {
-          tab: { value: 'string', optional: true },
+          tab: { type: 'string', optional: true },
         },
-        hash: ['profile', 'settings', 'security'],
+        hash: { type: 'enum', values: ['profile', 'settings', 'security'], optional: true },
         component: UserPage,
         meta: {
           title: 'User',
@@ -44,7 +44,7 @@ export const routes = defineRoutes([
         id: 'products',
         path: 'products',
         search: {
-          tags: { value: 'string', type: 'many', optional: true },
+          tags: { type: 'string', many: true, optional: true },
         },
         url: {
           arrayFormat: 'comma',

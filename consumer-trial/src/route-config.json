@@ -38,15 +38,19 @@
           "path": "users/{id:int}",
           "search": {
             "tab": {
-              "value": "string",
-              "optional": true
+              "optional": true,
+              "type": "string"
             },
             "preview": {
-              "value": "string",
-              "optional": true
+              "optional": true,
+              "type": "string"
             }
           },
-          "hash": ["profile", "settings"],
+          "hash": {
+            "type": "enum",
+            "values": ["profile", "settings"],
+            "optional": true
+          },
           "meta": {
             "title": "User",
             "requiresAuth": true

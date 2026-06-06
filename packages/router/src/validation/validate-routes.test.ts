@@ -1,3 +1,4 @@
+import { UrlKitError } from '@cookbook/urlkit';
 import { describe, expect, it } from 'vitest';
 import { validateRoutes } from './validate-routes';
 
@@ -103,12 +104,18 @@ describe('validateRoutes', () => {
   });
 
   it('rejects invalid hash configuration', () => {
-    expect(() => validateRoutes([{ id: 'empty-hash', path: '/', hash: [''] }])).toThrow(
-      'empty or non-string hash value',
-    );
-    expect(() => validateRoutes([{ id: 'duplicate-hash', path: '/', hash: ['a', 'a'] }])).toThrow(
-      'duplicate hash',
-    );
+    expect(() =>
+      validateRoutes([{ id: 'array-hash', path: '/', hash: ['summary'] } as never]),
+    ).toThrow('hash uses removed array shorthand');
+    expect(() =>
+      validateRoutes([
+        {
+          id: 'optional-default-hash',
+          path: '/',
+          hash: { type: 'string', optional: true, default: 'top' },
+        } as never,
+      ]),
+    ).toThrow('hash cannot combine optional: true with default');
   });
 
   it('rejects invalid slot names and removed slot forms', () => {
@@ -360,12 +367,18 @@ it('validates URLKit static search descriptors', () => {
         id: 'articles.index',
         path: '/articles',
         search: {
-          query: { type: 'one', optional: true },
-          filters: { type: 'many', optional: true },
-          requiredToken: { type: 'one' },
-          page: { value: 'int', default: 1 },
-          visible: { value: 'boolean', optional: true },
-          sort: { value: { type: 'enum', values: ['new', 'top'] }, optional: true },
+          query: { type: 'string', optional: true },
+          filters: { type: 'string', many: true, optional: true },
+          requiredToken: { type: 'string' },
+          page: { type: 'int', default: 1 },
+          visible: { type: 'boolean', optional: true },
+          publishedOn: { type: 'date', format: 'dd-MM-yyyy', optional: true },
+          startsAt: {
+            type: 'date-time',
+            format: 'dd-MM-yyyy HH:mm:ss',
+            optional: true,
+          },
+          sort: { type: 'enum', values: ['new', 'top'], optional: true },
         },
       },
     ]),
@@ -373,21 +386,73 @@ it('validates URLKit static search descriptors', () => {
 
   expect(() =>
     validateRoutes([{ id: 'direct', path: '/', search: { query: 'string' } } as never]),
+  ).toThrow('uses removed shorthand');
+
+  expect(() =>
+    validateRoutes([{ id: 'good', path: '/', search: { query: { type: 'string' } } } as never]),
   ).not.toThrow();
 
   expect(() =>
-    validateRoutes([{ id: 'bad', path: '/', search: { query: { type: 'string' } } } as never]),
-  ).toThrow('type must be "one", "many", "date", or "enum"');
-
-  expect(() =>
     validateRoutes([{ id: 'bad', path: '/', search: { query: { value: 'object' } } } as never]),
-  ).toThrow('not a supported URLKit static value');
+  ).toThrow('uses removed "value" descriptors');
 
   expect(() =>
     validateRoutes([
-      { id: 'bad', path: '/', search: { query: { type: 'one', optional: 'yes' } } } as never,
+      { id: 'bad', path: '/', search: { query: { type: 'string', optional: 'yes' } } } as never,
     ]),
-  ).toThrow('optional must be a boolean');
+  ).toThrow('optional must be literal true when provided');
+
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'bad',
+        path: '/',
+        search: {
+          from: {
+            type: 'date',
+            format: {
+              parse: (value: string) => new Date(value),
+              serialize: (value: Date) => value.toISOString(),
+            },
+          },
+        },
+      } as never,
+    ]),
+  ).toThrow(UrlKitError);
+
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'bad',
+        path: '/',
+        search: {
+          from: {
+            value: {
+              type: 'date',
+              format: 'dd-MM-yyyy',
+            },
+            optional: true,
+          },
+        },
+      } as never,
+    ]),
+  ).toThrow('uses removed "value" descriptors');
+
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'products',
+        path: '/products',
+        search: {
+          from: {
+            type: 'date',
+            format: 'DD-MM-yyyy',
+            optional: true,
+          },
+        },
+      },
+    ]),
+  ).toThrow('Date format contains unsupported token');
 });
 
 it('rejects layout fallbacks and slots when no layout component is in scope', () => {

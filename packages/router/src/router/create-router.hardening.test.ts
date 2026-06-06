@@ -23,7 +23,11 @@ describe('create-router hardening', () => {
 
   it('allows client-only hash differences during hydration and syncs them after creation', async () => {
     const routes = defineRoutes([
-      { id: 'article', path: '/articles/{slug}', hash: ['summary'] },
+      {
+        id: 'article',
+        path: '/articles/{slug}',
+        hash: { type: 'enum', values: ['summary'], optional: true },
+      },
     ] as const);
     const history = createMemoryHistory({
       initialEntries: ['/articles/typed-routing?preview=true#summary'],

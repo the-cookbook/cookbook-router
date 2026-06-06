@@ -20,7 +20,10 @@ export interface LinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly params?: HrefOptions<Route>['params'];
   readonly search?: HrefOptions<Route>['search'];
   readonly hash?: HrefOptions<Route>['hash'];
-  /** Per-component URLKit build options overriding route-level and router-level defaults. */
+  /**
+   * Per-component URLKit build options such as arrayFormat and defaults,
+   * overriding route-level and router-level defaults.
+   */
   readonly url?: HrefOptions<Route>['url'];
   readonly intercept?: InterceptInput;
   readonly context?: HrefOptions<Route>['context'];

@@ -206,9 +206,9 @@ export const routes = defineRoutes([
         id: 'users.show',
         path: 'users/{id:int}',
         search: {
-          tab: { type: 'one', optional: true },
+          tab: { type: 'string', optional: true },
         },
-        hash: ['profile', 'settings', 'security'],
+        hash: { type: 'enum', values: ['profile', 'settings', 'security'], optional: true },
         component: UserPage,
         meta: {
           title: 'User',
@@ -395,6 +395,26 @@ export const routes = defineRoutes([
     id: 'products',
     path: '/products',
     search: { page: int().default(1) },
+  },
+] as const);
+`,
+    });
+
+    await expect(loadRouteFiles({ routeFiles: ['routes.tsx'], fs })).rejects.toThrow(
+      'URLKit runtime builders',
+    );
+  });
+
+  it('rejects URLKit runtime date builders with format options in static route files', async () => {
+    const fs = createMemoryFileSystem({
+      'routes.tsx': `import { defineRoutes } from '@cookbook/router';
+import { date } from '@cookbook/urlkit';
+
+export const routes = defineRoutes([
+  {
+    id: 'products',
+    path: '/products',
+    search: { from: date({ format: 'dd-MM-yyyy' }).optional() },
   },
 ] as const);
 `,

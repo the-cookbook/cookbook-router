@@ -7,6 +7,7 @@ Routes describe URL matching, route identity, rendering hierarchy, metadata, red
 - [Route definition](#route-definition)
 - [Field reference](#field-reference)
 - [Path composition](#path-composition)
+- [Path routes and constraints](#path-routes-and-constraints)
 - [Index routes](#index-routes)
 - [Pathless layouts](#pathless-layouts)
 - [Params](#params)
@@ -41,7 +42,7 @@ interface RouteDefinition {
   readonly url?: RouterUrlOptions;
   readonly meta?: RouteMeta;
   readonly loading?: RouteComponent;
-  readonly errorFallback?: RouteComponent;
+  readonly error?: RouteComponent;
   readonly lifecycle?: RouteLifecycle;
   readonly middleware?: readonly Middleware[];
 }
@@ -56,17 +57,11 @@ interface RouteLayoutDefinition {
 }
 
 type RouteSlotDefinitions = Readonly<Record<string, RouteSlotDefinition>>;
-type RouteSlotDefinition = RouteSlotConfig | false;
+type RouteSlotDefinition = RouteComponent | RouteSlotConfig | true;
 
 interface RouteSlotConfig {
-  readonly fallback?: RouteSlotFallback | null;
+  readonly component?: RouteComponent;
   readonly routes?: readonly RouteDefinition[];
-  readonly meta?: RouteMeta;
-}
-
-interface RouteSlotFallback {
-  readonly id?: string;
-  readonly component: RouteComponent;
   readonly meta?: RouteMeta;
 }
 
@@ -89,25 +84,25 @@ type RouteIntercepts = Readonly<Record<string, RouteInterceptConfig>>;
 
 ## Field reference
 
-| Field              | Purpose                                                                                                                                             |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`               | Required stable route ID. Used for navigation, contracts, diagnostics, and metadata lookup.                                                         |
-| `path`             | URL pattern. Child paths are relative unless they start with `/`.                                                                                   |
-| `index`            | Marks a child as the default route for its parent path. Index routes must not define `path`.                                                        |
-| `component`        | Page component rendered for this route.                                                                                                             |
-| `layout.component` | Layout wrapper component. Layouts render child branches through `<Outlet />`.                                                                       |
-| `layout.slots`     | Named layout regions rendered through `<Slot name="..." />`.                                                                                        |
-| `children`         | Primary child route branch.                                                                                                                         |
-| `intercepts`       | Configured source-route interception rules keyed by target slot name.                                                                               |
-| `redirect`         | Internal or external redirect target. Redirect-only routes do not need components.                                                                  |
-| `search`           | URLKit-compatible static search descriptor for parsed search state and generated contracts.                                                         |
-| `hash`             | URLKit-compatible static hash descriptor or allowed hash fragment values.                                                                           |
-| `url`              | Route-level URL options such as `arrayFormat`, `invalidSearch`, `invalidHash`, and `unknownSearch`; overrides router-level defaults for this route. |
-| `meta`             | Arbitrary metadata preserved in generated contracts and runtime route definitions.                                                                  |
-| `loading`          | Route-level React Suspense fallback component rendered while the route subtree is loading.                                                          |
-| `errorFallback`    | Route-level React error fallback component rendered when the route subtree throws during rendering.                                                 |
-| `lifecycle`        | Route-level transition hooks.                                                                                                                       |
-| `middleware`       | Route-level middleware.                                                                                                                             |
+| Field              | Purpose                                                                                                                                                         |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | Required stable route ID. Used for navigation, contracts, diagnostics, and metadata lookup.                                                                     |
+| `path`             | URL pattern. Child paths are relative unless they start with `/`.                                                                                               |
+| `index`            | Marks a child as the default route for its parent path. Index routes must not define `path`.                                                                    |
+| `component`        | Page component rendered for this route.                                                                                                                         |
+| `layout.component` | Layout wrapper component. Layouts render child branches through `<Outlet />`.                                                                                   |
+| `layout.slots`     | Named layout regions rendered through `<Slot name="..." />`.                                                                                                    |
+| `children`         | Primary child route branch.                                                                                                                                     |
+| `intercepts`       | Configured source-route interception rules keyed by target slot name.                                                                                           |
+| `redirect`         | Internal or external redirect target. Redirect-only routes do not need components.                                                                              |
+| `search`           | URLKit-backed Router static search descriptor for parsed search state and generated contracts.                                                                  |
+| `hash`             | URLKit-backed static hash object descriptor for parsed hash state and generated contracts.                                                                      |
+| `url`              | Route-level URL options such as `arrayFormat`, `defaults`, `invalidSearch`, `invalidHash`, and `unknownSearch`; overrides router-level defaults for this route. |
+| `meta`             | Arbitrary metadata preserved in generated contracts and runtime route definitions.                                                                              |
+| `loading`          | Route-level React Suspense fallback component rendered while the route subtree is loading.                                                                      |
+| `error`            | Route-level React error fallback component rendered when the route subtree throws during rendering.                                                             |
+| `lifecycle`        | Route-level transition hooks.                                                                                                                                   |
+| `middleware`       | Route-level middleware.                                                                                                                                         |
 
 ## Path composition
 
@@ -150,6 +145,22 @@ Child paths may include a leading `/`, but they are still composed relative to t
 ```
 
 `terms-of-service` matches `/policies/terms-of-service`, not `/terms-of-service`. Top-level routes can still use leading `/` normally.
+
+## Path routes and constraints
+
+Route `path` values use PathKit syntax and URLKit parsed-param semantics. For the full path guide, including all built-in constraints and custom constraints, see [Path routes and constraints](path-routes.md).
+
+Built-in constraints are:
+
+| Constraint | Syntax                     | Generated/runtime type |
+| ---------- | -------------------------- | ---------------------- | ---------- | -------- |
+| `decimal`  | `{price:decimal}`          | `number`               |
+| `int`      | `{id:int}`                 | `number`               |
+| `range`    | `{page:range(1,100)}`      | `number`               |
+| `list`     | `{view:list(grid           | list                   | details)}` | `string` |
+| `regex`    | `{slug:regex([a-z0-9-]+)}` | `string`               |
+
+Use `{param}` for unconstrained string segments. There is no built-in `{param:number}` or `{param:string}` constraint.
 
 ## Index routes
 
@@ -218,32 +229,31 @@ Path params use PathKit path-pattern syntax and URLKit parsed-param semantics. P
 
 Generated params and runtime match state use parsed URLKit values:
 
-| Pattern                    | Parsed/generated type | Runtime behavior                     |
-| -------------------------- | --------------------- | ------------------------------------ |
-| `{id}`                     | `string`              | Captures a segment.                  |
-| `{id:string}`              | `string`              | Captures a string segment.           |
-| `{id:int}`                 | `number`              | Parses an integer-shaped URL value.  |
-| `{value:range(1,10)}`      | `number`              | Parses a numeric URL value.          |
-| `{slug:regex([a-z0-9-]+)}` | `string`              | Matches the configured regex.        |
-| `{slug:slug}`              | `string`              | Uses a registered custom constraint. |
-| `{*path}`                  | `string`              | Captures wildcard path data.         |
+| Pattern                    | Parsed/generated type | Runtime behavior                          |
+| -------------------------- | --------------------- | ----------------------------------------- |
+| `{id}`                     | `string`              | Captures an unconstrained string segment. |
+| `{id:int}`                 | `number`              | Parses an integer-shaped URL value.       |
+| `{value:range(1,10)}`      | `number`              | Parses a numeric URL value.               |
+| `{slug:regex([a-z0-9-]+)}` | `string`              | Matches the configured regex.             |
+| `{slug:slug}`              | `string`              | Uses a registered custom constraint.      |
+| `{*path}`                  | `string`              | Captures wildcard path data.              |
 
 Duplicate param names in the same parent-to-child branch fail validation.
 
-Custom path constraints let you define reusable validation rules for route params beyond the built-in constraints such as `int`, `number`, `string`, and `regex`. Register them with [`pathConstraints`](#pathconstraints) before using them in route paths so the router can forward them to URLKit before route validation, matching, and href generation. Custom constraints generate `string` params unless URLKit supports typed static inference for the custom constraint.
+Custom path constraints let you define reusable validation rules for route params beyond the built-in `decimal`, `int`, `range`, `list`, and `regex` constraints. Register them with [`pathConstraints`](#pathconstraints) before using them in route paths so the router can forward them to URLKit before route validation, matching, and href generation. Custom constraints generate `string` params unless URLKit supports typed static inference for the custom constraint. See [Path routes and constraints](path-routes.md) for the complete constraint API.
 
 ## Search, hash, and metadata
 
-Search contracts are generated from URLKit-compatible static `search` descriptors. Keep descriptors static in route files consumed by the CLI; do not use URLKit runtime builders there unless static extraction explicitly supports them.
+Search contracts are generated from URLKit-backed Router static `search` descriptors. Keep descriptors static in route files consumed by the CLI; do not use URLKit runtime builders there unless static extraction explicitly supports them.
 
 ```tsx
 {
   id: 'articles.index',
   path: '/articles',
   search: {
-    query: { value: 'string', optional: true },
-    page: { value: 'int', default: 1 },
-    filters: { value: 'string', type: 'many', optional: true },
+    query: { type: 'string', optional: true },
+    page: { type: 'int', default: 1 },
+    filters: { type: 'string', many: true, optional: true },
   },
   url: {
     arrayFormat: 'comma',
@@ -263,7 +273,7 @@ type ArticlesSearch = {
 };
 ```
 
-`url.arrayFormat` controls repeated search param parsing and building. `url.unknownSearch` controls undeclared query keys and defaults to `'strip'`. Router-level defaults can be set on `createRouter({ url })`; route-level `url` overrides router defaults; URL-building call-site options such as `router.href()`, `router.navigate.to()`, `useHref()`, `Link`, and `NavLink` can override build options such as `arrayFormat`.
+`url.arrayFormat` controls repeated search param parsing and building. `url.unknownSearch` controls undeclared query keys and defaults to `'strip'`. Router-level defaults can be set on `createRouter({ url })`; route-level `url` overrides router defaults; URL-building call-site options such as `router.href()`, `router.navigate.to()`, `useHref()`, `Link`, and `NavLink` can override build options such as `arrayFormat` and `defaults`.
 
 When `unknownSearch: 'preserve'` is active, declared search remains typed and unknown keys are exposed separately on the match as `unknownSearch`.
 
@@ -273,7 +283,7 @@ Hash values become a string union:
 {
   id: 'articles.show',
   path: '/articles/{slug}',
-  hash: ['comments', 'share'],
+  hash: { type: 'enum', values: ['comments', 'share'], optional: true },
   component: ArticlePage,
 }
 ```
@@ -390,10 +400,7 @@ Slots render named layout regions.
     component: DashboardLayout,
     slots: {
       sidebar: {
-        fallback: {
-          id: 'dashboard.sidebar.fallback',
-          component: DashboardSidebar,
-        },
+        component: DashboardSidebar,
         routes: [
           {
             id: 'dashboard.sidebar.activity',
@@ -402,9 +409,7 @@ Slots render named layout regions.
           },
         ],
       },
-      modal: {
-        fallback: null,
-      },
+      modal: true,
     },
   },
 }
@@ -428,12 +433,12 @@ export function DashboardLayout() {
 
 Slot rules:
 
-- `fallback` renders when no slot route matches.
-- `fallback: null` creates an empty but valid slot.
-- `false` disables an inherited slot for that branch.
+- `true` enables a declared slot without fallback content.
+- A slot `component` renders when no slot route or intercept is active for that slot.
+- Slot configs support only `component`, `meta`, and `routes`.
 - Slot names are layout-scoped, not global.
-- Slot fallback IDs are useful for diagnostics but are not generated as navigable route contracts.
 - Slot route IDs are generated because they are real URL-matched route definitions.
+- The removed `fallback`, `fallback.id`, and `id` slot forms fail validation; see [Route validation errors](route-validation-errors.md).
 
 When a slot route shares a URL with primary content, define both routes:
 
@@ -475,7 +480,7 @@ Configured intercepts are declared on the source route.
   layout: {
     component: BlogLayout,
     slots: {
-      modal: { fallback: null },
+      modal: true,
     },
   },
   intercepts: {
@@ -556,7 +561,7 @@ Use `RouterProvider fallback` for global 404 UI. For section-specific 404 UI, de
 
 Route-level `loading` components are used by `@cookbook/router-react` as React Suspense fallbacks. They render while a lazy route component, layout, slot route, or intercepted route suspends.
 
-Route-level `errorFallback` components are used by `@cookbook/router-react` as React error-boundary fallbacks. The nearest matched route with an `errorFallback` owns errors thrown by its route subtree. The fallback receives `error`, `reset`, and `route` props.
+Route-level `error` components are used by `@cookbook/router-react` as React error-boundary fallbacks. The nearest matched route with an `error` component owns errors thrown by its route subtree. The fallback receives `error`, `reset`, and `route` props.
 
 ```tsx
 function ArticleLoading() {
@@ -579,11 +584,11 @@ function ArticleErrorFallback(props: RouteErrorFallbackProps) {
   path: 'articles/{slug}',
   component: ArticlePage,
   loading: ArticleLoading,
-  errorFallback: ArticleErrorFallback,
+  error: ArticleErrorFallback,
 }
 ```
 
-`errorFallback` handles React rendering and lazy-import errors. Router transition errors from middleware or lifecycle hooks still flow through router navigation error handling.
+`error` handles React rendering and lazy-import errors. Router transition errors from middleware or lifecycle hooks still flow through router navigation error handling.
 
 ## Middleware and lifecycle on routes
 
@@ -645,9 +650,9 @@ createRouter({ routes, maxRedirectDepth: 20 });
 
 ### `pathConstraints`
 
-Custom path constraints let route params use reusable validation rules beyond the built-in constraints such as `int`, `number`, `string`, and `regex`. Create custom constraints with `createConstraint()` and register them through `defineRoutes(..., { pathConstraints })` before using them in route paths.
+Custom path constraints let route params use reusable validation rules beyond the built-in `decimal`, `int`, `range`, `list`, and `regex` constraints. Create custom constraints with `createConstraint()` and register them through `defineRoutes(..., { pathConstraints })` before using them in route paths.
 
-`defineRoutes()` validates route patterns immediately, so any custom constraint referenced by a route path must already be registered. Cookbook Router forwards registered constraints to URLKit before descriptor validation, matching, parsing, and href building. For the full constraint API, see the `@cookbook/pathkit` documentation for `createConstraint`.
+`defineRoutes()` validates route patterns immediately, so any custom constraint referenced by a route path must already be registered. Cookbook Router forwards registered constraints to URLKit before descriptor validation, matching, parsing, and href building. For all built-in constraints, custom constraint APIs, and common mistakes, see [Path routes and constraints](path-routes.md).
 
 ```ts
 import { createConstraint, createRouter, defineRoutes } from '@cookbook/router';
@@ -713,21 +718,9 @@ Matching uses normalized route paths and URLKit-backed route URL contracts. Path
 
 ## Validation diagnostics
 
-Validation fails for common route tree problems, including:
+`defineRoutes()`, `validateRoutes()`, router creation, and CLI generation validate route trees before they are used. Error messages include route IDs or invalid field names where possible.
 
-- duplicate route IDs
-- duplicate full paths
-- missing route IDs
-- index routes with `path`
-- routes with both `index: true` and `path`
-- routes that are neither pathless layout/group routes nor addressable through `path` or `index`
-- duplicate params in a branch
-- invalid path patterns
-- invalid slot definitions
-- malformed redirect config
-- invalid configured intercept targets
-
-Error messages include route IDs or invalid field names where possible.
+For the full catalog of route validation failures with symptoms, causes, and fixes, see [Route validation errors](route-validation-errors.md).
 
 ## Best practices
 
@@ -735,7 +728,6 @@ Error messages include route IDs or invalid field names where possible.
 - Prefer route-object redirects over literal internal string redirects.
 - Use `basename` instead of hard-coding deployment prefixes in route paths.
 - Define primary routes for navigable pages and slot routes for slot-specific UI.
-- Keep slot fallback IDs out of generated contract expectations.
-- Use direct `useOutletContext<Context>()` for slot fallback context unless you have generated outlet context contracts.
+- Use direct `useOutletContext<Context>()` for slot component context unless you have generated outlet context contracts.
 - Use configured intercepts for route-owned UX patterns and call-site intercepts for local UI decisions.
 - Keep external URLs out of route params; use string redirects or normal anchors for external navigation.

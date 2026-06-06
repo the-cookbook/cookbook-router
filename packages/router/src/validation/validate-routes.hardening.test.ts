@@ -16,9 +16,11 @@ describe('validate-routes hardening', () => {
   });
 
   it('rejects hash contracts with a leading number sign', () => {
-    expect(() => validateRoutes([{ id: 'home', path: '/', hash: ['#profile'] }])).toThrow(
-      'must not include a leading #',
-    );
+    expect(() =>
+      validateRoutes([
+        { id: 'home', path: '/', hash: { type: 'enum', values: ['#profile'] } } as never,
+      ]),
+    ).toThrow('must not include a leading #');
   });
 
   it('does not treat pathless layouts as duplicate URL declarations', () => {

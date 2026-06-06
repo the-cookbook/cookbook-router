@@ -49,9 +49,9 @@ export const routes = defineRoutes([
         id: 'users.show',
         path: 'users/{id:int}',
         search: {
-          tab: { value: 'string', optional: true },
+          tab: { type: 'string', optional: true },
         },
-        hash: ['profile', 'settings', 'security'],
+        hash: { type: 'enum', values: ['profile', 'settings', 'security'], optional: true },
         component: UserPage,
         meta: {
           title: 'User',
@@ -118,7 +118,7 @@ export const router = createRouter({
 });
 ```
 
-The default router chooses browser history when `window` exists and memory history otherwise. You can pass `basename`, `middleware`, `lifecycle`, `pathOptions`, or a custom `history` when needed. If route definitions use custom path constraints, pass `pathConstraints` to `defineRoutes()` so immediate validation can see them.
+The default router chooses browser history when `window` exists and memory history otherwise. You can pass `basename`, `middleware`, `lifecycle`, `pathOptions`, or a custom `history` when needed. If route definitions use custom path constraints, pass `pathConstraints` to `defineRoutes()` so immediate validation can see them. See [Path routes and constraints](path-routes.md) for built-in constraints and custom constraints.
 
 ## Render React
 

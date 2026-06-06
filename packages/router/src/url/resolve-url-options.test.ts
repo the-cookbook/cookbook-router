@@ -25,6 +25,16 @@ describe('resolveUrlOptions', () => {
     ).toEqual({ arrayFormat: 'repeat' });
   });
 
+  it('resolves default serialization options with the same precedence model', () => {
+    expect(
+      resolveUrlOptions({
+        router: { defaults: 'include' },
+        route: { defaults: 'omit' },
+        call: { defaults: 'include' },
+      }),
+    ).toEqual({ defaults: 'include' });
+  });
+
   it('resolves invalidSearch with the same precedence model', () => {
     expect(
       resolveUrlOptions({

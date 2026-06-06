@@ -4,8 +4,9 @@ import type {
   CreateRouterRouteUrlContractOptions,
   RouterRouteUrlContract,
   RouterRouteUrlDescriptor,
-  RouterUrlOptions,
 } from './contracts';
+import { createRouteUrlContractDiagnostic } from './create-route-url-contract-diagnostic';
+import { toUrlKitContractOptions } from './map-router-url-options';
 import { registerUrlPathConstraints } from './register-url-path-constraints';
 import { resolveUrlOptions } from './resolve-url-options';
 
@@ -18,8 +19,10 @@ interface UrlKitStaticRouteDescriptor {
 /**
  * Compiles the URLKit contract for a router route descriptor.
  *
- * Params are compiled in parsed mode so built-in URLKit path constraints such as
- * `{id:int}` and `{value:range(1,10)}` produce numbers instead of raw strings.
+ * Router route definitions consume the same cleaned static descriptor shape as
+ * URLKit v2. Search and hash descriptors are forwarded without compatibility
+ * conversion so URLKit remains the single source of validation, parsing,
+ * normalization, and build behavior.
  */
 export function createRouteUrlContract(
   route: RouterRouteUrlDescriptor,
@@ -32,22 +35,18 @@ export function createRouteUrlContract(
     ...(route.url === undefined ? {} : { route: route.url }),
     ...(options.callUrl === undefined ? {} : { call: options.callUrl }),
   });
-  const descriptor = createUrlKitRouteDescriptor(route);
 
-  return createUrlKitRouteUrlContract(descriptor, {
-    params: 'parsed',
-    ...toUrlKitContractOptions(urlOptions),
-    ...(options.pathConstraints === undefined ? {} : { pathConstraints: options.pathConstraints }),
-  }) as RouterRouteUrlContract;
-}
-
-function toUrlKitContractOptions(
-  options: RouterUrlOptions,
-): Pick<RouterUrlOptions, 'arrayFormat' | 'unknownSearch'> {
-  return {
-    ...(options.arrayFormat === undefined ? {} : { arrayFormat: options.arrayFormat }),
-    ...(options.unknownSearch === undefined ? {} : { unknownSearch: options.unknownSearch }),
-  };
+  try {
+    return createUrlKitRouteUrlContract(createUrlKitRouteDescriptor(route), {
+      params: 'parsed',
+      ...toUrlKitContractOptions(urlOptions),
+      ...(options.pathConstraints === undefined
+        ? {}
+        : { pathConstraints: options.pathConstraints }),
+    }) as RouterRouteUrlContract;
+  } catch (error) {
+    throw createRouteUrlContractDiagnostic(error, options.routeId);
+  }
 }
 
 function createUrlKitRouteDescriptor(route: RouterRouteUrlDescriptor): UrlKitStaticRouteDescriptor {

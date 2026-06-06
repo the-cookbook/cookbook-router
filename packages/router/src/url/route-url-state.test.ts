@@ -33,9 +33,9 @@ describe('route URL state helpers', () => {
       id: 'users.show',
       path: '/users/{id:int}',
       search: {
-        tags: { value: 'string', type: 'many', optional: true },
+        tags: { type: 'string', many: true, optional: true },
       },
-      hash: ['details', 'activity'],
+      hash: { type: 'enum', values: ['details', 'activity'], optional: true },
       url: { arrayFormat: 'comma' },
     });
 
@@ -61,8 +61,8 @@ describe('route URL state helpers', () => {
       id: 'overview',
       path: '/overview',
       search: {
-        page: { value: 'number', optional: true },
-        pageSize: { value: 'number', optional: true },
+        page: { type: 'number', optional: true },
+        pageSize: { type: 'number', optional: true },
       },
     });
 
@@ -74,8 +74,8 @@ describe('route URL state helpers', () => {
       id: 'overview',
       path: '/overview',
       search: {
-        page: { value: 'number', default: 1, optional: true },
-        pageSize: { value: 'number', optional: true },
+        page: { type: 'number', default: 1 },
+        pageSize: { type: 'number', optional: true },
       },
     });
 
@@ -85,16 +85,16 @@ describe('route URL state helpers', () => {
     ).toEqual({ page: 1, pageSize: 10 });
   });
 
-  it('recovers invalid required search params as missing values', () => {
+  it('propagates invalid required search params instead of recovering them', () => {
     const route = normalizedRoute({
       id: 'reports',
       path: '/reports',
       search: {
-        page: { value: 'number' },
+        page: { type: 'number' },
       },
     });
 
-    expect(parseRouteSearch(route, '?page=a')).toEqual({});
+    expect(() => parseRouteSearch(route, '?page=a')).toThrow('Expected a finite number value');
   });
 
   it('keeps strict URLKit search validation when invalidSearch is error or no-match', () => {
@@ -102,7 +102,7 @@ describe('route URL state helpers', () => {
       id: 'overview',
       path: '/overview',
       search: {
-        page: { value: 'number', optional: true },
+        page: { type: 'number', optional: true },
       },
     });
 
@@ -119,7 +119,7 @@ describe('route URL state helpers', () => {
       id: 'products',
       path: '/products',
       search: {
-        page: { value: 'number', optional: true },
+        page: { type: 'number', optional: true },
       },
     });
 
@@ -151,7 +151,7 @@ describe('route URL state helpers', () => {
     const route = normalizedRoute({
       id: 'products',
       path: '/products',
-      hash: ['grid', 'list'],
+      hash: { type: 'enum', values: ['grid', 'list'], optional: true },
     });
 
     expect(parseRouteHash(route, '#missing')).toBeUndefined();
@@ -168,7 +168,7 @@ describe('route URL state helpers', () => {
       id: 'products',
       path: '/products',
       search: {
-        tags: { value: 'string', type: 'many', optional: true },
+        tags: { type: 'string', many: true, optional: true },
       },
       url: { arrayFormat: 'comma' },
     });

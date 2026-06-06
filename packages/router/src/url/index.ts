@@ -1,6 +1,7 @@
 export type {
   CreateRouterRouteUrlContractOptions,
   ResolveUrlOptionsInput,
+  RouterRouteSearchParseOptions,
   RouterRouteUrlContract,
   RouterRouteUrlDescriptor,
   RouterInvalidUrlStatePolicy,

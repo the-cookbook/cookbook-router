@@ -333,7 +333,7 @@ describe('Slot', () => {
               id: 'blog.articles.show',
               path: 'articles/{slug:regex([a-z0-9-]+)}',
               component: ArticlePage,
-              search: { ref: { type: 'one', optional: true } },
+              search: { ref: { type: 'string', optional: true } },
             },
           ],
         },

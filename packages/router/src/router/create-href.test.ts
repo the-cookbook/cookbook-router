@@ -23,7 +23,7 @@ describe('createRouteHref', () => {
         {
           id: 'products',
           path: '/products',
-          search: { tags: { type: 'many', optional: true } },
+          search: { tags: { type: 'string', many: true, optional: true } },
           url: { arrayFormat: 'comma' },
         },
       ]),
@@ -50,5 +50,26 @@ describe('createRouteHref', () => {
         routerUrl: { arrayFormat: 'comma' },
       }),
     ).toBe('/products?tags=router&tags=typescript');
+  });
+
+  it('forwards default serialization options while building search', () => {
+    const routes = normalizeRoutes(
+      defineRoutes([
+        {
+          id: 'products',
+          path: '/products',
+          search: { page: { type: 'int', default: 1 } },
+        },
+      ]),
+    );
+    const lookup = createRouteLookup(routes);
+
+    expect(
+      createRouteHref({
+        routeId: 'products',
+        options: { search: { page: 1 }, url: { defaults: 'omit' } },
+        routes: lookup,
+      }),
+    ).toBe('/products');
   });
 });

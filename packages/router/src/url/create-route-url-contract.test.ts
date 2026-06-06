@@ -46,9 +46,9 @@ describe('createRouteUrlContract', () => {
     const contract = createRouteUrlContract({
       path: '/products',
       search: {
-        page: { value: 'int', default: 1 },
-        featured: { value: 'boolean', optional: true },
-        tags: { value: 'string', type: 'many' },
+        page: { type: 'int', default: 1 },
+        featured: { type: 'boolean', optional: true },
+        tags: { type: 'string', many: true },
       },
     });
 
@@ -59,12 +59,90 @@ describe('createRouteUrlContract', () => {
     });
   });
 
+  it('uses Router static date and date-time format strings with URLKit', () => {
+    const contract = createRouteUrlContract({
+      path: '/products',
+      search: {
+        from: {
+          type: 'date',
+          format: 'dd-MM-yyyy',
+          optional: true,
+        },
+        at: {
+          type: 'date-time',
+          format: 'dd-MM-yyyy HH:mm:ss',
+          optional: true,
+        },
+      },
+    });
+
+    expect(contract.parse('/products?from=06-06-2026&at=06-06-2026+14%3A30%3A05')).toMatchObject({
+      pathname: '/products',
+      search: {
+        from: new Date(Date.UTC(2026, 5, 6)),
+        at: new Date(Date.UTC(2026, 5, 6, 14, 30, 5)),
+      },
+    });
+
+    expect(
+      contract.build({
+        search: {
+          from: new Date(Date.UTC(2026, 5, 6)),
+          at: new Date(Date.UTC(2026, 5, 6, 14, 30, 5)),
+        },
+      }),
+    ).toBe('/products?from=06-06-2026&at=06-06-2026+14%3A30%3A05');
+  });
+
+  it('wraps invalid URLKit date format errors with route and search param context', () => {
+    expect(() =>
+      createRouteUrlContract(
+        {
+          path: '/products',
+          search: {
+            from: {
+              type: 'date',
+              format: 'DD-MM-yyyy',
+              optional: true,
+            },
+          },
+        },
+        { routeId: 'products' },
+      ),
+    ).toThrow(/invalid URL descriptor/);
+  });
+
+  it('accepts direct router date-time descriptor objects', () => {
+    const contract = createRouteUrlContract({
+      path: '/reports/{id:int}',
+      search: {
+        at: {
+          type: 'date-time',
+          format: 'dd-MM-yyyy HH:mm:ss',
+          optional: true,
+        },
+      },
+      hash: { type: 'enum', values: ['summary'], optional: true },
+    });
+
+    expect(contract.parseSearch('?at=06-06-2026+14%3A30%3A05')).toEqual({
+      at: new Date(Date.UTC(2026, 5, 6, 14, 30, 5)),
+    });
+    expect(contract.parse('/reports/42?at=06-06-2026+14%3A30%3A05#summary')).toMatchObject({
+      params: { id: 42 },
+      search: {
+        at: new Date(Date.UTC(2026, 5, 6, 14, 30, 5)),
+      },
+      hash: 'summary',
+    });
+  });
+
   it('uses route-level URL options over router-level URL options', () => {
     const contract = createRouteUrlContract(
       {
         path: '/products',
         search: {
-          tags: { type: 'many' },
+          tags: { type: 'string', many: true },
         },
         url: { arrayFormat: 'comma' },
       },
@@ -80,7 +158,7 @@ describe('createRouteUrlContract', () => {
     const contract = createRouteUrlContract({
       path: '/products',
       search: {
-        page: { value: 'number', optional: true },
+        page: { type: 'number', optional: true },
       },
       url: { unknownSearch: 'error' },
     });
@@ -98,7 +176,7 @@ describe('createRouteUrlContract', () => {
       {
         path: '/products',
         search: {
-          tags: { type: 'many' },
+          tags: { type: 'string', many: true },
         },
         url: { arrayFormat: 'comma' },
       },

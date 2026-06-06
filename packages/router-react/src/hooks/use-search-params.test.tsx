@@ -33,8 +33,8 @@ describe('useSearchParams', () => {
           id: 'products',
           path: '/products',
           search: {
-            page: { value: 'int', default: 1 },
-            tags: { value: 'string', type: 'many', optional: true },
+            page: { type: 'int', default: 1 },
+            tags: { type: 'string', many: true, optional: true },
           },
           component: Page,
         },
@@ -58,7 +58,7 @@ describe('useSearchParams', () => {
         {
           id: 'products',
           path: '/products',
-          search: { tags: { value: 'string', type: 'many', optional: true } },
+          search: { tags: { type: 'string', many: true, optional: true } },
           url: { arrayFormat: 'comma' },
           component: Page,
         },

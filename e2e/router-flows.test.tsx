@@ -77,8 +77,8 @@ const routes = defineRoutes([
       {
         id: 'user',
         path: 'users/{id:int}',
-        search: { tab: { type: 'one', optional: true } },
-        hash: ['profile', 'details'],
+        search: { tab: { type: 'string', optional: true } },
+        hash: { type: 'enum', values: ['profile', 'details'], optional: true },
         component: UserPage,
         lifecycle: {
           beforeEnter: ({ location }) => events.push(`before:${location.href}`),

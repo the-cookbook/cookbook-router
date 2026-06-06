@@ -72,6 +72,6 @@
   },
   "dependencies": {
     "@cookbook/pathkit": "v0.3.1",
-    "@cookbook/urlkit": "^1.1.0"
+    "@cookbook/urlkit": "file:../../../../urlkit"
   }
 }

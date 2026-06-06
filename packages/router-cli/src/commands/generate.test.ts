@@ -93,8 +93,8 @@ export const routes = defineRoutes([
       {
         id: 'users.show',
         path: 'users/{id:int}',
-        search: { tab: { type: 'one', optional: true } },
-        hash: ['profile', 'settings', 'security'],
+        search: { tab: { type: 'string', optional: true } },
+        hash: { type: 'enum', values: ['profile', 'settings', 'security'], optional: true },
         component: UserPage,
         meta: { title: 'User', requiresAuth: true },
         lifecycle: {
@@ -196,9 +196,9 @@ export const routes = defineRoutes([
     id: 'products.show',
     path: '/products/{price:int}',
     search: {
-      page: { value: 'int', default: 1 },
-      tags: { value: 'string', type: 'many' },
-      sort: { value: { type: 'enum', values: ['new', 'top'] }, optional: true },
+      page: { type: 'int', default: 1 },
+      tags: { type: 'string', many: true },
+      sort: { type: 'enum', values: ['new', 'top'], optional: true },
     },
     hash: { type: 'enum', values: ['details', 'reviews'], optional: true },
     url: { arrayFormat: 'comma' },

@@ -2,16 +2,18 @@ import {
   buildHash as buildUrlKitHash,
   buildSearch as buildUrlKitSearch,
   normalizeHash,
+  parseHash as parseUrlKitHash,
   parseSearch as parseUrlKitSearch,
 } from '@cookbook/urlkit/router-runtime';
 import { matchPathPattern, type RouterPathConstraints } from '../pathkit/pathkit';
-import type { NormalizedRoute, RouteHashSchema, RouteSearchSchema } from '../routes/contracts';
-import type {
-  RouterUnknownSearchParams,
-  RouterUrlBuildOptions,
-  RouterUrlOptions,
-} from './contracts';
+import type { NormalizedRoute } from '../routes/contracts';
+import type { RouterUnknownSearchParams, RouterUrlOptions } from './contracts';
 import { createRouteUrlContract } from './create-route-url-contract';
+import {
+  toUrlKitHashParseOptions,
+  toUrlKitBuildOptions,
+  toUrlKitSearchParseOptions,
+} from './map-router-url-options';
 import { resolveUrlOptions } from './resolve-url-options';
 
 export interface RouteUrlStateOptions {
@@ -136,7 +138,7 @@ export function buildRouteSearch(
   options: RouteUrlStateOptions = {},
 ): string {
   const urlOptions = {
-    ...toUrlKitSearchBuildOptions(resolveRouteUrlOptions(route, options)),
+    ...toUrlKitBuildOptions(resolveRouteUrlOptions(route, options)),
     sortKeys: true,
   };
 
@@ -159,15 +161,7 @@ export function parseRouteHash(
   const urlOptions = resolveRouteUrlOptions(route, options);
 
   if (route.route.hash) {
-    if ((urlOptions.invalidHash ?? 'recover') !== 'recover') {
-      return createNormalizedRouteUrlContract(route, options).parseHash(hash);
-    }
-
-    try {
-      return createNormalizedRouteUrlContract(route, options).parseHash(hash);
-    } catch {
-      return getHashDefault(route.route.hash);
-    }
+    return parseUrlKitHash(hash, route.route.hash, toUrlKitHashParseOptions(urlOptions));
   }
 
   return normalizeHash(hash);
@@ -182,7 +176,10 @@ export function buildRouteHash(
   const normalized = normalizeHash(hash);
 
   if (route.route.hash) {
-    return createNormalizedRouteUrlContract(route, options).buildHash(normalized as never);
+    return createNormalizedRouteUrlContract(route, options).buildHash(
+      normalized as never,
+      toUrlKitBuildOptions(resolveRouteUrlOptions(route, options)),
+    );
   }
 
   return buildUrlKitHash(normalized);
@@ -206,47 +203,10 @@ function parseSchemaRouteSearch(
   options: RouteUrlStateOptions,
   urlOptions: RouterUrlOptions,
 ): Record<string, unknown> {
-  const invalidSearch = urlOptions.invalidSearch ?? 'recover';
-  const urlKitOptions = toUrlKitSearchParseOptions(urlOptions);
-
-  if (invalidSearch !== 'recover') {
-    return createNormalizedRouteUrlContract(route, options).parseSearch(
-      search,
-      urlKitOptions,
-    ) as Record<string, unknown>;
-  }
-
-  return parseRecoverableRouteSearch(route, search, options, urlKitOptions);
-}
-
-function parseRecoverableRouteSearch(
-  route: NormalizedRoute,
-  search: string,
-  options: RouteUrlStateOptions,
-  urlKitOptions: Pick<RouterUrlOptions, 'arrayFormat' | 'unknownSearch'>,
-): Record<string, unknown> {
-  const schema = route.route.search;
-  const invalidKeys = new Set<string>();
-  let currentSearch = search;
-  const maxAttempts = Object.keys(schema ?? {}).length + 1;
-  const contract = createRecoverableSearchContract(route, options);
-
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    try {
-      return contract.parseSearch(currentSearch, urlKitOptions) as Record<string, unknown>;
-    } catch (error) {
-      const invalidKey = getRecoverableInvalidSearchKey(error, schema);
-
-      if (!invalidKey || invalidKeys.has(invalidKey)) {
-        throw error;
-      }
-
-      invalidKeys.add(invalidKey);
-      currentSearch = removeSearchKey(currentSearch, invalidKey);
-    }
-  }
-
-  return contract.parseSearch(currentSearch, urlKitOptions) as Record<string, unknown>;
+  return createNormalizedRouteUrlContract(route, options).parseSearch(
+    search,
+    toUrlKitSearchParseOptions(urlOptions),
+  ) as Record<string, unknown>;
 }
 
 function parseSchemaRouteSearchState(
@@ -256,73 +216,11 @@ function parseSchemaRouteSearchState(
   options: RouteUrlStateOptions,
   urlOptions: RouterUrlOptions,
 ): ParsedRouteSearchState {
-  const invalidSearch = urlOptions.invalidSearch ?? 'recover';
-  const urlKitOptions = toUrlKitSearchParseOptions(urlOptions);
-
-  if (invalidSearch !== 'recover') {
-    return toParsedRouteSearchState(
-      createNormalizedRouteUrlContract(route, options).parse(
-        createUrlInput(pathname, search),
-        urlKitOptions,
-      ),
-    );
-  }
-
-  return parseRecoverableRouteSearchState(route, pathname, search, options, urlKitOptions);
-}
-
-function parseRecoverableRouteSearchState(
-  route: NormalizedRoute,
-  pathname: string,
-  search: string,
-  options: RouteUrlStateOptions,
-  urlKitOptions: Pick<RouterUrlOptions, 'arrayFormat' | 'unknownSearch'>,
-): ParsedRouteSearchState {
-  const schema = route.route.search;
-  const invalidKeys = new Set<string>();
-  let currentSearch = search;
-  const maxAttempts = Object.keys(schema ?? {}).length + 1;
-  const contract = createRecoverableSearchContract(route, options);
-
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    try {
-      return toParsedRouteSearchState(
-        contract.parse(createUrlInput(pathname, currentSearch), urlKitOptions),
-      );
-    } catch (error) {
-      const invalidKey = getRecoverableInvalidSearchKey(error, schema);
-
-      if (!invalidKey || invalidKeys.has(invalidKey)) {
-        throw error;
-      }
-
-      invalidKeys.add(invalidKey);
-      currentSearch = removeSearchKey(currentSearch, invalidKey);
-    }
-  }
-
   return toParsedRouteSearchState(
-    contract.parse(createUrlInput(pathname, currentSearch), urlKitOptions),
-  );
-}
-
-function createRecoverableSearchContract(route: NormalizedRoute, options: RouteUrlStateOptions) {
-  const recoverableSearch = makeSearchSchemaRecoverable(route.route.search);
-
-  return createRouteUrlContract(
-    {
-      ...(route.fullPath === undefined ? {} : { path: route.fullPath }),
-      ...(recoverableSearch === undefined ? {} : { search: recoverableSearch }),
-      ...(route.route.hash === undefined ? {} : { hash: route.route.hash }),
-      ...(route.route.url === undefined ? {} : { url: route.route.url }),
-    },
-    {
-      ...(options.routerUrl === undefined ? {} : { routerUrl: options.routerUrl }),
-      ...(options.callUrl === undefined ? {} : { callUrl: options.callUrl }),
-      ...(options.pathConstraints === undefined
-        ? {}
-        : { pathConstraints: options.pathConstraints }),
-    },
+    createNormalizedRouteUrlContract(route, options).parse(
+      createUrlInput(pathname, search),
+      toUrlKitSearchParseOptions(urlOptions),
+    ),
   );
 }
 
@@ -339,87 +237,6 @@ function toParsedRouteSearchState(parsed: unknown): ParsedRouteSearchState {
   return {
     search: state.search ?? {},
     ...(state.unknownSearch === undefined ? {} : { unknownSearch: state.unknownSearch }),
-  };
-}
-
-function makeSearchSchemaRecoverable(
-  schema: RouteSearchSchema | undefined,
-): RouteSearchSchema | undefined {
-  if (!schema) {
-    return schema;
-  }
-
-  return Object.fromEntries(
-    Object.entries(schema).map(([key, field]) => [key, makeSearchFieldRecoverable(field)]),
-  ) as RouteSearchSchema;
-}
-
-function makeSearchFieldRecoverable(field: RouteSearchSchema[string]): RouteSearchSchema[string] {
-  if (!field || typeof field !== 'object' || Array.isArray(field)) {
-    return field;
-  }
-
-  return { ...field, optional: true } as RouteSearchSchema[string];
-}
-
-function getRecoverableInvalidSearchKey(
-  error: unknown,
-  schema: RouteSearchSchema | undefined,
-): string | undefined {
-  if (!schema || !isUrlKitInvalidSearchError(error)) {
-    return undefined;
-  }
-
-  const [pathHead] = error.path;
-
-  if (typeof pathHead !== 'string' || !(pathHead in schema)) {
-    return undefined;
-  }
-
-  return pathHead;
-}
-
-function isUrlKitInvalidSearchError(
-  error: unknown,
-): error is { readonly code: 'invalid-search'; readonly path: readonly unknown[] } {
-  return (
-    !!error &&
-    typeof error === 'object' &&
-    'code' in error &&
-    error.code === 'invalid-search' &&
-    'path' in error &&
-    Array.isArray(error.path)
-  );
-}
-
-function removeSearchKey(search: string, key: string): string {
-  const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
-  params.delete(key);
-  const next = params.toString();
-
-  return next ? `?${next}` : '';
-}
-
-function getHashDefault(hash: RouteHashSchema): unknown {
-  if (!hash || typeof hash !== 'object' || Array.isArray(hash) || !('default' in hash)) {
-    return undefined;
-  }
-
-  return hash.default;
-}
-
-function toUrlKitSearchParseOptions(
-  options: RouterUrlOptions,
-): Pick<RouterUrlOptions, 'arrayFormat' | 'unknownSearch'> {
-  return {
-    ...(options.arrayFormat === undefined ? {} : { arrayFormat: options.arrayFormat }),
-    ...(options.unknownSearch === undefined ? {} : { unknownSearch: options.unknownSearch }),
-  };
-}
-
-function toUrlKitSearchBuildOptions(options: RouterUrlOptions): RouterUrlBuildOptions {
-  return {
-    ...(options.arrayFormat === undefined ? {} : { arrayFormat: options.arrayFormat }),
   };
 }
 
@@ -471,6 +288,7 @@ function createNormalizedRouteUrlContract(route: NormalizedRoute, options: Route
       ...(route.route.url === undefined ? {} : { url: route.route.url }),
     },
     {
+      routeId: route.id,
       ...(options.routerUrl === undefined ? {} : { routerUrl: options.routerUrl }),
       ...(options.callUrl === undefined ? {} : { callUrl: options.callUrl }),
       ...(options.pathConstraints === undefined

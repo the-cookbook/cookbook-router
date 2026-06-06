@@ -20,9 +20,8 @@ export type RouterUnknownSearchParams = UnknownSearchParams;
  * Controls how invalid declared search or hash URL state is handled after the
  * path has already matched.
  *
- * - `recover` keeps the page route matched. Invalid values are treated as
- *   missing, descriptor defaults apply when present, and fields without
- *   defaults resolve to `undefined`/absence.
+ * - `recover` keeps the page route matched when URLKit can omit invalid
+ *   optional/defaulted values. Required invalid values still propagate.
  * - `no-match` rejects the route candidate so normal fallback/not-found route
  *   matching can continue.
  * - `error` keeps the path route matched and surfaces the URL state parse
@@ -44,10 +43,12 @@ export type RouterInvalidSearchBehavior = RouterInvalidUrlStatePolicy;
 export interface RouterUrlOptions {
   /** Controls how repeated search params are parsed and serialized by URLKit. */
   readonly arrayFormat?: RouterUrlArrayFormat;
+  /** Controls whether URLKit serializes fields equal to descriptor defaults while building. */
+  readonly defaults?: 'include' | 'omit';
   /**
    * Controls recovery for invalid declared search params. Defaults to
-   * `recover`, so malformed query-string state does not break page route
-   * matching unless strict behavior is requested.
+   * `recover`, so malformed optional/defaulted query-string state does not
+   * break page route matching unless strict behavior is requested.
    */
   readonly invalidSearch?: RouterInvalidUrlStatePolicy;
   /**
@@ -71,6 +72,8 @@ export interface RouterUrlOptions {
 export interface RouterUrlBuildOptions {
   /** Controls how repeated search params are serialized by URLKit. */
   readonly arrayFormat?: RouterUrlArrayFormat;
+  /** Controls whether URLKit serializes fields equal to descriptor defaults. */
+  readonly defaults?: 'include' | 'omit';
 }
 
 /**
@@ -100,6 +103,15 @@ export interface CreateRouterRouteUrlContractOptions {
   readonly routerUrl?: RouterUrlOptions;
   readonly callUrl?: RouterUrlOptions;
   readonly pathConstraints?: RouterPathConstraints;
+  /** Route id used only for diagnostics when URLKit rejects a route URL descriptor. */
+  readonly routeId?: string;
+}
+
+/** URLKit route-contract parse options after router policy mapping. */
+export interface RouterRouteSearchParseOptions {
+  readonly arrayFormat?: RouterUrlArrayFormat;
+  readonly unknownSearch?: RouterUnknownSearchPolicy;
+  readonly invalidSearch?: 'error' | 'omit';
 }
 
 /**
@@ -109,15 +121,15 @@ export interface CreateRouterRouteUrlContractOptions {
  */
 export interface RouterRouteUrlContract {
   readonly pattern: string | undefined;
-  parse(input: string | URL, options?: RouterUrlOptions): unknown;
-  match(input: string | URL, options?: RouterUrlOptions): boolean;
+  parse(input: string | URL, options?: RouterRouteSearchParseOptions): unknown;
+  match(input: string | URL, options?: RouterRouteSearchParseOptions): boolean;
   build(input: unknown, options?: RouterUrlBuildOptions): string;
   parsePathname: ((pathname: string) => unknown) | never;
   buildPath: ((params: unknown) => string) | never;
-  parseSearch(input: string | URLSearchParams, options?: RouterUrlOptions): unknown;
+  parseSearch(input: string | URLSearchParams, options?: RouterRouteSearchParseOptions): unknown;
   buildSearch(search: unknown, options?: RouterUrlBuildOptions): string;
   parseHash(input: unknown): unknown;
-  buildHash(hash?: unknown): string;
+  buildHash(hash?: unknown, options?: RouterUrlBuildOptions): string;
 }
 
 export type UrlContractRouteDescriptor = Pick<RouteDefinition, 'path' | 'search' | 'hash' | 'url'>;

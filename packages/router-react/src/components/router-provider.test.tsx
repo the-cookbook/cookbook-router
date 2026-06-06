@@ -988,7 +988,7 @@ describe('RouterProvider scroll restoration', () => {
           path: '/products',
           component: ProductsPage,
           error: ProductsErrorFallback,
-          search: { page: { value: 'number', optional: true } },
+          search: { page: { type: 'number', optional: true } },
         },
       ] as const),
       initialEntries: ['/products?page=a'],

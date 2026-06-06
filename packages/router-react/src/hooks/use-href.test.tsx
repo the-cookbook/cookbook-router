@@ -46,7 +46,7 @@ describe('useHref', () => {
         {
           id: 'products',
           path: '/products',
-          search: { tags: { value: 'string', type: 'many', optional: true } },
+          search: { tags: { type: 'string', many: true, optional: true } },
           component: Page,
         },
       ] as const),
@@ -67,5 +67,29 @@ describe('useHref', () => {
     );
 
     expect(result.current).toBe('/products?tags=router%2Ctypescript');
+  });
+
+  it('forwards default serialization options to href generation', async () => {
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        {
+          id: 'products',
+          path: '/products',
+          search: { page: { type: 'int', default: 1 } },
+          component: Page,
+        },
+      ] as const),
+    });
+    await router.resolveCurrent();
+    const wrapper = ({ children }: { children: import('react').ReactNode }) => (
+      <RouterProvider router={router}>{children}</RouterProvider>
+    );
+
+    const { result } = renderHook(
+      () => useHref('products', { search: { page: 1 }, url: { defaults: 'omit' } }),
+      { wrapper },
+    );
+
+    expect(result.current).toBe('/products');
   });
 });

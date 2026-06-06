@@ -18,6 +18,7 @@ declare module '@cookbook/router' {
         'blog.articles': '/blog/articles';
         'blog.articles.show': '/blog/articles/{slug:regex([a-z0-9-]+)}';
         products: '/products';
+        listing: '/listing';
         article: '/articles/{slug:slug}';
       };
       params: {
@@ -34,6 +35,7 @@ declare module '@cookbook/router' {
         'blog.articles': Record<string, never>;
         'blog.articles.show': { slug: string };
         products: Record<string, never>;
+        listing: Record<string, never>;
         article: { slug: string };
       };
       search: {
@@ -50,6 +52,7 @@ declare module '@cookbook/router' {
         'blog.articles': Record<string, never>;
         'blog.articles.show': { ref?: string };
         products: { page?: number; tags?: readonly string[] };
+        listing: { page?: number };
         article: Record<string, never>;
       };
       hash: {
@@ -66,6 +69,7 @@ declare module '@cookbook/router' {
         'blog.articles': never;
         'blog.articles.show': never;
         products: never;
+        listing: never;
         article: never;
       };
       outletContext: {
@@ -92,6 +96,7 @@ describe('router-react contracts', () => {
       | 'blog.articles'
       | 'blog.articles.show'
       | 'products'
+      | 'listing'
       | 'article'
     >();
     expectTypeOf<RouteParams<'blog.articles.show'>>().toEqualTypeOf<{ slug: string }>();

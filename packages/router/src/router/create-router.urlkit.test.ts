@@ -79,8 +79,8 @@ describe('create-router URLKit runtime integration', () => {
         {
           id: 'products',
           path: '/products/{page:int}',
-          search: { tags: { type: 'many', optional: true } },
-          hash: ['grid', 'list'],
+          search: { tags: { type: 'string', many: true, optional: true } },
+          hash: { type: 'enum', values: ['grid', 'list'], optional: true },
         },
       ]),
       url: { arrayFormat: 'repeat', unknownSearch: 'preserve' },
@@ -115,13 +115,69 @@ describe('create-router URLKit runtime integration', () => {
     expect(resolved.href).toBe('/products/4?tags=a%2Cb#grid');
   });
 
+  it('uses URLKit custom date and date-time format strings from static descriptors', () => {
+    const router = createRouter({
+      routes: defineRoutes([
+        {
+          id: 'products',
+          path: '/products',
+          search: {
+            from: {
+              type: 'date',
+              format: 'dd-MM-yyyy',
+              optional: true,
+            },
+            at: {
+              type: 'date-time',
+              format: 'dd-MM-yyyy HH:mm:ss',
+              optional: true,
+            },
+          },
+        },
+      ]),
+    });
+
+    expect(router.match('/products?at=06-06-2026+14%3A30%3A05&from=06-06-2026')?.search).toEqual({
+      from: new Date(Date.UTC(2026, 5, 6)),
+      at: new Date(Date.UTC(2026, 5, 6, 14, 30, 5)),
+    });
+    expect(
+      router.href('products', {
+        search: {
+          from: new Date(Date.UTC(2026, 5, 6)),
+          at: new Date(Date.UTC(2026, 5, 6, 14, 30, 5)),
+        },
+      }),
+    ).toBe('/products?at=06-06-2026+14%3A30%3A05&from=06-06-2026');
+  });
+
+  it('surfaces invalid date format descriptors during router creation', () => {
+    expect(() =>
+      createRouter({
+        routes: [
+          {
+            id: 'products',
+            path: '/products',
+            search: {
+              from: {
+                type: 'date',
+                format: 'DD-MM-yyyy',
+                optional: true,
+              },
+            },
+          },
+        ],
+      }),
+    ).toThrow(/invalid URL descriptor/);
+  });
+
   it('applies router, route, and per-call arrayFormat precedence', () => {
     const router = createRouter({
       routes: defineRoutes([
         {
           id: 'products',
           path: '/products',
-          search: { tags: { type: 'many', optional: true } },
+          search: { tags: { type: 'string', many: true, optional: true } },
           url: { arrayFormat: 'comma' },
         },
       ]),
@@ -149,9 +205,8 @@ describe('create-router URLKit runtime integration', () => {
         id: 'overview',
         path: '/overview',
         search: {
-          page: { value: 'number', default: 1, optional: true },
-          pageSize: { value: 'number', optional: true },
-          required: { value: 'number' },
+          page: { type: 'number', default: 1 },
+          pageSize: { type: 'number', optional: true },
         },
       },
     ]);
@@ -159,14 +214,14 @@ describe('create-router URLKit runtime integration', () => {
     const router = createRouter({
       routes,
       history: createMemoryHistory({
-        initialEntries: ['/overview?page=a&pageSize=10&required=nope'],
+        initialEntries: ['/overview?page=a&pageSize=10'],
       }),
     });
 
     expect(router.state.error).toBeUndefined();
     expect(router.state.match?.search).toEqual({ page: 1, pageSize: 10 });
     expect(
-      router.match('/overview?page=a&pageSize=10&required=nope', {
+      router.match('/overview?page=a&pageSize=10', {
         url: { invalidSearch: 'recover' },
       })?.search,
     ).toEqual({ page: 1, pageSize: 10 });
@@ -178,7 +233,7 @@ describe('create-router URLKit runtime integration', () => {
         {
           id: 'overview',
           path: '/overview',
-          search: { page: { value: 'number', optional: true } },
+          search: { page: { type: 'number', optional: true } },
         },
         { id: 'not-found', path: '/{*path}' },
       ]),
@@ -194,7 +249,7 @@ describe('create-router URLKit runtime integration', () => {
         {
           id: 'overview',
           path: '/overview',
-          search: { page: { value: 'number', optional: true } },
+          search: { page: { type: 'number', optional: true } },
         },
         { id: 'not-found', path: '/{*path}' },
       ]),
@@ -212,7 +267,7 @@ describe('create-router URLKit runtime integration', () => {
       {
         id: 'products',
         path: '/products',
-        search: { page: { value: 'number', optional: true } },
+        search: { page: { type: 'number', optional: true } },
       },
     ]);
 
@@ -239,7 +294,7 @@ describe('create-router URLKit runtime integration', () => {
         {
           id: 'products',
           path: '/products',
-          search: { page: { value: 'number', optional: true } },
+          search: { page: { type: 'number', optional: true } },
           url: { unknownSearch: 'strip' },
         },
       ]),
@@ -254,7 +309,11 @@ describe('create-router URLKit runtime integration', () => {
 
   it('supports recover, no-match, and error policies for invalid hash', () => {
     const routes = defineRoutes([
-      { id: 'products', path: '/products', hash: ['grid', 'list'] },
+      {
+        id: 'products',
+        path: '/products',
+        hash: { type: 'enum', values: ['grid', 'list'], optional: true },
+      },
       { id: 'not-found', path: '/{*path}' },
     ]);
 
@@ -280,7 +339,7 @@ describe('create-router URLKit runtime integration', () => {
         {
           id: 'products',
           path: '/products',
-          search: { tags: { type: 'many', optional: true } },
+          search: { tags: { type: 'string', many: true, optional: true } },
         },
       ]),
       url: { arrayFormat: 'repeat' },
@@ -302,8 +361,8 @@ describe('create-router URLKit runtime integration', () => {
         {
           id: 'product',
           path: '/products/{id:int}',
-          search: { tags: { type: 'many', optional: true } },
-          hash: ['grid'],
+          search: { tags: { type: 'string', many: true, optional: true } },
+          hash: { type: 'enum', values: ['grid'], optional: true },
         },
       ]),
       url: { arrayFormat: 'comma' },
@@ -355,7 +414,7 @@ describe('create-router URLKit runtime integration', () => {
         {
           id: 'products',
           path: '/products',
-          search: { tags: { type: 'many', optional: true } },
+          search: { tags: { type: 'string', many: true, optional: true } },
           url: { arrayFormat: 'comma' },
         },
       ]),

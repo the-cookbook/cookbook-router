@@ -11,8 +11,8 @@ describe('matchLocation', () => {
         {
           id: 'user',
           path: '/users/{id:int}',
-          search: { tags: { type: 'many', optional: true } },
-          hash: ['profile'],
+          search: { tags: { type: 'string', many: true, optional: true } },
+          hash: { type: 'enum', values: ['profile'], optional: true },
         },
       ]),
     );
@@ -30,7 +30,13 @@ describe('matchLocation', () => {
 
   it('returns null when route path state fails validation', () => {
     const routes = normalizeRoutes(
-      defineRoutes([{ id: 'user', path: '/users/{id:int}', hash: ['profile'] }]),
+      defineRoutes([
+        {
+          id: 'user',
+          path: '/users/{id:int}',
+          hash: { type: 'enum', values: ['profile'], optional: true },
+        },
+      ]),
     );
 
     expect(matchLocation({ routes, location: parseHref('/users/abc#profile') })).toBeNull();
@@ -38,7 +44,13 @@ describe('matchLocation', () => {
 
   it('recovers, rejects, or errors for invalid hash state according to policy', () => {
     const routes = normalizeRoutes(
-      defineRoutes([{ id: 'user', path: '/users/{id:int}', hash: ['profile'] }]),
+      defineRoutes([
+        {
+          id: 'user',
+          path: '/users/{id:int}',
+          hash: { type: 'enum', values: ['profile'], optional: true },
+        },
+      ]),
     );
 
     expect(matchLocation({ routes, location: parseHref('/users/42#settings') })?.hash).toBe(

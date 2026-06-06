@@ -26,9 +26,6 @@ export type {
   RouteParamDefinition,
   RouteHashSchema,
   RouteSearchSchema,
-  RouteSearchStaticValue,
-  RouteSearchValueSchema,
-  RouteSearchValueType,
   RouteSlotConfig,
   RouteSlotDefinition,
   RouteSlotDefinitions,
@@ -41,6 +38,7 @@ export type {
 export type {
   CreateRouterRouteUrlContractOptions,
   ResolveUrlOptionsInput,
+  RouterRouteSearchParseOptions,
   RouterRouteUrlContract,
   RouterRouteUrlDescriptor,
   RouterInvalidUrlStatePolicy,

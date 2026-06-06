@@ -41,7 +41,7 @@ describe('createStaticRouter', () => {
         {
           id: 'products',
           path: '/products',
-          search: { page: { value: 'number', optional: true } },
+          search: { page: { type: 'number', optional: true } },
         },
       ]),
       url: '/products?page=1&debug=true',

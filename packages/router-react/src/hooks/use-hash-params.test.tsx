@@ -15,7 +15,7 @@ describe('useHashParams', () => {
         {
           id: 'user',
           path: '/users/{id:int}',
-          hash: ['profile', 'settings', 'bio', 'top'],
+          hash: { type: 'enum', values: ['profile', 'settings', 'bio', 'top'], optional: true },
           component: Page,
         },
       ] as const),
@@ -38,7 +38,7 @@ describe('useHashParams', () => {
         {
           id: 'user',
           path: '/users/{id:int}',
-          hash: ['profile', 'settings'],
+          hash: { type: 'enum', values: ['profile', 'settings'], optional: true },
           component: Page,
         },
       ] as const),

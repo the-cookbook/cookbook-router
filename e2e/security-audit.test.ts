@@ -13,8 +13,8 @@ const routes = defineRoutes([
   {
     id: 'user',
     path: '/users/{id:int}',
-    hash: ['profile'],
-    search: { tab: { type: 'one', optional: true } },
+    hash: { type: 'enum', values: ['profile'], optional: true },
+    search: { tab: { type: 'string', optional: true } },
   },
 ] as const);
 

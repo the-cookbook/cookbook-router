@@ -1,0 +1,608 @@
+# Path routes and constraints
+
+Route `path` values describe the URL pathname matched by a route. Cookbook Router delegates path pattern syntax and constraint validation to `@cookbook/pathkit`, and delegates parsed URL state to `@cookbook/urlkit`.
+
+Use this page when defining route paths, choosing built-in constraints, or adding a custom path constraint.
+
+## Table of contents
+
+- [Path route basics](#path-route-basics)
+- [Path composition](#path-composition)
+- [Path params](#path-params)
+- [Optional params](#optional-params)
+- [Wildcard params](#wildcard-params)
+- [Built-in constraints](#built-in-constraints)
+- [`decimal`](#decimal)
+- [`int`](#int)
+- [`range`](#range)
+- [`list`](#list)
+- [`regex`](#regex)
+- [Multiple constraints](#multiple-constraints)
+- [Parsed param types](#parsed-param-types)
+- [Custom constraints](#custom-constraints)
+- [`createConstraint()`](#createconstraint)
+- [Register custom constraints](#register-custom-constraints)
+- [Custom constraints and generated contracts](#custom-constraints-and-generated-contracts)
+- [Path options](#path-options)
+- [Matching and href generation](#matching-and-href-generation)
+- [Common mistakes](#common-mistakes)
+
+## Path route basics
+
+A route path is a PathKit pattern:
+
+```tsx
+export const routes = defineRoutes([
+  { id: 'home', path: '/', component: HomePage },
+  { id: 'users.show', path: '/users/{id:int}', component: UserPage },
+] as const);
+```
+
+Static segments match exactly. Parameter segments are wrapped in braces:
+
+```txt
+/users/{id}
+/users/{id:int}
+/files/{*path}
+/search/{term?}
+```
+
+Rules:
+
+- `path` describes only the pathname. Search and hash state belong in `search` and `hash` route descriptors.
+- Route IDs are the public navigation API. Use route IDs with `router.href()`, `router.navigate`, `<Link>`, and `<NavLink>`.
+- Index routes use `index: true` and must not define `path`.
+- Pathless routes are valid only as layout/group routes with children.
+
+## Path composition
+
+Child route paths are composed with their parent path.
+
+```tsx
+{
+  id: 'users',
+  path: '/users',
+  children: [
+    {
+      id: 'users.show',
+      path: '{id:int}',
+      component: UserPage,
+    },
+  ],
+}
+```
+
+The resolved path is:
+
+```txt
+/users/{id:int}
+```
+
+A child path may start with `/`, but it is still composed relative to the parent route:
+
+```tsx
+{
+  id: 'settings',
+  path: '/settings',
+  children: [
+    {
+      id: 'settings.profile',
+      path: '/profile',
+      component: ProfilePage,
+    },
+  ],
+}
+```
+
+`settings.profile` matches:
+
+```txt
+/settings/profile
+```
+
+not:
+
+```txt
+/profile
+```
+
+## Path params
+
+Unconstrained params capture one path segment and are parsed as strings.
+
+```tsx
+{
+  id: 'articles.show',
+  path: '/articles/{slug}',
+  component: ArticlePage,
+}
+```
+
+```tsx
+<Link to="articles.show" params={{ slug: 'typed-routing' }} />
+```
+
+The generated and runtime param type is:
+
+```ts
+{
+  slug: string;
+}
+```
+
+Do not write `{slug:string}`. `string` is not a built-in PathKit constraint. Use `{slug}` for an unconstrained string segment, or use `regex(...)` / a custom constraint when the segment needs validation.
+
+## Optional params
+
+Add `?` after the param name to make one segment optional:
+
+```txt
+/search/{term?}
+```
+
+Valid matches include:
+
+```txt
+/search
+/search/router
+```
+
+Optional params are useful for small path variations. Prefer search params for optional filters, sorting, pagination, and shareable UI state.
+
+## Wildcard params
+
+A wildcard captures the rest of the path:
+
+```txt
+/files/{*path}
+```
+
+It matches:
+
+```txt
+/files/images/logo.svg
+```
+
+and captures:
+
+```ts
+{
+  path: 'images/logo.svg';
+}
+```
+
+When building hrefs, wildcard params can be provided as a slash-delimited string or an array of primitive path segments:
+
+```ts
+router.href('files.show', {
+  params: { path: ['images', 'logo.svg'] },
+});
+```
+
+Optional wildcards use `?`:
+
+```txt
+/files/{*path?}
+```
+
+## Built-in constraints
+
+PathKit provides these built-in constraints, and Router forwards them through URLKit for validation, matching, href generation, SSR, and generated contracts:
+
+| Constraint | Syntax                             | Matches                                              | Generated/runtime param type |
+| ---------- | ---------------------------------- | ---------------------------------------------------- | ---------------------------- |
+| `decimal`  | `{price:decimal}`                  | Decimal numeric values such as `1`, `1.5`, `200.99`. | `number`                     |
+| `int`      | `{id:int}`                         | Unsigned integer values such as `1`, `42`, `9000`.   | `number`                     |
+| `range`    | `{page:range(1,100)}`              | Numeric values inside an inclusive range.            | `number`                     |
+| `list`     | `{view:list(grid\|list\|details)}` | One exact item from a pipe-separated list.           | `string`                     |
+| `regex`    | `{slug:regex([a-z0-9-]+)}`         | Values that satisfy the regular expression.          | `string`                     |
+
+There is no built-in `{param:number}` or `{param:string}` constraint. Use `{param:decimal}` for finite decimal path values, `{param:int}` for integers, and `{param}` for unconstrained string segments.
+
+## `decimal`
+
+Use `decimal` for finite decimal path values.
+
+```tsx
+{
+  id: 'products.by-price',
+  path: '/products/by-price/{price:decimal}',
+  component: ProductsByPricePage,
+}
+```
+
+Valid:
+
+```txt
+/products/by-price/1
+/products/by-price/1.5
+/products/by-price/200.99
+```
+
+Invalid:
+
+```txt
+/products/by-price/abc
+/products/by-price/foo-1
+```
+
+Runtime and generated params expose `price` as `number`.
+
+## `int`
+
+Use `int` for unsigned integer path values.
+
+```tsx
+{
+  id: 'users.show',
+  path: '/users/{id:int}',
+  component: UserPage,
+}
+```
+
+Valid:
+
+```txt
+/users/1
+/users/42
+/users/9000
+```
+
+Invalid:
+
+```txt
+/users/abc
+/users/1.5
+/users/foo-1
+```
+
+Runtime and generated params expose `id` as `number`.
+
+## `range`
+
+Use `range(min,max)` for inclusive numeric ranges.
+
+```tsx
+{
+  id: 'pages.show',
+  path: '/pages/{page:range(1,100)}',
+  component: PageRoute,
+}
+```
+
+Valid:
+
+```txt
+/pages/1
+/pages/50
+/pages/100
+```
+
+Invalid:
+
+```txt
+/pages/0
+/pages/101
+/pages/abc
+```
+
+`min` and `max` are required. Runtime and generated params expose `page` as `number`.
+
+## `list`
+
+Use `list(item1|item2|item3)` for small exact string unions in path segments.
+
+```tsx
+{
+  id: 'search.view',
+  path: '/search/{view:list(grid|list|details)}',
+  component: SearchViewPage,
+}
+```
+
+Valid:
+
+```txt
+/search/grid
+/search/list
+/search/details
+```
+
+Invalid:
+
+```txt
+/search/table
+/search/detail
+```
+
+Runtime and generated params expose `view` as `string`. If the same value would be better represented as optional UI state, prefer an enum search field instead:
+
+```ts
+search: {
+  view: { type: 'enum', values: ['grid', 'list', 'details'], default: 'grid' },
+}
+```
+
+## `regex`
+
+Use `regex(pattern)` when a path segment must match a regular expression.
+
+```tsx
+{
+  id: 'posts.show',
+  path: '/posts/{slug:regex([a-z0-9-]+)}',
+  component: PostPage,
+}
+```
+
+Valid:
+
+```txt
+/posts/hello-world
+/posts/post-123
+```
+
+Invalid:
+
+```txt
+/posts/HelloWorld
+/posts/hello_world
+```
+
+The regex is used by both href generation and route matching. Do not include route delimiters in the regex unless the parameter is intentionally a wildcard-like value. For cross-segment matching, use a wildcard parameter.
+
+## Multiple constraints
+
+A parameter can use multiple constraints:
+
+```txt
+/users/{id:int:range(1,100)}
+```
+
+This route requires an integer-shaped value and then validates that the value is inside the inclusive range.
+
+Use multiple constraints sparingly. If a rule needs custom validation or clearer error messages, create a custom constraint.
+
+## Parsed param types
+
+Router state, React hooks, middleware, lifecycle hooks, and generated contracts use URLKit parsed-param semantics.
+
+| Pattern                    | Runtime/generated type | Notes                                                                                                   |
+| -------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------- |
+| `{slug}`                   | `string`               | Unconstrained segment.                                                                                  |
+| `{id:int}`                 | `number`               | Parsed integer.                                                                                         |
+| `{price:decimal}`          | `number`               | Parsed finite decimal.                                                                                  |
+| `{page:range(1,100)}`      | `number`               | Parsed numeric range value.                                                                             |
+| `{view:list(grid\|list)}`  | `string`               | Validated string.                                                                                       |
+| `{slug:regex([a-z0-9-]+)}` | `string`               | Validated string.                                                                                       |
+| `{slug:slug}`              | `string`               | Custom constraints expose `string` unless generated contracts are extended with custom typed inference. |
+| `{*path}`                  | `string`               | Captured wildcard path.                                                                                 |
+
+```tsx
+function UserPage() {
+  const params = useParams('users.show');
+
+  params.id;
+  // number for /users/{id:int}
+}
+```
+
+## Custom constraints
+
+Create custom constraints when the same path validation rule appears in multiple routes or when a built-in constraint cannot express the rule clearly.
+
+Custom constraints are process-level registrations. Register the same custom constraints in server, client, test, and CLI route-loading environments.
+
+## `createConstraint()`
+
+`createConstraint()` creates a PathKit-compatible constraint.
+
+```ts
+import { createConstraint } from '@cookbook/router';
+
+const slug = createConstraint({
+  parse(paramName, value) {
+    if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
+      throw new Error(`Parameter "${paramName}" must be a valid slug.`);
+    }
+  },
+
+  verify(_paramName, params) {
+    if (params.trim()) {
+      throw new Error('slug does not accept parameters.');
+    }
+  },
+
+  toRegExp() {
+    return '[a-z0-9-]+';
+  },
+});
+```
+
+The methods are:
+
+| Method                            | Purpose                                                                                                 |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `parse(paramName, value, params)` | Validate the matched or generated param value. Throw when invalid.                                      |
+| `verify(paramName, params)`       | Validate the constraint declaration itself before route matching/generation.                            |
+| `toRegExp(params)`                | Return the regular expression source used to match the path segment. Do not include `/.../` delimiters. |
+
+`params` is the optional constraint argument string inside parentheses. For example, `{id:tenant(active)}` passes `active` to `verify`, `toRegExp`, and `parse`.
+
+## Register custom constraints
+
+Register custom constraints through `defineRoutes(..., { pathConstraints })` when possible. `defineRoutes()` validates immediately, so constraints must be available before validation.
+
+```tsx
+import { createConstraint, createRouter, defineRoutes } from '@cookbook/router';
+
+const slug = createConstraint({
+  parse(paramName, value) {
+    if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
+      throw new Error(`Parameter "${paramName}" must be a valid slug.`);
+    }
+  },
+  verify(_paramName, params) {
+    if (params.trim()) {
+      throw new Error('slug does not accept parameters.');
+    }
+  },
+  toRegExp() {
+    return '[a-z0-9-]+';
+  },
+});
+
+export const routes = defineRoutes(
+  [
+    {
+      id: 'posts.show',
+      path: '/posts/{slug:slug}',
+      component: PostPage,
+    },
+  ] as const,
+  { pathConstraints: { slug } },
+);
+
+export const router = createRouter({ routes });
+```
+
+`createRouter({ pathConstraints })` is also supported for raw route arrays that were not already validated:
+
+```ts
+const router = createRouter({
+  routes: [{ id: 'posts.show', path: '/posts/{slug:slug}', component: PostPage }],
+  pathConstraints: { slug },
+});
+```
+
+Advanced integrations can call `registerPathConstraints({ slug })` directly, but app route modules should prefer the explicit `defineRoutes()` or `createRouter()` option so the CLI, tests, SSR, and browser runtimes see the same setup.
+
+## Custom constraints and generated contracts
+
+Custom constraints validate values at runtime, but generated contracts expose custom-constrained params as `string` unless the generated contract layer is extended with custom typed inference.
+
+```tsx
+<Link to="posts.show" params={{ slug: 'hello-world' }} />
+```
+
+```ts
+useParams('posts.show').slug;
+// string
+```
+
+If you need a numeric path param, prefer built-in numeric constraints:
+
+```txt
+{id:int}
+{price:decimal}
+{page:range(1,100)}
+```
+
+## Path options
+
+Router path options are forwarded to PathKit validation, matching, href compilation, and canonicalization.
+
+```ts
+createRouter({
+  routes,
+  pathOptions: {
+    prune: 'all',
+  },
+});
+```
+
+Supported `prune` values:
+
+| Value           | Behavior                                              |
+| --------------- | ----------------------------------------------------- |
+| `'all'`         | Remove duplicated delimiters and trailing delimiters. |
+| `'duplication'` | Remove duplicated delimiters only.                    |
+| `'trailing'`    | Remove trailing delimiters only.                      |
+| `false`         | Preserve authored/generated pathnames exactly.        |
+
+The default is:
+
+```ts
+{
+  prune: 'all';
+}
+```
+
+## Matching and href generation
+
+Path constraints are enforced during matching and href generation.
+
+```ts
+router.match('/users/42')?.params;
+// { id: 42 } for /users/{id:int}
+
+router.match('/users/abc');
+// null
+
+router.href('users.show', { params: { id: 42 } });
+// '/users/42'
+
+router.href('users.show', { params: { id: 'abc' } });
+// throws because id does not satisfy int
+```
+
+During matching, constrained values that do not satisfy the route pattern become non-matches. During href generation, invalid params throw because the requested route ID has a known path contract and cannot build an invalid URL.
+
+## Common mistakes
+
+### Using `{id:number}`
+
+`number` is not a built-in PathKit constraint.
+
+Use:
+
+```txt
+{id:decimal}
+```
+
+for decimal numbers, or:
+
+```txt
+{id:int}
+```
+
+for integers.
+
+### Using `{slug:string}`
+
+`string` is not a built-in PathKit constraint.
+
+Use:
+
+```txt
+{slug}
+```
+
+for an unconstrained string segment.
+
+### Registering custom constraints too late
+
+This fails because `defineRoutes()` validates immediately:
+
+```ts
+const routes = defineRoutes([{ id: 'post', path: '/posts/{slug:slug}' }] as const);
+registerPathConstraints({ slug });
+```
+
+Register through the second `defineRoutes()` argument instead:
+
+```ts
+const routes = defineRoutes([{ id: 'post', path: '/posts/{slug:slug}' }] as const, {
+  pathConstraints: { slug },
+});
+```
+
+### Using side-effect-only registration in CLI route files
+
+The CLI extracts static route definitions. Put custom constraints in the second `defineRoutes()` argument so validation and generation can see them.
+
+```ts
+export const routes = defineRoutes([{ id: 'post', path: '/posts/{slug:slug}' }] as const, {
+  pathConstraints: { slug },
+});
+```

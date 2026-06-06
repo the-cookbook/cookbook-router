@@ -1,5 +1,5 @@
 import type { RouterLocation } from '../history/memory-history';
-import type { StaticHashDescriptor, StaticSearchField } from '@cookbook/urlkit/static';
+import type { StaticHashDescriptor, StaticSearchDescriptor } from '@cookbook/urlkit/static';
 import type { RouterPathOptions } from '../pathkit/pathkit';
 import type { RouterUrlOptions } from '../url/contracts';
 import type { RouteHash, RouteId, RouteParams, RouteSearch } from '../contracts';
@@ -21,39 +21,15 @@ export type RouteComponent = unknown;
  */
 export type RouteMeta = Record<string, unknown>;
 /**
- * Legacy cardinality marker for static search descriptors.
+ * URLKit-backed static search descriptor accepted in route definitions.
  *
- * Prefer URLKit-compatible descriptors such as `{ value: 'string' }` and
- * `{ value: 'string', type: 'many' }` in new route definitions.
+ * Search fields use the cleaned URLKit v2 static shape: value kind lives in
+ * `type`, repeated values use `many: true`, and descriptor flags use positive
+ * literal flags such as `optional: true`.
  */
-export type RouteSearchValueType = 'one' | 'many';
+export type RouteSearchSchema = StaticSearchDescriptor;
 
-/**
- * Static URLKit-backed search value descriptor accepted in route definitions.
- */
-export type RouteSearchStaticValue = StaticSearchField;
-
-/**
- * Schema entry for one search parameter in an authored route.
- *
- * `value` follows URLKit static descriptor semantics, so `int` and
- * `number` parse to `number`, `boolean` parses to `boolean`, date descriptors
- * parse to `Date`, and enum descriptors parse to their string literal union.
- * `type: 'many'` reads repeated values as an array. `default` makes the parsed value present while allowing href/navigation
- * builders to omit the field. Runtime URLKit builders are intentionally not
- * part of this static descriptor model so CLI extraction stays analyzable.
- */
-export type RouteSearchValueSchema = StaticSearchField;
-
-/**
- * Search schema keyed by query-string parameter name.
- *
- * The CLI uses this URLKit-compatible static descriptor to generate typed
- * `search` contracts for links, hrefs, navigation calls, and parsed match state.
- */
-export type RouteSearchSchema = Readonly<Record<string, RouteSearchValueSchema>>;
-
-/** URLKit-compatible static hash descriptor accepted in route definitions. */
+/** URLKit-backed static hash descriptor accepted in route definitions. */
 export type RouteHashSchema = StaticHashDescriptor;
 export type { RouterPathOptions };
 
@@ -179,7 +155,7 @@ export interface RouteDefinition {
   readonly search?: RouteSearchSchema;
   /** Route-level URLKit options that override router-level URL defaults. */
   readonly url?: RouterUrlOptions;
-  /** URLKit-compatible static hash descriptor for this route. */
+  /** URLKit-backed static hash descriptor for this route. */
   readonly hash?: RouteHashSchema;
   /** User-defined metadata copied into normalized routes and matches. */
   readonly meta?: RouteMeta;

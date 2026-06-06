@@ -9,6 +9,7 @@ import { ErrorState } from '@/components/error-state';
 export function ErrorPage(props: RouterErrorFallbackProps) {
   const navigate = useNavigate();
 
+  console.log(props.reset);
   const handleOnGoBack = React.useCallback(() => {
     if (!window.history.state.length) {
       navigate.to('overview');

@@ -148,7 +148,7 @@ function ArticleLoading() {
 }
 ```
 
-Use `errorFallback` for route-level render errors. The nearest active route with `errorFallback` handles errors thrown by its component, layout, slot routes, intercepted routes, and descendants.
+Use `error` for route-level render errors. The nearest active route with `error` handles errors thrown by its component, layout, slot routes, intercepted routes, and descendants.
 
 ```tsx
 import type { RouteErrorFallbackProps } from '@cookbook/router-react';
@@ -168,7 +168,7 @@ function ArticleErrorFallback(props: RouteErrorFallbackProps) {
   id: 'blog.articles.show',
   path: 'articles/{slug}',
   component: ArticlePage,
-  errorFallback: ArticleErrorFallback,
+  error: ArticleErrorFallback,
 }
 ```
 
@@ -238,7 +238,7 @@ const navigation = useNavigation();
 
 ### `useParams()`
 
-Reads URLKit-parsed params from the current match or a route in the active branch. Built-in numeric constraints parse to numbers, so `{id:int}` exposes `params.id` as `number`. Custom constraints expose `string` unless the generated contract says otherwise.
+Reads URLKit-parsed params from the current match or a route in the active branch. Built-in numeric constraints parse to numbers, so `{id:int}`, `{price:decimal}`, and `{page:range(1,100)}` expose numbers. `list`, `regex`, unconstrained params, wildcards, and custom constraints expose `string` unless the generated contract says otherwise.
 
 ```tsx
 const params = useParams('users.show');

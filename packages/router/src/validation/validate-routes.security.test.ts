@@ -19,13 +19,15 @@ describe('validateRoutes security hardening', () => {
       'hash configuration must use a URLKit static hash descriptor',
     );
     expect(() => validateRoutes([{ id: 'bad', path: '/', hash: [1] } as never])).toThrow(
-      'empty or non-string hash value',
+      'hash uses removed array shorthand',
     );
   });
 
   it('rejects unsafe search and meta keys that can poison generated contracts', () => {
     expect(() =>
-      validateRoutes([{ id: 'bad', path: '/', search: { constructor: 'string' } } as never]),
+      validateRoutes([
+        { id: 'bad', path: '/', search: { constructor: { type: 'string' } } } as never,
+      ]),
     ).toThrow('search contains unsafe key "constructor"');
     expect(() =>
       validateRoutes([{ id: 'bad', path: '/', meta: { prototype: true } } as never]),

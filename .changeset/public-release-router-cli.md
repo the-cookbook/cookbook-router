@@ -12,3 +12,4 @@ Prepare `@cookbook/router-cli` for the first public release with finalized v1-fa
 - respect `defineRoutes(..., { pathConstraints })` during generation and validation
 - harden release-readiness checks around package exports, generated files, docs, and repository validation
 - add JSDoc across public and semi-public CLI APIs
+- generate route search and hash contracts from the cleaned `@cookbook/urlkit` v2 static descriptor API and reject legacy descriptor forms in CLI-consumed route files

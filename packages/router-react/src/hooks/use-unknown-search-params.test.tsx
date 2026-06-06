@@ -17,7 +17,7 @@ describe('useUnknownSearchParams', () => {
           id: 'products',
           path: '/products',
           search: {
-            page: { value: 'number', optional: true },
+            page: { type: 'number', optional: true },
           },
           component: Page,
         },
@@ -43,7 +43,7 @@ describe('useUnknownSearchParams', () => {
         {
           id: 'products',
           path: '/products',
-          search: { page: { value: 'number', optional: true } },
+          search: { page: { type: 'number', optional: true } },
           component: Page,
         },
       ] as const),

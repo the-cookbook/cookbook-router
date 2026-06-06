@@ -11,3 +11,6 @@ Prepare `@cookbook/router` for the first public release with finalized v1-facing
 - clarify custom path constraint registration through `defineRoutes(..., { pathConstraints })`
 - improve runtime documentation for blockers, serialization, hydration, redirects, middleware, lifecycle, histories, slots, and intercepts
 - add JSDoc across public and semi-public core router APIs
+- align route search and hash definitions with the cleaned `@cookbook/urlkit` v2 static descriptor API: direct `{ type: ... }` search fields, `many: true`, object hash descriptors, and no legacy `value`, `type: 'many'`, or hash array forms
+- forward URLKit `defaults` build options through core href, navigation, and URL state builders
+- delegate search/hash descriptor validation and invalid URL-state recovery to URLKit while preserving route-context diagnostics

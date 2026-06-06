@@ -143,8 +143,8 @@ export const routes = defineRoutes([
     id: 'articles.show',
     path: '/articles/{slug}',
     search: {
-      ref: { value: 'string', optional: true },
-      filters: { value: 'string', type: 'many', optional: true },
+      ref: { type: 'string', optional: true },
+      filters: { type: 'string', many: true, optional: true },
     },
     component: ArticlePage,
   },

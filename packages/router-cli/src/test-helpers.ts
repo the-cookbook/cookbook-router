@@ -71,11 +71,11 @@ export const sampleRoutes = [
         id: 'users.show',
         path: 'users/{id:int}',
         search: {
-          tab: { type: 'one', optional: true },
-          page: { type: 'one', optional: true },
-          filters: { type: 'many', optional: true },
+          tab: { type: 'string', optional: true },
+          page: { type: 'string', optional: true },
+          filters: { type: 'string', many: true, optional: true },
         },
-        hash: ['profile', 'settings'],
+        hash: { type: 'enum', values: ['profile', 'settings'], optional: true },
         meta: {
           requiresAuth: true,
         },
