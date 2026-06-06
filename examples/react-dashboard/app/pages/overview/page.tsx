@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  useNavigate,
-  useSearchParams,
-  useUnknownSearchParams,
-} from '@cookbook/router-react';
+import { useNavigate, useSearchParams } from '@cookbook/router-react';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +8,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 
 import { CreateContent } from '../create/create-content';
@@ -22,7 +24,15 @@ import { SectionCards } from './components/section-cards';
 import data from './data.json';
 
 export function OverviewLayoutHeader() {
-  return <h1 className="text-base font-medium">Overview</h1>;
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbPage>Overview</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
 }
 
 export function OverviewCreateModal() {
@@ -57,9 +67,6 @@ export function OverviewCreateModal() {
 
 export function OverviewPage() {
   const searchParams = useSearchParams('overview');
-  const unknownSearchParams = useUnknownSearchParams();
-
-  console.log({ searchParams, unknownSearchParams });
 
   return (
     <div className="flex flex-1 flex-col">

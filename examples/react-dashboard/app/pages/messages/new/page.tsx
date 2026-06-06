@@ -5,6 +5,12 @@ import { useNavigate, useBlocker } from '@cookbook/router-react';
 
 import { Button } from '@/components/ui/button';
 import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from '@/components/ui/breadcrumb';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -112,7 +118,15 @@ function NewMessage() {
 }
 
 export function NewMessageLayoutHeader() {
-  return <h1 className="text-base font-medium">New Message</h1>;
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbPage>New Message</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
 }
 
 export function NewMessageModalPage() {

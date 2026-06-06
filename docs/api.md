@@ -562,22 +562,22 @@ Use these only when implementing integrations that need consistent router errors
 
 Important exported types include:
 
-| Type                                                           | Purpose                                                                                                                     |
-| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `RouteId`                                                      | Registered route ID union. Falls back to `string` before contracts are generated.                                           |
-| `RouteParams<Route>`                                           | URLKit-parsed params for a registered route. `{id:int}` and `{value:number}` are `number`; custom constraints are `string`. |
-| `RouteSearch<Route>`                                           | URLKit-parsed search object for a registered route.                                                                         |
-| `RouteHash<Route>`                                             | URLKit-parsed hash value for a registered route.                                                                            |
-| `RouteHashInput<Route>`                                        | Input accepted for route hash generation.                                                                                   |
-| `RouteMeta<Route>` / `RegisteredRouteMeta<Route>`              | Metadata for a registered route.                                                                                            |
-| `RouteOutletContext<Route>`                                    | Outlet context type for a registered route.                                                                                 |
-| `RouteUrlOptions<Route>`                                       | Route URL params/search/hash options.                                                                                       |
-| `RouterContracts`                                              | Generated contract container.                                                                                               |
-| `Register`                                                     | Module augmentation target.                                                                                                 |
-| `RouterNavigationState`                                        | Navigation state union.                                                                                                     |
-| `RouteMatch`, `MatchedRoute`, `NormalizedRoute`, `RankedRoute` | Matching and normalized route structures.                                                                                   |
-| `Middleware`, `MiddlewareContext`, `MiddlewareResult`          | Middleware API.                                                                                                             |
-| `RouteLifecycle`, `GlobalLifecycle`, `RouteLifecycleContext`   | Lifecycle API.                                                                                                              |
+| Type                                                           | Purpose                                                                                                                                      |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RouteId`                                                      | Registered route ID union. Falls back to `string` before contracts are generated.                                                            |
+| `RouteParams<Route>`                                           | URLKit-parsed params for a registered route. `{id:int}`, `{value:number}` and `{value:range}` are `number`; custom constraints are `string`. |
+| `RouteSearch<Route>`                                           | URLKit-parsed search object for a registered route.                                                                                          |
+| `RouteHash<Route>`                                             | URLKit-parsed hash value for a registered route.                                                                                             |
+| `RouteHashInput<Route>`                                        | Input accepted for route hash generation.                                                                                                    |
+| `RouteMeta<Route>` / `RegisteredRouteMeta<Route>`              | Metadata for a registered route.                                                                                                             |
+| `RouteOutletContext<Route>`                                    | Outlet context type for a registered route.                                                                                                  |
+| `RouteUrlOptions<Route>`                                       | Route URL params/search/hash options.                                                                                                        |
+| `RouterContracts`                                              | Generated contract container.                                                                                                                |
+| `Register`                                                     | Module augmentation target.                                                                                                                  |
+| `RouterNavigationState`                                        | Navigation state union.                                                                                                                      |
+| `RouteMatch`, `MatchedRoute`, `NormalizedRoute`, `RankedRoute` | Matching and normalized route structures.                                                                                                    |
+| `Middleware`, `MiddlewareContext`, `MiddlewareResult`          | Middleware API.                                                                                                                              |
+| `RouteLifecycle`, `GlobalLifecycle`, `RouteLifecycleContext`   | Lifecycle API.                                                                                                                               |
 
 ## `@cookbook/router-react`
 

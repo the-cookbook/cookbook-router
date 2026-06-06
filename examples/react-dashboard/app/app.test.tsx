@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App, createTestRouter } from './app';
 import { auth } from './state/auth';
@@ -19,8 +19,18 @@ describe('react-dashboard example', () => {
     const view = render(<App router={router} />);
 
     expect(router.state.location.href).toBe('/overview?page=0');
+
+    const breadcrumb = await view.findByRole(
+      'navigation',
+      { name: 'breadcrumb' },
+      lazyPageTimeout
+    );
+
     expect(
-      await view.findByRole('heading', { name: 'Overview' }, lazyPageTimeout)
+      within(breadcrumb).getByRole('link', {
+        name: 'Overview',
+        current: 'page',
+      })
     ).toBeTruthy();
     expect(
       await view.findByText('Total Revenue', {}, lazyPageTimeout)
@@ -41,9 +51,20 @@ describe('react-dashboard example', () => {
       pageSize: 10,
       visitors: '30d',
     });
+
+    const breadcrumb = await view.findByRole(
+      'navigation',
+      { name: 'breadcrumb' },
+      lazyPageTimeout
+    );
+
     expect(
-      await view.findByRole('heading', { name: 'Overview' }, lazyPageTimeout)
+      within(breadcrumb).getByRole('link', {
+        name: 'Overview',
+        current: 'page',
+      })
     ).toBeTruthy();
+
     expect(
       await view.findByText('Total Revenue', {}, lazyPageTimeout)
     ).toBeTruthy();
@@ -104,8 +125,17 @@ describe('react-dashboard example', () => {
 
     expect(view.queryByRole('dialog', { name: 'Add section' })).toBeNull();
 
+    const breadcrumb = await view.findByRole(
+      'navigation',
+      { name: 'breadcrumb' },
+      lazyPageTimeout
+    );
+
     expect(
-      await view.findByRole('heading', { name: 'Create' }, lazyPageTimeout)
+      within(breadcrumb).getByRole('link', {
+        name: 'Create',
+        current: 'page',
+      })
     ).toBeTruthy();
 
     expect(
@@ -206,7 +236,7 @@ describe('react-dashboard example', () => {
     ).toBeTruthy();
     expect(
       view.getAllByRole('heading', { name: 'Reports', level: 1 })
-    ).toHaveLength(2);
+    ).toHaveLength(1);
   });
 
   it('redirects to login page on non public access pages', async () => {
@@ -233,11 +263,21 @@ describe('react-dashboard example', () => {
       lazyPageTimeout
     );
 
+    const breadcrumb = await view.findByRole(
+      'navigation',
+      { name: 'breadcrumb' },
+      lazyPageTimeout
+    );
+
+    expect(
+      within(breadcrumb).getByRole('link', {
+        name: 'Overview',
+        current: 'page',
+      })
+    ).toBeTruthy();
+
     expect(
       await view.findByText('Total Revenue', {}, lazyPageTimeout)
-    ).toBeTruthy();
-    expect(
-      view.getAllByRole('heading', { name: 'Overview', level: 1 })
     ).toBeTruthy();
   });
 });

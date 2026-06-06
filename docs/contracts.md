@@ -246,4 +246,4 @@ const context = useOutletContext<{ user: string }>();
 
 ### Params are numbers instead of strings
 
-This is expected for built-in numeric constraints. `{id:int}` and `{value:number}` parse to `number` in generated contracts and runtime state. Custom constraints remain `string` unless URLKit supports typed static inference for them.
+This is expected for built-in numeric constraints. `{id:int}`, `{value:number}` and `{value:range}` parse to `number` in generated contracts and runtime state. Custom constraints remain `string` unless URLKit supports typed static inference for them.

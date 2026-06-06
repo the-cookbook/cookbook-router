@@ -41,10 +41,6 @@ export function DocumentCard({ document }: DocumentCardProps) {
               to="documents.details"
               params={{ documentId: document.id }}
               className="hover:underline"
-              intercept={{
-                slot: 'modal',
-                component: DocumentPreview,
-              }}
             >
               {document.title}
             </Link>
@@ -90,6 +86,10 @@ export function DocumentCard({ document }: DocumentCardProps) {
         <Link
           to="documents.details"
           params={{ documentId: document.id }}
+          intercept={{
+            slot: 'modal',
+            component: DocumentPreview,
+          }}
           className="inline-flex items-center text-sm font-medium text-foreground hover:underline"
         >
           Preview document

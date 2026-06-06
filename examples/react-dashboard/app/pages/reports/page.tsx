@@ -1,10 +1,22 @@
 import { Button } from '@/components/ui/button';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from '@/components/ui/breadcrumb';
 import { Reports } from './components/reports-page';
 
 export function ReportsLayoutHeader() {
   return (
     <div className="flex w-full items-center justify-between">
-      <h1 className="text-base font-medium">Reports</h1>
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbPage>Reports</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
       <div className="flex items-center gap-2">
         <Button variant="outline">Export CSV</Button>

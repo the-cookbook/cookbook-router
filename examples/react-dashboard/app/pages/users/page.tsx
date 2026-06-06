@@ -1,10 +1,24 @@
 import { Mail, UserRoundCheck, UserRoundX, Users } from 'lucide-react';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from '@/components/ui/breadcrumb';
 import { UsersDataTable } from './data-table';
 import { StatCard } from './stat-card';
 import data from './data.json';
 
 export function UsersLayoutHeader() {
-  return <h1 className="text-base font-medium">Users</h1>;
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbPage>Users</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
 }
 
 export function UsersPage() {

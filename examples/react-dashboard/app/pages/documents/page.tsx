@@ -1,6 +1,11 @@
 import { FileText, Search } from 'lucide-react';
 import { useParams } from '@cookbook/router-react';
-
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from '@/components/ui/breadcrumb';
 import { Input } from '@/components/ui/input';
 
 import { documents, getDocumentById } from './data/documents';
@@ -9,7 +14,15 @@ import { DocumentPreviewSheet } from './document-preview-sheet';
 import { DocumentNotFound } from './details/not-found';
 
 export function DocumentsLayoutHeader() {
-  return <h1 className="text-base font-medium">Documents</h1>;
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbPage>Documents</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
 }
 
 export function DocumentPreview() {

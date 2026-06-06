@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import { renderToString } from 'react-dom/server';
 import { hydrateRoot } from 'react-dom/client';
 import { act } from 'react';
@@ -209,8 +209,17 @@ describe('example application integration', () => {
 
     const view = render(<DashboardApp router={router} />);
 
+    const breadcrumb = await view.findByRole(
+      'navigation',
+      { name: 'breadcrumb' },
+      dashboardLazyPageTimeout,
+    );
+
     expect(
-      await view.findByRole('heading', { name: 'Overview' }, dashboardLazyPageTimeout),
+      within(breadcrumb).getByRole('link', {
+        name: 'Overview',
+        current: 'page',
+      }),
     ).toBeTruthy();
 
     expect(await view.findByText('Total Revenue', {}, dashboardLazyPageTimeout)).toBeTruthy();

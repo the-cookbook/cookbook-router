@@ -7,6 +7,9 @@ describe('generate-route-params', () => {
     expect(renderParamType({ name: 'value', constraint: 'number', token: '{value:number}' })).toBe(
       'number',
     );
+    expect(
+      renderParamType({ name: 'quantity', constraint: 'range', token: '{value:range(1,10)}' }),
+    ).toBe('number');
   });
 
   it('renders custom and wildcard constraints as strings', () => {
