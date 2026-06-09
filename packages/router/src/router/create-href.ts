@@ -84,6 +84,10 @@ function assertRequiredPathParams(route: NormalizedRoute, params: unknown): void
   const values = asParamRecord(params);
 
   for (const param of route.params) {
+    if (param.optional) {
+      continue;
+    }
+
     const value = values[param.name];
 
     if (value === undefined || value === null || value === '') {

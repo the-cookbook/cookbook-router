@@ -389,21 +389,28 @@ There is no built-in `{param:number}` or `{param:string}` constraint. Use `{para
 
 PathKit provides these built-in constraints, which Router forwards to URLKit for route validation, matching, href generation, static router workflows, and generated contracts.
 
-| Constraint | Syntax                             | Valid examples             | Invalid examples            | Runtime/generated type |
-| ---------- | ---------------------------------- | -------------------------- | --------------------------- | ---------------------- |
-| `decimal`  | `{price:decimal}`                  | `1`, `1.5`, `42`, `200.99` | `abc`, `foo-1`              | `number`               |
-| `int`      | `{id:int}`                         | `1`, `42`, `9000`          | `abc`, `1.5`, `foo-1`       | `number`               |
-| `range`    | `{page:range(1,100)}`              | `1`, `50`, `100`           | `0`, `101`, `abc`           | `number`               |
-| `list`     | `{view:list(grid\|list\|details)}` | `grid`, `list`, `details`  | `table`, `detail`           | `string`               |
-| `regex`    | `{slug:regex([a-z0-9-]+)}`         | `hello-world`, `post-123`  | `HelloWorld`, `hello_world` | `string`               |
+| Constraint  | Syntax                             | Valid examples                         | Invalid examples            | Runtime/generated type |
+| ----------- | ---------------------------------- | -------------------------------------- | --------------------------- | ---------------------- |
+| `decimal`   | `{price:decimal}`                  | `1`, `1.5`, `42`, `200.99`             | `abc`, `foo-1`              | `number`               |
+| `int`       | `{id:int}`                         | `1`, `42`, `9000`                      | `abc`, `1.5`, `foo-1`       | `number`               |
+| `uuid`      | `{id:uuid}`                        | `550e8400-e29b-41d4-a716-446655440000` | `abc`, missing hyphens      | `string`               |
+| `min`       | `{price:min(1)}`                   | `1`, `9.99`, `10`                      | `0`, `abc`                  | `number`               |
+| `max`       | `{price:max(10)}`                  | `1`, `9.99`, `10`                      | `10.01`, `abc`              | `number`               |
+| `range`     | `{page:range(1,100)}`              | `1`, `50`, `100`                       | `0`, `101`, `abc`           | `number`               |
+| `minlength` | `{slug:minlength(3)}`              | `foo`, `product-123`                   | `a`, `ab`                   | `string`               |
+| `maxlength` | `{slug:maxlength(50)}`             | `foo`, `product-123`                   | value longer than max       | `string`               |
+| `list`      | `{view:list(grid\|list\|details)}` | `grid`, `list`, `details`              | `table`, `detail`           | `string`               |
+| `regex`     | `{slug:regex([a-z0-9-]+)}`         | `hello-world`, `post-123`              | `HelloWorld`, `hello_world` | `string`               |
 
-Numeric built-ins parse to `number` in router state, React hooks, middleware, lifecycle hooks, and generated contracts. `list`, `regex`, unconstrained params, wildcards, and custom constraints expose `string` unless generated contracts are extended with custom typed inference.
+URLKit infers parsed param types from the full constraint chain. If `int`, `decimal`, `range`, `min`, or `max` appears anywhere in the chain, router state, React hooks, middleware, lifecycle hooks, and generated contracts use `number`. `uuid`, `minlength`, `maxlength`, `list`, `regex`, unconstrained params, wildcards, and custom constraints expose `string` unless the same chain also includes a numeric constraint.
 
 ```tsx
 const routes = defineRoutes([
   { id: 'users.show', path: '/users/{id:int}', component: UserPage },
   { id: 'prices.show', path: '/prices/{price:decimal}', component: PricePage },
   { id: 'pages.show', path: '/pages/{page:range(1,100)}', component: PageRoute },
+  { id: 'products.min', path: '/products/{price:decimal:min(1)}', component: ProductsPage },
+  { id: 'users.uuid', path: '/uuid-users/{id:uuid}', component: UserPage },
   { id: 'search.view', path: '/search/{view:list(grid|list|details)}', component: SearchPage },
   { id: 'posts.show', path: '/posts/{slug:regex([a-z0-9-]+)}', component: PostPage },
 ] as const);
@@ -463,7 +470,7 @@ These APIs are exported for advanced integrations, tests, and Router internals. 
 
 #### `createRouteUrlContract(route, options?)`
 
-Creates the URLKit route-runtime contract for one Router route descriptor. Router forwards the cleaned Static descriptor shape directly to URLKit; it does not translate legacy search/hash forms.
+Creates the URLKit route-runtime contract for one Router route descriptor. Router forwards the final Static descriptor shape directly to URLKit; it does not translate invalid search/hash forms.
 
 ```ts
 function createRouteUrlContract(
@@ -988,27 +995,27 @@ interface RouterPathConstraints {
 | `getConstraint()`           | Read a registered constraint for diagnostics or tests.                                                                               |
 | `unregisterConstraint()`    | Remove a registered constraint, mainly for isolated tests.                                                                           |
 
-Built-in PathKit constraints available in route paths are `decimal`, `int`, `range`, `list`, and `regex`. See [Path routes and constraints](path-routes.md) for syntax, examples, parsed types, and custom-constraint guidance.
+Built-in PathKit constraints available in route paths are `decimal`, `int`, `uuid`, `min`, `max`, `range`, `minlength`, `maxlength`, `list`, and `regex`. See [Path routes and constraints](path-routes.md) for syntax, examples, parsed types, and custom-constraint guidance.
 
 ```ts
-const uuid = createConstraint({
+const slug = createConstraint({
   parse(paramName, value) {
-    if (typeof value !== 'string' || !/^[0-9a-f-]{36}$/i.test(value)) {
-      throw new Error(`${paramName} must be a UUID.`);
+    if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
+      throw new Error(`${paramName} must be a slug.`);
     }
   },
   verify(_paramName, params) {
     if (params.trim()) {
-      throw new Error('uuid does not accept parameters.');
+      throw new Error('slug does not accept parameters.');
     }
   },
   toRegExp() {
-    return '[0-9a-fA-F-]{36}';
+    return '[a-z0-9-]+';
   },
 });
 
-const routes = defineRoutes([{ id: 'users.show', path: '/users/{id:uuid}' }] as const, {
-  pathConstraints: { uuid },
+const routes = defineRoutes([{ id: 'posts.show', path: '/posts/{slug:slug}' }] as const, {
+  pathConstraints: { slug },
 });
 ```
 
@@ -1032,22 +1039,22 @@ Use these only when implementing integrations that need consistent router errors
 
 Important exported types include:
 
-| Type                                                           | Purpose                                                                                                                                       |
-| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `RouteId`                                                      | Registered route ID union. Falls back to `string` before contracts are generated.                                                             |
-| `RouteParams<Route>`                                           | URLKit-parsed params for a registered route. `{id:int}`, `{price:decimal}` and `{value:range}` are `number`; custom constraints are `string`. |
-| `RouteSearch<Route>`                                           | URLKit-parsed search object for a registered route.                                                                                           |
-| `RouteHash<Route>`                                             | URLKit-parsed hash value for a registered route.                                                                                              |
-| `RouteHashInput<Route>`                                        | Input accepted for route hash generation.                                                                                                     |
-| `RouteMeta<Route>` / `RegisteredRouteMeta<Route>`              | Metadata for a registered route.                                                                                                              |
-| `RouteOutletContext<Route>`                                    | Outlet context type for a registered route.                                                                                                   |
-| `RouteUrlOptions<Route>`                                       | Route URL params/search/hash options.                                                                                                         |
-| `RouterContracts`                                              | Generated contract container.                                                                                                                 |
-| `Register`                                                     | Module augmentation target.                                                                                                                   |
-| `RouterNavigationState`                                        | Navigation state union.                                                                                                                       |
-| `RouteMatch`, `MatchedRoute`, `NormalizedRoute`, `RankedRoute` | Matching and normalized route structures.                                                                                                     |
-| `Middleware`, `MiddlewareContext`, `MiddlewareResult`          | Middleware API.                                                                                                                               |
-| `RouteLifecycle`, `GlobalLifecycle`, `RouteLifecycleContext`   | Lifecycle API.                                                                                                                                |
+| Type                                                           | Purpose                                                                                                                                                                                                                                          |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `RouteId`                                                      | Registered route ID union. Falls back to `string` before contracts are generated.                                                                                                                                                                |
+| `RouteParams<Route>`                                           | URLKit-parsed params for a registered route. `{id:int}`, `{price:decimal}`, `{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` are `number`; `uuid`, `minlength`, `maxlength`, `list`, `regex`, and custom constraints are `string`. |
+| `RouteSearch<Route>`                                           | URLKit-parsed search object for a registered route.                                                                                                                                                                                              |
+| `RouteHash<Route>`                                             | URLKit-parsed hash value for a registered route.                                                                                                                                                                                                 |
+| `RouteHashInput<Route>`                                        | Input accepted for route hash generation.                                                                                                                                                                                                        |
+| `RouteMeta<Route>` / `RegisteredRouteMeta<Route>`              | Metadata for a registered route.                                                                                                                                                                                                                 |
+| `RouteOutletContext<Route>`                                    | Outlet context type for a registered route.                                                                                                                                                                                                      |
+| `RouteUrlOptions<Route>`                                       | Route URL params/search/hash options.                                                                                                                                                                                                            |
+| `RouterContracts`                                              | Generated contract container.                                                                                                                                                                                                                    |
+| `Register`                                                     | Module augmentation target.                                                                                                                                                                                                                      |
+| `RouterNavigationState`                                        | Navigation state union.                                                                                                                                                                                                                          |
+| `RouteMatch`, `MatchedRoute`, `NormalizedRoute`, `RankedRoute` | Matching and normalized route structures.                                                                                                                                                                                                        |
+| `Middleware`, `MiddlewareContext`, `MiddlewareResult`          | Middleware API.                                                                                                                                                                                                                                  |
+| `RouteLifecycle`, `GlobalLifecycle`, `RouteLifecycleContext`   | Lifecycle API.                                                                                                                                                                                                                                   |
 
 ## `@cookbook/router-react`
 

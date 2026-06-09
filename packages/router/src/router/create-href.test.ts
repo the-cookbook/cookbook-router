@@ -17,6 +17,16 @@ describe('createRouteHref', () => {
     ).toThrow('expected param "id"');
   });
 
+  it('does not require optional path params while building hrefs', () => {
+    const routes = normalizeRoutes(defineRoutes([{ id: 'page', path: '/pages/{page:min(1)?}' }]));
+    const lookup = createRouteLookup(routes);
+
+    expect(createRouteHref({ routeId: 'page', options: {}, routes: lookup })).toBe('/pages');
+    expect(
+      createRouteHref({ routeId: 'page', options: { params: { page: 2 } }, routes: lookup }),
+    ).toBe('/pages/2');
+  });
+
   it('applies route-level and per-call URL options while building search', () => {
     const routes = normalizeRoutes(
       defineRoutes([

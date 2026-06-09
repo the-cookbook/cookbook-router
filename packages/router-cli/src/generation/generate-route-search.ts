@@ -1,9 +1,9 @@
 import type { RouteSearchSchema } from '@cookbook/router';
 import { quote, quoteProperty, renderObject } from './render-types';
 
-type StaticSearchValue = NonNullable<RouteSearchSchema[string]>;
+type StaticSearchField = RouteSearchSchema[string];
 
-/** Renders generated search contracts from URLKit v2 static descriptors. */
+/** Renders generated search contracts from URLKit static descriptors. */
 export function renderRouteSearch(search: RouteSearchSchema | undefined): string {
   if (!search) {
     return '{}';
@@ -17,47 +17,35 @@ export function renderRouteSearch(search: RouteSearchSchema | undefined): string
   return renderObject(entries);
 }
 
-export function renderSearchFieldType(field: StaticSearchValue): string {
-  const element = renderSearchValueType(field);
-  return isManySearchField(field) ? `readonly ${element}[]` : element;
+export function renderSearchFieldType(field: StaticSearchField): string {
+  const element = renderSearchScalarType(field);
+  return field.many === true ? `readonly ${element}[]` : element;
 }
 
-function renderSearchValueType(field: StaticSearchValue): string {
-  const descriptor = field;
-
-  if (descriptor.type === 'number' || descriptor.type === 'int') {
+function renderSearchScalarType(field: StaticSearchField): string {
+  if (field.type === 'number' || field.type === 'int') {
     return 'number';
   }
 
-  if (descriptor.type === 'boolean') {
+  if (field.type === 'boolean') {
     return 'boolean';
   }
 
-  if (descriptor.type === 'date' || descriptor.type === 'date-time') {
+  if (field.type === 'date' || field.type === 'date-time') {
     return 'Date';
   }
 
-  if (descriptor.type === 'enum') {
-    return Array.isArray(descriptor.values)
-      ? descriptor.values.map((value) => quote(String(value))).join(' | ') || 'never'
-      : 'never';
+  if (field.type === 'enum') {
+    return field.values.map((value) => quote(String(value))).join(' | ') || 'never';
   }
 
-  if (descriptor.type === 'string') {
+  if (field.type === 'string') {
     return 'string';
   }
 
   return 'unknown';
 }
 
-function isManySearchField(field: StaticSearchValue): boolean {
-  return isRecord(field) && field.many === true;
-}
-
-function isOptionalSearchField(field: StaticSearchValue): boolean {
-  return isRecord(field) && !('default' in field) && field.optional === true;
-}
-
-function isRecord(input: unknown): input is Record<string, unknown> {
-  return typeof input === 'object' && input !== null && !Array.isArray(input);
+function isOptionalSearchField(field: StaticSearchField): boolean {
+  return field.optional === true && !Object.prototype.hasOwnProperty.call(field, 'default');
 }

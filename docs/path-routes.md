@@ -14,7 +14,12 @@ Use this page when defining route paths, choosing built-in constraints, or addin
 - [Built-in constraints](#built-in-constraints)
 - [`decimal`](#decimal)
 - [`int`](#int)
+- [`uuid`](#uuid)
+- [`min`](#min)
+- [`max`](#max)
 - [`range`](#range)
+- [`minlength`](#minlength)
+- [`maxlength`](#maxlength)
 - [`list`](#list)
 - [`regex`](#regex)
 - [Multiple constraints](#multiple-constraints)
@@ -189,15 +194,22 @@ Optional wildcards use `?`:
 
 PathKit provides these built-in constraints, and Router forwards them through URLKit for validation, matching, href generation, SSR, and generated contracts:
 
-| Constraint | Syntax                             | Matches                                              | Generated/runtime param type |
-| ---------- | ---------------------------------- | ---------------------------------------------------- | ---------------------------- |
-| `decimal`  | `{price:decimal}`                  | Decimal numeric values such as `1`, `1.5`, `200.99`. | `number`                     |
-| `int`      | `{id:int}`                         | Unsigned integer values such as `1`, `42`, `9000`.   | `number`                     |
-| `range`    | `{page:range(1,100)}`              | Numeric values inside an inclusive range.            | `number`                     |
-| `list`     | `{view:list(grid\|list\|details)}` | One exact item from a pipe-separated list.           | `string`                     |
-| `regex`    | `{slug:regex([a-z0-9-]+)}`         | Values that satisfy the regular expression.          | `string`                     |
+| Constraint  | Syntax                             | Matches                                              | Generated/runtime param type |
+| ----------- | ---------------------------------- | ---------------------------------------------------- | ---------------------------- |
+| `decimal`   | `{price:decimal}`                  | Decimal numeric values such as `1`, `1.5`, `200.99`. | `number`                     |
+| `int`       | `{id:int}`                         | Unsigned integer values such as `1`, `42`, `9000`.   | `number`                     |
+| `uuid`      | `{id:uuid}`                        | Canonical hyphenated UUID values.                    | `string`                     |
+| `min`       | `{price:min(1)}`                   | Numeric values greater than or equal to the minimum. | `number`                     |
+| `max`       | `{price:max(10)}`                  | Numeric values less than or equal to the maximum.    | `number`                     |
+| `range`     | `{page:range(1,100)}`              | Numeric values inside an inclusive range.            | `number`                     |
+| `minlength` | `{slug:minlength(3)}`              | Values with at least the specified length.           | `string`                     |
+| `maxlength` | `{slug:maxlength(50)}`             | Values with no more than the specified length.       | `string`                     |
+| `list`      | `{view:list(grid\|list\|details)}` | One exact item from a pipe-separated list.           | `string`                     |
+| `regex`     | `{slug:regex([a-z0-9-]+)}`         | Values that satisfy the regular expression.          | `string`                     |
 
 There is no built-in `{param:number}` or `{param:string}` constraint. Use `{param:decimal}` for finite decimal path values, `{param:int}` for integers, and `{param}` for unconstrained string segments.
+
+URLKit infers parsed param types from the full constraint chain. If `int`, `decimal`, `range`, `min`, or `max` appears anywhere in the chain, Router state and generated contracts use `number`. Otherwise the param is `string`.
 
 ## `decimal`
 
@@ -258,6 +270,57 @@ Invalid:
 
 Runtime and generated params expose `id` as `number`.
 
+## `uuid`
+
+Use `uuid` for canonical hyphenated UUID values.
+
+```tsx
+{
+  id: 'users.show',
+  path: '/users/{id:uuid}',
+  component: UserPage,
+}
+```
+
+Valid:
+
+```txt
+/users/550e8400-e29b-41d4-a716-446655440000
+/users/00000000-0000-0000-0000-000000000000
+```
+
+Invalid:
+
+```txt
+/users/abc
+/users/550e8400e29b41d4a716446655440000
+/users/zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz
+```
+
+Runtime and generated params expose `id` as `string`.
+
+## `min`
+
+Use `min(value)` for inclusive numeric minimum validation.
+
+```txt
+/products/{price:decimal:min(1)}
+/products/{page:min(1)}
+```
+
+`min` parses as `number` even when it appears without `decimal` or `int`. Combine it with `decimal` or `int` when the URL matcher should also restrict the segment shape.
+
+## `max`
+
+Use `max(value)` for inclusive numeric maximum validation.
+
+```txt
+/products/{price:decimal:max(10)}
+/products/{page:max(10)}
+```
+
+`max` parses as `number` even when it appears without `decimal` or `int`. Combine it with `decimal` or `int` when the URL matcher should also restrict the segment shape.
+
 ## `range`
 
 Use `range(min,max)` for inclusive numeric ranges.
@@ -287,6 +350,26 @@ Invalid:
 ```
 
 `min` and `max` are required. Runtime and generated params expose `page` as `number`.
+
+## `minlength`
+
+Use `minlength(length)` for string length validation.
+
+```txt
+/articles/{slug:minlength(3)}
+```
+
+This validates character length, not numeric value. Runtime and generated params expose `slug` as `string` unless the same constraint chain also includes `min`, `max`, `range`, `int`, or `decimal`.
+
+## `maxlength`
+
+Use `maxlength(length)` for maximum string length validation.
+
+```txt
+/articles/{slug:maxlength(50)}
+```
+
+This validates character length, not numeric value. Runtime and generated params expose `slug` as `string` unless the same constraint chain also includes a numeric constraint.
 
 ## `list`
 
@@ -349,7 +432,14 @@ Invalid:
 /posts/hello_world
 ```
 
-The regex is used by both href generation and route matching. Do not include route delimiters in the regex unless the parameter is intentionally a wildcard-like value. For cross-segment matching, use a wildcard parameter.
+The regex pattern must be a raw regex source, not a JavaScript regex literal. Do not include `/.../` delimiters:
+
+```txt
+/posts/{slug:regex(/[a-z0-9-]+/)}  // invalid
+/posts/{slug:regex([a-z0-9-]+)}    // valid
+```
+
+For cross-segment matching, use a wildcard parameter.
 
 ## Multiple constraints
 
@@ -357,9 +447,12 @@ A parameter can use multiple constraints:
 
 ```txt
 /users/{id:int:range(1,100)}
+/products/{price:decimal:min(1):max(10)}
+/articles/{slug:minlength(3):maxlength(50)}
+/scores/{id:regex(\d):min(1)}
 ```
 
-This route requires an integer-shaped value and then validates that the value is inside the inclusive range.
+Router and URLKit infer parsed param types from the full chain, not from the first constraint. Any numeric constraint in the chain makes the parsed/generated param a `number`.
 
 Use multiple constraints sparingly. If a rule needs custom validation or clearer error messages, create a custom constraint.
 
@@ -367,16 +460,21 @@ Use multiple constraints sparingly. If a rule needs custom validation or clearer
 
 Router state, React hooks, middleware, lifecycle hooks, and generated contracts use URLKit parsed-param semantics.
 
-| Pattern                    | Runtime/generated type | Notes                                                                                                   |
-| -------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------- |
-| `{slug}`                   | `string`               | Unconstrained segment.                                                                                  |
-| `{id:int}`                 | `number`               | Parsed integer.                                                                                         |
-| `{price:decimal}`          | `number`               | Parsed finite decimal.                                                                                  |
-| `{page:range(1,100)}`      | `number`               | Parsed numeric range value.                                                                             |
-| `{view:list(grid\|list)}`  | `string`               | Validated string.                                                                                       |
-| `{slug:regex([a-z0-9-]+)}` | `string`               | Validated string.                                                                                       |
-| `{slug:slug}`              | `string`               | Custom constraints expose `string` unless generated contracts are extended with custom typed inference. |
-| `{*path}`                  | `string`               | Captured wildcard path.                                                                                 |
+| Pattern                    | Runtime/generated type | Notes                                                                                  |
+| -------------------------- | ---------------------- | -------------------------------------------------------------------------------------- |
+| `{slug}`                   | `string`               | Unconstrained segment.                                                                 |
+| `{id:int}`                 | `number`               | Parsed integer.                                                                        |
+| `{price:decimal}`          | `number`               | Parsed finite decimal.                                                                 |
+| `{page:range(1,100)}`      | `number`               | Parsed numeric range value.                                                            |
+| `{price:min(1)}`           | `number`               | Parsed numeric minimum value.                                                          |
+| `{price:max(10)}`          | `number`               | Parsed numeric maximum value.                                                          |
+| `{id:uuid}`                | `string`               | Canonical UUID string.                                                                 |
+| `{slug:minlength(3)}`      | `string`               | String length validation.                                                              |
+| `{slug:maxlength(50)}`     | `string`               | String length validation.                                                              |
+| `{view:list(grid\|list)}`  | `string`               | Validated string.                                                                      |
+| `{slug:regex([a-z0-9-]+)}` | `string`               | Validated string.                                                                      |
+| `{slug:slug}`              | `string`               | Custom constraints expose `string` unless combined with a numeric built-in constraint. |
+| `{*path}`                  | `string`               | Captured wildcard path.                                                                |
 
 ```tsx
 function UserPage() {
@@ -479,7 +577,7 @@ Advanced integrations can call `registerPathConstraints({ slug })` directly, but
 
 ## Custom constraints and generated contracts
 
-Custom constraints validate values at runtime, but generated contracts expose custom-constrained params as `string` unless the generated contract layer is extended with custom typed inference.
+Custom constraints validate values at runtime, but generated contracts expose custom-constrained params as `string` unless the same constraint chain also includes a numeric built-in constraint.
 
 ```tsx
 <Link to="posts.show" params={{ slug: 'hello-world' }} />
@@ -496,6 +594,8 @@ If you need a numeric path param, prefer built-in numeric constraints:
 {id:int}
 {price:decimal}
 {page:range(1,100)}
+{page:min(1)}
+{page:max(100)}
 ```
 
 ## Path options

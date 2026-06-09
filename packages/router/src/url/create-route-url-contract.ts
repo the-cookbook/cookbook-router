@@ -1,5 +1,5 @@
 import { createRouteUrlContract as createUrlKitRouteUrlContract } from '@cookbook/urlkit/router-runtime';
-import type { StaticHashDescriptor, StaticSearchDescriptor } from '@cookbook/urlkit/static';
+import type { StaticHashDescriptor, StaticSearchField } from '@cookbook/urlkit/static';
 import type {
   CreateRouterRouteUrlContractOptions,
   RouterRouteUrlContract,
@@ -12,7 +12,7 @@ import { resolveUrlOptions } from './resolve-url-options';
 
 interface UrlKitStaticRouteDescriptor {
   readonly path?: string;
-  readonly search?: StaticSearchDescriptor;
+  readonly search?: Readonly<Record<string, StaticSearchField>>;
   readonly hash?: StaticHashDescriptor;
 }
 
@@ -52,7 +52,7 @@ export function createRouteUrlContract(
 function createUrlKitRouteDescriptor(route: RouterRouteUrlDescriptor): UrlKitStaticRouteDescriptor {
   return {
     ...(route.path === undefined ? {} : { path: route.path }),
-    ...(route.search === undefined ? {} : { search: route.search as StaticSearchDescriptor }),
+    ...(route.search === undefined ? {} : { search: route.search }),
     ...(route.hash === undefined ? {} : { hash: route.hash as StaticHashDescriptor }),
   };
 }

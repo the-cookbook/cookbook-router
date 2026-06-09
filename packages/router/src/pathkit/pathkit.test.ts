@@ -31,13 +31,54 @@ describe('pathkit integration adapter', () => {
     ).toEqual([
       {
         name: 'organizationId',
-        constraint: 'regex',
+        constraints: [{ type: 'regex', params: uuidPattern }],
+        wildcard: false,
+        optional: false,
         token: `{organizationId:regex(${uuidPattern})}`,
       },
       {
         name: 'userId',
-        constraint: 'int',
+        constraints: [{ type: 'int', params: '' }],
+        wildcard: false,
+        optional: false,
         token: '{userId:int}',
+      },
+    ]);
+  });
+
+  it('extracts full chained path constraint metadata', () => {
+    expect(
+      getPathParams(
+        '/products/{price:decimal:min(1):max(10)}/{slug:minlength(3):maxlength(50)?}/{*path?}',
+      ),
+    ).toEqual([
+      {
+        name: 'price',
+        constraints: [
+          { type: 'decimal', params: '' },
+          { type: 'min', params: '1' },
+          { type: 'max', params: '10' },
+        ],
+        wildcard: false,
+        optional: false,
+        token: '{price:decimal:min(1):max(10)}',
+      },
+      {
+        name: 'slug',
+        constraints: [
+          { type: 'minlength', params: '3' },
+          { type: 'maxlength', params: '50' },
+        ],
+        wildcard: false,
+        optional: true,
+        token: '{slug:minlength(3):maxlength(50)?}',
+      },
+      {
+        name: 'path',
+        constraints: [],
+        wildcard: true,
+        optional: true,
+        token: '{*path?}',
       },
     ]);
   });

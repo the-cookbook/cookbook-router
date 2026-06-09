@@ -24,6 +24,7 @@ export type {
   ResolvedSlots,
   RouteMeta,
   RouteParamDefinition,
+  RouteParamConstraint,
   RouteHashSchema,
   RouteSearchSchema,
   RouteSlotConfig,

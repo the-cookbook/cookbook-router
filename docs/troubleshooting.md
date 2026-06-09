@@ -14,7 +14,9 @@ Use this guide when routing behavior, generated contracts, examples, SSR, or tes
 - [Call-site intercept throws `DataCloneError`](#call-site-intercept-throws-datacloneerror)
 - [Slot fallback IDs are missing from contracts](#slot-fallback-ids-are-missing-from-contracts)
 - [Generated contracts are stale](#generated-contracts-are-stale)
-- [`useParams()` returns `number` for `{id:int}`](#useparams-returns-number-for-idint)
+- [`useParams()` returns `number` for numeric path constraints](#useparams-returns-number-for-numeric-path-constraints)
+- [`uuid`, `minlength`, `maxlength`, `list`, and `regex` params remain `string`](#uuid-minlength-maxlength-list-and-regex-params-remain-string)
+- [Regex path constraints with `/.../` delimiters fail](#regex-path-constraints-with--delimiters-fail)
 - [Custom constraint params remain `string`](#custom-constraint-params-remain-string)
 - [Invalid path params fail during URLKit-backed validation](#invalid-path-params-fail-during-urlkit-backed-validation)
 - [Search params parse differently after URLKit integration](#search-params-parse-differently-after-urlkit-integration)
@@ -40,7 +42,7 @@ Use this guide when routing behavior, generated contracts, examples, SSR, or tes
 - [SSR returns an empty root](#ssr-returns-an-empty-root)
 - [SSR page has no styles](#ssr-page-has-no-styles)
 - [Tests warn about React `act`](#tests-warn-about-react-act)
-- [Examples still use old package behavior](#examples-still-use-old-package-behavior)
+- [Examples still use stale package builds](#examples-still-use-stale-package-builds)
 - [Route file extraction fails on computed values](#route-file-extraction-fails-on-computed-values)
 
 ## Route validation fails
@@ -212,7 +214,7 @@ In development, use watch mode. It generates once, keeps running, and regenerate
 cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router --watch
 ```
 
-## `useParams()` returns `number` for `{id:int}`
+## `useParams()` returns `number` for numeric path constraints
 
 This is expected URLKit-backed behavior.
 
@@ -234,11 +236,44 @@ Use numeric params in links, hrefs, navigation, tests, middleware assumptions, a
 <Link to="users.show" params={{ id: 42 }} />
 ```
 
-`{value:range(1,10)}` also parses to `number`.
+`{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` also parse to `number`.
+
+## `uuid`, `minlength`, `maxlength`, `list`, and `regex` params remain `string`
+
+These constraints validate string shape or length. They do not make the parsed value numeric:
+
+```tsx
+{
+  id: 'articles.show',
+  path: '/articles/{slug:minlength(3):maxlength(50)}',
+}
+```
+
+```ts
+const params = useParams('articles.show');
+params.slug; // string
+```
+
+Use `min(...)` and `max(...)` for numeric bounds. Use `minlength(...)` and `maxlength(...)` for string length.
+
+## Regex path constraints with `/.../` delimiters fail
+
+PathKit expects a raw regex source inside `regex(...)`, not a JavaScript regex literal.
+
+```txt
+/posts/{slug:regex(/[a-z0-9-]+/)}  // invalid
+/posts/{slug:regex([a-z0-9-]+)}    // valid
+```
+
+Escape backslashes in TypeScript string literals when needed:
+
+```ts
+path: '/scores/{id:regex(\\d):min(1)}';
+```
 
 ## Custom constraint params remain `string`
 
-Custom constraints validate shape but generate and expose `string` params unless URLKit supports typed static inference for that custom constraint.
+Custom constraints validate shape but generate and expose `string` params unless the same constraint chain also includes a numeric built-in constraint.
 
 ```tsx
 {
@@ -660,7 +695,7 @@ Regenerate after changing `path`, `search`, `hash`, custom constraints, or route
 cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router
 ```
 
-Generated contracts should show `{id:int}`, `{price:decimal}` and `{value:range}` params as `number`, custom constraints as `string`, URLKit-compatible search descriptors as parsed types, and route-level `url` options in `manifest.json` when configured.
+Generated contracts should show `{id:int}`, `{price:decimal}`, `{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` params as `number`, `uuid`, `minlength`, `maxlength`, `list`, `regex`, and custom constraints as `string`, URLKit-compatible search descriptors as parsed types, and route-level `url` options in `manifest.json` when configured.
 
 ## Custom path constraints are not registered during CLI generation
 
@@ -718,7 +753,7 @@ If you call router navigation methods directly in a test, wrap the call with Rea
 
 For click-driven navigation, prefer `fireEvent.click()` or `userEvent.click()` and then `waitFor()` assertions.
 
-## Examples still use old package behavior
+## Examples still use stale package builds
 
 Examples consume workspace packages. After package source changes, run:
 

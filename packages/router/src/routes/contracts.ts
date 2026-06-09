@@ -1,5 +1,5 @@
 import type { RouterLocation } from '../history/memory-history';
-import type { StaticHashDescriptor, StaticSearchDescriptor } from '@cookbook/urlkit/static';
+import type { StaticHashDescriptor, StaticSearchField } from '@cookbook/urlkit/static';
 import type { RouterPathOptions } from '../pathkit/pathkit';
 import type { RouterUrlOptions } from '../url/contracts';
 import type { RouteHash, RouteId, RouteParams, RouteSearch } from '../contracts';
@@ -27,7 +27,7 @@ export type RouteMeta = Record<string, unknown>;
  * `type`, repeated values use `many: true`, and descriptor flags use positive
  * literal flags such as `optional: true`.
  */
-export type RouteSearchSchema = StaticSearchDescriptor;
+export type RouteSearchSchema = Readonly<Record<string, StaticSearchField>>;
 
 /** URLKit-backed static hash descriptor accepted in route definitions. */
 export type RouteHashSchema = StaticHashDescriptor;
@@ -184,14 +184,19 @@ export interface RouteDefinition {
  * Built-in constraints come from `@cookbook/pathkit`; custom constraints can be
  * registered through `defineRoutes({ pathConstraints })` or router path options.
  */
-export type RouteParamConstraint = string;
+export interface RouteParamConstraint {
+  readonly type: string;
+  readonly params: string;
+}
 
 /**
  * Normalized description of one path parameter discovered from a route pattern.
  */
 export interface RouteParamDefinition {
   readonly name: string;
-  readonly constraint: RouteParamConstraint;
+  readonly constraints: readonly RouteParamConstraint[];
+  readonly wildcard: boolean;
+  readonly optional: boolean;
   readonly token: string;
 }
 

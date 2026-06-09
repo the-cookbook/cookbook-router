@@ -17,7 +17,15 @@ function normalizedRoute(route: NormalizedRoute['route']): NormalizedRoute {
     fullPath: route.path,
     localPath: route.path,
     children: [],
-    params: [{ name: 'id', constraint: 'int', optional: false, repeat: false }],
+    params: [
+      {
+        name: 'id',
+        constraints: [{ type: 'int', params: '' }],
+        wildcard: false,
+        optional: false,
+        token: '{id:int}',
+      },
+    ],
     index: false,
     score: 0,
     order: 0,

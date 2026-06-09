@@ -36,7 +36,7 @@ Generated URL:
 /users/42?tab=settings#profile
 ```
 
-`{id:int}`, `{price:decimal}` and `{value:range(1,10)}` params use numbers in generated contracts and router state. `list`, `regex`, unconstrained params, wildcards, and custom constraints remain strings unless URLKit supports typed static inference for the custom constraint. See [Path routes and constraints](path-routes.md) for all built-in constraints.
+`{id:int}`, `{price:decimal}`, `{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` params use numbers in generated contracts and router state. `uuid`, `minlength`, `maxlength`, `list`, `regex`, unconstrained params, wildcards, and custom constraints remain strings unless the same constraint chain also includes a numeric built-in constraint. See [Path routes and constraints](path-routes.md) for all built-in constraints.
 
 The two-argument form is also supported:
 

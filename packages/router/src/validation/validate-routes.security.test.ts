@@ -16,10 +16,10 @@ describe('validateRoutes security hardening', () => {
 
   it('rejects malformed hash configuration', () => {
     expect(() => validateRoutes([{ id: 'bad', path: '/', hash: 'profile' } as never])).toThrow(
-      'hash configuration must use a URLKit static hash descriptor',
+      'invalid URL descriptor',
     );
     expect(() => validateRoutes([{ id: 'bad', path: '/', hash: [1] } as never])).toThrow(
-      'hash uses removed array shorthand',
+      'invalid URL descriptor',
     );
   });
 

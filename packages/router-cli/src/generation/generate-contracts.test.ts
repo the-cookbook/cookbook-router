@@ -86,6 +86,22 @@ describe('generateContracts', () => {
     expect(output).toContain("'products.show': 'details' | 'reviews' | undefined;");
   });
 
+  it('infers params from full PathKit constraint chains', () => {
+    const output = generateContracts([
+      { id: 'bounded.price', path: '/prices/{price:decimal:min(1):max(10)}' },
+      { id: 'numeric.regex', path: '/scores/{id:regex(\\d):min(1)}' },
+      { id: 'uuid.user', path: '/users/{id:uuid}' },
+      { id: 'bounded.slug', path: '/articles/{slug:minlength(3):maxlength(50)}' },
+      { id: 'optional.page', path: '/pages/{page:min(1)?}' },
+    ]);
+
+    expect(output).toContain("'bounded.price': { price: number };");
+    expect(output).toContain("'numeric.regex': { id: number };");
+    expect(output).toContain("'uuid.user': { id: string };");
+    expect(output).toContain("'bounded.slug': { slug: string };");
+    expect(output).toContain("'optional.page': { page?: number };");
+  });
+
   it('keeps custom path constraints as strings in generated params', () => {
     const output = generateContracts([{ id: 'post.show', path: '/posts/{slug:slug}' }], {
       pathConstraints: {

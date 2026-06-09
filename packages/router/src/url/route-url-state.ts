@@ -257,16 +257,16 @@ function mergeWildcardParamsFromPathkit(
   params: Record<string, unknown>,
 ): Record<string, unknown> {
   const missingWildcardParams = route.params.filter(
-    (param) => param.constraint === 'wildcard' && params[param.name] === undefined,
+    (param) => param.wildcard && params[param.name] === undefined,
   );
 
   if (!missingWildcardParams.length || !route.fullPath) {
     return params;
   }
 
-  // URLKit v1.0 validates PathKit catch-all routes but does not currently
-  // return wildcard captures. Keep this bridge internal until URLKit exposes
-  // catch-all values through parsed pathname contracts.
+  // URLKit validates PathKit catch-all routes but may not always
+  // return wildcard captures through parsed pathname contracts. Keep this bridge
+  // internal so Router state still includes wildcard values when needed.
   const pathkitParams = matchPathPattern(route.fullPath, pathname);
 
   if (!pathkitParams) {

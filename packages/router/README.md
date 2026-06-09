@@ -224,7 +224,7 @@ await router.navigate.to({
 });
 ```
 
-Use `router.href()` when rendering links outside React. Path params, search, and hash are parsed/built by URLKit, so `{id:int}`, `{price:decimal}` and `{value:range(1,10)}` params use numbers:
+Use `router.href()` when rendering links outside React. Path params, search, and hash are parsed/built by URLKit, so `{id:int}`, `{price:decimal}`, `{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` params use numbers:
 
 ```ts
 const href = router.href({
@@ -299,7 +299,7 @@ The core package exports contract utility types:
 - `RouterContracts`
 - `Register`
 
-They become app-specific after `@cookbook/router-cli` generates `contracts.ts` and `register.d.ts`. Generated params/search/hash follow URLKit parsing semantics: `{id:int}`, `{price:decimal}` and `{value:range(1,10)}` become `number`; custom constraints remain `string`; URLKit-compatible search/hash descriptors produce parsed value types. Static `date` and `date-time` search fields parse to `Date` with UTC semantics.
+They become app-specific after `@cookbook/router-cli` generates `contracts.ts` and `register.d.ts`. Generated params/search/hash follow URLKit parsing semantics: `{id:int}`, `{price:decimal}`, `{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` become `number`; `uuid`, `minlength`, `maxlength`, `list`, `regex`, and custom constraints remain `string`; URLKit-compatible search/hash descriptors produce parsed value types. Static `date` and `date-time` search fields parse to `Date` with UTC semantics.
 
 See [Contracts](../../docs/contracts.md) and [Code generation](../../docs/codegen.md).
 

@@ -98,7 +98,7 @@ Writes only `manifest.json`.
 
 The CLI expects statically extractable route declarations. Keep codegen-relevant fields inline and literal when possible: `id`, `path`, `index`, `search`, `hash`, `meta`, `children`, `layout.slots`, and `redirect`. Imported components are supported because the extractor replaces component-bearing fields with placeholders, but imported constants for route IDs, search schemas, or metadata may not be understood by static extraction.
 
-Generated contracts follow URLKit static descriptor semantics. Built-in parsed path constraints such as `{id:int}`, `{price:decimal}` and `{value:range}` generate `number` params. Built-in `list` and `regex` constraints generate `string` params. Custom path constraints declared through `defineRoutes(routes, { pathConstraints })` generate `string` params unless URLKit exposes typed static custom inference. See [Path routes and constraints](path-routes.md) for the complete path constraint surface.
+Generated contracts follow URLKit static descriptor semantics. Built-in parsed path constraints such as `{id:int}`, `{price:decimal}`, `{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` generate `number` params. Built-in `uuid`, `minlength`, `maxlength`, `list`, and `regex` constraints generate `string` params. Custom path constraints declared through `defineRoutes(routes, { pathConstraints })` generate `string` params unless URLKit exposes typed static custom inference. See [Path routes and constraints](path-routes.md) for the complete path constraint surface.
 
 Use static URL descriptors in CLI-consumed route files:
 

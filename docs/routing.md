@@ -148,19 +148,36 @@ Child paths may include a leading `/`, but they are still composed relative to t
 
 ## Path routes and constraints
 
-Route `path` values use PathKit syntax and URLKit parsed-param semantics. For the full path guide, including all built-in constraints and custom constraints, see [Path routes and constraints](path-routes.md).
+Route `path` values use PathKit syntax and URLKit parsed-param semantics. PathKit owns the route-pattern grammar and constraint validation; URLKit owns the parsed route URL state used by matches, params, and href generation.
+
+For the complete path guide, including detailed examples and custom constraints, see [Path routes and constraints](path-routes.md).
 
 Built-in constraints are:
 
-| Constraint | Syntax                     | Generated/runtime type |
-| ---------- | -------------------------- | ---------------------- | ---------- | -------- |
-| `decimal`  | `{price:decimal}`          | `number`               |
-| `int`      | `{id:int}`                 | `number`               |
-| `range`    | `{page:range(1,100)}`      | `number`               |
-| `list`     | `{view:list(grid           | list                   | details)}` | `string` |
-| `regex`    | `{slug:regex([a-z0-9-]+)}` | `string`               |
+| Constraint  | Syntax                                                | Generated/runtime type | Purpose                                                                     |
+| ----------- | ----------------------------------------------------- | ---------------------- | --------------------------------------------------------------------------- |
+| `int`       | `{id:int}`                                            | `number`               | Unsigned integer segment.                                                   |
+| `decimal`   | `{price:decimal}`                                     | `number`               | Finite decimal segment.                                                     |
+| `range`     | `{page:range(1,100)}`                                 | `number`               | Numeric segment inside an inclusive range.                                  |
+| `min`       | `{price:min(1)}`                                      | `number`               | Numeric segment greater than or equal to the minimum.                       |
+| `max`       | `{price:max(10)}`                                     | `number`               | Numeric segment less than or equal to the maximum.                          |
+| `uuid`      | `{id:uuid}`                                           | `string`               | Canonical hyphenated UUID segment.                                          |
+| `minlength` | `{slug:minlength(3)}`                                 | `string`               | Segment with at least the specified number of characters.                   |
+| `maxlength` | `{slug:maxlength(50)}`                                | `string`               | Segment with no more than the specified number of characters.               |
+| `list`      | <code>{view:list(grid&#124;list&#124;details)}</code> | `string`               | Segment that exactly matches one item from a pipe-separated list.           |
+| `regex`     | `{slug:regex([a-z0-9-]+)}`                            | `string`               | Segment that matches a raw regex source. Do not include `/.../` delimiters. |
 
-Use `{param}` for unconstrained string segments. There is no built-in `{param:number}` or `{param:string}` constraint.
+Use `{param}` for an unconstrained string segment. There is no built-in `{param:number}` or `{param:string}` constraint.
+
+Constraints can be chained:
+
+```txt
+/products/{price:decimal:min(1):max(10)}
+/articles/{slug:minlength(3):maxlength(50)}
+/scores/{score:regex(\d+):min(1)}
+```
+
+URLKit infers parsed param types from the full constraint chain, not from the first constraint. If `int`, `decimal`, `range`, `min`, or `max` appears anywhere in the chain, Router runtime state and generated contracts use `number`. Otherwise the param uses `string`.
 
 ## Index routes
 
@@ -217,30 +234,70 @@ The layout affects rendering but contributes no URL segment. Pathless routes are
 
 ## Params
 
-Path params use PathKit path-pattern syntax and URLKit parsed-param semantics. PathKit remains the path-pattern primitive beneath URLKit, while URLKit owns parsing, validation, URL matching, and href path building for route URL contracts.
+Path params use PathKit path-pattern syntax and URLKit parsed-param semantics. PathKit validates the path pattern and constraint chain. URLKit parses route URL state with `params: 'parsed'`, so runtime matches, `useParams()`, redirects, and generated contracts expose parsed values instead of raw URL strings.
 
 ```tsx
 {
   id: 'organizations.users.show',
-  path: '/organizations/{organizationId:regex([0-9a-fA-F-]+)}/users/{userId:int}',
+  path: '/organizations/{organizationId:uuid}/users/{userId:int}',
   component: OrganizationUserPage,
 }
 ```
 
-Generated params and runtime match state use parsed URLKit values:
+Generated params and runtime match state use the same parsed URLKit values:
 
-| Pattern                    | Parsed/generated type | Runtime behavior                          |
-| -------------------------- | --------------------- | ----------------------------------------- |
-| `{id}`                     | `string`              | Captures an unconstrained string segment. |
-| `{id:int}`                 | `number`              | Parses an integer-shaped URL value.       |
-| `{value:range(1,10)}`      | `number`              | Parses a numeric URL value.               |
-| `{slug:regex([a-z0-9-]+)}` | `string`              | Matches the configured regex.             |
-| `{slug:slug}`              | `string`              | Uses a registered custom constraint.      |
-| `{*path}`                  | `string`              | Captures wildcard path data.              |
+```ts
+type OrganizationUserParams = {
+  organizationId: string;
+  userId: number;
+};
+```
+
+Param inference uses the full PathKit constraint chain:
+
+| Pattern                                               | Parsed/generated type | Runtime behavior                                                         |
+| ----------------------------------------------------- | --------------------- | ------------------------------------------------------------------------ |
+| `{id}`                                                | `string`              | Captures an unconstrained string segment.                                |
+| `{id:int}`                                            | `number`              | Parses an integer-shaped URL value.                                      |
+| `{price:decimal}`                                     | `number`              | Parses a finite decimal URL value.                                       |
+| `{page:range(1,100)}`                                 | `number`              | Parses a numeric value inside the inclusive range.                       |
+| `{price:min(1)}`                                      | `number`              | Parses a numeric value greater than or equal to the minimum.             |
+| `{price:max(10)}`                                     | `number`              | Parses a numeric value less than or equal to the maximum.                |
+| `{id:uuid}`                                           | `string`              | Matches canonical hyphenated UUID values.                                |
+| `{slug:minlength(3)}`                                 | `string`              | Matches values with at least the specified length.                       |
+| `{slug:maxlength(50)}`                                | `string`              | Matches values with no more than the specified length.                   |
+| <code>{view:list(grid&#124;list&#124;details)}</code> | `string`              | Matches one exact value from the list.                                   |
+| `{slug:regex([a-z0-9-]+)}`                            | `string`              | Matches the configured raw regex source.                                 |
+| `{score:regex(\d+):min(1)}`                           | `number`              | Numeric because `min` appears anywhere in the chain.                     |
+| `{score:min(1):regex(\d+)}`                           | `number`              | Numeric for the same reason; constraint order does not change inference. |
+| `{slug:slug}`                                         | `string`              | Uses a registered custom constraint.                                     |
+| `{*path}`                                             | `string`              | Captures wildcard path data.                                             |
+
+Optional params generate optional properties and are absent when the segment is not present:
+
+```tsx
+{
+  id: 'products.optional',
+  path: '/products/{id:int?}',
+  component: ProductPage,
+}
+```
+
+Generated params:
+
+```ts
+type ProductParams = {
+  id?: number;
+};
+```
+
+Custom path constraints let you define reusable validation rules for route params beyond the built-in `int`, `decimal`, `range`, `min`, `max`, `uuid`, `minlength`, `maxlength`, `list`, and `regex` constraints. Register them with [`pathConstraints`](#pathconstraints) before using them in route paths so the router can forward them to URLKit before route validation, matching, and href generation.
+
+Custom constraints generate `string` params unless the same constraint chain also includes a numeric built-in constraint. For example, `{slug:slug}` is `string`, while `{id:slug:min(1)}` is `number` because `min` appears in the chain.
 
 Duplicate param names in the same parent-to-child branch fail validation.
 
-Custom path constraints let you define reusable validation rules for route params beyond the built-in `decimal`, `int`, `range`, `list`, and `regex` constraints. Register them with [`pathConstraints`](#pathconstraints) before using them in route paths so the router can forward them to URLKit before route validation, matching, and href generation. Custom constraints generate `string` params unless URLKit supports typed static inference for the custom constraint. See [Path routes and constraints](path-routes.md) for the complete constraint API.
+See [Path routes and constraints](path-routes.md) for the complete constraint API.
 
 ## Search, hash, and metadata
 
@@ -650,7 +707,7 @@ createRouter({ routes, maxRedirectDepth: 20 });
 
 ### `pathConstraints`
 
-Custom path constraints let route params use reusable validation rules beyond the built-in `decimal`, `int`, `range`, `list`, and `regex` constraints. Create custom constraints with `createConstraint()` and register them through `defineRoutes(..., { pathConstraints })` before using them in route paths.
+Custom path constraints let route params use reusable validation rules beyond the built-in `decimal`, `int`, `uuid`, `min`, `max`, `range`, `minlength`, `maxlength`, `list`, and `regex` constraints. Create custom constraints with `createConstraint()` and register them through `defineRoutes(..., { pathConstraints })` before using them in route paths.
 
 `defineRoutes()` validates route patterns immediately, so any custom constraint referenced by a route path must already be registered. Cookbook Router forwards registered constraints to URLKit before descriptor validation, matching, parsing, and href building. For all built-in constraints, custom constraint APIs, and common mistakes, see [Path routes and constraints](path-routes.md).
 

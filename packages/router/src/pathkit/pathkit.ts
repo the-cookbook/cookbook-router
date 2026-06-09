@@ -131,7 +131,12 @@ export function getPathParams(pattern: string): readonly RouteParamDefinition[] 
     )
     .map((segment) => ({
       name: segment.name,
-      constraint: segment.wildcard ? 'wildcard' : (segment.constraints[0]?.type ?? 'string'),
+      constraints: segment.constraints.map((constraint) => ({
+        type: constraint.type,
+        params: constraint.params,
+      })),
+      wildcard: segment.wildcard,
+      optional: segment.optional,
       token: segmentToToken(segment),
     }));
 }
@@ -240,5 +245,5 @@ function segmentToToken(segment: Extract<RouteSegment, { readonly type: 'paramet
     return `:${constraint.type}${params}`;
   });
 
-  return `{${prefix}${segment.name}${suffix}${constraints.join('')}}`;
+  return `{${prefix}${segment.name}${constraints.join('')}${suffix}}`;
 }

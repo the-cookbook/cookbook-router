@@ -620,7 +620,7 @@ Validation throws `UrlKitError` with code `invalid-descriptor`, usually with rou
 
 ### Cause
 
-`search` is not a valid URLKit Static search descriptor. Common causes include runtime builders, removed shorthand forms, invalid `optional`/`many` flags, invalid defaults, invalid enum values, invalid date/date-time formats, or runtime date codec objects.
+`search` is not a valid URLKit Static search descriptor. Common causes include runtime builders, invalid `optional`/`many` flags, invalid defaults, invalid enum values, invalid date/date-time formats, or runtime date codec objects.
 
 ### Fix
 

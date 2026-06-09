@@ -29,7 +29,15 @@ describe('normalizeRoutes', () => {
       localPath: '{id:int}',
       fullPath: '/users/{id:int}',
       parentId: 'users',
-      params: [{ name: 'id', constraint: 'int', token: '{id:int}' }],
+      params: [
+        {
+          name: 'id',
+          constraints: [{ type: 'int', params: '' }],
+          wildcard: false,
+          optional: false,
+          token: '{id:int}',
+        },
+      ],
     });
   });
 

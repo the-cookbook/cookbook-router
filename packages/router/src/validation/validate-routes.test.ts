@@ -106,7 +106,7 @@ describe('validateRoutes', () => {
   it('rejects invalid hash configuration', () => {
     expect(() =>
       validateRoutes([{ id: 'array-hash', path: '/', hash: ['summary'] } as never]),
-    ).toThrow('hash uses removed array shorthand');
+    ).toThrow('invalid URL descriptor');
     expect(() =>
       validateRoutes([
         {
@@ -115,7 +115,7 @@ describe('validateRoutes', () => {
           hash: { type: 'string', optional: true, default: 'top' },
         } as never,
       ]),
-    ).toThrow('hash cannot combine optional: true with default');
+    ).toThrow('invalid URL descriptor');
   });
 
   it('rejects invalid slot names and removed slot forms', () => {
@@ -386,7 +386,7 @@ it('validates URLKit static search descriptors', () => {
 
   expect(() =>
     validateRoutes([{ id: 'direct', path: '/', search: { query: 'string' } } as never]),
-  ).toThrow('uses removed shorthand');
+  ).toThrow(UrlKitError);
 
   expect(() =>
     validateRoutes([{ id: 'good', path: '/', search: { query: { type: 'string' } } } as never]),
@@ -394,13 +394,13 @@ it('validates URLKit static search descriptors', () => {
 
   expect(() =>
     validateRoutes([{ id: 'bad', path: '/', search: { query: { value: 'object' } } } as never]),
-  ).toThrow('uses removed "value" descriptors');
+  ).toThrow(UrlKitError);
 
   expect(() =>
     validateRoutes([
       { id: 'bad', path: '/', search: { query: { type: 'string', optional: 'yes' } } } as never,
     ]),
-  ).toThrow('optional must be literal true when provided');
+  ).toThrow(UrlKitError);
 
   expect(() =>
     validateRoutes([
@@ -436,7 +436,7 @@ it('validates URLKit static search descriptors', () => {
         },
       } as never,
     ]),
-  ).toThrow('uses removed "value" descriptors');
+  ).toThrow(UrlKitError);
 
   expect(() =>
     validateRoutes([
