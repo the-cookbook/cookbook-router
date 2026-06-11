@@ -3,7 +3,7 @@
 **Define routes once. Trust them everywhere.**
 
 <div align="center">
-  <img src="/assets/harpy.png" alt="Centered Image" style="width:420px;" />
+  <img src="/assets/harpy.png" alt="Cookbook Router" style="width:420px;" />
 </div>
 
 Cookbook Router is a strongly typed, framework-agnostic router that turns route declarations into shared contracts for matching, links, redirects, middleware, rendering traversal, SSR, React integration, and generated TypeScript types.
