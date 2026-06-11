@@ -28,6 +28,3 @@ export function useHashParams<Route extends RouteId = RouteId>(
 
   return (match.hash ?? null) as RouteHash<Route> | null;
 }
-
-/** Alias for `useHashParams`. */
-export const useHash = useHashParams;

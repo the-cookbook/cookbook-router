@@ -261,10 +261,8 @@ A slot can render a matched slot route, fallback, intercepted destination, route
 | `useNavigation()`                               | Return the navigation state.                              |
 | `useParams(routeId?)`                           | Read route params.                                        |
 | `useSearchParams(routeId?)`                     | Read declared URLKit-parsed search params.                |
-| `useSearch(routeId?)`                           | Alias for `useSearchParams`.                              |
 | `useUnknownSearchParams()`                      | Read URLKit-preserved unknown search params.              |
 | `useHashParams(routeId?)`                       | Read URLKit-parsed hash, or `null`.                       |
-| `useHash(routeId?)`                             | Alias for `useHashParams`.                                |
 | `useOutletContext()`                            | Read nearest outlet or slot context.                      |
 | `useBlocker({ when, message? })`                | Block in-app navigation and browser unload while enabled. |
 

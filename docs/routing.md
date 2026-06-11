@@ -1,6 +1,6 @@
 # Routing
 
-Routes describe URL matching, route identity, rendering hierarchy, metadata, redirects, slots, intercepts, middleware, lifecycle hooks, and generated contract inputs. URL state is parsed and built by `@cookbook/urlkit`; Cookbook Router owns the route tree and routing behavior around that URL state.
+Routes describe URL matching, route identity, rendering hierarchy, metadata, redirects, slots, intercepts, middleware, lifecycle hooks, and generated contract inputs. URL state is parsed and built by [`@cookbook/urlkit`](https://github.com/the-cookbook/urlkit); Cookbook Router owns the route tree and routing behavior around the URL state.
 
 ## Table of contents
 
@@ -87,8 +87,8 @@ type RouteIntercepts = Readonly<Record<string, RouteInterceptConfig>>;
 | Field          | Purpose                                                                                                                                                         |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`           | Required stable route ID. Used for navigation, contracts, diagnostics, and metadata lookup.                                                                     |
-| `path`         | URL pattern. Child paths are relative unless they start with `/`.                                                                                               |
-| `index`        | Marks a child as the default route for its parent path. Index routes must not define `path`.                                                                    |
+| `path`         | URL pattern. Child paths are relative to the parent path.                                                                                                       |
+| `index`        | Marks a child route as the default route for its parent path. Index routes must not define `path`.                                                              |
 | `view`         | Page view rendered for this route.                                                                                                                              |
 | `layout.view`  | Layout wrapper view. Layouts render child branches through `<Outlet />`.                                                                                        |
 | `layout.slots` | Named layout regions rendered through `<Slot name="..." />`.                                                                                                    |
@@ -208,11 +208,11 @@ Invalid:
 }
 ```
 
-Index routes must not define `path`.
+Index routes **must not** define `path`.
 
 ## Pathless layouts
 
-A route may define a layout without a path.
+A route **may** define a layout without a path.
 
 ```tsx
 {
@@ -230,11 +230,11 @@ A route may define a layout without a path.
 }
 ```
 
-The layout affects rendering but contributes no URL segment. Pathless routes are only valid as layout/group routes with children. A route that renders, redirects, declares search/hash contracts, or participates in navigation must define either `path` or `index: true`.
+The layout affects rendering but contributes no URL segment. Pathless routes are only valid as layout/group routes with children. A route that renders, redirects, declares search/hash contracts, or participates in navigation **must** define either `path` or `index: true`.
 
 ## Params
 
-Path params use PathKit path-pattern syntax and URLKit parsed-param semantics. PathKit validates the path pattern and constraint chain. URLKit parses route URL state with `params: 'parsed'`, so runtime matches, `useParams()`, redirects, and generated contracts expose parsed values instead of raw URL strings.
+Path params use [PathKit](https://github.com/the-cookbook/pathkit) path-pattern syntax and [URLKit](https://github.com/the-cookbook/urlkit) parsed-param semantics. PathKit validates the path pattern and constraint chain. URLKit parses route URL state with `params: 'parsed'`, so runtime matches, `useParams()`, redirects, and generated contracts expose parsed values instead of raw URL strings.
 
 ```tsx
 {
@@ -247,10 +247,10 @@ Path params use PathKit path-pattern syntax and URLKit parsed-param semantics. P
 Generated params and runtime match state use the same parsed URLKit values:
 
 ```ts
-type OrganizationUserParams = {
+interface OrganizationUserParams {
   organizationId: string;
   userId: number;
-};
+}
 ```
 
 Param inference uses the full PathKit constraint chain:
@@ -301,7 +301,7 @@ See [Path routes and constraints](path-routes.md) for the complete constraint AP
 
 ## Search, hash, and metadata
 
-Search contracts are generated from URLKit-backed Router static `search` descriptors. Keep descriptors static in route files consumed by the CLI; do not use URLKit runtime builders there unless static extraction explicitly supports them.
+Search contracts are generated from [URLKit](https://github.com/the-cookbook/urlkit)-backed Router static `search` descriptors. Keep descriptors static in route files consumed by the CLI; do not use URLKit runtime builders there unless static extraction explicitly supports them.
 
 ```tsx
 {
@@ -323,11 +323,11 @@ Search contracts are generated from URLKit-backed Router static `search` descrip
 Generated fields and runtime state follow URLKit parsing semantics:
 
 ```ts
-type ArticlesSearch = {
+interface ArticlesSearch {
   query?: string;
   page: number;
   filters?: readonly string[];
-};
+}
 ```
 
 `url.arrayFormat` controls repeated search param parsing and building. `url.unknownSearch` controls undeclared query keys and defaults to `'strip'`. Router-level defaults can be set on `createRouter({ url })`; route-level `url` overrides router defaults; URL-building call-site options such as `router.href()`, `router.navigate.to()`, `useHref()`, `Link`, and `NavLink` can override build options such as `arrayFormat` and `defaults`.
@@ -376,7 +376,7 @@ A route can redirect to another route without rendering a view. Redirect routes 
       id: 'entry.redirect',
       index: true,
       redirect: {
-        route: 'dashboard',
+        route: 'dashboard', // "dashboard" represents the target route id
       },
     },
   ],
@@ -422,7 +422,7 @@ Use route-object redirects for internal targets when possible. They keep basenam
 
 ## Layouts and outlets
 
-A layout view wraps the active child branch. It must render `<Outlet />` to show children.
+A layout view wraps the active route child branch. It **must** render `<Outlet />` to show children.
 
 ```tsx
 import { Outlet } from '@cookbook/router-react';
@@ -437,7 +437,7 @@ export function DashboardLayout() {
 }
 ```
 
-Direct child views read outlet context with `useOutletContext()`.
+Direct route child views can read outlet context with `useOutletContext()`.
 
 ```tsx
 const context = useOutletContext<{ source: string }>();
@@ -532,23 +532,22 @@ Configured intercepts are declared on the source route.
 
 ```tsx
 {
-  id: 'blog',
-  path: '/blog',
+  id: 'gallery',
+  path: '/gallery',
   layout: {
-    view: BlogLayout,
+    view: GalleryLayout,
     slots: {
       modal: true,
     },
   },
   intercepts: {
     modal: {
-      to: ['articles/{slug:regex([a-z0-9-]+)}'],
-      view: ArticleModal,
+      to: 'gallery.photo',
+      view: PhotoModal,
     },
   },
   children: [
-    { id: 'blog.index', index: true, view: BlogHomePage },
-    { id: 'blog.articles', path: 'articles', view: ArticlesPage },
+    { id: 'gallery.index', index: true, view: GalleryPage },
   ],
 }
 ```
@@ -557,33 +556,33 @@ The canonical destination must exist as a normal route:
 
 ```tsx
 {
-  id: 'blog.articles.show',
-  path: '/blog/articles/{slug:regex([a-z0-9-]+)}',
-  view: ArticlePage,
+  id: 'gallery.photo',
+  path: '/gallery/photo/{slug:regex([a-z0-9-]+)}',
+  view: PhotoPage,
 }
 ```
 
 Link with configured interception:
 
 ```tsx
-<Link to="blog.articles.show" params={{ slug }} intercept="modal">
-  Read in modal
+<Link to="gallery.photo" params={{ slug }}>
+  Preview in modal
 </Link>
 ```
 
-Call-site interception is also supported:
+An inline interception is also supported. It does not require a route level `intercepts` declaration:
 
 ```tsx
-<Link to="blog.articles.show" params={{ slug }} intercept={{ slot: 'modal', view: ArticleModal }}>
-  Preview article
+<Link to="gallery.photo" params={{ slug }} intercept={{ slot: 'modal', view: PhotoModal }}>
+  Preview in modal
 </Link>
 ```
 
 Behavior:
 
-- Client click from `/blog` to `/blog/articles/my-post` can render `ArticleModal` in the active modal slot.
-- Direct entry to `/blog/articles/my-post` renders `ArticlePage`.
-- Refresh on `/blog/articles/my-post` renders `ArticlePage`.
+- Client click from `/gallery` to `/gallery/photo/a-snowy-landscape` can render `PhotoModal` in the active modal slot.
+- Direct entry to `/gallery/photo/a-snowy-landscape` renders `PhotoPage`.
+- Refresh on `/gallery/photo/a-snowy-landscape` still renders `PhotoModal`.
 - Browser back closes the modal by returning to the previous URL.
 - Browser forward can restore the modal during the same app session when intercept state exists in history.
 

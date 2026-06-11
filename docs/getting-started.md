@@ -26,7 +26,7 @@ pnpm add -D @cookbook/router-cli
 
 ## Define routes
 
-Create `src/routes.tsx`.
+Create `src/routes.ts`.
 
 ```tsx
 import { defineRoutes } from '@cookbook/router';
@@ -159,8 +159,8 @@ Add scripts to `package.json`.
 ```json
 {
   "scripts": {
-    "generate:routes": "cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router",
-    "validate:routes": "cookbook-router validate --routes src/routes.tsx"
+    "generate:routes": "cookbook-router generate --routes src/routes.ts --out-dir .cookbook-router",
+    "validate:routes": "cookbook-router validate --routes src/routes.ts"
   }
 }
 ```
@@ -171,15 +171,17 @@ Run generation:
 pnpm generate:routes
 ```
 
-Add the generated files to `tsconfig.json`.
+Add the generated directory to `tsconfig.json`.
 
 ```json
 {
-  "include": ["src", ".cookbook-router/contracts.ts", ".cookbook-router/register.d.ts"]
+  "include": ["src", ".cookbook-router"]
 }
 ```
 
-After registration, route IDs, URLKit-parsed params, search fields, hash values, metadata, and paths are inferred through the public package types. `{id:int}` is `number`; custom constraints remain `string`.
+Once `.cookbook-router` is included in your TypeScript program, it augments `@cookbook/router` with the generated route contracts.
+
+Router APIs can then infer valid route IDs, exact route paths, path params, search values, hash values, and route metadata from the generated public types. Path params follow the generated constraint contract: numeric built-in constraints such as `{id:int}`, `{price:decimal}`, `{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` become `number`; unconstrained params, wildcards, string-shaped constraints such as `uuid`, `regex`, `list`, `minlength`, `maxlength`, and custom constraints are exposed as `string` unless combined with a numeric built-in constraint.
 
 ## Use typed navigation
 
@@ -207,7 +209,7 @@ export function OpenSettingsButton() {
 }
 ```
 
-The two-argument form is also supported:
+A two-argument form is also supported:
 
 ```ts
 await navigate.to('users.show', {
@@ -215,15 +217,60 @@ await navigate.to('users.show', {
 });
 ```
 
-## Add a not-found fallback
+## Router-level fallback
 
-The simplest fallback is provider-level:
+`RouterProvider.fallback` is the last-resort UI for unmatched locations that do
+not resolve to any route.
 
 ```tsx
 <RouterProvider router={router} fallback={<h1>Not found</h1>} />
 ```
 
-For section-specific not-found UI, define an explicit catch-all child route inside that section. This preserves the section layout while keeping not-found behavior inside normal route matching.
+Use it for simple apps, prototypes, tests, or as a defensive fallback while route
+definitions are still incomplete.
+
+For production route handling, prefer an explicit catch-all route:
+
+```tsx
+{
+  id: 'not-found',
+  path: '{*path}',
+  view: NotFoundPage,
+}
+```
+
+A catch-all route participates in normal Cookbook Router matching. That means it
+can use the same routing features as any other route, including layouts,
+middleware, redirects, rewrites, lifecycle hooks, metadata, slots, and generated
+contracts.
+
+You can also place catch-all routes under specific layouts or route groups to
+show different not-found pages in different parts of the app, example:
+
+```tsx
+{
+  id: 'dashboard',
+  path: '/dashboard',
+  layout: {
+    view: DashboardLayout,
+  },
+  children: [
+    {
+      id: 'dashboard.home',
+      index: true,
+      view: DashboardHomePage,
+    },
+    {
+      id: 'dashboard.not-found',
+      path: '{*path}',
+      view: DashboardNotFoundPage,
+    },
+  ],
+}
+```
+
+In this example, unknown `/dashboard/*` URLs keep `DashboardLayout` mounted while
+`DashboardNotFoundPage` renders inside it.
 
 ## Run locally
 

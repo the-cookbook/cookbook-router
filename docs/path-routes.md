@@ -1,6 +1,6 @@
 # Path routes and constraints
 
-Route `path` values describe the URL pathname matched by a route. Cookbook Router delegates path pattern syntax and constraint validation to `@cookbook/pathkit`, and delegates parsed URL state to `@cookbook/urlkit`.
+Route `path` values describe the URL pathname matched by a route. Cookbook Router delegates path pattern syntax and constraint validation to [`@cookbook/pathkit`](https://github.com/the-cookbook/pathkit), and delegates parsed URL state to [`@cookbook/urlkit`](https://github.com/the-cookbook/urlkit).
 
 Use this page when defining route paths, choosing built-in constraints, or adding a custom path constraint.
 
@@ -34,7 +34,7 @@ Use this page when defining route paths, choosing built-in constraints, or addin
 
 ## Path route basics
 
-A route path is a PathKit pattern:
+A route path is a [PathKit](https://github.com/the-cookbook/pathkit) pattern:
 
 ```tsx
 export const routes = defineRoutes([
@@ -56,7 +56,7 @@ Rules:
 
 - `path` describes only the pathname. Search and hash state belong in `search` and `hash` route descriptors.
 - Route IDs are the public navigation API. Use route IDs with `router.href()`, `router.navigate`, `<Link>`, and `<NavLink>`.
-- Index routes use `index: true` and must not define `path`.
+- Index routes use `index: true` and **must** not define `path`.
 - Pathless routes are valid only as layout/group routes with children.
 
 ## Path composition
@@ -113,7 +113,7 @@ not:
 
 ## Path params
 
-Unconstrained params capture one path segment and are parsed as strings.
+Unconstrained params capture one path segment and are parsed as `strings`.
 
 ```tsx
 {
@@ -135,14 +135,15 @@ The generated and runtime param type is:
 }
 ```
 
-Do not write `{slug:string}`. `string` is not a built-in PathKit constraint. Use `{slug}` for an unconstrained string segment, or use `regex(...)` / a custom constraint when the segment needs validation.
+Do not write `{slug:string}`. `string` is not a built-in PathKit constraint but the **default type**. Use `{slug}` for an unconstrained string segment, or use `regex(...)` / a custom constraint when the segment needs validation.
 
 ## Optional params
 
-Add `?` after the param name to make one segment optional:
+Add `?` after the param name or constraint(s) to make one segment optional:
 
 ```txt
 /search/{term?}
+/products/by-price/{term:min(1):max(999)?}
 ```
 
 Valid matches include:
@@ -150,6 +151,8 @@ Valid matches include:
 ```txt
 /search
 /search/router
+/products/by-price
+/products/by-price/9.99
 ```
 
 Optional params are useful for small path variations. Prefer search params for optional filters, sorting, pagination, and shareable UI state.
@@ -525,11 +528,15 @@ The methods are:
 | `verify(paramName, params)`       | Validate the constraint declaration itself before route matching/generation.                            |
 | `toRegExp(params)`                | Return the regular expression source used to match the path segment. Do not include `/.../` delimiters. |
 
-`params` is the optional constraint argument string inside parentheses. For example, `{id:tenant(active)}` passes `active` to `verify`, `toRegExp`, and `parse`.
+`params` is the optional constraint argument string inside parentheses. For example `{id:tenant(active|idle|trial|suspended|archived)}`:
+
+- `paramName`: `id`
+- `params`: `active|idle|trial|suspended|archived`
+- `value` is the parameter runtime value. Example: "active" or "foo"
 
 ## Register custom constraints
 
-Register custom constraints through `defineRoutes(..., { pathConstraints })` when possible. `defineRoutes()` validates immediately, so constraints must be available before validation.
+When declaring routes with `defineRoutes()`, register custom constraints with `defineRoutes(..., { pathConstraints })`. `defineRoutes()` validates routes immediately, so custom constraint names must be registered there; otherwise, validation fails with an unknown constraint type error.
 
 ```tsx
 import { createConstraint, createRouter, defineRoutes } from '@cookbook/router';
@@ -564,7 +571,7 @@ export const routes = defineRoutes(
 export const router = createRouter({ routes });
 ```
 
-`createRouter({ pathConstraints })` is also supported for raw route arrays that were not already validated:
+`createRouter({ pathConstraints })` is also supported for **raw** route arrays that were not declared with `defineRoutes()`:
 
 ```ts
 const router = createRouter({

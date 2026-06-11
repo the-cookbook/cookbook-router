@@ -28,7 +28,7 @@ cookbook-router manifest --routes src/routes.tsx --out-dir .cookbook-router
 cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router --watch
 ```
 
-The shorter `cbr` binary is also available:
+A shorter alias `cbr` is also available:
 
 ```sh
 cbr generate --routes src/routes.tsx --out-dir .cookbook-router
@@ -324,4 +324,14 @@ The CLI does not need to execute views, but the route declaration still needs to
 
 ### TypeScript does not see generated types
 
-Include `.cookbook-router/contracts.ts` and `.cookbook-router/register.d.ts` in `tsconfig.json`.
+Include the generated `.cookbook-router` (or your custom name) directory in `tsconfig.json`.
+
+```json
+{
+  "include": ["src", ".cookbook-router"]
+}
+```
+
+Once `.cookbook-router` is included in your TypeScript program, it augments `@cookbook/router` with the generated route contracts.
+
+Router APIs can then infer valid route IDs, exact route paths, path params, search values, hash values, and route metadata from the generated public types. Path params follow the generated constraint contract: numeric built-in constraints such as `{id:int}`, `{price:decimal}`, `{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` become `number`; unconstrained params, wildcards, string-shaped constraints such as `uuid`, `regex`, `list`, `minlength`, `maxlength`, and custom constraints are exposed as `string` unless combined with a numeric built-in constraint.

@@ -721,7 +721,7 @@ search: {
 
 ## JSDoc hovers are broad with generic `defineRoutes`
 
-Generic `defineRoutes([...])` calls can show broad hover text because TypeScript displays the generic route-definition surface instead of the narrowed generated contract. Run the CLI and include `.cookbook-router/register.d.ts` in `tsconfig.json`; use generated `RouteParams`, `RouteSearch`, and hook/router call sites for precise app-specific types.
+Generic `defineRoutes([...])` calls can show broad hover text because TypeScript displays the generic route-definition surface instead of the narrowed generated contract. Run the CLI and include `.cookbook-router` directory in `tsconfig.json`; use generated `RouteParams`, `RouteSearch`, and hook/router call sites for precise app-specific types.
 
 ## Type inference does not work
 

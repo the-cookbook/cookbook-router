@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import { RouterProvider } from '../provider/router-provider';
-import { useSearch, useSearchParams } from './use-search-params';
+import { useSearchParams } from './use-search-params';
 
 function Page() {
   return null;
@@ -47,7 +47,7 @@ describe('useSearchParams', () => {
       <RouterProvider router={router}>{children}</RouterProvider>
     );
 
-    const { result } = renderHook(() => useSearch('products'), { wrapper });
+    const { result } = renderHook(() => useSearchParams('products'), { wrapper });
 
     expect(result.current).toEqual({ page: 2, tags: ['router', 'typescript'] });
   });

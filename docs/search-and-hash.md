@@ -381,7 +381,7 @@ export function ArticlesPage() {
 }
 ```
 
-`useSearchParams()` and `useSearch()` read the declared URLKit-parsed search state from the current router match. They do not accept `url` options and do not re-parse the URL with different matching policies. Router middleware, lifecycle hooks, `router.match()`, and `router.resolve()` receive the same declared parsed values.
+`useSearchParams()` read the declared URLKit-parsed search state from the current router match. They do not accept `url` options and do not re-parse the URL with different matching policies. Router middleware, lifecycle hooks, `router.match()`, and `router.resolve()` receive the same declared parsed values.
 
 ## Array format
 

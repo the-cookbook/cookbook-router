@@ -27,6 +27,3 @@ export function useSearchParams<Route extends RouteId>(
 
   return match.search as RouteSearch<Route>;
 }
-
-/** Alias for `useSearchParams`. */
-export const useSearch = useSearchParams;

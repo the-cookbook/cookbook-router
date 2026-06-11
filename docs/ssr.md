@@ -101,7 +101,7 @@ hydrateRoot(document.getElementById('root')!, <RouterProvider router={router} />
 
 The client location and hydration data should match by pathname and search. If they do not, the router records a hydration mismatch error in state.
 
-Hash fragments are different: browsers do not send URL fragments to the server.
+**Hash fragments are different:** browsers do not send URL fragments to the server.
 For a direct request such as `/articles/typed-routing?preview=true#summary`, the
 server can only render and serialize `/articles/typed-routing?preview=true`.
 During React hydration, `RouterProvider` intentionally keeps that serialized

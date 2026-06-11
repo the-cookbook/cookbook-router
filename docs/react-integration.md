@@ -34,6 +34,7 @@ import { RouterProvider } from '@cookbook/router-react';
 import { routes } from './routes';
 
 const router = createRouter({ routes });
+
 await router.start();
 
 export function App() {
@@ -245,7 +246,7 @@ const params = useParams('users.show');
 // params.id is a number for `/users/{id:int}`
 ```
 
-### `useSearchParams()` / `useSearch()`
+### `useSearchParams()`
 
 Reads declared URLKit-parsed search state from the active match. This hook consumes already-resolved router state and does not accept `url` options. Configure route-resolution policies such as `invalidSearch`, `unknownSearch`, and `invalidHash` on the core router, the route definition, explicit match calls, or static router creation.
 
@@ -324,7 +325,7 @@ Configured intercept:
 </Link>
 ```
 
-Call-site intercept:
+Inline intercept:
 
 ```tsx
 <Link to="blog.articles.show" params={{ slug }} intercept={{ slot: 'modal', view: ArticleModal }}>
@@ -355,6 +356,7 @@ Prefer `createMemoryRouter()` and render the real provider.
 
 ```tsx
 const router = createMemoryRouter({ routes, initialEntries: ['/users/42'] });
+
 await router.start();
 
 render(<RouterProvider router={router} fallback={<h1>Not found</h1>} />);

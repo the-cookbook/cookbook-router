@@ -122,9 +122,36 @@ import { NavLink } from '@cookbook/router-react';
 </NavLink>;
 ```
 
-- With `end`, the current `href` must match exactly.
-- Without `end`, a path prefix match is active.
-- Active links receive `aria-current="page"` unless you already supplied `aria-current`.
+By default, `NavLink` uses prefix matching. A link is active when the current
+URL matches the generated `href`, or when the current pathname starts with the
+target pathname.
+
+Use `end` when the link should only be active for an exact URL match:
+
+```tsx
+<NavLink to="blog.articles" end>
+  Articles
+</NavLink>
+```
+
+With `end`, the pathname, search string, and hash must all match.
+
+Use `end={{ search: 'ignore' }}` when search params should not affect active
+state:
+
+```tsx
+<NavLink to="products" search={{ page: 1 }} end={{ search: 'ignore' }}>
+  Products
+</NavLink>
+```
+
+With `end={{ search: 'ignore' }}`, the pathname and hash must match, but the
+search string is ignored.
+
+`end={{ search: 'all' }}` is equivalent to `end`: pathname, search string, and
+hash must all match.
+
+Active links receive `aria-current="page"`.
 
 ## Search and hash
 
@@ -146,7 +173,7 @@ router.href({ route: 'articles.show', params: { slug }, hash: '#comments' });
 
 Both produce `#comments`.
 
-Undefined and null search values are omitted from generated URLs. Search and hash are parsed through URLKit in `router.match()`, `router.resolve()`, middleware contexts, lifecycle contexts, and React hooks.
+`undefined` and `null` search values are omitted from generated URLs. Search and hash are parsed through URLKit in `router.match()`, `router.resolve()`, middleware contexts, lifecycle contexts, and React hooks.
 
 ### URL options
 
@@ -186,7 +213,7 @@ Middleware redirects are returned from middleware.
 
 ```ts
 const requireAuth = ({ route, location, redirect }) => {
-  if (route.route.route.meta?.requiresAuth) {
+  if (route.route.meta?.requiresAuth) {
     return redirect(`/blog/login?redirect=${encodeURIComponent(location.href)}`);
   }
 };
@@ -211,13 +238,13 @@ A basename prefixes generated hrefs and visible browser URLs.
 ```ts
 const router = createRouter({
   routes,
-  basename: '/foo',
+  basename: '/cookbook',
 });
 ```
 
 ```ts
-router.href({ route: 'blog.index' }); // /foo/blog
-router.match('/foo/blog'); // matches blog.index
+router.href({ route: 'blog.index' }); // /cookbook/blog
+router.match('/cookbook/blog'); // matches blog.index
 ```
 
 Configured intercepts compare against app paths after basename stripping, so route config should not include the basename.
@@ -246,7 +273,7 @@ Configured interception:
 </Link>
 ```
 
-Call-site interception:
+Inline interception:
 
 ```tsx
 <Link to="blog.articles.show" params={{ slug }} intercept={{ slot: 'modal', view: ArticleModal }}>

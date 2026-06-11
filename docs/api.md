@@ -1175,6 +1175,8 @@ Use `to` for internal typed navigation and `href` for literal links. Params, sea
 
 #### `NavLink(props)`
 
+Renders a typed link and exposes whether the generated href is active for the current router location.
+
 ```ts
 interface NavLinkRenderProps {
   readonly isActive: boolean;
@@ -1201,11 +1203,45 @@ interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
 function NavLink<Route extends RouteId = RouteId>(props: NavLinkProps<Route>): JSX.Element;
 ```
 
+Use `to` for the target route ID. `route` is also accepted as an alias.
+
 ```tsx
-<NavLink to="users.show" params={{ id: 42 }} end>
+<NavLink to="users.show" params={{ id: 42 }}>
+  User
+</NavLink>
+```
+
+Use a render function when the child needs the active state.
+
+```tsx
+<NavLink to="users.show" params={{ id: 42 }}>
   {({ isActive }) => <span data-active={isActive}>User</span>}
 </NavLink>
 ```
+
+By default, `NavLink` is active when the current URL exactly matches the generated href, or when the current pathname is inside the target pathname.
+
+Use `end` for exact matching.
+
+```tsx
+<NavLink to="users.show" params={{ id: 42 }} end>
+  User
+</NavLink>
+```
+
+With `end`, pathname, search, and hash must all match.
+
+Use `end={{ search: 'ignore' }}` when search params should not affect active state.
+
+```tsx
+<NavLink to="products.index" search={{ page: 1 }} end={{ search: 'ignore' }}>
+  Products
+</NavLink>
+```
+
+`end={{ search: 'all' }}` is equivalent to `end`.
+
+Active links receive `aria-current="page"`.
 
 #### `Outlet(props)`
 

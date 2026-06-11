@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import { RouterProvider } from '../provider/router-provider';
-import { useHash, useHashParams } from './use-hash-params';
+import { useHashParams } from './use-hash-params';
 
 function Page() {
   return null;
@@ -49,7 +49,7 @@ describe('useHashParams', () => {
       <RouterProvider router={router}>{children}</RouterProvider>
     );
 
-    const { result } = renderHook(() => useHash('user'), { wrapper });
+    const { result } = renderHook(() => useHashParams('user'), { wrapper });
 
     expect(result.current).toBe('settings');
   });
