@@ -83,12 +83,14 @@ Route files may be JSON, JavaScript, TypeScript, or TSX modules. The normal app 
 import { defineRoutes } from '@cookbook/router';
 
 export const routes = defineRoutes([
-  { id: 'home', path: '/', component: HomePage },
-  { id: 'users.show', path: '/users/{id:int}', component: UserPage },
+  { id: 'home', path: '/', view: HomePage },
+  { id: 'users.show', path: '/users/{id:int}', view: UserPage },
 ] as const);
 ```
 
 The extractor expects a static `defineRoutes([...])` call or a static `routes = [...]` array. Avoid runtime-generated route trees in files consumed by the CLI. URL state descriptors must also stay static: use route `path`, `search`, `hash`, and `url` objects rather than URLKit runtime builders.
+
+Imported route views are supported. The static extractor replaces view-bearing fields such as `view`, `layout.view`, slot fallback views, `loading`, `error`, and `intercepts.*.view` with placeholders before evaluating route metadata.
 
 Generated contracts are URLKit-backed. Built-in parsed path constraints such as `{id:int}`, `{price:decimal}`, `{price:range(1,100)}`, `{price:min(1)}`, and `{price:max(100)}` generate `number` params, while `uuid`, `minlength`, `maxlength`, `list`, `regex`, and custom constraints generate `string` params unless the same chain also includes a numeric built-in constraint. Static `date` and `date-time` search descriptors generate `Date` values that URLKit parses and serializes with UTC semantics.
 
@@ -123,7 +125,7 @@ const constraints = {
 };
 
 export const routes = defineRoutes(
-  [{ id: 'posts.show', path: '/posts/{slug:slug}', component: PostPage }] as const,
+  [{ id: 'posts.show', path: '/posts/{slug:slug}', view: PostPage }] as const,
   { pathConstraints: constraints },
 );
 ```

@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, expectTypeOf } from 'vitest';
-import { OutletContext } from '../context/router-context';
+import { OutletContext } from '../provider/router-context';
 import { useOutletContext } from './use-outlet-context';
 
 describe('useOutletContext', () => {

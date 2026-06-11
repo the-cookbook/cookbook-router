@@ -43,16 +43,16 @@ export const routes = defineRoutes([
     id: 'blog',
     path: '/blog',
     layout: {
-      component: BlogLayout,
+      view: BlogLayout,
       slots: {
         sidebar: {
-          component: BlogSidebar,
+          view: BlogSidebar,
           meta: {
             title: 'Reader sidebar',
           },
         },
         preview: {
-          component: ArticlePreviewPanel,
+          view: ArticlePreviewPanel,
           meta: {
             title: 'Article preview',
           },
@@ -63,7 +63,7 @@ export const routes = defineRoutes([
     intercepts: {
       modal: {
         to: 'blog.articles.show',
-        component: ArticleModal,
+        view: ArticleModal,
       },
     },
     meta: {
@@ -73,7 +73,7 @@ export const routes = defineRoutes([
       {
         id: 'blog.home',
         index: true,
-        component: BlogHomePage,
+        view: BlogHomePage,
         search: {
           query: { type: 'string', optional: true },
         },
@@ -84,7 +84,7 @@ export const routes = defineRoutes([
       {
         id: 'blog.articles',
         path: 'articles',
-        component: ArticlesPage,
+        view: ArticlesPage,
         search: {
           query: { type: 'string', optional: true },
         },
@@ -101,7 +101,7 @@ export const routes = defineRoutes([
       {
         id: 'blog.articles.show',
         path: 'articles/{slug:regex([a-z0-9-]+)}',
-        component: ArticlePage,
+        view: ArticlePage,
         loading: ArticleLoading,
         error: ArticleErrorFallback,
         search: {
@@ -116,7 +116,7 @@ export const routes = defineRoutes([
       {
         id: 'blog.archive',
         path: 'archive',
-        component: ArchivePage,
+        view: ArchivePage,
         meta: {
           title: 'Archive',
         },
@@ -124,7 +124,7 @@ export const routes = defineRoutes([
       {
         id: 'blog.members',
         path: 'members',
-        component: MembersPage,
+        view: MembersPage,
         middleware: [requireAuth],
         meta: {
           title: 'Editorial desk',
@@ -134,7 +134,7 @@ export const routes = defineRoutes([
       {
         id: 'blog.login',
         path: 'login',
-        component: LoginPage,
+        view: LoginPage,
         search: {
           redirect: { type: 'string', optional: true },
         },

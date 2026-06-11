@@ -40,7 +40,7 @@ Middleware may also be declared directly on a route.
 {
   id: 'members',
   path: '/members',
-  component: MembersPage,
+  view: MembersPage,
   meta: { requiresAuth: true },
   middleware: [requireAuth],
 }

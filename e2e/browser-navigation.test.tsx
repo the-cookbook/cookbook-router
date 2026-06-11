@@ -34,15 +34,15 @@ const routes = defineRoutes([
   {
     id: 'root',
     path: '/',
-    layout: { component: Layout },
+    layout: { view: Layout },
     children: [
-      { id: 'home', index: true, component: HomePage },
+      { id: 'home', index: true, view: HomePage },
       {
         id: 'user',
         path: 'users/{id:int}',
         search: { tab: { type: 'string', optional: true } },
         hash: { type: 'enum', values: ['top'], optional: true },
-        component: UserPage,
+        view: UserPage,
       },
     ],
   },

@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
 import { describe, expect, it } from 'vitest';
-import { RouterProvider } from '../components/router-provider';
+import { RouterProvider } from '../provider/router-provider';
 import { useSearchParams } from './use-search-params';
 import { useUnknownSearchParams } from './use-unknown-search-params';
 
@@ -19,7 +19,7 @@ describe('useUnknownSearchParams', () => {
           search: {
             page: { type: 'number', optional: true },
           },
-          component: Page,
+          view: Page,
         },
       ] as const),
       initialEntries: ['/products?page=0&utm_source=website'],
@@ -44,7 +44,7 @@ describe('useUnknownSearchParams', () => {
           id: 'products',
           path: '/products',
           search: { page: { type: 'number', optional: true } },
-          component: Page,
+          view: Page,
         },
       ] as const),
       initialEntries: ['/products?page=0&utm_source=website'],

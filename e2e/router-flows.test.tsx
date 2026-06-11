@@ -71,22 +71,22 @@ const routes = defineRoutes([
   {
     id: 'root',
     path: '/',
-    layout: { component: RootLayout },
+    layout: { view: RootLayout },
     children: [
-      { id: 'home', index: true, component: HomePage },
+      { id: 'home', index: true, view: HomePage },
       {
         id: 'user',
         path: 'users/{id:int}',
         search: { tab: { type: 'string', optional: true } },
         hash: { type: 'enum', values: ['profile', 'details'], optional: true },
-        component: UserPage,
+        view: UserPage,
         lifecycle: {
           beforeEnter: ({ location }) => events.push(`before:${location.href}`),
           afterEnter: ({ location }) => events.push(`after:${location.href}`),
         },
       },
-      { id: 'admin', path: 'admin', component: AdminPage, meta: { requiresAuth: true } },
-      { id: 'login', path: 'login', component: LoginPage },
+      { id: 'admin', path: 'admin', view: AdminPage, meta: { requiresAuth: true } },
+      { id: 'login', path: 'login', view: LoginPage },
     ],
   },
 ] as const);

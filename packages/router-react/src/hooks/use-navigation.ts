@@ -1,5 +1,5 @@
 import type { RouterNavigationState } from '@cookbook/router';
-import { useRouterContext } from '../context/router-context';
+import { useRouterContext } from '../provider/router-context';
 
 /**
  * Subscribes to the current navigation state such as idle, pending, blocked,

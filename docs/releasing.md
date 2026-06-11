@@ -70,7 +70,7 @@ Add route-level redirects for internal route targets and external absolute URLs.
 Avoid implementation-only summaries:
 
 ```txt
-Edit create-router.ts.
+Update the runtime behavior and its package-facing tests.
 ```
 
 ## Validating a release locally

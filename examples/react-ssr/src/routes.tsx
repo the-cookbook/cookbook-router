@@ -8,13 +8,13 @@ export const routes = defineRoutes([
     id: 'root',
     path: '/',
     layout: {
-      component: RootLayout,
+      view: RootLayout,
     },
     children: [
       {
         id: 'home',
         index: true,
-        component: HomePage,
+        view: HomePage,
         meta: {
           title: 'SSR Home',
         },
@@ -26,7 +26,7 @@ export const routes = defineRoutes([
           preview: { type: 'string', optional: true },
         },
         hash: { type: 'enum', values: ['comments', 'summary'], optional: true },
-        component: ArticlePage,
+        view: ArticlePage,
         meta: {
           title: 'Article',
         },
@@ -37,7 +37,7 @@ export const routes = defineRoutes([
         search: {
           tab: { type: 'string', optional: true },
         },
-        component: UserPage,
+        view: UserPage,
         meta: {
           title: 'SSR User',
         },

@@ -249,16 +249,12 @@ Configured interception:
 Call-site interception:
 
 ```tsx
-<Link
-  to="blog.articles.show"
-  params={{ slug }}
-  intercept={{ slot: 'modal', component: ArticleModal }}
->
+<Link to="blog.articles.show" params={{ slug }} intercept={{ slot: 'modal', view: ArticleModal }}>
   Preview
 </Link>
 ```
 
-Call-site intercept state stored in browser history is clone-safe. The component reference is held in memory for the current app session, so forward navigation can restore it during the same runtime session. A refresh or direct visit renders the canonical page.
+Call-site intercept state stored in browser history is clone-safe. The view reference is held in memory for the current app session, so forward navigation can restore it during the same runtime session. A refresh or direct visit renders the canonical page.
 
 ## Browser behavior
 

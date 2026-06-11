@@ -1,5 +1,5 @@
 import { createMissingOutletContextError } from '@cookbook/router';
-import { useOutletContextValue } from '../context/router-context';
+import { useOutletContextValue } from '../provider/router-context';
 import type { RouteId, RouteOutletContext } from '@cookbook/router';
 
 /** Options for reading outlet context. */

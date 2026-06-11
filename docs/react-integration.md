@@ -67,9 +67,9 @@ import { Link, NavLink } from '@cookbook/router-react';
 </NavLink>
 ```
 
-Both components render anchors. `NavLink` adds active-state calculation and `aria-current` handling.
+Both views render anchors. `NavLink` adds active-state calculation and `aria-current` handling.
 
-Route-id links forward `url` options to the core router. Hook/component URL options override route-level and router-level defaults.
+Route-id links forward `url` options to the core router. Hook/view URL options override route-level and router-level defaults.
 
 ```tsx
 <Link to="products" search={{ tags: ['router', 'typescript'] }} url={{ arrayFormat: 'comma' }}>
@@ -123,7 +123,7 @@ A slot can render:
 - a slot fallback
 - an intercepted destination
 - nothing, when the slot is empty or disabled
-- a slot-level not-found component, when applicable
+- a slot-level not-found view, when applicable
 
 ## Suspense and error fallbacks
 
@@ -143,12 +143,12 @@ function ArticleLoading() {
 {
   id: 'blog.articles.show',
   path: 'articles/{slug}',
-  component: ArticlePage,
+  view: ArticlePage,
   loading: ArticleLoading,
 }
 ```
 
-Use `error` for route-level render errors. The nearest active route with `error` handles errors thrown by its component, layout, slot routes, intercepted routes, and descendants.
+Use `error` for route-level render errors. The nearest active route with `error` handles errors thrown by its view, layout, slot routes, intercepted routes, and descendants.
 
 ```tsx
 import type { RouteErrorFallbackProps } from '@cookbook/router-react';
@@ -167,7 +167,7 @@ function ArticleErrorFallback(props: RouteErrorFallbackProps) {
 {
   id: 'blog.articles.show',
   path: 'articles/{slug}',
-  component: ArticlePage,
+  view: ArticlePage,
   error: ArticleErrorFallback,
 }
 ```
@@ -327,16 +327,12 @@ Configured intercept:
 Call-site intercept:
 
 ```tsx
-<Link
-  to="blog.articles.show"
-  params={{ slug }}
-  intercept={{ slot: 'modal', component: ArticleModal }}
->
+<Link to="blog.articles.show" params={{ slug }} intercept={{ slot: 'modal', view: ArticleModal }}>
   Preview
 </Link>
 ```
 
-The component rendered in the slot receives the destination route context, so `useParams('blog.articles.show')` reads destination params.
+The view rendered in the slot receives the destination route context, so `useParams('blog.articles.show')` reads destination params.
 
 ## Blocking navigation
 
@@ -364,11 +360,11 @@ await router.resolveCurrent();
 render(<RouterProvider router={router} fallback={<h1>Not found</h1>} />);
 ```
 
-Avoid mocking route matching, href generation, or middleware pipelines in component tests unless the component is intentionally isolated from the router.
+Avoid mocking route matching, href generation, or middleware pipelines in view tests unless the view is intentionally isolated from the router.
 
 ## Provider edge cases
 
 - Call `router.resolveCurrent()` before first render when initial redirects or middleware should resolve before UI appears.
 - `RouterProvider` suppresses redirect-only branches while resolving them.
-- If a route has neither `component` nor `layout`, it renders its child branch or fallback.
+- If a route has neither `view` nor `layout`, it renders its child branch or fallback.
 - If no match exists, provider `fallback` is rendered.

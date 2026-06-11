@@ -103,7 +103,7 @@ export const routes = defineRoutes(
     {
       id: 'posts.show',
       path: '/posts/{slug:slug}',
-      component: PostPage,
+      view: PostPage,
     },
   ] as const,
   { pathConstraints: { slug } },
@@ -117,7 +117,7 @@ interface RouteDefinition {
   readonly id: string;
   readonly path?: string;
   readonly index?: boolean;
-  readonly component?: RouteComponent;
+  readonly view?: RouteView;
   readonly layout?: RouteLayoutDefinition;
   readonly children?: readonly RouteDefinition[];
   readonly intercepts?: RouteIntercepts;
@@ -126,8 +126,8 @@ interface RouteDefinition {
   readonly hash?: RouteHashSchema;
   readonly url?: RouterUrlOptions;
   readonly meta?: RouteMeta;
-  readonly loading?: RouteComponent;
-  readonly error?: RouteComponent;
+  readonly loading?: RouteView;
+  readonly error?: RouteView;
   readonly lifecycle?: RouteLifecycle;
   readonly middleware?: readonly Middleware[];
 }
@@ -138,8 +138,8 @@ interface RouteDefinition {
 | `id`         | Stable public route ID used by links, hrefs, navigation, redirects, generated contracts, and tests.                |
 | `path`       | Local path segment or absolute path. Index routes must not define `path`.                                          |
 | `index`      | Marks the route as the default child for its parent path.                                                          |
-| `component`  | Route component or framework-owned render value. The core package treats it as `unknown`.                          |
-| `layout`     | Layout component and named slot definitions.                                                                       |
+| `view`       | Route view or framework-owned render value. The core package treats it as `unknown`.                               |
+| `layout`     | Layout view and named slot definitions.                                                                            |
 | `children`   | Primary child routes.                                                                                              |
 | `intercepts` | Configured route interception targets for named slots.                                                             |
 | `redirect`   | Internal route redirect object or literal href string.                                                             |
@@ -147,12 +147,29 @@ interface RouteDefinition {
 | `hash`       | URLKit-backed static hash object descriptor for parsed hash state and generated contracts.                         |
 | `url`        | Route-level URLKit options such as `arrayFormat`, `defaults`, `invalidSearch`, `invalidHash`, and `unknownSearch`. |
 | `meta`       | Arbitrary route metadata.                                                                                          |
-| `loading`    | Route-level React Suspense fallback component for loading route subtrees.                                          |
-| `error`      | Route-level React error-boundary fallback component for render errors in route subtrees.                           |
+| `loading`    | Route-level React Suspense fallback view for loading route subtrees.                                               |
+| `error`      | Route-level React error-boundary fallback view for render errors in route subtrees.                                |
 | `lifecycle`  | Route lifecycle hooks.                                                                                             |
 | `middleware` | Route-specific middleware pipeline.                                                                                |
 
 Related: [Routing](routing.md), [Search and hash](search-and-hash.md), [Middleware](middleware.md), [Lifecycle](lifecycle.md).
+
+#### `renderRouteMatch()`
+
+Renderer-neutral traversal helper for framework adapters and custom renderers.
+The core router traverses the active route match, but renderer callbacks decide
+how route-owned `view` values become UI.
+
+```ts
+import { renderRouteMatch } from '@cookbook/router';
+
+const output = renderRouteMatch(router.state.match, {
+  fallback: null,
+  renderView(view, context) {
+    return renderMyFrameworkView(view, context);
+  },
+});
+```
 
 ##### Static search descriptors
 
@@ -406,13 +423,13 @@ URLKit infers parsed param types from the full constraint chain. If `int`, `deci
 
 ```tsx
 const routes = defineRoutes([
-  { id: 'users.show', path: '/users/{id:int}', component: UserPage },
-  { id: 'prices.show', path: '/prices/{price:decimal}', component: PricePage },
-  { id: 'pages.show', path: '/pages/{page:range(1,100)}', component: PageRoute },
-  { id: 'products.min', path: '/products/{price:decimal:min(1)}', component: ProductsPage },
-  { id: 'users.uuid', path: '/uuid-users/{id:uuid}', component: UserPage },
-  { id: 'search.view', path: '/search/{view:list(grid|list|details)}', component: SearchPage },
-  { id: 'posts.show', path: '/posts/{slug:regex([a-z0-9-]+)}', component: PostPage },
+  { id: 'users.show', path: '/users/{id:int}', view: UserPage },
+  { id: 'prices.show', path: '/prices/{price:decimal}', view: PricePage },
+  { id: 'pages.show', path: '/pages/{page:range(1,100)}', view: PageRoute },
+  { id: 'products.min', path: '/products/{price:decimal:min(1)}', view: ProductsPage },
+  { id: 'users.uuid', path: '/uuid-users/{id:uuid}', view: UserPage },
+  { id: 'search.view', path: '/search/{view:list(grid|list|details)}', view: SearchPage },
+  { id: 'posts.show', path: '/posts/{slug:regex([a-z0-9-]+)}', view: PostPage },
 ] as const);
 ```
 
@@ -457,7 +474,7 @@ const slug = createConstraint({
 });
 
 export const routes = defineRoutes(
-  [{ id: 'posts.show', path: '/posts/{slug:slug}', component: PostPage }] as const,
+  [{ id: 'posts.show', path: '/posts/{slug:slug}', view: PostPage }] as const,
   { pathConstraints: { slug } },
 );
 ```
@@ -924,17 +941,9 @@ Related: [Middleware](middleware.md), [Lifecycle](lifecycle.md).
 
 ### Slots and intercept APIs
 
-`@cookbook/router-react` uses `getResolvedSlot()` internally to render layout slots. Application code should usually use `<Slot name="..." />` instead.
+Slots and intercepts are resolved by the core router as part of route matching and rendering traversal. Application code should usually consume them through a framework integration, such as `<Slot name="..." />` from `@cookbook/router-react`, or through `renderRouteMatch()` when building a custom renderer.
 
-```ts
-function getResolvedSlot(
-  slots: ResolvedSlots,
-  ownerRouteId: string,
-  slotName: string,
-): ResolvedSlot | undefined;
-```
-
-Intercept configuration is part of route definitions and navigation options. The package root exposes the intercept input types, but not the internal intercept resolver helpers as public APIs.
+The package root exposes slot and intercept state types, but not the internal slot/intercept resolver helpers as public APIs.
 
 Related: [Routing slots](routing.md#layout-slots), [Navigation interception](navigation.md#interception), [React slots](react-integration.md#slots).
 
@@ -1222,7 +1231,7 @@ interface SlotProps<T = unknown> {
 function Slot<T = unknown>(props: SlotProps<T>): ReactElement | null;
 ```
 
-Renders a named layout slot. A slot can render a matched slot route, fallback, intercepted destination, not-found component, or nothing.
+Renders a named layout slot. A slot can render a matched slot route, fallback, intercepted destination, not-found view, or nothing.
 
 ### React hooks
 
@@ -1277,7 +1286,7 @@ The React package also exports advanced integration helpers:
 
 | API                                                              | Purpose                                                                |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `renderMatches(matches, fallback, slots?, options?)`             | Render a matched branch manually.                                      |
+| `renderReactRouteMatch(match, fallback, options?)`               | Render a resolved route match with the React adapter.                  |
 | `renderRouteBoundary(match, element)`                            | Wrap one matched route element in its route-level Suspense/error UI.   |
 | `useRouterState(router)`                                         | Subscribe to a router and return state.                                |
 | `RouterContext`                                                  | Router/state context.                                                  |
@@ -1298,7 +1307,7 @@ Exported React types include:
 - `NavLinkRenderProps`
 - `OutletProps`
 - `SlotProps`
-- `RenderMatchesOptions`
+- `RenderReactRouteMatchOptions`
 - `RouteErrorFallbackProps`
 - `RouteLoadingFallbackProps`
 - `RouterErrorFallbackProps`

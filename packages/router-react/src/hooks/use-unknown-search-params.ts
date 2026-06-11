@@ -1,5 +1,5 @@
 import type { RouterUnknownSearchParams } from '@cookbook/router';
-import { useRouterContext } from '../context/router-context';
+import { useRouterContext } from '../provider/router-context';
 
 /**
  * Returns undeclared query-string values preserved by URLKit.

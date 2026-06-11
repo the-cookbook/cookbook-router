@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
 import { describe, expect, it } from 'vitest';
-import { RouterProvider } from '../components/router-provider';
+import { RouterProvider } from '../provider/router-provider';
 import { useHref } from './use-href';
 
 function Page() {
@@ -11,7 +11,7 @@ function Page() {
 describe('useHref', () => {
   it('generates href through the router', async () => {
     const router = createMemoryRouter({
-      routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', component: Page }] as const),
+      routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', view: Page }] as const),
     });
     await router.resolveCurrent();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
@@ -28,7 +28,7 @@ describe('useHref', () => {
 
   it('accepts an object target for cleaner call sites', async () => {
     const router = createMemoryRouter({
-      routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', component: Page }] as const),
+      routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', view: Page }] as const),
     });
     await router.resolveCurrent();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
@@ -47,7 +47,7 @@ describe('useHref', () => {
           id: 'products',
           path: '/products',
           search: { tags: { type: 'string', many: true, optional: true } },
-          component: Page,
+          view: Page,
         },
       ] as const),
       url: { arrayFormat: 'repeat' },
@@ -76,7 +76,7 @@ describe('useHref', () => {
           id: 'products',
           path: '/products',
           search: { page: { type: 'int', default: 1 } },
-          component: Page,
+          view: Page,
         },
       ] as const),
     });

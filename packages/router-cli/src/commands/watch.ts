@@ -1,5 +1,5 @@
 import { generateCommand } from './generate';
-import { nodeFileSystem } from '../node-file-system';
+import { nodeFileSystem } from '../fs/node-file-system';
 import type { CommandResult, WatchHandle, WatchOptions } from '../contracts';
 
 /** Options for watch-mode generation. */

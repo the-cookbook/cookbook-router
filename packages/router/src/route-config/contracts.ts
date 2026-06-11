@@ -1,0 +1,476 @@
+import type { RouterLocation } from '../history/memory-history';
+import type { StaticHashDescriptor, StaticSearchField } from '@cookbook/urlkit/static';
+import type { RouterPathOptions } from '../path';
+import type { RouterUrlOptions } from '../url-state/contracts';
+import type { RouteHash, RouteId, RouteParams, RouteSearch } from '../contracts';
+import type { RouterUnknownSearchParams } from '../url-state/contracts';
+
+/**
+ * View-like value consumed by router integrations.
+ *
+ * The core package keeps this intentionally opaque so React, SSR, or other
+ * renderers can provide their own view model without coupling the route
+ * contract to a framework.
+ */
+export type RouteView = unknown;
+/**
+ * Arbitrary metadata attached to authored, normalized, and matched routes.
+ *
+ * Metadata is never interpreted by the core router; consumers can use it for
+ * breadcrumbs, authorization hints, analytics, titles, or layout decisions.
+ */
+export type RouteMeta = Record<string, unknown>;
+/**
+ * URLKit-backed static search descriptor accepted in route definitions.
+ *
+ * Search fields use the cleaned URLKit v2 static shape: value kind lives in
+ * `type`, repeated values use `many: true`, and descriptor flags use positive
+ * literal flags such as `optional: true`.
+ */
+export type RouteSearchSchema = Readonly<Record<string, StaticSearchField>>;
+
+/** URLKit-backed static hash descriptor accepted in route definitions. */
+export type RouteHashSchema = StaticHashDescriptor;
+export type { RouterPathOptions };
+
+/**
+ * Target route id or route ids that a configured intercept can handle.
+ */
+export type RouteInterceptTarget = string | readonly string[];
+
+/**
+ * Defines one route-configured intercept for a named slot.
+ *
+ * Configured intercepts are automatic: client navigation from the source route
+ * to `to` renders `view` in the slot while preserving the source branch.
+ * Direct visits to the target route render the canonical target route instead.
+ */
+export interface RouteInterceptConfig {
+  readonly to: RouteInterceptTarget;
+  readonly view: RouteView;
+}
+
+/**
+ * Intercepts keyed by slot name on the route that owns the source context.
+ */
+export type RouteIntercepts = Readonly<Record<string, RouteInterceptConfig>>;
+
+/**
+ * Static redirect declared on a route.
+ *
+ * String values are used as absolute or app-relative hrefs. Object values use a
+ * route id with typed params, search, and hash to generate the redirect href.
+ */
+export type RouteRedirect =
+  | string
+  | {
+      readonly route: string;
+      readonly params?: Record<string, unknown>;
+      readonly search?: Record<string, unknown>;
+      readonly hash?: string | null;
+    };
+
+/**
+ * Authored configuration for a named layout slot.
+ *
+ * A slot can provide a fallback view, its own nested route tree, and metadata
+ * consumed by rendering integrations.
+ */
+export interface RouteSlotConfig {
+  readonly view?: RouteView;
+  readonly routes?: readonly RouteDefinition[];
+  readonly meta?: RouteMeta;
+}
+
+/**
+ * Authored slot shorthand.
+ *
+ * A view value becomes the slot fallback, an object configures routes and
+ * metadata, and `true` enables the slot without fallback content.
+ */
+export type RouteSlotDefinition = RouteView | RouteSlotConfig | true;
+/**
+ * Layout slot definitions keyed by slot name.
+ */
+export type RouteSlotDefinitions = Readonly<Record<string, RouteSlotDefinition>>;
+
+/**
+ * Layout shell owned by a route.
+ *
+ * Layouts wrap descendant route content and can own shared loading/error
+ * fallbacks and named slots. Use this when a route provides persistent UI around
+ * nested branches.
+ */
+export interface RouteLayoutDefinition {
+  /** Layout shell view that wraps descendant route content. */
+  readonly view?: RouteView;
+  /**
+   * Shared loading fallback for content rendered inside this layout.
+   *
+   * Unlike `RouteDefinition.loading`, this fallback belongs to the layout shell
+   * and can be reused while descendant route content is pending.
+   */
+  readonly loading?: RouteView;
+  /** Shared error fallback for failures while rendering descendants inside this layout. */
+  readonly error?: RouteView;
+  /** Named slots rendered by this layout shell. */
+  readonly slots?: RouteSlotDefinitions;
+}
+
+/**
+ * Authored route definition consumed by `defineRoutes` and router creation.
+ *
+ * This is the user-facing configuration shape. Router creation normalizes these
+ * records into `NormalizedRoute` entries with full paths, params, ranks, slot
+ * ownership, and intercept metadata.
+ */
+export interface RouteDefinition {
+  /**
+   * Stable identifier used for typed navigation, href generation, route matching,
+   * generated contracts, and diagnostics.
+   *
+   * Route ids must be unique across the normalized route tree.
+   */
+  readonly id: string;
+  /**
+   * Local path pattern for this route. Omit it for pathless layout routes.
+   *
+   * Patterns can include constrained params such as `{id:int}` and catch-all
+   * params such as `{*path}`.
+   */
+  readonly path?: string;
+  /** Marks the route as the index child for its parent path. */
+  readonly index?: boolean;
+  /** Route-local view rendered when this exact route participates in a match. */
+  readonly view?: RouteView;
+  /** Optional layout shell shared by descendant route content. */
+  readonly layout?: RouteLayoutDefinition;
+  /** Child routes nested under this route's path and layout context. */
+  readonly children?: readonly RouteDefinition[];
+  /** Automatic slot intercepts available while this route is the active source. */
+  readonly intercepts?: RouteIntercepts;
+  /** Static redirect evaluated when this route matches. */
+  readonly redirect?: RouteRedirect;
+  /** Search parameter schema used by generated contracts and href validation. */
+  readonly search?: RouteSearchSchema;
+  /** Route-level URLKit options that override router-level URL defaults. */
+  readonly url?: RouterUrlOptions;
+  /** URLKit-backed static hash descriptor for this route. */
+  readonly hash?: RouteHashSchema;
+  /** User-defined metadata copied into normalized routes and matches. */
+  readonly meta?: RouteMeta;
+  /**
+   * Loading fallback for this route's own view.
+   *
+   * This is route-local. It is used when the route view itself is pending.
+   * It is not inherited by child routes and does not act as a shared layout
+   * loading boundary.
+   *
+   * Use `layout.loading` when the route owns a layout shell and should provide
+   * a shared loading fallback for descendants rendered inside that layout.
+   */
+  readonly loading?: RouteView;
+  /** Route-local error fallback for this route's own view. */
+  readonly error?: RouteView;
+  /** Route-local lifecycle hooks for enter/leave/error behavior. */
+  readonly lifecycle?: RouteLifecycle;
+  /** Route-local middleware run when navigation resolves through this route. */
+  readonly middleware?: readonly Middleware[];
+}
+
+/**
+ * Name of the path constraint applied to a route parameter token.
+ *
+ * Built-in constraints come from `@cookbook/pathkit`; custom constraints can be
+ * registered through `defineRoutes({ pathConstraints })` or router path options.
+ */
+export interface RouteParamConstraint {
+  readonly type: string;
+  readonly params: string;
+}
+
+/**
+ * Normalized description of one path parameter discovered from a route pattern.
+ */
+export interface RouteParamDefinition {
+  readonly name: string;
+  readonly constraints: readonly RouteParamConstraint[];
+  readonly wildcard: boolean;
+  readonly optional: boolean;
+  readonly token: string;
+}
+
+/**
+ * Normalized fallback view for a slot owned by a route layout.
+ */
+export interface NormalizedRouteSlotFallback {
+  readonly ownerRouteId: string;
+  readonly slotName: string;
+  readonly view: RouteView;
+  readonly meta?: RouteMeta;
+}
+
+/**
+ * Normalized slot configuration with owner, fallback, nested slot routes, and
+ * disabled state resolved from the authored route tree.
+ */
+export interface NormalizedRouteSlotConfig {
+  readonly ownerRouteId: string;
+  readonly name: string;
+  readonly fallback?: NormalizedRouteSlotFallback | null;
+  readonly routes: readonly NormalizedRoute[];
+  readonly meta?: RouteMeta;
+  readonly disabled: boolean;
+}
+
+/**
+ * Normalized layout slots keyed by slot name.
+ */
+export type NormalizedRouteSlots = Readonly<Record<string, NormalizedRouteSlotConfig>>;
+
+/**
+ * Normalized layout shell data used by render integrations.
+ */
+export interface NormalizedRouteLayout {
+  readonly view?: RouteView;
+  readonly slots?: NormalizedRouteSlots;
+}
+
+/**
+ * Normalized route-configured intercept from a source route to a target route.
+ */
+export interface NormalizedIntercept {
+  readonly sourceRouteId: string;
+  readonly slot: string;
+  readonly targetRouteId: string;
+  readonly view: RouteView;
+}
+
+/**
+ * Internal normalized route used for ranking, matching, rendering, slots, and
+ * diagnostics.
+ *
+ * Prefer `RouteDefinition` for authored config and `RouteMatch` for public match
+ * state. This shape includes derived data such as full paths, scores, order, slot
+ * ownership, params, and normalized intercepts.
+ */
+export interface NormalizedRoute {
+  readonly id: string;
+  readonly localPath?: string;
+  readonly fullPath?: string;
+  readonly parentId?: string;
+  readonly children: readonly NormalizedRoute[];
+  readonly layout?: NormalizedRouteLayout;
+  readonly view?: RouteView;
+  readonly params: readonly RouteParamDefinition[];
+  readonly index: boolean;
+  readonly score: number;
+  readonly order: number;
+  readonly route: RouteDefinition;
+  readonly meta?: RouteMeta;
+  readonly lifecycle?: RouteLifecycle;
+  readonly middleware?: readonly Middleware[];
+  readonly slotOwnerId?: string;
+  readonly slotName?: string;
+  readonly slotRoute: boolean;
+  readonly intercepts: readonly NormalizedIntercept[];
+}
+
+/**
+ * Normalized route with its final route matching rank.
+ */
+export interface RankedRoute extends NormalizedRoute {
+  readonly rank: number;
+}
+
+/**
+ * One route entry in a matched branch.
+ *
+ * `params` are URLKit-parsed values for that branch entry. Built-in typed
+ * constraints such as `{id:int}` are exposed as numbers.
+ */
+export interface MatchedRoute {
+  readonly id: string;
+  readonly route: NormalizedRoute;
+  readonly params: Record<string, unknown>;
+}
+
+/**
+ * Runtime state for a slot after resolving the active location.
+ */
+export type ResolvedSlotStatus = 'matched' | 'fallback' | 'empty' | 'disabled' | 'not-found';
+
+/**
+ * Runtime resolution for one named slot.
+ *
+ * A slot can render a matched slot route, fallback content, an empty state, a
+ * disabled state, or a not-found state when slot routing misses.
+ */
+export interface ResolvedSlot {
+  readonly ownerRouteId: string;
+  readonly name: string;
+  readonly status: ResolvedSlotStatus;
+  readonly config: NormalizedRouteSlotConfig;
+  readonly match?: MatchedRoute;
+  readonly branch?: readonly MatchedRoute[];
+  readonly fallback?: NormalizedRouteSlotFallback;
+  readonly params: Record<string, unknown>;
+  readonly meta?: RouteMeta;
+  readonly view?: RouteView;
+}
+
+/**
+ * Resolved slots grouped first by owner route id, then by slot name.
+ */
+export type ResolvedSlots = Readonly<Record<string, Readonly<Record<string, ResolvedSlot>>>>;
+
+/**
+ * Parsed query-string values when no generated search contract is available.
+ */
+export type ParsedRouteSearch = Record<string, string | readonly string[]>;
+
+/** Preserved undeclared query-string values when `unknownSearch` is `preserve`. */
+export type ParsedUnknownRouteSearch = RouterUnknownSearchParams;
+
+/** Parsed hash fragment value when no generated hash contract is available. */
+export type ParsedRouteHash = string | undefined;
+
+/**
+ * Public matched route state for the current or requested location.
+ *
+ * When generated contracts are registered, `params`, `search`, and `hash` are
+ * narrowed for the matched route id. `branch` keeps the matched route entries
+ * and URLKit-parsed params for each level.
+ */
+export interface RouteMatch<Route extends string = string> {
+  readonly id: Route;
+  readonly pathname: string;
+  readonly search: Route extends RouteId ? RouteSearch<Route> : ParsedRouteSearch;
+  readonly unknownSearch?: ParsedUnknownRouteSearch;
+  readonly hash: Route extends RouteId ? RouteHash<Route> : ParsedRouteHash;
+  readonly href: string;
+  readonly route: NormalizedRoute;
+  readonly branch: readonly MatchedRoute[];
+  readonly params: Route extends RouteId ? RouteParams<Route> : Record<string, unknown>;
+  readonly slots: ResolvedSlots;
+  readonly intercepted?: ResolvedInterceptedRoute;
+}
+
+/**
+ * Route match narrowed to the generated route id union when module augmentation
+ * has registered contracts.
+ */
+export type RegisteredRouteMatch = RouteId extends string
+  ? RouteMatch<RouteId>
+  : RouteMatch<string>;
+
+/**
+ * Active intercepted route rendered into a slot while the source branch remains
+ * mounted.
+ */
+export interface ResolvedInterceptedRoute {
+  readonly slot: string;
+  readonly sourceRouteId: string;
+  readonly targetRouteId: string;
+  readonly previousHref: string;
+  readonly match: RouteMatch;
+  readonly view: RouteView;
+  readonly context?: unknown;
+}
+
+/**
+ * Context passed to route and runtime middleware during navigation.
+ *
+ * Helpers return structured middleware results so middleware can redirect,
+ * rewrite, or cancel without constructing those objects manually.
+ */
+export interface MiddlewareContext {
+  readonly route: MatchedRoute;
+  readonly location: RouterLocation;
+  readonly params: Record<string, unknown>;
+  readonly search: ParsedRouteSearch | Record<string, unknown>;
+  readonly unknownSearch?: ParsedUnknownRouteSearch;
+  readonly hash: ParsedRouteHash | unknown;
+  redirect: (to: string) => MiddlewareResult;
+  rewrite: (to: string) => MiddlewareResult;
+  cancel: () => MiddlewareResult;
+}
+
+/**
+ * Supported middleware outcomes.
+ *
+ * `void` continues navigation, `false` or `{ type: 'cancel' }` blocks it,
+ * redirect changes the browser location, rewrite resolves another route without
+ * exposing the intermediate href, and `Response` is surfaced as navigation error
+ * state for integrations that model loader responses.
+ */
+export type MiddlewareResult =
+  | void
+  | false
+  | Response
+  | {
+      readonly type: 'redirect';
+      readonly to: string;
+    }
+  | {
+      readonly type: 'rewrite';
+      readonly to: string;
+    }
+  | {
+      readonly type: 'cancel';
+    };
+
+/**
+ * Middleware function run during navigation after blockers and before lifecycle
+ * completion.
+ */
+export type Middleware = (
+  context: MiddlewareContext,
+) => MiddlewareResult | Promise<MiddlewareResult>;
+
+/**
+ * Context shared by route and global lifecycle hooks.
+ */
+export interface RouteLifecycleContext {
+  readonly from: RouteMatch | null;
+  readonly to: RouteMatch | null;
+  readonly location: RouterLocation;
+  readonly params: Record<string, unknown>;
+  readonly search: ParsedRouteSearch | Record<string, unknown>;
+  readonly unknownSearch?: ParsedUnknownRouteSearch;
+  readonly hash: ParsedRouteHash | unknown;
+}
+
+/**
+ * Route-local lifecycle hooks.
+ *
+ * `beforeEnter` and `beforeLeave` can cancel navigation by returning `false`.
+ * Errors thrown by hooks are routed to `onError` and navigation error state.
+ */
+export interface RouteLifecycle {
+  readonly beforeEnter?: (
+    context: RouteLifecycleContext,
+  ) => boolean | void | Promise<boolean | void>;
+  readonly afterEnter?: (context: RouteLifecycleContext) => void | Promise<void>;
+  readonly beforeLeave?: (
+    context: RouteLifecycleContext,
+  ) => boolean | void | Promise<boolean | void>;
+  readonly onError?: (error: unknown, context: RouteLifecycleContext) => void | Promise<void>;
+}
+
+/**
+ * Router-wide lifecycle hooks that wrap route transitions.
+ *
+ * Global hooks are useful for analytics, logging, or shared guards that should
+ * not be duplicated on individual route definitions.
+ */
+export interface GlobalLifecycle {
+  readonly beforeNavigate?: (
+    context: RouteLifecycleContext,
+  ) => boolean | void | Promise<boolean | void>;
+  readonly afterNavigate?: (context: RouteLifecycleContext) => void | Promise<void>;
+  readonly onNavigationError?: (
+    error: unknown,
+    context: RouteLifecycleContext,
+  ) => void | Promise<void>;
+}

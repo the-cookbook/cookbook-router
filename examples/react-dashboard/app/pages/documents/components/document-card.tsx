@@ -88,7 +88,7 @@ export function DocumentCard({ document }: DocumentCardProps) {
           params={{ documentId: document.id }}
           intercept={{
             slot: 'modal',
-            component: DocumentPreview,
+            view: DocumentPreview,
           }}
           className="inline-flex items-center text-sm font-medium text-foreground hover:underline"
         >

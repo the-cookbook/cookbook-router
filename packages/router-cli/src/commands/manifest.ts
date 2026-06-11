@@ -6,7 +6,7 @@ import {
   assertGeneratedOutputDoesNotClobberRouteFiles,
   resolveGeneratedOutputPaths,
 } from '../security/safe-paths';
-import { nodeFileSystem } from '../node-file-system';
+import { nodeFileSystem } from '../fs/node-file-system';
 
 const defaultFs: CliFileSystem = nodeFileSystem;
 

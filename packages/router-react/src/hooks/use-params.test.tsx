@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { createConstraint, createMemoryRouter, defineRoutes } from '@cookbook/router';
 import { describe, expect, it, expectTypeOf } from 'vitest';
-import { RouterProvider } from '../components/router-provider';
+import { RouterProvider } from '../provider/router-provider';
 import { useParams } from './use-params';
 
 function Page() {
@@ -11,7 +11,7 @@ function Page() {
 describe('useParams', () => {
   it('returns params for the active route', async () => {
     const router = createMemoryRouter({
-      routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', component: Page }] as const),
+      routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', view: Page }] as const),
       initialEntries: ['/users/42'],
     });
     await router.resolveCurrent();
@@ -41,7 +41,7 @@ describe('useParams', () => {
     });
     const router = createMemoryRouter({
       routes: defineRoutes(
-        [{ id: 'article', path: '/articles/{slug:slug}', component: Page }] as const,
+        [{ id: 'article', path: '/articles/{slug:slug}', view: Page }] as const,
         { pathConstraints: { slug } },
       ),
       initialEntries: ['/articles/urlkit-react'],

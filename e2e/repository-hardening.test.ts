@@ -8,7 +8,11 @@ const packageSourceRoots = [
   'packages/router-react/src',
   'packages/router-cli/src',
 ];
-const typeOnlyAllowlist = new Set(['packages/router/src/routes/contracts.ts']);
+const typeOnlyAllowlist = new Set([
+  'packages/router/src/route-config/contracts.ts',
+  'packages/router/src/rendering/contracts.ts',
+  'packages/router/src/runtime/contracts.ts',
+]);
 
 describe('repository hardening', () => {
   it('every implementation file has a colocated test file or explicit type-only allowlist entry', () => {

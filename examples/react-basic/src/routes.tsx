@@ -8,13 +8,13 @@ export const routes = defineRoutes([
     id: 'root',
     path: '/',
     layout: {
-      component: RootLayout,
+      view: RootLayout,
     },
     children: [
       {
         id: 'home',
         index: true,
-        component: HomePage,
+        view: HomePage,
         meta: {
           title: 'Home',
         },
@@ -26,7 +26,7 @@ export const routes = defineRoutes([
           tab: { type: 'string', optional: true },
         },
         hash: { type: 'enum', values: ['profile', 'settings', 'security'], optional: true },
-        component: UserPage,
+        view: UserPage,
         meta: {
           title: 'User',
           requiresAuth: true,
@@ -49,7 +49,7 @@ export const routes = defineRoutes([
         url: {
           arrayFormat: 'comma',
         },
-        component: ProductsPage,
+        view: ProductsPage,
         meta: {
           title: 'Products',
         },
@@ -57,7 +57,7 @@ export const routes = defineRoutes([
       {
         id: 'blocked',
         path: 'blocked',
-        component: BlockedPage,
+        view: BlockedPage,
         meta: {
           requiresAuth: true,
         },

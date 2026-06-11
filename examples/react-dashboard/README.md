@@ -1,11 +1,11 @@
 # React dashboard example
 
-`examples/react-dashboard` is a production-style dashboard app that uses Cookbook Router with React, generated route contracts, async route components, layout-level loading and error fallbacks, layout slots, custom path constraints, search params, middleware, link-level route interception, and navigation blocking.
+`examples/react-dashboard` is a production-style dashboard app that uses Cookbook Router with React, generated route contracts, async route views, layout-level loading and error fallbacks, layout slots, custom path constraints, search params, middleware, link-level route interception, and navigation blocking.
 
 ## What it demonstrates
 
 - Shared shell layout across the overview, users, documents, reports, create, messages, broken-page, policy, and not-found demo routes.
-- Async page components that suspend during navigation, making layout-level loading states easy to preview.
+- Async page views that suspend during navigation, making layout-level loading states easy to preview.
 - `layout.loading` fallbacks rendered inside the shared layout outlet.
 - `layout.error` boundaries rendered inside the shared layout when a child route throws.
 - Route-specific layout slots for headers, sidebars, and modals.
@@ -60,15 +60,15 @@ The unit tests cover entry redirects, async layout loading behavior, search-pres
 
 Dashboard pages are loaded with `React.lazy()` and an intentional delay so route-level async rendering is easy to see during development and tests. Each shell-backed route uses `layout.loading: LoadingSkeleton`, so the sidebar, header area, and layout chrome stay mounted while the route outlet shows the skeleton.
 
-The `/broken-page` route intentionally throws from its page component:
+The `/broken-page` route intentionally throws from its page view:
 
 ```ts
 {
   id: 'broken-page',
   path: '/broken-page',
-  component: AsyncBrokenPage,
+  view: AsyncBrokenPage,
   layout: {
-    component: LayoutPage,
+    view: LayoutPage,
     loading: LoadingSkeleton,
     error: ErrorPage,
   },
@@ -94,7 +94,7 @@ For example, document cards link to the canonical document detail route while as
   className="hover:underline"
   intercept={{
     slot: 'modal',
-    component: DocumentPreview,
+    view: DocumentPreview,
   }}
 >
   {document.title}

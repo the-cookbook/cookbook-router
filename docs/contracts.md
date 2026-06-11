@@ -80,7 +80,7 @@ Params are generated from path patterns.
 {
   id: 'users.show',
   path: '/users/{id:int}',
-  component: UserPage,
+  view: UserPage,
 }
 ```
 
@@ -117,7 +117,7 @@ Search fields are generated from URLKit-backed Router static `search` descriptor
     publishedOn: { type: 'date', format: 'dd-MM-yyyy', optional: true },
     startsAt: { type: 'date-time', format: 'dd-MM-yyyy HH:mm:ss', optional: true },
   },
-  component: ArticlesPage,
+  view: ArticlesPage,
 }
 ```
 
@@ -146,7 +146,7 @@ Hash values generate a union.
   id: 'articles.show',
   path: '/articles/{slug}',
   hash: { type: 'enum', values: ['comments', 'share'], optional: true },
-  component: ArticlePage,
+  view: ArticlePage,
 }
 ```
 

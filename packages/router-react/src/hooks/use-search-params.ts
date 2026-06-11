@@ -1,5 +1,5 @@
 import type { RouteId, RouteSearch } from '@cookbook/router';
-import { useRouterContext } from '../context/router-context';
+import { useRouterContext } from '../provider/router-context';
 
 /**
  * Returns URLKit-parsed search values for the current match.

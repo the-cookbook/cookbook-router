@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import { RouterProvider } from '../components/router-provider';
+import { RouterProvider } from '../provider/router-provider';
 import { useHash, useHashParams } from './use-hash-params';
 
 function Page() {
@@ -16,7 +16,7 @@ describe('useHashParams', () => {
           id: 'user',
           path: '/users/{id:int}',
           hash: { type: 'enum', values: ['profile', 'settings', 'bio', 'top'], optional: true },
-          component: Page,
+          view: Page,
         },
       ] as const),
       initialEntries: ['/users/42#profile'],
@@ -39,7 +39,7 @@ describe('useHashParams', () => {
           id: 'user',
           path: '/users/{id:int}',
           hash: { type: 'enum', values: ['profile', 'settings'], optional: true },
-          component: Page,
+          view: Page,
         },
       ] as const),
       initialEntries: ['/users/42#settings'],
@@ -56,7 +56,7 @@ describe('useHashParams', () => {
 
   it('returns null without a hash', async () => {
     const router = createMemoryRouter({
-      routes: defineRoutes([{ id: 'user', path: '/page', component: Page }] as const),
+      routes: defineRoutes([{ id: 'user', path: '/page', view: Page }] as const),
       initialEntries: ['/page'],
     });
     await router.resolveCurrent();

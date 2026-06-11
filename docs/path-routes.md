@@ -38,8 +38,8 @@ A route path is a PathKit pattern:
 
 ```tsx
 export const routes = defineRoutes([
-  { id: 'home', path: '/', component: HomePage },
-  { id: 'users.show', path: '/users/{id:int}', component: UserPage },
+  { id: 'home', path: '/', view: HomePage },
+  { id: 'users.show', path: '/users/{id:int}', view: UserPage },
 ] as const);
 ```
 
@@ -71,7 +71,7 @@ Child route paths are composed with their parent path.
     {
       id: 'users.show',
       path: '{id:int}',
-      component: UserPage,
+      view: UserPage,
     },
   ],
 }
@@ -93,7 +93,7 @@ A child path may start with `/`, but it is still composed relative to the parent
     {
       id: 'settings.profile',
       path: '/profile',
-      component: ProfilePage,
+      view: ProfilePage,
     },
   ],
 }
@@ -119,7 +119,7 @@ Unconstrained params capture one path segment and are parsed as strings.
 {
   id: 'articles.show',
   path: '/articles/{slug}',
-  component: ArticlePage,
+  view: ArticlePage,
 }
 ```
 
@@ -219,7 +219,7 @@ Use `decimal` for finite decimal path values.
 {
   id: 'products.by-price',
   path: '/products/by-price/{price:decimal}',
-  component: ProductsByPricePage,
+  view: ProductsByPricePage,
 }
 ```
 
@@ -248,7 +248,7 @@ Use `int` for unsigned integer path values.
 {
   id: 'users.show',
   path: '/users/{id:int}',
-  component: UserPage,
+  view: UserPage,
 }
 ```
 
@@ -278,7 +278,7 @@ Use `uuid` for canonical hyphenated UUID values.
 {
   id: 'users.show',
   path: '/users/{id:uuid}',
-  component: UserPage,
+  view: UserPage,
 }
 ```
 
@@ -329,7 +329,7 @@ Use `range(min,max)` for inclusive numeric ranges.
 {
   id: 'pages.show',
   path: '/pages/{page:range(1,100)}',
-  component: PageRoute,
+  view: PageRoute,
 }
 ```
 
@@ -379,7 +379,7 @@ Use `list(item1|item2|item3)` for small exact string unions in path segments.
 {
   id: 'search.view',
   path: '/search/{view:list(grid|list|details)}',
-  component: SearchViewPage,
+  view: SearchViewPage,
 }
 ```
 
@@ -414,7 +414,7 @@ Use `regex(pattern)` when a path segment must match a regular expression.
 {
   id: 'posts.show',
   path: '/posts/{slug:regex([a-z0-9-]+)}',
-  component: PostPage,
+  view: PostPage,
 }
 ```
 
@@ -555,7 +555,7 @@ export const routes = defineRoutes(
     {
       id: 'posts.show',
       path: '/posts/{slug:slug}',
-      component: PostPage,
+      view: PostPage,
     },
   ] as const,
   { pathConstraints: { slug } },
@@ -568,7 +568,7 @@ export const router = createRouter({ routes });
 
 ```ts
 const router = createRouter({
-  routes: [{ id: 'posts.show', path: '/posts/{slug:slug}', component: PostPage }],
+  routes: [{ id: 'posts.show', path: '/posts/{slug:slug}', view: PostPage }],
   pathConstraints: { slug },
 });
 ```

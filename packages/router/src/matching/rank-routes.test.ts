@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeRoutes } from './normalize-routes';
+import { normalizeRoutes } from '../route-config/normalize-routes';
 import { flattenRoutes, rankRoutes } from './rank-routes';
 
 describe('rankRoutes', () => {

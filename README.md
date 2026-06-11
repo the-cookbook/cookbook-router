@@ -1,110 +1,193 @@
 # Cookbook Router
 
+**Define routes once. Trust them everywhere.**
+
+<div align="center">
+  <img src="/assets/harpy.png" alt="Centered Image" style="width:420px;" />
+</div>
+
+Cookbook Router is a strongly typed, framework-agnostic router that turns route declarations into shared contracts for matching, links, redirects, middleware, rendering traversal, SSR, React integration, and generated TypeScript types.
+
+URL params, search params, and hash state are parsed and validated before they reach your pages, so application code works with checked, typed route data instead of raw URL strings.
+
+Beyond matching URLs to views, Cookbook Router gives you routing primitives for real application flows: middleware and lifecycle hooks for authorization, redirects, analytics, audit trails, and logging; layouts and slots for structured screens; and intercepts for route-driven modals, previews, and split-view experiences.
+
+Not string-driven. Not filesystem-bound. Contract-first routing.
+
 > **Status:** Cookbook Router is currently under active development. APIs, generated contracts, and route manifest formats may change before a stable release.
 
-Cookbook Router is a typed, SSR-ready routing framework backed by `@cookbook/urlkit` for URL state and `@cookbook/pathkit` beneath URLKit for path-pattern primitives. The repository contains a framework-agnostic runtime, React bindings, and a CLI that generates TypeScript contracts and route manifests from static route definitions.
+**Live example:** https://the-cookbook.github.io/cookbook-router/overview
 
-**Live Example**: [https://the-cookbook.github.io/cookbook-router/overview](https://the-cookbook.github.io/cookbook-router/overview)
+**API documentation:** https://the-cookbook.github.io/cookbook-router-docs/
 
-**API documentation**: [https://the-cookbook.github.io/cookbook-router-docs/](https://the-cookbook.github.io/cookbook-router-docs/)
+---
 
-## Table of contents
+## Table of Contents
 
-- [Motivation](#motivation)
-- [Packages](#packages)
-- [Requirements](#requirements)
-- [Install](#install)
-- [Quick start](#quick-start)
-- [Custom path constraints](#custom-path-constraints)
-- [Generate contracts](#generate-contracts)
-- [Core concepts](#core-concepts)
-- [Examples](#examples)
-- [Repository scripts](#repository-scripts)
-- [Git hooks](#git-hooks)
-- [Release workflow](#release-workflow)
-- [Documentation](#documentation)
-- [Documentation map](#documentation-map)
-- [Development notes](#development-notes)
+- [Cookbook Router](#cookbook-router)
+  - [Why Cookbook Router?](#why-cookbook-router)
+  - [Routes: convention, strings, or contracts?](#routes-convention-strings-or-contracts)
+  - [Packages](#packages)
+  - [Requirements](#requirements)
+  - [Install what you need](#install-what-you-need)
+    - [1.a. Core Router](#1a-core-router)
+    - [1.b. React Integration](#1b-react-integration)
+    - [2. CLI](#2-cli)
+  - [Quick start](#quick-start)
+    - [1. Declare the routes](#1-declare-the-routes)
+    - [2.a. Create the router: framework-agnostic](#2a-create-the-router-framework-agnostic)
+    - [2.b. Using React? Add the React integration](#2b-using-react-add-the-react-integration)
+    - [3. Build URLs from the contract](#3-build-urls-from-the-contract)
+    - [4. Generate contracts](#4-generate-contracts)
+  - [Generate route contracts](#generate-route-contracts)
+    - [What gets generated](#what-gets-generated)
+    - [Recommended scripts](#recommended-scripts)
+    - [Keep route files static](#keep-route-files-static)
+  - [Core concepts](#core-concepts)
+  - [Common patterns](#common-patterns)
+    - [Protect before render](#protect-before-render)
+    - [Track navigation where it happens](#track-navigation-where-it-happens)
+    - [Keep screen structure in the route tree](#keep-screen-structure-in-the-route-tree)
+    - [Make modals routable](#make-modals-routable)
+  - [Custom path constraints](#custom-path-constraints)
+  - [Examples](#examples)
+  - [Documentation](#documentation)
 
-## Motivation
+---
 
-Most modern routing solutions work well for common application flows, but many have moved toward file-system routing as the primary architecture. That approach is convenient at the start of a project, but it can also make routes too dependent on folder structure, reduce architectural freedom, and make large applications harder to organize around product domains, permissions, layouts, data ownership, or business workflows.
+## Why Cookbook Router?
 
-Cookbook Router takes a route-definition-first approach. Routes are declared explicitly, with stable route IDs, typed navigation, generated contracts, middleware, layouts, slots, intercepts, redirects, SSR support, and validation built into the routing layer. The URL structure remains fully under your control without forcing the application architecture to mirror the filesystem.
+Most routers match URLs. Cookbook Router makes routes matter.
 
-A key difference is path parameter validation. Many routers match dynamic segments but leave validation to page components, loaders, or application code. Cookbook Router validates route params at the routing boundary through path constraints, so invalid URLs fail naturally into not-found behavior before they reach business logic. This reduces defensive checks inside screens and makes route validity part of the route contract.
+In real applications, a route is not just a path. It is validation, navigation, authorization, redirects, analytics, layout, UI flow, SSR state, and type safety.
 
-Modern applications also need middleware for authentication, authorization, redirects, rewrites, guards, analytics, and request-like navigation control. Cookbook Router supports middleware as a first-class routing primitive, including route-level middleware and provider-level middleware for React applications. That keeps cross-cutting navigation rules close to the router instead of scattering them across pages, effects, or layout components.
+When those rules are scattered across strings, folders, page components, effects, loaders, and guards, your routing model becomes invisible. And invisible architecture always gets expensive.
 
-The goal is not to replace framework conventions with more ceremony. The goal is to provide a routing model that scales with application complexity while preserving developer choice:
+With Cookbook Router, a route does not just point to a page. It checks the input, enforces the rules, coordinates the flow, and sends every request where it belongs.
 
-- define routes where they best fit your architecture;
-- navigate by stable route IDs instead of fragile path strings;
-- validate URL params before rendering business screens;
-- centralize navigation rules with middleware;
-- support advanced UI patterns such as layouts, slots, and intercepts;
-- keep SSR, generated contracts, and runtime behavior aligned.
+One route. One contract. No guesswork.
 
-Cookbook Router is designed for teams that want the type safety and structure of modern routers without giving up control over how their application is organized.
+## Routes: convention, strings, or contracts?
+
+Every router chooses where the truth lives.
+
+| Routing model            | Where the truth lives             | The tradeoff                                                                                                                                                          |
+| ------------------------ | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Filesystem routing       | In folders.                       | Fast to start. Expensive when product structure, permissions, layouts, and workflows stop looking like a file tree.                                                   |
+| String-based routing     | Everywhere.                       | Flexible until paths spread through links, redirects, tests, guards, and page code. Then every refactor becomes archaeology.                                          |
+| Component-first routing  | In the UI.                        | Natural for rendering. Messy when validation, authorization, redirects, analytics, and lifecycle rules start living beside components.                                |
+| Typed route-tree routing | In route structure and inference. | Safer navigation, but often shaped by a specific framework, runtime, or rendering model.                                                                              |
+| Cookbook Router          | In route contracts.               | Routes validate URL state, build links, run middleware, coordinate lifecycle, shape layouts and slots, support intercepts and SSR, and generate TypeScript contracts. |
+
+Folders are conventions. Strings are liabilities. Views are not traffic cops.
+
+Cookbook Router treats routes as contracts: validate the input, run the rules, and send every request where it belongs.
 
 ## Packages
 
-| Package                  | Purpose                                                                                                                                                                     | Package docs                              | API reference                           |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | --------------------------------------- |
-| `@cookbook/router`       | Route definitions, validation, normalization, matching, href generation, middleware, lifecycle, SSR, histories, slots, intercepts, redirects, and generated contract types. | [README](packages/router/README.md)       | [API](docs/api.md#cookbookrouter)       |
-| `@cookbook/router-react` | React provider, links, nav links, outlets, slots, hooks, outlet context, unload blockers, and static rendering integration.                                                 | [README](packages/router-react/README.md) | [API](docs/api.md#cookbookrouter-react) |
-| `@cookbook/router-cli`   | Contract generation, manifest generation, route validation, static route extraction, watch mode, and programmatic generation APIs.                                          | [README](packages/router-cli/README.md)   | [API](docs/api.md#cookbookrouter-cli)   |
+| Package                  | Purpose                                                                                                                                                                                                 | Package docs                              | API reference                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | --------------------------------------- |
+| `@cookbook/router`       | Route definitions, validation, normalization, matching, href generation, middleware, lifecycle, SSR, histories, slots, intercepts, redirects, renderer-neutral traversal, and generated contract types. | [README](packages/router/README.md)       | [API](docs/api.md#cookbookrouter)       |
+| `@cookbook/router-react` | React provider, links, nav links, outlets, slots, hooks, outlet context, unload blockers, and static rendering integration.                                                                             | [README](packages/router-react/README.md) | [API](docs/api.md#cookbookrouter-react) |
+| `@cookbook/router-cli`   | Contract generation, manifest generation, route validation, static route extraction, watch mode, and programmatic generation APIs.                                                                      | [README](packages/router-cli/README.md)   | [API](docs/api.md#cookbookrouter-cli)   |
 
 The root package does not expose runtime APIs. Use package-root imports from the packages above and avoid deep imports from `src` or `dist`.
 
 ## Requirements
 
 - Node.js `>=18`
-- pnpm `>=9.0.0`
 - React apps must provide `react` and `react-dom` `>=18`
 
-## Install
+## Install what you need
+
+### 1.a. Core Router
+
+Use the core router in any JavaScript or TypeScript application that needs framework-agnostic routing.
 
 ```sh
 pnpm add @cookbook/router
-pnpm add @cookbook/router-react react react-dom
-pnpm add -D @cookbook/router-cli
+
+npm install @cookbook/router
+
+yarn add @cookbook/router
 ```
 
-For non-React usage, install only `@cookbook/router`. `@cookbook/urlkit` and `@cookbook/pathkit` are installed transitively by `@cookbook/router`.
+### 1.b. React Integration
+
+Use the React integration for applications built with React.
+
+```sh
+pnpm add @cookbook/router @cookbook/router-react
+
+npm install @cookbook/router @cookbook/router-react
+
+yarn add @cookbook/router @cookbook/router-react
+```
+
+### 2. CLI
+
+Use the CLI when you want to generate route contracts, generate route manifests, validate route files, or run those checks in CI.
+
+```sh
+pnpm add -D @cookbook/router-cli
+
+npm install -D @cookbook/router-cli
+
+yarn add -D @cookbook/router-cli
+```
+
+Use this. It keeps the punch, keeps the monorepo story, uses `view`, uses a catch-all route, and does **not** reduce Quick start back into boring docs.
 
 ## Quick start
 
-Define routes with stable route IDs. Use `component` for page components and `layout.component` for layout wrappers.
+Start with the contract. Rendering comes after.
+
+### 1. Declare the routes
 
 ```tsx
 import { defineRoutes } from '@cookbook/router';
-import { HomePage, RootLayout, UserPage } from './pages';
+import { HomePage, NotFoundPage, RootLayout, UserPage } from './pages';
 
 export const routes = defineRoutes([
   {
     id: 'root',
     path: '/',
     layout: {
-      component: RootLayout,
+      view: RootLayout,
     },
     children: [
       {
         id: 'home',
         index: true,
-        component: HomePage,
+        view: HomePage,
       },
       {
         id: 'users.show',
         path: 'users/{id:int}',
         search: {
-          tab: { type: 'string', optional: true },
+          tab: {
+            type: 'enum',
+            values: ['profile', 'settings'],
+            default: 'profile',
+          },
         },
-        hash: { type: 'enum', values: ['profile', 'settings'], optional: true },
-        component: UserPage,
+        hash: {
+          type: 'enum',
+          values: ['profile', 'settings'],
+          optional: true,
+        },
+        view: UserPage,
         meta: {
           title: 'User',
           requiresAuth: true,
+        },
+      },
+      {
+        id: 'not-found',
+        path: '{*path}',
+        view: NotFoundPage,
+        meta: {
+          title: 'Not found',
         },
       },
     ],
@@ -112,25 +195,32 @@ export const routes = defineRoutes([
 ] as const);
 ```
 
-Create and render a router.
+One declaration. Path matched. URL checked. Metadata carried. Layout shaped. Not-found handled.
 
-```tsx
+### 2.a. Create the router: framework-agnostic
+
+No UI framework required.
+
+```ts
 import { createRouter } from '@cookbook/router';
-import { RouterProvider } from '@cookbook/router-react';
 import { routes } from './routes';
 
-const router = createRouter({ routes });
-await router.resolveCurrent();
+export const router = createRouter({
+  routes,
+});
 
-export function App() {
-  return <RouterProvider router={router} fallback={<h1>Not found</h1>} />;
-}
+await router.resolveCurrent();
 ```
 
-Navigate by route ID.
+### 2.b. Using React? Add the React integration
 
 ```tsx
-import { Link, useParams } from '@cookbook/router-react';
+import { Link, RouterProvider, useParams, useSearchParams } from '@cookbook/router-react';
+import { router } from './router';
+
+export function App() {
+  return <RouterProvider router={router} />;
+}
 
 export function UserLink() {
   return (
@@ -142,14 +232,330 @@ export function UserLink() {
 
 export function UserPage() {
   const params = useParams('users.show');
-  // params.id is number because `{id:int}` is parsed by URLKit.
-  return <h1>User {params.id}</h1>;
+  const search = useSearchParams('users.show');
+
+  // params.id: number
+  // search.tab: 'profile' | 'settings'
+
+  return (
+    <h1>
+      User {params.id}: {search.tab}
+    </h1>
+  );
 }
 ```
 
+### 3. Build URLs from the contract
+
+No hand-written paths.
+
+```ts
+const href = router.href('users.show', {
+  params: { id: 42 },
+  search: { tab: 'settings' },
+  hash: 'profile',
+});
+
+// /users/42?tab=settings#profile
+```
+
+### 4. Generate contracts
+
+Make TypeScript enforce the routing.
+
+```sh
+cookbook-router generate --routes src/routes.ts --out-dir .cookbook-router
+```
+
+Add the generated files to your `tsconfig.json` file.
+
+```json
+{
+  "include": ["src", ".cookbook-router/contracts.ts", ".cookbook-router/register.d.ts"]
+}
+```
+
+Generate the files. Register the contract. Let TypeScript do its job.
+
+One route declaration. Core runtime. React integration. Generated contracts.
+
+## Generate route contracts
+
+Runtime validation protects the page. Generated contracts protect the codebase.
+
+Use `@cookbook/router-cli` to generate TypeScript contracts, route registration, and a manifest from your route declarations.
+
+```sh
+cookbook-router generate --routes src/routes.ts --out-dir .cookbook-router
+```
+
+The CLI writes:
+
+```txt
+.cookbook-router/
+  contracts.ts
+  register.d.ts
+  manifest.json
+```
+
+Add the generated directory to your TypeScript program.
+
+```json
+{
+  "include": ["src", ".cookbook-router"]
+}
+```
+
+Generate the files. Register the contracts. Let TypeScript do its job.
+
+### What gets generated
+
+| File            | Purpose                                                                                        |
+| --------------- | ---------------------------------------------------------------------------------------------- |
+| `contracts.ts`  | Route IDs, paths, params, search, hash, metadata, outlet context, and router contract types.   |
+| `register.d.ts` | Registers generated contracts through `@cookbook/router` module augmentation.                  |
+| `manifest.json` | Tooling-friendly route manifest with route IDs, paths, hierarchy, and route-level URL options. |
+
+### Recommended scripts
+
+```json
+{
+  "scripts": {
+    "router:generate": "cookbook-router generate --routes src/routes.ts --out-dir .cookbook-router",
+    "router:watch": "cookbook-router generate --routes src/routes.ts --out-dir .cookbook-router --watch",
+    "router:validate": "cookbook-router validate --routes src/routes.ts",
+    "typecheck": "pnpm router:generate && tsc --noEmit"
+  }
+}
+```
+
+Use `validate` in CI when you want route validation without writing files.
+
+```sh
+cookbook-router validate --routes src/routes.ts
+```
+
+Use `--watch` during development.
+
+```sh
+cookbook-router generate --routes src/routes.ts --out-dir .cookbook-router --watch
+```
+
+The shorter `cbr` binary is also available.
+
+```sh
+cbr generate --routes src/routes.ts --out-dir .cookbook-router
+```
+
+### Keep route files static
+
+The CLI is a static extractor. Give it route data, not a puzzle.
+
+**Good**:
+
+```ts
+export const routes = defineRoutes([
+  {
+    id: 'products.show',
+    path: '/products/{id:int}',
+    search: {
+      page: { type: 'int', default: 1 },
+      tags: { type: 'string', many: true, optional: true },
+    },
+    hash: {
+      type: 'enum',
+      values: ['details', 'reviews'],
+      optional: true,
+    },
+    meta: {
+      title: 'Product',
+    },
+  },
+] as const);
+```
+
+**Bad**:
+
+```ts
+const productRouteId = 'products.show';
+const productPath = `/products/{id:int}`;
+
+const productSearch = {
+  page: { type: 'int', default: 1 },
+  tags: { type: 'string', many: true, optional: true },
+};
+
+const productMeta = {
+  title: 'Product',
+};
+
+export const routes = defineRoutes([
+  {
+    id: productRouteId,
+    path: productPath,
+    search: productSearch,
+    meta: {
+      ...productMeta,
+    },
+  },
+] as const);
+```
+
+Keep codegen-relevant fields inline: `id`, `path`, `index`, `search`, `hash`, `meta`, `children`, `layout.slots`, and `redirect`.
+
+Static route files are not a limitation. They are the deal: one route declaration that runtime, tooling, and TypeScript can all understand.
+
+## Core concepts
+
+Cookbook Router has one operating rule: the route declaration is the contract.
+
+| Concept             | What it owns                                                                                        | What it prevents                                               |
+| ------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Route IDs           | Links, redirects, hrefs, and navigation calls.                                                      | Hard-coded paths hiding across the app.                        |
+| URL validation      | Path params, search params, and hash state before they reach views, middleware, or lifecycle hooks. | Pages defending themselves from malformed URLs.                |
+| Views               | Route-owned view references. Rendering is handled by integrations such as `@cookbook/router-react`. | Coupling the core router to one UI framework.                  |
+| Middleware          | Auth, redirects, guards, audit, logging, and request-like navigation control.                       | Rules fragmented across pages, effects, and layout components. |
+| Lifecycle hooks     | Transition side effects such as analytics, instrumentation, and route tracking.                     | Navigation behavior becoming invisible side effects.           |
+| Layouts and slots   | Route-owned screen structure and named rendering regions.                                           | UI composition turning into component improvisation.           |
+| Intercepts          | Route-driven modals, previews, drawers, and split-view destinations.                                | Modal state pretending it is not routing.                      |
+| SSR state           | Static route resolution and serialized router state for hydration.                                  | Server and client disagreeing about the route.                 |
+| Generated contracts | Route IDs, params, search, hash, metadata, hrefs, and manifests.                                    | TypeScript guessing what the router already knows.             |
+
+Paths match. IDs navigate. Contracts enforce.
+
+URL shape belongs to the path. Application intent belongs to the route ID. Routing behavior belongs to the declaration.
+
+## Common patterns
+
+Routes should own routing behavior. Pages should not clean up after them.
+
+| Pattern             | Put it in the route when                                                                 | Use                             |
+| ------------------- | ---------------------------------------------------------------------------------------- | ------------------------------- |
+| Protected routes    | Access must be checked before the view renders.                                          | `middleware`, `meta`            |
+| Redirects           | A URL should move somewhere else by rule, not by component effect.                       | `redirect`, `middleware`        |
+| Analytics and audit | Navigation should be measured where navigation happens.                                  | `lifecycle`                     |
+| Shared shells       | A section needs persistent structure around child routes.                                | `layout.view`, `<Outlet />`     |
+| Parallel regions    | A screen needs owned regions like sidebars, panels, or modals.                           | `layout.slots`, `<Slot />`      |
+| Route-driven modals | A destination should open as a modal from one route and as a page when visited directly. | `intercepts`                    |
+| Section not-found   | Unknown child URLs should keep the section layout active.                                | catch-all child route           |
+| SSR                 | Server and client must agree before hydration starts.                                    | static router, serialized state |
+
+### Protect before render
+
+```tsx
+{
+  id: 'admin',
+  path: '/admin',
+  view: AdminPage,
+  meta: {
+    requiresAuth: true,
+  },
+  middleware: [requireAuth],
+}
+```
+
+No page-level permission theater. The route checks first.
+
+### Track navigation where it happens
+
+```tsx
+{
+  id: 'dashboard',
+  path: '/dashboard',
+  view: DashboardPage,
+  lifecycle: {
+    afterEnter: ({ location }) => {
+      analytics.page(location.href);
+    },
+    onError: (error, { location }) => {
+      logger.error(error, { href: location.href });
+    },
+  },
+}
+```
+
+Analytics in effects is cleanup. Analytics in lifecycle is architecture.
+
+### Keep screen structure in the route tree
+
+```tsx
+{
+  id: 'dashboard',
+  path: '/dashboard',
+  layout: {
+    view: DashboardLayout,
+    slots: {
+      sidebar: {
+        view: DashboardSidebar,
+      },
+      modal: true,
+    },
+  },
+  children: [
+    {
+      id: 'dashboard.home',
+      index: true,
+      view: DashboardHomePage,
+    },
+    {
+      id: 'dashboard.not-found',
+      path: '{*path}',
+      view: DashboardNotFoundPage,
+    },
+  ],
+}
+```
+
+The layout, the slots, and the not-found behavior live with the route that owns them.
+
+### Make modals routable
+
+```tsx
+{
+  id: 'gallery',
+  path: '/gallery',
+  layout: {
+    view: GalleryLayout,
+    slots: {
+      modal: true,
+    },
+  },
+  intercepts: {
+    modal: {
+      to: 'photos.show',
+      view: PhotoModal,
+    },
+  },
+  children: [
+    {
+      id: 'gallery.index',
+      index: true,
+      view: GalleryIndexPage,
+    },
+  ],
+},
+{
+  id: 'photos.show',
+  path: '/photos/{id:int}',
+  view: PhotoPage,
+}
+```
+
+```tsx
+<Link to="photos.show" params={{ id: 42 }}>
+  Preview photo
+</Link>
+```
+
+From the gallery, it is a modal. Direct visit, refresh, or share the URL, and it is the page.
+
+Modal state is routing state. Stop hiding it in components.
+
 ## Custom path constraints
 
-`@cookbook/router` re-exports `@cookbook/pathkit`'s `createConstraint()`. Register custom constraints in `defineRoutes(..., { pathConstraints })` when route definitions use custom constraint names, because the router forwards those constraints to URLKit before validation and URL contract compilation.
+Some parameters are not just parameters. They carry the rules of your business: the slug that must look like a slug, the locale that must speak the right language, the tenant that must identify the right customer, the product code that must not be guessed. For those cases, use custom path constraints.
+
+### Create a constraint
 
 ```ts
 import { createConstraint, createRouter, defineRoutes } from '@cookbook/router';
@@ -167,54 +573,19 @@ const slug = createConstraint({
   },
   toRegExp: () => '[a-z0-9-]+',
 });
+```
 
+### Register it with route validation
+
+`defineRoutes()` validates immediately, so constraints must be provided before the route path uses them.
+
+```ts
 const routes = defineRoutes([{ id: 'posts.show', path: '/posts/{slug:slug}' }] as const, {
   pathConstraints: { slug },
 });
-
-export const router = createRouter({
-  routes,
-});
 ```
 
-`defineRoutes(..., { pathConstraints })` registers constraints before immediate route validation. `createRouter({ pathConstraints })` is still supported for route arrays that have not already been validated. For SSR, use the same constraint setup on the server and client.
-
-## Generate contracts
-
-The CLI reads statically analyzable route definitions and generates contract files used for route ID, parsed params, parsed search, parsed hash, metadata, and path inference.
-
-```sh
-cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router
-```
-
-Generated files:
-
-```txt
-.cookbook-router/
-  contracts.ts
-  register.d.ts
-  manifest.json
-```
-
-Include the generated files in your TypeScript program:
-
-```json
-{
-  "include": ["src", ".cookbook-router/contracts.ts", ".cookbook-router/register.d.ts"]
-}
-```
-
-## Core concepts
-
-- **Route IDs are the public navigation API.** Paths declare URL matching; route IDs drive links, programmatic navigation, href generation, redirects, and type inference.
-- **URL state is URLKit-backed.** URLKit owns path param parsing, search/hash parsing and building, URL normalization, matching, and href construction. Cookbook Router owns route IDs, route trees, middleware, lifecycle, redirects, slots, intercepts, histories, React rendering, and CLI workflows.
-- **Built-in numeric params are numbers.** `{id:int}`, `{price:decimal}`, `{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` parse to `number` in router state, React hooks, middleware, lifecycle, and generated contracts. `uuid`, `minlength`, `maxlength`, `list`, `regex`, and custom constraints remain `string` unless the same chain also includes a numeric constraint.
-- **Search and hash are parsed through URLKit.** Static descriptors such as `{ type: 'int', default: 1 }`, `{ type: 'string', many: true }`, `{ type: 'date', format: 'dd-MM-yyyy' }`, `{ type: 'date-time', format: "dd-MM-yyyy'T'HH:mm:ss'Z'" }`, and object hash descriptors drive parsed runtime state and generated contracts. Date/date-time fields are UTC; use `toISOString()` or UTC getters when asserting parsed `Date` values.
-- **URL options are configurable.** `url.arrayFormat` and build-time `url.defaults` can be configured on the router, on a route, or per build call/hook/component. `url.invalidSearch` and `url.invalidHash` control whether malformed URL state recovers, rejects the route as a no-match, or becomes route error state. Precedence is per-call, then route-level, then router-level, then URLKit defaults.
-- **Layouts render child routes through `<Outlet />`.** Layout slots render parallel UI regions through `<Slot name="..." />`.
-- **Intercepts preserve the current branch while rendering a destination into a slot.** Direct visits to the same destination URL render the canonical full page.
-- **Route redirects are first-class.** Use `redirect: { route: 'target' }` for internal route redirects and `redirect: 'https://example.com'` for external redirects.
-- **SSR uses static routers.** Server code uses `createStaticRouter()`, `StaticRouterProvider`, and serialized router state for hydration.
+Custom constraints generate `string` params unless the same constraint chain also includes a numeric built-in constraint such as `int`, `decimal`, `range`, `min`, or `max`.
 
 ## Examples
 
@@ -236,76 +607,16 @@ pnpm --filter react-blog dev
 pnpm --filter react-dashboard dev
 ```
 
-## Repository scripts
-
-| Command                 | Purpose                                                      |
-| ----------------------- | ------------------------------------------------------------ |
-| `pnpm build:packages`   | Build all packages.                                          |
-| `pnpm build:examples`   | Typecheck and build all examples.                            |
-| `pnpm test`             | Run package tests.                                           |
-| `pnpm test:examples`    | Run example tests.                                           |
-| `pnpm test:e2e`         | Run repository-level E2E tests.                              |
-| `pnpm typecheck:all`    | Typecheck packages and examples.                             |
-| `pnpm validate:release` | Run release readiness checks.                                |
-| `pnpm hooks:pre-commit` | Run the same validation used by the pre-commit hook.         |
-| `pnpm hooks:pre-push`   | Run the same validation used by the pre-push hook.           |
-| `pnpm changeset`        | Create a release note and version bump intent.               |
-| `pnpm version-packages` | Apply pending changesets to package versions and changelogs. |
-| `pnpm release`          | Validate and publish packages with Changesets.               |
-
-## Git hooks
-
-Husky installs Git hooks through the root `prepare` script after `pnpm install`. The pre-commit hook uses `lint-staged` so ESLint and Prettier run only against staged files. The hooks call visible package scripts instead of hiding logic inside shell files.
-
-| Hook         | Script                  | Purpose                                                                |
-| ------------ | ----------------------- | ---------------------------------------------------------------------- |
-| `pre-commit` | `pnpm hooks:pre-commit` | Staged-file lint/format checks, docs API validation, and blocker scan. |
-| `pre-push`   | `pnpm hooks:pre-push`   | Full `pnpm test:ci` validation before pushing.                         |
-
-See [Git hooks](docs/git-hooks.md) for setup, skipping, and troubleshooting.
-
-For day-to-day contribution workflow, including when to add changesets during development, see [Developing](docs/developing.md).
-
-## Release workflow
-
-Releases use Changesets. Add a changeset for user-visible package changes, validate with `pnpm test:ci`, let `pnpm version-packages` apply pending changesets to versions and changelogs, then publish with `pnpm release`.
-
-See [Releasing](docs/releasing.md) for the full maintainer workflow, release gates, and common failure fixes.
-
 ## Documentation
 
-- [Getting started](docs/getting-started.md)
-- [Core API reference](docs/api.md)
-- [Routing](docs/routing.md)
-- [Navigation](docs/navigation.md)
-- [React integration](docs/react-integration.md)
-- [Contracts](docs/contracts.md)
-- [Code generation](docs/codegen.md)
-- [Search and hash](docs/search-and-hash.md)
-- [Middleware](docs/middleware.md)
-- [Lifecycle](docs/lifecycle.md)
-- [SSR](docs/ssr.md)
-- [Examples guide](docs/examples.md)
-- [Testing](docs/testing.md)
-- [Developing](docs/developing.md)
-- [Git hooks](docs/git-hooks.md)
-- [Releasing](docs/releasing.md)
-- [Troubleshooting](docs/troubleshooting.md)
-
-## Documentation map
-
-| Need                           | Start here                                 | Then read                                                                                                       |
-| ------------------------------ | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| Build a first React app        | [Getting started](docs/getting-started.md) | [React integration](docs/react-integration.md), [Navigation](docs/navigation.md)                                |
-| Understand route configuration | [Routing](docs/routing.md)                 | [Search and hash](docs/search-and-hash.md), [Middleware](docs/middleware.md), [Lifecycle](docs/lifecycle.md)    |
-| Use generated route types      | [Code generation](docs/codegen.md)         | [Contracts](docs/contracts.md), [API reference](docs/api.md#contract-registration)                              |
-| Render on the server           | [SSR](docs/ssr.md)                         | [React integration](docs/react-integration.md#static-provider), [API reference](docs/api.md#serialization-apis) |
-| Debug a failing route          | [Troubleshooting](docs/troubleshooting.md) | [Testing](docs/testing.md), [API reference](docs/api.md)                                                        |
-| Contribute to the repo         | [Developing](docs/developing.md)           | [Contributing](CONTRIBUTING.md), [Git hooks](docs/git-hooks.md), [Releasing](docs/releasing.md)                 |
-
-## Development notes
-
-- Tests for package source live next to the source file they cover.
-- Generated files under `.cookbook-router/` should be regenerated after route definition changes. Route definitions consumed by the CLI must stay statically analyzable; use static `path`, `search`, `hash`, and `url` descriptors rather than URLKit runtime builders.
-- Build package outputs before running examples against recently changed package code: `pnpm build:packages`.
-- Do not deep import from package internals; public APIs are exported from package roots.
+| Need                              | Start here                                     | Then read                                                                                                       |
+| --------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Start with Cookbook Router        | [Getting started](docs/getting-started.md)     | [Routing](docs/routing.md), [Navigation](docs/navigation.md), [Search and hash](docs/search-and-hash.md)        |
+| Use React                         | [React integration](docs/react-integration.md) | [Getting started](docs/getting-started.md), [Examples guide](docs/examples.md)                                  |
+| Define route contracts            | [Routing](docs/routing.md)                     | [Contracts](docs/contracts.md), [Code generation](docs/codegen.md), [API reference](docs/api.md)                |
+| Generate route types              | [Code generation](docs/codegen.md)             | [Contracts](docs/contracts.md), [API reference](docs/api.md#contract-registration)                              |
+| Add middleware or lifecycle hooks | [Middleware](docs/middleware.md)               | [Lifecycle](docs/lifecycle.md), [Troubleshooting](docs/troubleshooting.md)                                      |
+| Render on the server              | [SSR](docs/ssr.md)                             | [React integration](docs/react-integration.md#static-provider), [API reference](docs/api.md#serialization-apis) |
+| Test routing behavior             | [Testing](docs/testing.md)                     | [Troubleshooting](docs/troubleshooting.md), [API reference](docs/api.md)                                        |
+| Debug a failing route             | [Troubleshooting](docs/troubleshooting.md)     | [Testing](docs/testing.md), [Route validation errors](docs/route-validation-errors.md)                          |
+| Contribute to the repository      | [Developing](docs/developing.md)               | [Contributing](CONTRIBUTING.md), [Git hooks](docs/git-hooks.md), [Releasing](docs/releasing.md)                 |

@@ -1,5 +1,5 @@
 import type { RouterLocation } from '@cookbook/router';
-import { useRouterContext } from '../context/router-context';
+import { useRouterContext } from '../provider/router-context';
 
 /**
  * Subscribes to and returns the current router location. Parsed route URL state

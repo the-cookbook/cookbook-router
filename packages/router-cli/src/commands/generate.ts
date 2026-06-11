@@ -3,13 +3,13 @@ import type { DefineRoutesOptions, RouteDefinition } from '@cookbook/router';
 import { generateContracts } from '../generation/generate-contracts';
 import { generateManifest, serializeManifest } from '../generation/generate-manifest';
 import { generateRegister } from '../generation/generate-register';
-import { loadRouteFiles } from '../validation/validate-route-files';
+import { loadRouteFiles } from '../route-files/load-route-files';
 import type { CliFileSystem, CliRouteOptions, CommandResult, RouteFile } from '../contracts';
 import {
   assertGeneratedOutputDoesNotClobberRouteFiles,
   resolveGeneratedOutputPaths,
 } from '../security/safe-paths';
-import { nodeFileSystem } from '../node-file-system';
+import { nodeFileSystem } from '../fs/node-file-system';
 
 const defaultFs: CliFileSystem = nodeFileSystem;
 

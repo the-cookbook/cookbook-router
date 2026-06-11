@@ -224,7 +224,7 @@ export const routes = defineRoutes(
       id: 'entry',
       path: '/',
       layout: {
-        component: RootLayoutPage,
+        view: RootLayoutPage,
         loading: LoadingSkeleton,
         slots: {
           header: true,
@@ -235,7 +235,7 @@ export const routes = defineRoutes(
       intercepts: {
         modal: {
           to: ['new-message'],
-          component: AsyncSendMessageModalPage,
+          view: AsyncSendMessageModalPage,
         },
       },
       children: [
@@ -250,30 +250,30 @@ export const routes = defineRoutes(
           id: 'create',
           path: '/create',
           layout: {
-            component: LayoutPage,
+            view: LayoutPage,
             slots: {
               header: AsyncCreateLayoutHeader,
             },
           },
-          component: AsyncCreatePage,
+          view: AsyncCreatePage,
         },
         {
           id: 'new-message',
           path: '/messages/new',
           layout: {
-            component: LayoutPage,
+            view: LayoutPage,
             slots: {
               header: AsyncSendMessageLayoutHeader,
             },
           },
-          component: AsyncSendMessagePage,
+          view: AsyncSendMessagePage,
         },
         {
           id: 'overview',
           path: '/overview',
-          component: AsyncOverviewPage,
+          view: AsyncOverviewPage,
           layout: {
-            component: LayoutPage,
+            view: LayoutPage,
             slots: {
               header: AsyncOverviewLayoutHeader,
             },
@@ -281,7 +281,7 @@ export const routes = defineRoutes(
           intercepts: {
             modal: {
               to: 'create',
-              component: AsyncOverviewCreateModal,
+              view: AsyncOverviewCreateModal,
             },
           },
           search: {
@@ -294,7 +294,7 @@ export const routes = defineRoutes(
           id: 'users',
           path: '/users',
           layout: {
-            component: LayoutPage,
+            view: LayoutPage,
             slots: {
               header: AsyncUsersLayoutHeader,
             },
@@ -303,7 +303,7 @@ export const routes = defineRoutes(
             {
               id: 'users.index',
               index: true,
-              component: AsyncUsersPage,
+              view: AsyncUsersPage,
               search: {
                 page: { type: 'number', optional: true },
                 pageSize: { type: 'number', optional: true },
@@ -318,7 +318,7 @@ export const routes = defineRoutes(
             {
               id: 'users.details',
               path: '{slug:slug}',
-              component: AsyncUserDetailPage,
+              view: AsyncUserDetailPage,
               layout: {
                 slots: {
                   header: AsyncUserDetailsLayoutHeader,
@@ -331,7 +331,7 @@ export const routes = defineRoutes(
           id: 'documents',
           path: '/documents',
           layout: {
-            component: LayoutPage,
+            view: LayoutPage,
             loading: LoadingSkeleton,
             slots: {
               header: true,
@@ -341,7 +341,7 @@ export const routes = defineRoutes(
             {
               id: 'documents.index',
               index: true,
-              component: AsyncDocumentsPage,
+              view: AsyncDocumentsPage,
               layout: {
                 slots: {
                   header: AsyncDocumentsLayoutHeader,
@@ -351,7 +351,7 @@ export const routes = defineRoutes(
             {
               id: 'documents.details',
               path: '/{documentId:slug}',
-              component: AsyncDocumentDetailPage,
+              view: AsyncDocumentDetailPage,
               layout: {
                 slots: {
                   header: AsyncDocumentDetailLayoutHeader,
@@ -363,9 +363,9 @@ export const routes = defineRoutes(
         {
           id: 'reports',
           path: '/reports',
-          component: AsyncReportsPage,
+          view: AsyncReportsPage,
           layout: {
-            component: LayoutPage,
+            view: LayoutPage,
             loading: LoadingSkeleton,
             slots: {
               header: AsyncReportsLayoutHeader,
@@ -376,9 +376,9 @@ export const routes = defineRoutes(
         {
           id: 'broken-page',
           path: '/broken-page',
-          component: AsyncBrokenPage,
+          view: AsyncBrokenPage,
           layout: {
-            component: LayoutPage,
+            view: LayoutPage,
             loading: LoadingSkeleton,
             error: ErrorPage,
           },
@@ -387,7 +387,7 @@ export const routes = defineRoutes(
           id: 'policies',
           path: '/policies',
           layout: {
-            component: PoliciesLayoutPage,
+            view: PoliciesLayoutPage,
             loading: PoliciesPageSkeleton,
           },
           meta: {
@@ -397,7 +397,7 @@ export const routes = defineRoutes(
             {
               id: 'terms-of-service',
               path: '/terms-of-service',
-              component: AsyncTermsOfServicePage,
+              view: AsyncTermsOfServicePage,
               meta: {
                 access: 'public',
               },
@@ -405,7 +405,7 @@ export const routes = defineRoutes(
             {
               id: 'privacy-policy',
               path: '/privacy-policy',
-              component: AsyncPrivacyPolicyPage,
+              view: AsyncPrivacyPolicyPage,
               meta: {
                 access: 'public',
               },
@@ -418,9 +418,9 @@ export const routes = defineRoutes(
       id: 'login',
       path: '/login',
       layout: {
-        component: RootLayoutPage,
+        view: RootLayoutPage,
       },
-      component: LoginPage,
+      view: LoginPage,
       search: {
         redirect: { type: 'string', optional: true },
       },
@@ -431,12 +431,12 @@ export const routes = defineRoutes(
     {
       id: 'not-found',
       path: '/{*path}',
-      component: NotFound,
+      view: NotFound,
       meta: {
         access: 'public',
       },
       layout: {
-        component: RootLayoutPage,
+        view: RootLayoutPage,
       },
     },
   ] as const,

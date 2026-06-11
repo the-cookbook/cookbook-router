@@ -18,7 +18,7 @@ Lifecycle hooks observe route transitions. Use middleware for access control and
 {
   id: 'dashboard',
   path: '/dashboard',
-  component: DashboardPage,
+  view: DashboardPage,
   lifecycle: {
     beforeEnter: async (context) => {
       await preloadDashboard(context.location.pathname);

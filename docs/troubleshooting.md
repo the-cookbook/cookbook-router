@@ -159,7 +159,7 @@ For configured intercepts, the source route must declare the slot and destinatio
 intercepts: {
   modal: {
     to: ['articles/{slug}'],
-    component: ArticleModal,
+    view: ArticleModal,
   },
 }
 ```
@@ -173,12 +173,12 @@ The active layout tree must also render the target slot:
 If the current route does not own a configured intercept, use call-site interception:
 
 ```tsx
-<Link intercept={{ slot: 'modal', component: ArticleModal }} ... />
+<Link intercept={{ slot: 'modal', view: ArticleModal }} ... />
 ```
 
 ## Call-site intercept throws `DataCloneError`
 
-Browser history state cannot store functions. Current call-site intercept support stores a clone-safe component key in history and keeps the component in an in-memory registry.
+Browser history state cannot store functions. Current call-site intercept support stores a clone-safe view key in history and keeps the view in an in-memory registry.
 
 If you still see `DataCloneError`, rebuild packages and restart the dev server:
 

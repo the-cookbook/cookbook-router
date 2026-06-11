@@ -1,6 +1,6 @@
 # @cookbook/router-react
 
-React integration for Cookbook Router.
+React integration for Cookbook Router. In React route definitions, `view` should be a React component. `@cookbook/router-react` consumes the core rendering traversal through `renderRouteMatch()` and turns route views, layout views, outlets, slots, loading fallbacks, error fallbacks, and intercepts into React UI.
 
 Use this package to render a `@cookbook/router` instance with providers, links, outlets, slots, hooks, and SSR/static rendering support.
 
@@ -47,10 +47,10 @@ const routes = defineRoutes([
   {
     id: 'root',
     path: '/',
-    layout: { component: Layout },
+    layout: { view: Layout },
     children: [
-      { id: 'home', index: true, component: HomePage },
-      { id: 'users.show', path: 'users/{id:int}', component: UserPage },
+      { id: 'home', index: true, view: HomePage },
+      { id: 'users.show', path: 'users/{id:int}', view: UserPage },
     ],
   },
 ] as const);
@@ -247,7 +247,7 @@ Renders a named layout slot.
 <Slot name="modal" context={{ source: 'dashboard' }} />
 ```
 
-A slot can render a matched slot route, fallback, intercepted destination, route-level not-found component, or nothing.
+A slot can render a matched slot route, fallback, intercepted destination, route-level not-found view, or nothing.
 
 ## Hooks
 
@@ -323,15 +323,15 @@ Use `Slot` in a layout and pass `intercept` to links for modal, drawer, or previ
 </Link>
 ```
 
-Call-site intercepts can provide a component:
+Call-site intercepts can provide a view:
 
 ```tsx
-<Link to="articles.show" params={{ slug }} intercept={{ slot: 'modal', component: ArticlePreview }}>
+<Link to="articles.show" params={{ slug }} intercept={{ slot: 'modal', view: ArticlePreview }}>
   Preview
 </Link>
 ```
 
-The intercepted component reads destination route params. Navigation context overrides slot context for that intercepted render and is not present on direct visits.
+The intercepted view reads destination route params. Navigation context overrides slot context for that intercepted render and is not present on direct visits.
 
 See [Navigation](../../docs/navigation.md#interception) and [React integration](../../docs/react-integration.md#interception-in-react).
 
@@ -361,8 +361,15 @@ const router = createRouter({
   hydrationData: deserializeRouterState(window.__COOKBOOK_ROUTER__),
 });
 
-await router.resolveCurrent();
+hydrateRoot(root, <RouterProvider router={router} />);
 ```
+
+Do not call `router.resolveCurrent()` before `hydrateRoot()` when hydrating server HTML.
+HTTP requests do not include URL fragments, so the server may serialize
+`/articles/typed-routing?preview=true` while the browser address bar is
+`/articles/typed-routing?preview=true#summary`. `RouterProvider` keeps the
+serialized server location for the first client render and syncs the browser hash
+after React hydration commits.
 
 See [SSR](../../docs/ssr.md).
 
@@ -370,8 +377,8 @@ See [SSR](../../docs/ssr.md).
 
 - Rendering hooks outside `RouterProvider` throws a missing-provider error.
 - `RouterProvider` renders `fallback` when there is no match.
-- Route `loading`, `layout.loading`, and provider `loadingFallback` integrate with React Suspense. Layout loading fallbacks render inside that layout's outlet position so the same layout instance stays mounted while its route component or child routes load. The provider keeps the boundary shape stable around route content so unchanged layouts are reconciled instead of being remounted during navigation.
-- Suspense and error fallbacks are memoized by fallback component and owner route. Changing URL state or navigating between routes that reuse the same layout does not recreate fallback elements unless the active fallback actually changes.
+- Route `loading`, `layout.loading`, and provider `loadingFallback` integrate with React Suspense. Layout loading fallbacks render inside that layout's outlet position so the same layout instance stays mounted while its route view or child routes load. The provider keeps the boundary shape stable around route content so unchanged layouts are reconciled instead of being remounted during navigation.
+- Suspense and error fallbacks are memoized by fallback view and owner route. Changing URL state or navigating between routes that reuse the same layout does not recreate fallback elements unless the active fallback actually changes.
 - Route `error`, `layout.error`, and provider `errorFallback` integrate with React error boundaries. Route-level fallbacks are local to that route; layout fallbacks are shared by the layout tree.
 - Call `router.resolveCurrent()` before first render when initial redirects, middleware, or lifecycle hooks should complete before UI appears.
 - Outlet context is local to the nearest rendered `Outlet` or `Slot`.

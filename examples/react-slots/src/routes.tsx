@@ -22,10 +22,10 @@ export const routes = defineRoutes([
     id: 'dashboard',
     path: '/dashboard',
     layout: {
-      component: DashboardLayout,
+      view: DashboardLayout,
       slots: {
         sidebar: {
-          component: DashboardSidebar,
+          view: DashboardSidebar,
           meta: {
             title: 'Default sidebar',
           },
@@ -33,7 +33,7 @@ export const routes = defineRoutes([
             {
               id: 'dashboard.sidebar.activity',
               path: 'activity',
-              component: ActivitySidebar,
+              view: ActivitySidebar,
               meta: {
                 title: 'Activity sidebar',
               },
@@ -50,7 +50,7 @@ export const routes = defineRoutes([
       {
         id: 'dashboard.overview',
         index: true,
-        component: OverviewPage,
+        view: OverviewPage,
         meta: {
           title: 'Overview',
         },
@@ -58,7 +58,7 @@ export const routes = defineRoutes([
       {
         id: 'dashboard.activity',
         path: 'activity',
-        component: ActivityPage,
+        view: ActivityPage,
         meta: {
           title: 'Activity',
         },
@@ -66,11 +66,11 @@ export const routes = defineRoutes([
       {
         id: 'dashboard.settings',
         path: 'settings',
-        component: SettingsPage,
+        view: SettingsPage,
         layout: {
           slots: {
             sidebar: {
-              component: SettingsSidebar,
+              view: SettingsSidebar,
               meta: {
                 title: 'Settings sidebar',
               },
@@ -84,7 +84,7 @@ export const routes = defineRoutes([
       {
         id: 'dashboard.fullscreen',
         path: 'fullscreen',
-        component: FullscreenPage,
+        view: FullscreenPage,
         layout: {
           slots: {
             sidebar: true,

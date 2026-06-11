@@ -20,10 +20,10 @@ export const routes = defineRoutes([
     id: 'root',
     path: '/',
     layout: {
-      component: RootLayout,
+      view: RootLayout,
       slots: {
         sidebar: {
-          component: RootSidebarFallback,
+          view: RootSidebarFallback,
           meta: {
             title: 'Sidebar',
           },
@@ -31,7 +31,7 @@ export const routes = defineRoutes([
             {
               id: 'root.sidebar.user',
               path: 'users/{id:int}',
-              component: UserSidebar,
+              view: UserSidebar,
               meta: {
                 title: 'User sidebar',
               },
@@ -45,7 +45,7 @@ export const routes = defineRoutes([
       {
         id: 'home',
         index: true,
-        component: HomePage,
+        view: HomePage,
         meta: {
           title: 'Home',
         },
@@ -58,7 +58,7 @@ export const routes = defineRoutes([
           preview: { type: 'string', optional: true },
         },
         hash: { type: 'enum', values: ['profile', 'settings'], optional: true },
-        component: UserPage,
+        view: UserPage,
         meta: {
           title: 'User',
           requiresAuth: true,
@@ -75,7 +75,7 @@ export const routes = defineRoutes([
       {
         id: 'login',
         path: 'login',
-        component: LoginPage,
+        view: LoginPage,
         meta: {
           title: 'Login',
         },
@@ -83,7 +83,7 @@ export const routes = defineRoutes([
       {
         id: 'private.dashboard',
         path: 'private',
-        component: PrivateDashboardPage,
+        view: PrivateDashboardPage,
         meta: {
           title: 'Private dashboard',
           requiresAuth: true,
@@ -93,7 +93,7 @@ export const routes = defineRoutes([
         id: 'blog',
         path: 'blog',
         layout: {
-          component: BlogLayout,
+          view: BlogLayout,
           slots: {
             modal: true,
           },
@@ -101,14 +101,14 @@ export const routes = defineRoutes([
         intercepts: {
           modal: {
             to: 'blog.posts.show',
-            component: BlogPostModal,
+            view: BlogPostModal,
           },
         },
         children: [
           {
             id: 'blog.index',
             index: true,
-            component: BlogIndexPage,
+            view: BlogIndexPage,
             meta: {
               title: 'Blog',
             },
@@ -118,7 +118,7 @@ export const routes = defineRoutes([
       {
         id: 'blog.posts.show',
         path: '/blog/{slug:regex([a-z0-9-]+)}',
-        component: BlogPostPage,
+        view: BlogPostPage,
         meta: {
           title: 'Blog post',
         },

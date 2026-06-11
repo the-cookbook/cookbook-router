@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useRouterContext } from '../context/router-context';
+import { useRouterContext } from '../provider/router-context';
 
 /** Options controlling when `useBlocker` should prevent navigation. */
 export interface UseBlockerOptions {

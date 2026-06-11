@@ -5,6 +5,7 @@ describe('package entrypoint', () => {
     const module = await import('./index');
 
     expect(module.RouterProvider).toBeTypeOf('function');
+    expect(module.renderReactRouteMatch).toBeTypeOf('function');
     expect(module.renderRouteBoundary).toBeTypeOf('function');
     expect(module.StaticRouterProvider).toBeTypeOf('function');
     expect(module.Link).toBeTypeOf('function');

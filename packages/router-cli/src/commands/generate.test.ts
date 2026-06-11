@@ -87,15 +87,15 @@ export const routes = defineRoutes([
   {
     id: 'root',
     path: '/',
-    layout: { component: RootLayout },
+    layout: { view: RootLayout },
     children: [
-      { id: 'home', index: true, component: HomePage, meta: { title: 'Home' } },
+      { id: 'home', index: true, view: HomePage, meta: { title: 'Home' } },
       {
         id: 'users.show',
         path: 'users/{id:int}',
         search: { tab: { type: 'string', optional: true } },
         hash: { type: 'enum', values: ['profile', 'settings', 'security'], optional: true },
-        component: UserPage,
+        view: UserPage,
         meta: { title: 'User', requiresAuth: true },
         lifecycle: {
           beforeEnter: () => {
@@ -145,7 +145,7 @@ const constraints = {
 function PostPage() { return null; }
 
 export const routes = defineRoutes([
-  { id: 'post.show', path: '/posts/{slug:slug}', component: PostPage },
+  { id: 'post.show', path: '/posts/{slug:slug}', view: PostPage },
 ] as const, {
   pathConstraints: constraints,
 });

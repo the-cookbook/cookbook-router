@@ -13,7 +13,7 @@ export const routes = defineRoutes([
     id: 'gallery',
     path: '/gallery',
     layout: {
-      component: GalleryLayout,
+      view: GalleryLayout,
       slots: {
         modal: true,
       },
@@ -21,7 +21,7 @@ export const routes = defineRoutes([
     intercepts: {
       modal: {
         to: 'photos.show',
-        component: PhotoModal,
+        view: PhotoModal,
       },
     },
     meta: {
@@ -31,7 +31,7 @@ export const routes = defineRoutes([
       {
         id: 'gallery.index',
         index: true,
-        component: GalleryIndexPage,
+        view: GalleryIndexPage,
         meta: {
           title: 'Photos',
         },
@@ -45,7 +45,7 @@ export const routes = defineRoutes([
       source: { type: 'string', optional: true },
     },
     hash: { type: 'enum', values: ['details', 'comments'], optional: true },
-    component: PhotoPage,
+    view: PhotoPage,
     meta: {
       title: 'Photo',
     },

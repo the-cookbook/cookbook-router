@@ -1,5 +1,5 @@
 import type { RouterLocation } from '../history/memory-history';
-import type { SerializedRouterState } from '../router/create-router';
+import type { SerializedRouterState } from '../runtime/create-router';
 
 const NAVIGATION_STATES = new Set(['idle', 'pending', 'redirecting', 'blocked', 'error']);
 

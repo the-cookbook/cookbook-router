@@ -1,4 +1,4 @@
-import type { MatchedRoute, NormalizedRoute, RankedRoute } from '../routes/contracts';
+import type { MatchedRoute, NormalizedRoute, RankedRoute } from '../route-config/contracts';
 import { flattenRoutes, rankRoutes } from './rank-routes';
 
 export interface RouteMatchIndex {

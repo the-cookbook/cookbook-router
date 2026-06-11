@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { matchRoutes } from './match-routes';
-import { normalizeRoutes } from './normalize-routes';
+import { normalizeRoutes } from '../route-config/normalize-routes';
 
 describe('matchRoutes', () => {
   it('matches the highest-ranked route and returns decoded params', () => {

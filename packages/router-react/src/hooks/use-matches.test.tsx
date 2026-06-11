@@ -1,8 +1,8 @@
 import { renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
 import { describe, expect, it } from 'vitest';
-import { Outlet } from '../components/outlet';
-import { RouterProvider } from '../components/router-provider';
+import { Outlet } from '../outlets/outlet';
+import { RouterProvider } from '../provider/router-provider';
 import { useMatches } from './use-matches';
 
 function Layout() {
@@ -19,8 +19,8 @@ describe('useMatches', () => {
         {
           id: 'root',
           path: '/',
-          layout: { component: Layout },
-          children: [{ id: 'child', index: true, component: Page }],
+          layout: { view: Layout },
+          children: [{ id: 'child', index: true, view: Page }],
         },
       ] as const),
     });

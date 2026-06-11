@@ -37,13 +37,13 @@ export const routes = defineRoutes([
     id: 'root',
     path: '/',
     layout: {
-      component: RootLayout,
+      view: RootLayout,
     },
     children: [
       {
         id: 'home',
         index: true,
-        component: HomePage,
+        view: HomePage,
       },
       {
         id: 'users.show',
@@ -52,7 +52,7 @@ export const routes = defineRoutes([
           tab: { type: 'string', optional: true },
         },
         hash: { type: 'enum', values: ['profile', 'settings', 'security'], optional: true },
-        component: UserPage,
+        view: UserPage,
         meta: {
           title: 'User',
           requiresAuth: true,
@@ -228,6 +228,6 @@ pnpm --filter react-blog dev
 ## Next steps
 
 - Read [Routing](routing.md) for route definition details.
-- Read [React integration](react-integration.md) for components and hooks.
+- Read [React integration](react-integration.md) for views and hooks.
 - Read [Code generation](codegen.md) and [Contracts](contracts.md) for generated typing.
 - Read [SSR](ssr.md) for server rendering and hydration.

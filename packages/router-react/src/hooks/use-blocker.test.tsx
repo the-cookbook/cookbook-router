@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
 import { describe, expect, it, vi } from 'vitest';
-import { RouterProvider } from '../components/router-provider';
+import { RouterProvider } from '../provider/router-provider';
 import { useBlocker } from './use-blocker';
 
 function Page() {
@@ -17,7 +17,7 @@ function createWrapper(router: ReturnType<typeof createMemoryRouter>) {
 describe('useBlocker', () => {
   it('returns blocked state from the when flag', async () => {
     const router = createMemoryRouter({
-      routes: defineRoutes([{ id: 'home', path: '/', component: Page }] as const),
+      routes: defineRoutes([{ id: 'home', path: '/', view: Page }] as const),
     });
     await router.resolveCurrent();
 
@@ -31,8 +31,8 @@ describe('useBlocker', () => {
   it('blocks router navigation while enabled', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
-        { id: 'home', path: '/', component: Page },
-        { id: 'about', path: '/about', component: Page },
+        { id: 'home', path: '/', view: Page },
+        { id: 'about', path: '/about', view: Page },
       ] as const),
     });
     await router.resolveCurrent();
@@ -53,8 +53,8 @@ describe('useBlocker', () => {
   it('allows router navigation when the confirmation succeeds', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([
-        { id: 'home', path: '/', component: Page },
-        { id: 'about', path: '/about', component: Page },
+        { id: 'home', path: '/', view: Page },
+        { id: 'about', path: '/about', view: Page },
       ] as const),
     });
     await router.resolveCurrent();
@@ -72,7 +72,7 @@ describe('useBlocker', () => {
 
   it('registers and cleans beforeunload listener only when enabled', async () => {
     const router = createMemoryRouter({
-      routes: defineRoutes([{ id: 'home', path: '/', component: Page }] as const),
+      routes: defineRoutes([{ id: 'home', path: '/', view: Page }] as const),
     });
     await router.resolveCurrent();
     const add = vi.spyOn(window, 'addEventListener');

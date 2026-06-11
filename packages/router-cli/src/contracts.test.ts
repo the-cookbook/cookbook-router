@@ -8,8 +8,8 @@ import type {
 } from './contracts';
 
 it('exposes CLI contracts', () => {
-  expectTypeOf<Register>().toMatchTypeOf<object>();
-  expectTypeOf<RouterContracts>().toMatchTypeOf<object>();
+  expectTypeOf<Register>().toExtend<object>();
+  expectTypeOf<RouterContracts>().toExtend<object>();
   expectTypeOf<CommandResult>().toHaveProperty('ok').toEqualTypeOf<boolean>();
   expectTypeOf<CliFileSystem>().toHaveProperty('readFile');
   expectTypeOf<WatchHandle>().toHaveProperty('close');

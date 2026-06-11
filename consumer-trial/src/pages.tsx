@@ -99,7 +99,7 @@ export function BlogIndexPage() {
       <Link
         to="blog.posts.show"
         params={{ slug: 'ssr-routing' }}
-        intercept={{ slot: 'modal', element: BlogPostModal }}
+        intercept={{ slot: 'modal', view: BlogPostModal }}
       >
         Open call-site modal
       </Link>

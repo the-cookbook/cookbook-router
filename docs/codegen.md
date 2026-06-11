@@ -53,7 +53,7 @@ The common app shape is a static `defineRoutes([...])` export.
 ```tsx
 import { defineRoutes } from '@cookbook/router';
 
-export const routes = defineRoutes([{ id: 'home', path: '/', component: HomePage }] as const);
+export const routes = defineRoutes([{ id: 'home', path: '/', view: HomePage }] as const);
 ```
 
 JSON files must provide a top-level `routes` array.
@@ -96,7 +96,7 @@ Writes only `manifest.json`.
 
 ## Route file limitations
 
-The CLI expects statically extractable route declarations. Keep codegen-relevant fields inline and literal when possible: `id`, `path`, `index`, `search`, `hash`, `meta`, `children`, `layout.slots`, and `redirect`. Imported components are supported because the extractor replaces component-bearing fields with placeholders, but imported constants for route IDs, search schemas, or metadata may not be understood by static extraction.
+The CLI expects statically extractable route declarations. Keep codegen-relevant fields inline and literal when possible: `id`, `path`, `index`, `search`, `hash`, `meta`, `children`, `layout.slots`, and `redirect`. Imported views are supported because the extractor replaces view-bearing fields with placeholders, but imported constants for route IDs, search schemas, or metadata may not be understood by static extraction.
 
 Generated contracts follow URLKit static descriptor semantics. Built-in parsed path constraints such as `{id:int}`, `{price:decimal}`, `{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` generate `number` params. Built-in `uuid`, `minlength`, `maxlength`, `list`, and `regex` constraints generate `string` params. Custom path constraints declared through `defineRoutes(routes, { pathConstraints })` generate `string` params unless URLKit exposes typed static custom inference. See [Path routes and constraints](path-routes.md) for the complete path constraint surface.
 
@@ -255,7 +255,7 @@ Contains route IDs, paths, and route-level URL options such as `arrayFormat`, `d
 
 ## Static extraction rules
 
-The CLI statically extracts the array passed to `defineRoutes([...])` or a static `routes = [...]` array. Component references are sanitized to placeholder functions during extraction.
+The CLI statically extracts the array passed to `defineRoutes([...])` or a static `routes = [...]` array. View references are sanitized to placeholder functions during extraction.
 
 Keep route files codegen-friendly:
 
@@ -318,9 +318,9 @@ Make sure the file contains `defineRoutes([...])` or a static `routes = [...]` a
 
 Run `generate` manually once to check diagnostics, then use either `watch` or `generate --watch` during development. Watch mode prints the initial generation result and each later regeneration result.
 
-### Component imports fail during generation
+### View imports fail during generation
 
-The CLI does not need to execute components, but the route declaration still needs to be statically extractable. Keep component values as identifiers directly in the route array.
+The CLI does not need to execute views, but the route declaration still needs to be statically extractable. Keep view values as identifiers directly in the route array.
 
 ### TypeScript does not see generated types
 

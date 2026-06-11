@@ -1,4 +1,4 @@
-import type { NormalizedRoute, RankedRoute } from '../routes/contracts';
+import type { NormalizedRoute, RankedRoute } from '../route-config/contracts';
 
 const rankedCache = new WeakMap<readonly NormalizedRoute[], readonly RankedRoute[]>();
 const flattenedCache = new WeakMap<readonly NormalizedRoute[], readonly NormalizedRoute[]>();

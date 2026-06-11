@@ -35,8 +35,8 @@ Use this page when `defineRoutes()`, `validateRoutes()`, `createRouter()`, or th
 - [Invalid redirect search](#invalid-redirect-search)
 - [Invalid redirect hash](#invalid-redirect-hash)
 - [Removed `layout.errorFallback`](#removed-layouterrorfallback)
-- [Layout fallback without layout component](#layout-fallback-without-layout-component)
-- [Slots without layout component](#slots-without-layout-component)
+- [Layout fallback without layout view](#layout-fallback-without-layout-view)
+- [Slots without layout view](#slots-without-layout-view)
 - [Invalid `layout.slots`](#invalid-layoutslots)
 - [Empty slot name](#empty-slot-name)
 - [Slot not declared on an active layout](#slot-not-declared-on-an-active-layout)
@@ -50,7 +50,7 @@ Use this page when `defineRoutes()`, `validateRoutes()`, `createRouter()`, or th
 - [Empty intercept slot name](#empty-intercept-slot-name)
 - [Invalid intercept config](#invalid-intercept-config)
 - [Intercept slot not declared](#intercept-slot-not-declared)
-- [Intercept missing component](#intercept-missing-component)
+- [Intercept missing view](#intercept-missing-view)
 - [Intercept missing targets](#intercept-missing-targets)
 - [Intercept target contains an empty route ID](#intercept-target-contains-an-empty-route-id)
 
@@ -77,7 +77,7 @@ export const routes = defineRoutes([
   {
     id: 'home',
     path: '/',
-    component: HomePage,
+    view: HomePage,
   },
 ] as const);
 ```
@@ -105,7 +105,7 @@ export const routes = defineRoutes([
   {
     id: 'home',
     path: '/',
-    component: HomePage,
+    view: HomePage,
   },
 ] as const);
 ```
@@ -132,7 +132,7 @@ Give every route a stable non-empty string ID.
 {
   id: 'users.show',
   path: '/users/{id:int}',
-  component: UserPage,
+  view: UserPage,
 }
 ```
 
@@ -156,8 +156,8 @@ Rename one route. Prefer dotted IDs for nested routes.
 
 ```ts
 [
-  { id: 'dashboard.home', path: '/dashboard', component: DashboardPage },
-  { id: 'dashboard.reports', path: '/dashboard/reports', component: ReportsPage },
+  { id: 'dashboard.home', path: '/dashboard', view: DashboardPage },
+  { id: 'dashboard.reports', path: '/dashboard/reports', view: ReportsPage },
 ];
 ```
 
@@ -183,7 +183,7 @@ Use `index: true` for index routes or omit `index` for normal path routes.
 {
   id: 'dashboard.index',
   index: true,
-  component: DashboardIndexPage,
+  view: DashboardIndexPage,
 }
 ```
 
@@ -209,7 +209,7 @@ Use a string path, omit `path` for pathless layout/group routes, or use `index: 
 {
   id: 'users.show',
   path: '/users/{id:int}',
-  component: UserPage,
+  view: UserPage,
 }
 ```
 
@@ -239,7 +239,7 @@ Remove `path` from the index route. Put the parent path on the parent route.
     {
       id: 'dashboard.index',
       index: true,
-      component: DashboardHomePage,
+      view: DashboardHomePage,
     },
   ],
 }
@@ -268,8 +268,8 @@ Move children to a non-index parent route.
   id: 'settings',
   path: '/settings',
   children: [
-    { id: 'settings.index', index: true, component: SettingsHomePage },
-    { id: 'settings.profile', path: 'profile', component: ProfilePage },
+    { id: 'settings.index', index: true, view: SettingsHomePage },
+    { id: 'settings.profile', path: 'profile', view: ProfilePage },
   ],
 }
 ```
@@ -297,7 +297,7 @@ Use an array or omit `children`.
   id: 'dashboard',
   path: '/dashboard',
   children: [
-    { id: 'dashboard.index', index: true, component: DashboardHomePage },
+    { id: 'dashboard.index', index: true, view: DashboardHomePage },
   ],
 }
 ```
@@ -324,7 +324,7 @@ Use route-local `error`.
 {
   id: 'home',
   path: '/',
-  component: HomePage,
+  view: HomePage,
   error: HomeErrorPage,
 }
 ```
@@ -352,9 +352,9 @@ Use an object layout declaration.
   id: 'dashboard',
   path: '/dashboard',
   layout: {
-    component: DashboardLayout,
+    view: DashboardLayout,
   },
-  children: [{ id: 'dashboard.index', index: true, component: DashboardHomePage }],
+  children: [{ id: 'dashboard.index', index: true, view: DashboardHomePage }],
 }
 ```
 
@@ -465,7 +465,7 @@ Route "entry.redirect" must define either path or index. Pathless routes are onl
 
 ### Cause
 
-A route omits both `path` and `index`, but it is not a pure pathless layout/group route with children. Pathless routes cannot be directly navigable and cannot declare renderable/navigable route-local fields such as `component`, `redirect`, `search`, `hash`, `intercepts`, `middleware`, `lifecycle`, `loading`, or `error`.
+A route omits both `path` and `index`, but it is not a pure pathless layout/group route with children. Pathless routes cannot be directly navigable and cannot declare renderable/navigable route-local fields such as `view`, `redirect`, `search`, `hash`, `intercepts`, `middleware`, `lifecycle`, `loading`, or `error`.
 
 ### Fix
 
@@ -475,7 +475,7 @@ Use `path`, `index: true`, or make the route a pure group route with children.
 {
   id: 'settings.group',
   children: [
-    { id: 'settings.profile', path: '/settings/profile', component: ProfilePage },
+    { id: 'settings.profile', path: '/settings/profile', view: ProfilePage },
   ],
 }
 ```
@@ -509,7 +509,7 @@ Route "empty" defines an empty path.
 Use `/` for the root path, a non-empty path segment for children, or omit `path` for pathless groups.
 
 ```ts
-{ id: 'home', path: '/', component: HomePage }
+{ id: 'home', path: '/', view: HomePage }
 ```
 
 ## Invalid path pattern
@@ -550,7 +550,7 @@ const slug = createConstraint({
 });
 
 export const routes = defineRoutes(
-  [{ id: 'posts.show', path: '/posts/{slug:slug}', component: PostPage }] as const,
+  [{ id: 'posts.show', path: '/posts/{slug:slug}', view: PostPage }] as const,
   { pathConstraints: { slug } },
 );
 ```
@@ -575,8 +575,8 @@ Give one route a different full path, make one route an index route under a diff
 
 ```ts
 [
-  { id: 'users.index', path: '/users', component: UsersPage },
-  { id: 'users.show', path: '/users/{id:int}', component: UserPage },
+  { id: 'users.index', path: '/users', view: UsersPage },
+  { id: 'users.show', path: '/users/{id:int}', view: UserPage },
 ];
 ```
 
@@ -606,7 +606,7 @@ Use distinct param names across a parent-to-child branch.
     {
       id: 'teams.users.show',
       path: 'users/{userId:int}',
-      component: TeamUserPage,
+      view: TeamUserPage,
     },
   ],
 }
@@ -924,26 +924,26 @@ Use `layout.error`.
   id: 'dashboard',
   path: '/dashboard',
   layout: {
-    component: DashboardLayout,
+    view: DashboardLayout,
     error: DashboardErrorPage,
   },
-  children: [{ id: 'dashboard.index', index: true, component: DashboardHomePage }],
+  children: [{ id: 'dashboard.index', index: true, view: DashboardHomePage }],
 }
 ```
 
-## Layout fallback without layout component
+## Layout fallback without layout view
 
 ### Symptom
 
 Validation fails with:
 
 ```txt
-Route "standalone" declares layout.loading/layout.error, but no active layout component exists. Use route.loading/route.error for route-local fallbacks, or declare layout.component.
+Route "standalone" declares layout.loading/layout.error, but no active layout view exists. Use route.loading/route.error for route-local fallbacks, or declare layout.view.
 ```
 
 ### Cause
 
-`layout.loading` or `layout.error` is declared on a route that has no `layout.component` and no active ancestor layout component.
+`layout.loading` or `layout.error` is declared on a route that has no `layout.view` and no active ancestor layout view.
 
 ### Fix
 
@@ -953,56 +953,56 @@ For route-local fallback UI, use `loading` or `error` directly on the route.
 {
   id: 'standalone',
   path: '/standalone',
-  component: StandalonePage,
+  view: StandalonePage,
   loading: StandaloneLoading,
   error: StandaloneError,
 }
 ```
 
-For shared layout fallback UI, declare a layout component.
+For shared layout fallback UI, declare a layout view.
 
 ```ts
 {
   id: 'dashboard',
   path: '/dashboard',
   layout: {
-    component: DashboardLayout,
+    view: DashboardLayout,
     loading: DashboardLoading,
     error: DashboardError,
   },
-  children: [{ id: 'dashboard.index', index: true, component: DashboardHomePage }],
+  children: [{ id: 'dashboard.index', index: true, view: DashboardHomePage }],
 }
 ```
 
-## Slots without layout component
+## Slots without layout view
 
 ### Symptom
 
 Validation fails with:
 
 ```txt
-Route "standalone" declares layout.slots, but no active layout component exists in its ancestor tree. Slot declarations require layout.component on the same route or an ancestor route.
+Route "standalone" declares layout.slots, but no active layout view exists in its ancestor tree. Slot declarations require layout.view on the same route or an ancestor route.
 ```
 
 ### Cause
 
-A route declares `layout.slots`, but there is no active layout component that can render those slots.
+A route declares `layout.slots`, but there is no active layout view that can render those slots.
 
 ### Fix
 
-Declare `layout.component` on the same route or an ancestor route.
+Declare `layout.view` on the same route or an ancestor route.
 
 ```ts
 {
   id: 'dashboard',
   path: '/dashboard',
   layout: {
-    component: DashboardLayout,
+    view: DashboardLayout,
     slots: {
       sidebar: true,
     },
   },
-  children: [{ id: 'dashboard.index', index: true, component: DashboardHomePage }],
+  children: [{ id: 'dashboard.index', index: true, view: DashboardHomePage }],
 }
 ```
 
@@ -1026,7 +1026,7 @@ Use an object keyed by slot name.
 
 ```ts
 layout: {
-  component: DashboardLayout,
+  view: DashboardLayout,
   slots: {
     sidebar: true,
   },
@@ -1053,7 +1053,7 @@ Use a non-empty slot name.
 
 ```ts
 layout: {
-  component: DashboardLayout,
+  view: DashboardLayout,
   slots: {
     sidebar: true,
   },
@@ -1076,14 +1076,14 @@ A child route declares a slot that is not declared by the current layout route o
 
 ### Fix
 
-Declare the slot on the route that owns the layout component or remove the child slot declaration.
+Declare the slot on the route that owns the layout view or remove the child slot declaration.
 
 ```ts
 {
   id: 'users',
   path: '/users',
   layout: {
-    component: UsersLayout,
+    view: UsersLayout,
     slots: {
       header: true,
     },
@@ -1094,10 +1094,10 @@ Declare the slot on the route that owns the layout component or remove the child
       path: '{id:int}',
       layout: {
         slots: {
-          header: { component: UserHeader },
+          header: { view: UserHeader },
         },
       },
-      component: UserPage,
+      view: UserPage,
     },
   ],
 }
@@ -1110,7 +1110,7 @@ Declare the slot on the route that owns the layout component or remove the child
 Validation fails with one of:
 
 ```txt
-Route "root" declares invalid configuration for slot "sidebar". Use a component, { component?, meta?, routes? }, or true.
+Route "root" declares invalid configuration for slot "sidebar". Use a view, { view?, meta?, routes? }, or true.
 Route "root" defines invalid configuration for slot "sidebar".
 ```
 
@@ -1120,15 +1120,15 @@ A slot value is `false`, `null`, `undefined`, an array, or another invalid value
 
 ### Fix
 
-Use `true`, a component value, or an object with supported keys.
+Use `true`, a view value, or an object with supported keys.
 
 ```ts
 layout: {
-  component: AppLayout,
+  view: AppLayout,
   slots: {
     sidebar: true,
     modal: {
-      routes: [{ id: 'modal.compose', path: 'compose', component: ComposeModal }],
+      routes: [{ id: 'modal.compose', path: 'compose', view: ComposeModal }],
     },
   },
 }
@@ -1154,9 +1154,9 @@ Remove `id` and use the slot key as the identity.
 
 ```ts
 layout: {
-  component: AppLayout,
+  view: AppLayout,
   slots: {
-    sidebar: { component: SidebarFallback },
+    sidebar: { view: SidebarFallback },
   },
 }
 ```
@@ -1177,13 +1177,13 @@ A slot config uses the removed `fallback` property.
 
 ### Fix
 
-Put the fallback component directly on the slot config with `component`.
+Put the fallback view directly on the slot config with `view`.
 
 ```ts
 layout: {
-  component: AppLayout,
+  view: AppLayout,
   slots: {
-    sidebar: { component: SidebarFallback },
+    sidebar: { view: SidebarFallback },
   },
 }
 ```
@@ -1195,12 +1195,12 @@ layout: {
 Validation fails with:
 
 ```txt
-Unsupported slot key "loader" on route "root". Remove "layout.slots.sidebar.loader". Supported slot keys are "component", "meta", and "routes".
+Unsupported slot key "loader" on route "root". Remove "layout.slots.sidebar.loader". Supported slot keys are "view", "meta", and "routes".
 ```
 
 ### Cause
 
-A slot config contains a key other than `component`, `meta`, or `routes`.
+A slot config contains a key other than `view`, `meta`, or `routes`.
 
 ### Fix
 
@@ -1208,10 +1208,10 @@ Remove the unsupported key or move the value to route metadata.
 
 ```ts
 layout: {
-  component: AppLayout,
+  view: AppLayout,
   slots: {
     sidebar: {
-      component: SidebarFallback,
+      view: SidebarFallback,
       meta: { chrome: true },
     },
   },
@@ -1238,7 +1238,7 @@ Use an object or omit slot `meta`.
 
 ```ts
 layout: {
-  component: AppLayout,
+  view: AppLayout,
   slots: {
     sidebar: {
       meta: { chrome: true },
@@ -1267,10 +1267,10 @@ Use an array of route definitions.
 
 ```ts
 layout: {
-  component: AppLayout,
+  view: AppLayout,
   slots: {
     sidebar: {
-      routes: [{ id: 'dashboard.sidebar.activity', path: 'activity', component: ActivityPanel }],
+      routes: [{ id: 'dashboard.sidebar.activity', path: 'activity', view: ActivityPanel }],
     },
   },
 }
@@ -1300,7 +1300,7 @@ Use an object keyed by slot name.
 intercepts: {
   modal: {
     to: ['messages.new'],
-    component: ComposeMessageModal,
+    view: ComposeMessageModal,
   },
 }
 ```
@@ -1327,7 +1327,7 @@ Use the name of a declared slot.
 intercepts: {
   modal: {
     to: ['messages.new'],
-    component: ComposeMessageModal,
+    view: ComposeMessageModal,
   },
 }
 ```
@@ -1348,13 +1348,13 @@ The intercept entry is missing or is not an object.
 
 ### Fix
 
-Use an object with `component` and `to`.
+Use an object with `view` and `to`.
 
 ```ts
 intercepts: {
   modal: {
     to: ['messages.new'],
-    component: ComposeMessageModal,
+    view: ComposeMessageModal,
   },
 }
 ```
@@ -1382,7 +1382,7 @@ Declare the slot on the source route layout or an active ancestor layout.
   id: 'messages',
   path: '/messages',
   layout: {
-    component: MessagesLayout,
+    view: MessagesLayout,
     slots: {
       modal: true,
     },
@@ -1390,36 +1390,36 @@ Declare the slot on the source route layout or an active ancestor layout.
   intercepts: {
     modal: {
       to: ['messages.new'],
-      component: ComposeMessageModal,
+      view: ComposeMessageModal,
     },
   },
-  children: [{ id: 'messages.index', index: true, component: MessagesPage }],
+  children: [{ id: 'messages.index', index: true, view: MessagesPage }],
 }
 ```
 
-## Intercept missing component
+## Intercept missing view
 
 ### Symptom
 
 Validation fails with:
 
 ```txt
-Route "messages" intercept for slot "modal" must define component.
+Route "messages" intercept for slot "modal" must define view.
 ```
 
 ### Cause
 
-The intercept config does not define `component`.
+The intercept config does not define `view`.
 
 ### Fix
 
-Add the component rendered when the intercept is active.
+Add the view rendered when the intercept is active.
 
 ```ts
 intercepts: {
   modal: {
     to: ['messages.new'],
-    component: ComposeMessageModal,
+    view: ComposeMessageModal,
   },
 }
 ```
@@ -1446,7 +1446,7 @@ Provide one target route ID or a non-empty array of target route IDs.
 intercepts: {
   modal: {
     to: ['messages.new'],
-    component: ComposeMessageModal,
+    view: ComposeMessageModal,
   },
 }
 ```
@@ -1473,7 +1473,7 @@ Remove the empty entry or replace it with a valid target route ID.
 intercepts: {
   modal: {
     to: ['messages.new'],
-    component: ComposeMessageModal,
+    view: ComposeMessageModal,
   },
 }
 ```

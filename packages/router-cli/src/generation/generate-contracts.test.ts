@@ -47,10 +47,10 @@ describe('generateContracts', () => {
         id: 'dashboard',
         path: '/dashboard',
         layout: {
-          component: () => null,
+          view: () => null,
           slots: {
             sidebar: {
-              component: () => null,
+              view: () => null,
               routes: [{ id: 'dashboard.sidebar.activity', path: 'activity/{itemId:int}' }],
             },
             modal: true,

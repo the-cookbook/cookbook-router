@@ -40,7 +40,7 @@ Use URLKit-backed Router static descriptors in route definitions.
     filters: { type: 'string', many: true, optional: true },
     featured: { type: 'boolean', optional: true },
   },
-  component: ArticlesPage,
+  view: ArticlesPage,
 }
 ```
 
@@ -598,7 +598,7 @@ Static hash descriptors use object form only. Hash values are parsed and generat
   id: 'articles.show',
   path: '/articles/{slug}',
   hash: { type: 'enum', values: ['comments', 'share'], optional: true },
-  component: ArticlePage,
+  view: ArticlePage,
 }
 ```
 

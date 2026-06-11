@@ -6,7 +6,6 @@
       "layout": {
         "slots": {
           "sidebar": {
-            "component": "TrialSidebarFallback",
             "meta": {
               "title": "Sidebar"
             },
@@ -14,16 +13,17 @@
               {
                 "id": "root.sidebar.user",
                 "path": "users/{id:int}",
-                "component": "UserSidebar",
                 "meta": {
                   "title": "User sidebar"
-                }
+                },
+                "view": "UserSidebar"
               }
-            ]
+            ],
+            "view": "TrialSidebarFallback"
           },
           "modal": true
         },
-        "component": "RootLayout"
+        "view": "RootLayout"
       },
       "children": [
         {
@@ -78,12 +78,12 @@
             "slots": {
               "modal": true
             },
-            "component": "BlogLayout"
+            "view": "BlogLayout"
           },
           "intercepts": {
             "modal": {
               "to": "blog.posts.show",
-              "component": "BlogPostModal"
+              "view": "BlogPostModal"
             }
           },
           "children": [

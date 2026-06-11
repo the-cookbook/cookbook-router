@@ -72,8 +72,8 @@ Every implementation file must have a colocated test file unless it only exports
 Required style:
 
 ```txt
-src/navigation/run-middleware.ts
-src/navigation/run-middleware.test.ts
+src/transition/run-middleware.ts
+src/transition/run-middleware.test.ts
 ```
 
 Do not add central package-level behavior tests for source coverage. Repository-level E2E tests are allowed under `e2e/` because they verify integration across packages and examples.

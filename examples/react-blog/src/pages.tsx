@@ -174,7 +174,7 @@ export function ArticleLoading() {
     <article className="article-page panel stack" aria-busy="true">
       <p className="eyebrow">Loading</p>
       <h1>Preparing article…</h1>
-      <p className="muted">The article route is loading its React component.</p>
+      <p className="muted">The article route is loading its React view.</p>
     </article>
   );
 }
@@ -460,7 +460,7 @@ function ArticleActions(props: { readonly article: Article; readonly referrer: s
         params={{ slug: props.article.slug }}
         search={{ filters: ['call-site'], ref: 'call-site' }}
         hash="share"
-        intercept={{ slot: 'modal', component: ArticleModal }}
+        intercept={{ slot: 'modal', view: ArticleModal }}
         context={{ source: 'call-site' }}
         className="button button-secondary"
       >
@@ -519,7 +519,7 @@ function ArticleCard(props: { readonly article: Article; readonly referrer: stri
           params={{ slug: props.article.slug }}
           search={{ filters: ['call-site'], ref: 'call-site' }}
           hash="share"
-          intercept={{ slot: 'modal', component: ArticleModal }}
+          intercept={{ slot: 'modal', view: ArticleModal }}
           context={{ source: 'call-site' }}
           className="button button-secondary"
         >

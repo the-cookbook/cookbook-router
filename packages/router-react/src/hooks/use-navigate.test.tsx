@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { createMemoryRouter, defineRoutes } from '@cookbook/router';
 import { describe, expect, it } from 'vitest';
-import { RouterProvider } from '../components/router-provider';
+import { RouterProvider } from '../provider/router-provider';
 import { useNavigate } from './use-navigate';
 
 function Page() {
@@ -11,8 +11,8 @@ function Page() {
 function createTestRouter() {
   return createMemoryRouter({
     routes: defineRoutes([
-      { id: 'home', path: '/', component: Page },
-      { id: 'user', path: '/users/{id:int}', component: Page },
+      { id: 'home', path: '/', view: Page },
+      { id: 'user', path: '/users/{id:int}', view: Page },
     ] as const),
   });
 }

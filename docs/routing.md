@@ -32,7 +32,7 @@ interface RouteDefinition {
   readonly id: string;
   readonly path?: string;
   readonly index?: boolean;
-  readonly component?: RouteComponent;
+  readonly view?: RouteView;
   readonly layout?: RouteLayoutDefinition;
   readonly children?: readonly RouteDefinition[];
   readonly intercepts?: RouteIntercepts;
@@ -41,8 +41,8 @@ interface RouteDefinition {
   readonly hash?: RouteHashSchema;
   readonly url?: RouterUrlOptions;
   readonly meta?: RouteMeta;
-  readonly loading?: RouteComponent;
-  readonly error?: RouteComponent;
+  readonly loading?: RouteView;
+  readonly error?: RouteView;
   readonly lifecycle?: RouteLifecycle;
   readonly middleware?: readonly Middleware[];
 }
@@ -52,15 +52,15 @@ Supporting shapes:
 
 ```ts
 interface RouteLayoutDefinition {
-  readonly component?: RouteComponent;
+  readonly view?: RouteView;
   readonly slots?: RouteSlotDefinitions;
 }
 
 type RouteSlotDefinitions = Readonly<Record<string, RouteSlotDefinition>>;
-type RouteSlotDefinition = RouteComponent | RouteSlotConfig | true;
+type RouteSlotDefinition = RouteView | RouteSlotConfig | true;
 
 interface RouteSlotConfig {
-  readonly component?: RouteComponent;
+  readonly view?: RouteView;
   readonly routes?: readonly RouteDefinition[];
   readonly meta?: RouteMeta;
 }
@@ -76,7 +76,7 @@ type RouteRedirect =
 
 interface RouteInterceptConfig {
   readonly to: readonly string[];
-  readonly component: RouteComponent;
+  readonly view: RouteView;
 }
 
 type RouteIntercepts = Readonly<Record<string, RouteInterceptConfig>>;
@@ -84,25 +84,25 @@ type RouteIntercepts = Readonly<Record<string, RouteInterceptConfig>>;
 
 ## Field reference
 
-| Field              | Purpose                                                                                                                                                         |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`               | Required stable route ID. Used for navigation, contracts, diagnostics, and metadata lookup.                                                                     |
-| `path`             | URL pattern. Child paths are relative unless they start with `/`.                                                                                               |
-| `index`            | Marks a child as the default route for its parent path. Index routes must not define `path`.                                                                    |
-| `component`        | Page component rendered for this route.                                                                                                                         |
-| `layout.component` | Layout wrapper component. Layouts render child branches through `<Outlet />`.                                                                                   |
-| `layout.slots`     | Named layout regions rendered through `<Slot name="..." />`.                                                                                                    |
-| `children`         | Primary child route branch.                                                                                                                                     |
-| `intercepts`       | Configured source-route interception rules keyed by target slot name.                                                                                           |
-| `redirect`         | Internal or external redirect target. Redirect-only routes do not need components.                                                                              |
-| `search`           | URLKit-backed Router static search descriptor for parsed search state and generated contracts.                                                                  |
-| `hash`             | URLKit-backed static hash object descriptor for parsed hash state and generated contracts.                                                                      |
-| `url`              | Route-level URL options such as `arrayFormat`, `defaults`, `invalidSearch`, `invalidHash`, and `unknownSearch`; overrides router-level defaults for this route. |
-| `meta`             | Arbitrary metadata preserved in generated contracts and runtime route definitions.                                                                              |
-| `loading`          | Route-level React Suspense fallback component rendered while the route subtree is loading.                                                                      |
-| `error`            | Route-level React error fallback component rendered when the route subtree throws during rendering.                                                             |
-| `lifecycle`        | Route-level transition hooks.                                                                                                                                   |
-| `middleware`       | Route-level middleware.                                                                                                                                         |
+| Field          | Purpose                                                                                                                                                         |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`           | Required stable route ID. Used for navigation, contracts, diagnostics, and metadata lookup.                                                                     |
+| `path`         | URL pattern. Child paths are relative unless they start with `/`.                                                                                               |
+| `index`        | Marks a child as the default route for its parent path. Index routes must not define `path`.                                                                    |
+| `view`         | Page view rendered for this route.                                                                                                                              |
+| `layout.view`  | Layout wrapper view. Layouts render child branches through `<Outlet />`.                                                                                        |
+| `layout.slots` | Named layout regions rendered through `<Slot name="..." />`.                                                                                                    |
+| `children`     | Primary child route branch.                                                                                                                                     |
+| `intercepts`   | Configured source-route interception rules keyed by target slot name.                                                                                           |
+| `redirect`     | Internal or external redirect target. Redirect-only routes do not need views.                                                                                   |
+| `search`       | URLKit-backed Router static search descriptor for parsed search state and generated contracts.                                                                  |
+| `hash`         | URLKit-backed static hash object descriptor for parsed hash state and generated contracts.                                                                      |
+| `url`          | Route-level URL options such as `arrayFormat`, `defaults`, `invalidSearch`, `invalidHash`, and `unknownSearch`; overrides router-level defaults for this route. |
+| `meta`         | Arbitrary metadata preserved in generated contracts and runtime route definitions.                                                                              |
+| `loading`      | Route-level React Suspense fallback view rendered while the route subtree is loading.                                                                           |
+| `error`        | Route-level React error fallback view rendered when the route subtree throws during rendering.                                                                  |
+| `lifecycle`    | Route-level transition hooks.                                                                                                                                   |
+| `middleware`   | Route-level middleware.                                                                                                                                         |
 
 ## Path composition
 
@@ -116,7 +116,7 @@ Child paths are relative by default.
     {
       id: 'users.show',
       path: '{id:int}',
-      component: UserPage,
+      view: UserPage,
     },
   ],
 }
@@ -138,7 +138,7 @@ Child paths may include a leading `/`, but they are still composed relative to t
     {
       id: 'terms-of-service',
       path: '/terms-of-service',
-      component: TermsOfServicePage,
+      view: TermsOfServicePage,
     },
   ],
 }
@@ -191,7 +191,7 @@ Index routes inherit the parent path.
     {
       id: 'dashboard.overview',
       index: true,
-      component: OverviewPage,
+      view: OverviewPage,
     },
   ],
 }
@@ -204,7 +204,7 @@ Invalid:
   id: 'dashboard.overview',
   index: true,
   path: '',
-  component: OverviewPage,
+  view: OverviewPage,
 }
 ```
 
@@ -218,13 +218,13 @@ A route may define a layout without a path.
 {
   id: 'app.layout',
   layout: {
-    component: AppLayout,
+    view: AppLayout,
   },
   children: [
     {
       id: 'account',
       path: '/account',
-      component: AccountPage,
+      view: AccountPage,
     },
   ],
 }
@@ -240,7 +240,7 @@ Path params use PathKit path-pattern syntax and URLKit parsed-param semantics. P
 {
   id: 'organizations.users.show',
   path: '/organizations/{organizationId:uuid}/users/{userId:int}',
-  component: OrganizationUserPage,
+  view: OrganizationUserPage,
 }
 ```
 
@@ -279,7 +279,7 @@ Optional params generate optional properties and are absent when the segment is 
 {
   id: 'products.optional',
   path: '/products/{id:int?}',
-  component: ProductPage,
+  view: ProductPage,
 }
 ```
 
@@ -316,7 +316,7 @@ Search contracts are generated from URLKit-backed Router static `search` descrip
     arrayFormat: 'comma',
     unknownSearch: 'strip',
   },
-  component: ArticlesPage,
+  view: ArticlesPage,
 }
 ```
 
@@ -341,7 +341,7 @@ Hash values become a string union:
   id: 'articles.show',
   path: '/articles/{slug}',
   hash: { type: 'enum', values: ['comments', 'share'], optional: true },
-  component: ArticlePage,
+  view: ArticlePage,
 }
 ```
 
@@ -365,7 +365,7 @@ Generates a shape similar to:
 
 ## Redirect routes
 
-A route can redirect to another route without rendering a component. Redirect routes must be addressable with either `path` or `index: true`. Use an index redirect when a parent route should redirect from its own URL.
+A route can redirect to another route without rendering a view. Redirect routes must be addressable with either `path` or `index: true`. Use an index redirect when a parent route should redirect from its own URL.
 
 ```tsx
 {
@@ -422,7 +422,7 @@ Use route-object redirects for internal targets when possible. They keep basenam
 
 ## Layouts and outlets
 
-A layout component wraps the active child branch. It must render `<Outlet />` to show children.
+A layout view wraps the active child branch. It must render `<Outlet />` to show children.
 
 ```tsx
 import { Outlet } from '@cookbook/router-react';
@@ -437,7 +437,7 @@ export function DashboardLayout() {
 }
 ```
 
-Direct child components read outlet context with `useOutletContext()`.
+Direct child views read outlet context with `useOutletContext()`.
 
 ```tsx
 const context = useOutletContext<{ source: string }>();
@@ -454,15 +454,15 @@ Slots render named layout regions.
   id: 'dashboard',
   path: '/dashboard',
   layout: {
-    component: DashboardLayout,
+    view: DashboardLayout,
     slots: {
       sidebar: {
-        component: DashboardSidebar,
+        view: DashboardSidebar,
         routes: [
           {
             id: 'dashboard.sidebar.activity',
             path: 'activity',
-            component: ActivitySidebar,
+            view: ActivitySidebar,
           },
         ],
       },
@@ -491,8 +491,8 @@ export function DashboardLayout() {
 Slot rules:
 
 - `true` enables a declared slot without fallback content.
-- A slot `component` renders when no slot route or intercept is active for that slot.
-- Slot configs support only `component`, `meta`, and `routes`.
+- A slot `view` renders when no slot route or intercept is active for that slot.
+- Slot configs support only `view`, `meta`, and `routes`.
 - Slot names are layout-scoped, not global.
 - Slot route IDs are generated because they are real URL-matched route definitions.
 - The removed `fallback`, `fallback.id`, and `id` slot forms fail validation; see [Route validation errors](route-validation-errors.md).
@@ -504,7 +504,7 @@ children: [
   {
     id: 'dashboard.activity',
     path: 'activity',
-    component: ActivityPage,
+    view: ActivityPage,
   },
 ],
 layout: {
@@ -514,7 +514,7 @@ layout: {
         {
           id: 'dashboard.sidebar.activity',
           path: 'activity',
-          component: ActivitySidebar,
+          view: ActivitySidebar,
         },
       ],
     },
@@ -535,7 +535,7 @@ Configured intercepts are declared on the source route.
   id: 'blog',
   path: '/blog',
   layout: {
-    component: BlogLayout,
+    view: BlogLayout,
     slots: {
       modal: true,
     },
@@ -543,12 +543,12 @@ Configured intercepts are declared on the source route.
   intercepts: {
     modal: {
       to: ['articles/{slug:regex([a-z0-9-]+)}'],
-      component: ArticleModal,
+      view: ArticleModal,
     },
   },
   children: [
-    { id: 'blog.index', index: true, component: BlogHomePage },
-    { id: 'blog.articles', path: 'articles', component: ArticlesPage },
+    { id: 'blog.index', index: true, view: BlogHomePage },
+    { id: 'blog.articles', path: 'articles', view: ArticlesPage },
   ],
 }
 ```
@@ -559,7 +559,7 @@ The canonical destination must exist as a normal route:
 {
   id: 'blog.articles.show',
   path: '/blog/articles/{slug:regex([a-z0-9-]+)}',
-  component: ArticlePage,
+  view: ArticlePage,
 }
 ```
 
@@ -574,11 +574,7 @@ Link with configured interception:
 Call-site interception is also supported:
 
 ```tsx
-<Link
-  to="blog.articles.show"
-  params={{ slug }}
-  intercept={{ slot: 'modal', component: ArticleModal }}
->
+<Link to="blog.articles.show" params={{ slug }} intercept={{ slot: 'modal', view: ArticleModal }}>
   Preview article
 </Link>
 ```
@@ -605,20 +601,20 @@ Use `RouterProvider fallback` for global 404 UI. For section-specific 404 UI, de
 {
   id: 'admin',
   path: '/admin',
-  layout: { component: AdminLayout },
+  layout: { view: AdminLayout },
   children: [
     {
       id: 'admin.not-found',
       path: '{*path}',
-      component: AdminNotFound,
+      view: AdminNotFound,
     },
   ],
 }
 ```
 
-Route-level `loading` components are used by `@cookbook/router-react` as React Suspense fallbacks. They render while a lazy route component, layout, slot route, or intercepted route suspends.
+Route-level `loading` views are used by `@cookbook/router-react` as React Suspense fallbacks. They render while a lazy route view, layout, slot route, or intercepted route suspends.
 
-Route-level `error` components are used by `@cookbook/router-react` as React error-boundary fallbacks. The nearest matched route with an `error` component owns errors thrown by its route subtree. The fallback receives `error`, `reset`, and `route` props.
+Route-level `error` views are used by `@cookbook/router-react` as React error-boundary fallbacks. The nearest matched route with an `error` view owns errors thrown by its route subtree. The fallback receives `error`, `reset`, and `route` props.
 
 ```tsx
 function ArticleLoading() {
@@ -639,7 +635,7 @@ function ArticleErrorFallback(props: RouteErrorFallbackProps) {
 {
   id: 'blog.articles.show',
   path: 'articles/{slug}',
-  component: ArticlePage,
+  view: ArticlePage,
   loading: ArticleLoading,
   error: ArticleErrorFallback,
 }
@@ -655,7 +651,7 @@ Routes can own middleware and lifecycle hooks.
 {
   id: 'admin',
   path: '/admin',
-  component: AdminPage,
+  view: AdminPage,
   meta: { requiresAuth: true },
   middleware: [requireAuth],
   lifecycle: {
@@ -785,6 +781,6 @@ For the full catalog of route validation failures with symptoms, causes, and fix
 - Prefer route-object redirects over literal internal string redirects.
 - Use `basename` instead of hard-coding deployment prefixes in route paths.
 - Define primary routes for navigable pages and slot routes for slot-specific UI.
-- Use direct `useOutletContext<Context>()` for slot component context unless you have generated outlet context contracts.
+- Use direct `useOutletContext<Context>()` for slot view context unless you have generated outlet context contracts.
 - Use configured intercepts for route-owned UX patterns and call-site intercepts for local UI decisions.
 - Keep external URLs out of route params; use string redirects or normal anchors for external navigation.

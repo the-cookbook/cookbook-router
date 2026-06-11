@@ -10,7 +10,7 @@ export type {
   NormalizedRouteSlotFallback,
   NormalizedRouteSlots,
   RankedRoute,
-  RouteComponent,
+  RouteView,
   RouteDefinition,
   RouteInterceptConfig,
   RouteIntercepts,
@@ -30,12 +30,8 @@ export type {
   RouteSlotConfig,
   RouteSlotDefinition,
   RouteSlotDefinitions,
-} from './routes/contracts';
-export type {
-  RouterPathConstraint,
-  RouterPathConstraints,
-  RouterPathOptions,
-} from './pathkit/pathkit';
+} from './route-config/contracts';
+export type { RouterPathConstraint, RouterPathConstraints, RouterPathOptions } from './path';
 export type {
   CreateRouterRouteUrlContractOptions,
   ResolveUrlOptionsInput,
@@ -48,7 +44,7 @@ export type {
   RouterUnknownSearchPolicy,
   RouterUnknownSearchParams,
   RouterUrlOptions,
-} from './url';
+} from './url-state';
 export type {
   Register,
   RegisteredContracts,
@@ -76,57 +72,54 @@ export type {
   NavigateOptions,
   MatchOptions,
   CreateRouterOptions,
-} from './router/create-router';
-export type { CreateStaticRouterOptions } from './router/create-static-router';
-export type { CreateMemoryRouterOptions } from './router/create-memory-router';
+} from './runtime/create-router';
+export type { CreateStaticRouterOptions } from './runtime/create-static-router';
+export type { CreateMemoryRouterOptions } from './runtime/create-memory-router';
 export type {
   InterceptInput,
   CallSiteInterceptInput,
   InterceptHistoryState,
   ResolvedIntercept,
-} from './resolution/resolve-intercepts';
-export type { RouterNavigationState } from './navigation/transition';
-export type { DefineRoutesOptions } from './routes/define-routes';
+} from './rendering/resolve-intercepts';
+export type { RouterNavigationState } from './transition/run-transition';
+export type { DefineRoutesOptions } from './route-config/define-routes';
+export type {
+  RenderRouteMatchOptions,
+  ResolvedRouteFallback,
+  RouteBoundaryViewContext,
+  RouteEmptyViewContext,
+  RouteErrorViewContext,
+  RouteInterceptViewContext,
+  RouteLayoutViewContext,
+  RouteLoadingViewContext,
+  RouteSlotViewContext,
+  RouteViewContext,
+} from './rendering';
 export {
   hasConstraint,
   getConstraint,
   unregisterConstraint,
   createConstraint,
   registerPathConstraints,
-} from './pathkit/pathkit';
-export { createRouteUrlContract, registerUrlPathConstraints, resolveUrlOptions } from './url';
-export { defineRoutes } from './routes/define-routes';
+} from './path';
+export { createRouteUrlContract, registerUrlPathConstraints, resolveUrlOptions } from './url-state';
+export { defineRoutes } from './route-config/define-routes';
+export { renderRouteMatch } from './rendering';
 export { matchRoutes } from './matching/match-routes';
 export { flattenRoutes, rankRoutes } from './matching/rank-routes';
-export { normalizeRoutes } from './matching/normalize-routes';
-export { validateRoutes } from './validation/validate-routes';
+export { normalizeRoutes } from './route-config/normalize-routes';
+export { validateRoutes } from './route-config/validate-routes';
 export { createMemoryHistory, parseHref } from './history/memory-history';
 export { createStaticHistory } from './history/static-history';
 export { createBrowserHistory } from './history/browser-history';
-export { runMiddleware } from './navigation/run-middleware';
-export {
-  runBeforeNavigate,
-  runAfterNavigate,
-  runNavigationError,
-} from './navigation/run-lifecycle';
-export { completeTransition, runTransition } from './navigation/transition';
-export {
-  createInterceptHistoryState,
-  normalizeCallSiteIntercept,
-  normalizeConfiguredIntercepts,
-  resolveIntercept,
-  restoreInterceptFromState,
-  validateInterceptTargets,
-} from './resolution/resolve-intercepts';
-export { getResolvedSlot, resolveSlots } from './resolution/resolve-slots';
 export {
   createRouter,
   deserializeRouterState,
   serializeRouterState,
   stringifyRouterState,
-} from './router/create-router';
-export { createStaticRouter } from './router/create-static-router';
-export { createMemoryRouter } from './router/create-memory-router';
+} from './runtime/create-router';
+export { createStaticRouter } from './runtime/create-static-router';
+export { createMemoryRouter } from './runtime/create-memory-router';
 export {
   createGeneratedHrefMismatchError,
   createHydrationMismatchError,

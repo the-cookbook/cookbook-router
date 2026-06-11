@@ -1,8 +1,10 @@
 # @cookbook/router
 
-Framework-agnostic typed routing runtime for Cookbook Router.
+Framework-agnostic routing and rendering traversal engine for Cookbook Router.
 
-Use this package for route definitions, matching, href generation, navigation, middleware, lifecycle hooks, SSR router state, histories, slots, intercepts, redirects, and generated contract types. URL state is backed by `@cookbook/urlkit`; routing behavior remains owned by Cookbook Router.
+`@cookbook/router` owns route definitions, matching, href generation, navigation, middleware, lifecycle hooks, SSR router state, histories, slots, intercepts, redirects, generated contract types, and renderer-neutral route traversal.
+
+It does not mount UI, create DOM nodes, return JSX, or depend on a framework. Routes define renderer-owned `view` values. The core router resolves the active route match and can traverse it with `renderRouteMatch()`. Framework adapters provide the callbacks that turn views, layouts, outlets, slots, loading states, error states, and intercepts into UI. URL state is backed by `@cookbook/urlkit`; routing behavior remains owned by Cookbook Router.
 
 ## Table of contents
 
@@ -14,6 +16,7 @@ Use this package for route definitions, matching, href generation, navigation, m
 - [Router creation API](#router-creation-api)
 - [Router instance API](#router-instance-api)
 - [Navigation and hrefs](#navigation-and-hrefs)
+- [Renderer-neutral traversal](#renderer-neutral-traversal)
 - [Middleware and lifecycle](#middleware-and-lifecycle)
 - [SSR and histories](#ssr-and-histories)
 - [Generated contracts](#generated-contracts)
@@ -28,14 +31,9 @@ Use this package for route definitions, matching, href generation, navigation, m
 pnpm add @cookbook/router
 ```
 
-For React apps:
-
-```sh
-pnpm add @cookbook/router @cookbook/router-react react react-dom
-pnpm add -D @cookbook/router-cli
-```
-
 `@cookbook/urlkit` and `@cookbook/pathkit` are installed transitively by `@cookbook/router`. PathKit remains external and is used beneath URLKit for path-pattern primitives.
+
+For React rendering, install `@cookbook/router-react` in addition to this package. For generated app-specific route contracts, install `@cookbook/router-cli` as a development dependency.
 
 ## Requirements
 
@@ -47,13 +45,13 @@ pnpm add -D @cookbook/router-cli
 ## Quick start
 
 ```tsx
-import { createRouter, defineRoutes } from '@cookbook/router';
+import { createRouter, defineRoutes, renderRouteMatch } from '@cookbook/router';
 
 const routes = defineRoutes([
   {
     id: 'home',
     path: '/',
-    component: HomePage,
+    view: HomePage,
   },
   {
     id: 'users.show',
@@ -62,12 +60,19 @@ const routes = defineRoutes([
       tab: { type: 'string', optional: true },
     },
     hash: { type: 'enum', values: ['profile', 'settings'], optional: true },
-    component: UserPage,
+    view: UserPage,
   },
 ] as const);
 
 const router = createRouter({ routes });
 await router.resolveCurrent();
+
+const rendered = renderRouteMatch(router.state.match, {
+  fallback: '<h1>Not found</h1>',
+  renderView(view, context) {
+    return renderMyView(view, context);
+  },
+});
 
 const href = router.href({
   route: 'users.show',
@@ -81,6 +86,8 @@ await router.navigate.to({
   params: { id: 42 },
 });
 ```
+
+`renderRouteMatch()` is for custom renderers and framework adapters. Most applications should use a framework adapter such as `@cookbook/router-react` instead of implementing `renderMyView()` manually.
 
 Expected `href`:
 
@@ -117,18 +124,18 @@ interface DefineRoutesOptions {
 
 Common route fields:
 
-| Field       | Purpose                                                                                                            |
-| ----------- | ------------------------------------------------------------------------------------------------------------------ |
-| `id`        | Stable public route ID.                                                                                            |
-| `path`      | URL path segment or absolute path.                                                                                 |
-| `index`     | Default child route for a parent path.                                                                             |
-| `component` | Framework-owned render value.                                                                                      |
-| `layout`    | Layout component and slot configuration.                                                                           |
-| `children`  | Primary child routes.                                                                                              |
-| `redirect`  | Internal route redirect or literal href.                                                                           |
-| `search`    | URLKit-compatible static search descriptor for parsed search state and generated contracts.                        |
-| `hash`      | URLKit-compatible static hash descriptor for parsed hash state and generated contracts.                            |
-| `url`       | Route-level URLKit options such as `arrayFormat`, `defaults`, `invalidSearch`, `invalidHash`, and `unknownSearch`. |
+| Field      | Purpose                                                                                                            |
+| ---------- | ------------------------------------------------------------------------------------------------------------------ |
+| `id`       | Stable public route ID.                                                                                            |
+| `path`     | URL path segment or absolute path.                                                                                 |
+| `index`    | Default child route for a parent path.                                                                             |
+| `view`     | Renderer-owned view value. The core router stores it but does not mount or invoke it directly.                     |
+| `layout`   | Layout view, loading/error views, and slot configuration.                                                          |
+| `children` | Primary child routes.                                                                                              |
+| `redirect` | Internal route redirect or literal href.                                                                           |
+| `search`   | URLKit-compatible static search descriptor for parsed search state and generated contracts.                        |
+| `hash`     | URLKit-compatible static hash descriptor for parsed hash state and generated contracts.                            |
+| `url`      | Route-level URLKit options such as `arrayFormat`, `defaults`, `invalidSearch`, `invalidHash`, and `unknownSearch`. |
 
 When `unknownSearch` is `preserve`, URLKit keeps undeclared query keys as a sibling `unknownSearch` object on the matched route. Declared typed search remains in `match.search`.
 
@@ -224,7 +231,7 @@ await router.navigate.to({
 });
 ```
 
-Use `router.href()` when rendering links outside React. Path params, search, and hash are parsed/built by URLKit, so `{id:int}`, `{price:decimal}`, `{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` params use numbers:
+Use `router.href()` when rendering links outside a framework integration. Path params, search, and hash are parsed/built by URLKit, so `{id:int}`, `{price:decimal}`, `{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` params use numbers:
 
 ```ts
 const href = router.href({
@@ -239,6 +246,35 @@ const products = router.href('products', {
 ```
 
 See [Navigation](../../docs/navigation.md).
+
+## Renderer-neutral traversal
+
+Use `renderRouteMatch()` when building a framework adapter or a custom renderer.
+The core router owns route, layout, outlet, slot, fallback, and intercept traversal,
+but it never calls views directly. Your renderer decides how a `view` becomes UI.
+
+```ts
+import { renderRouteMatch } from '@cookbook/router';
+
+const output = renderRouteMatch(router.state.match, {
+  fallback: '<h1>Not found</h1>',
+
+  renderView(view, context) {
+    return renderMyFrameworkView(view, context);
+  },
+
+  renderLayout(view, context) {
+    return renderMyFrameworkLayout(view, {
+      outlet: context.outlet,
+      slots: context.slots,
+      match: context.match,
+    });
+  },
+});
+```
+
+Most application code should use a framework integration such as
+`@cookbook/router-react` instead of calling this helper directly.
 
 ## Middleware and lifecycle
 
@@ -342,7 +378,7 @@ The package root intentionally keeps the public v1 surface small. Advanced helpe
 - `validateRoutes()`
 - `normalizeRoutes()`
 - `matchRoutes()`
-- `getResolvedSlot()`
+- `renderRouteMatch()`
 - history factories such as `createMemoryHistory()`
 - diagnostic error factories
 

@@ -51,6 +51,43 @@ docs/
 
 Use `packages/` for published packages, `examples/` for runnable example apps, `e2e/` for repository-level integration tests, and `docs/` for contributor and user-facing documentation.
 
+The core router source tree is organized by router concepts rather than dependency names:
+
+```txt
+packages/router/src/
+  route-config/  route definitions, validation, and normalization
+  path/          path constraints and path-pattern helpers
+  url-state/     params, search, hash, and URLKit integration
+  matching/      URL-to-route matching and ranking
+  runtime/       router factories, navigation state, hrefs, hydration, serialization
+  transition/    middleware and lifecycle execution
+  rendering/     renderer-neutral route traversal, slots, intercepts, fallbacks
+  history/       browser, memory, and static histories
+  diagnostics/   public diagnostic errors
+  security/      SSR and serialized-state hardening
+```
+
+The React package mirrors its runtime responsibilities:
+
+```txt
+packages/router-react/src/
+  provider/  router subscription, context, and React route rendering
+  outlets/   Outlet and Slot components
+  links/     Link/NavLink components and href helpers
+  hooks/     state-reading and navigation hooks
+```
+
+The CLI keeps route-source loading separate from output generation:
+
+```txt
+packages/router-cli/src/
+  commands/     generate, validate, manifest, and watch commands
+  route-files/  route source loading and static extraction
+  generation/   contracts, register file, and manifest generation
+  security/     filesystem/path hardening
+  fs/           Node filesystem adapter
+```
+
 ## Common workflow
 
 Start from a clean dependency install, then build and validate the workspace:
@@ -146,7 +183,7 @@ export const routes = defineRoutes([
       ref: { type: 'string', optional: true },
       filters: { type: 'string', many: true, optional: true },
     },
-    component: ArticlePage,
+    view: ArticlePage,
   },
 ] as const);
 ```
@@ -160,8 +197,8 @@ Every implementation file must have a colocated test file unless it only exports
 Use this colocated style:
 
 ```txt
-src/router/create-router.ts
-src/router/create-router.test.ts
+src/runtime/create-router-runtime.ts
+src/runtime/create-router-runtime.test.ts
 ```
 
 Use real router behavior where possible. Do not mock matching, validation, href generation, middleware, lifecycle, slot resolution, or intercept resolution in package tests.

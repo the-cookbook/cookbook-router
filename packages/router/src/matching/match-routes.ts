@@ -1,8 +1,8 @@
-import { resolveSlots } from '../resolution/resolve-slots';
-import type { RouterPathConstraints, RouterPathOptions } from '../pathkit/pathkit';
-import type { NormalizedRoute, RouteMatch } from '../routes/contracts';
-import { parseRoutePathParams } from '../url/route-url-state';
-import type { RouterUrlOptions } from '../url';
+import { resolveSlots } from '../rendering/resolve-slots';
+import type { RouterPathConstraints, RouterPathOptions } from '../path';
+import type { NormalizedRoute, RouteMatch } from '../route-config/contracts';
+import { parseRoutePathParams } from '../url-state/route-url-state';
+import type { RouterUrlOptions } from '../url-state';
 import { createMatchedBranch, getRouteMatchIndex } from './route-match-index';
 
 export interface MatchRoutesOptions {

@@ -79,10 +79,10 @@ export const articles: readonly Article[] = [
     slug: 'broken-page',
     title: 'Preview the route error boundary',
     excerpt:
-      'This demo article intentionally fails when opened so the route error component can be previewed.',
+      'This demo article intentionally fails when opened so the route error view can be previewed.',
     body: [
       'This article is part of the demo dataset and is designed to simulate a broken route render.',
-      'When users open this article, the page should throw a controlled error so the configured route error component is displayed.',
+      'When users open this article, the page should throw a controlled error so the configured route error view is displayed.',
       'Use this entry to verify that loading, route error UI, and route-level recovery behavior work as expected.',
     ],
     category: 'Engineering',

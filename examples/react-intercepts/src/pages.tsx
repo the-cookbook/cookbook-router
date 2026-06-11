@@ -40,7 +40,7 @@ export function GalleryIndexPage() {
         params={{ id: 2 }}
         search={{ source: 'call-site' }}
         hash="comments"
-        intercept={{ slot: 'modal', component: PhotoModal }}
+        intercept={{ slot: 'modal', view: PhotoModal }}
       >
         Open call-site modal
       </Link>
@@ -51,7 +51,7 @@ export function GalleryIndexPage() {
             params: { id: 3 },
             search: { source: 'button' },
             hash: 'details',
-            intercept: { slot: 'modal', component: PhotoModal },
+            intercept: { slot: 'modal', view: PhotoModal },
           })
         }
       >
