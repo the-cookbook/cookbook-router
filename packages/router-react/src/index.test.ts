@@ -13,9 +13,7 @@ describe('package entrypoint', () => {
     expect(module.Outlet).toBeTypeOf('function');
     expect(module.useNavigate).toBeTypeOf('function');
     expect(module.useHashParams).toBeTypeOf('function');
-    expect(module.useHash).toBeTypeOf('function');
     expect(module.useSearchParams).toBeTypeOf('function');
     expect(module.useUnknownSearchParams).toBeTypeOf('function');
-    expect(module.useSearch).toBeTypeOf('function');
   });
 });

@@ -41,7 +41,7 @@ export type {
 } from './provider/router-context';
 export { useBlocker } from './hooks/use-blocker';
 export type { BlockerState, UseBlockerOptions } from './hooks/use-blocker';
-export { useHash, useHashParams } from './hooks/use-hash-params';
+export { useHashParams } from './hooks/use-hash-params';
 export { useHref } from './hooks/use-href';
 export { useLocation } from './hooks/use-location';
 export { useMatches } from './hooks/use-matches';
@@ -51,6 +51,6 @@ export { useOutletContext } from './hooks/use-outlet-context';
 export type { OutletContextOptions } from './hooks/use-outlet-context';
 export { useParams } from './hooks/use-params';
 export { useRouter } from './hooks/use-router';
-export { useSearch, useSearchParams } from './hooks/use-search-params';
+export { useSearchParams } from './hooks/use-search-params';
 export { useUnknownSearchParams } from './hooks/use-unknown-search-params';
 export type { Register, RegisteredContracts, RouterContracts } from './contracts';
