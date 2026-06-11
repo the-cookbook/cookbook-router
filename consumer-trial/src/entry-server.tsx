@@ -5,7 +5,7 @@ import { createTrialStaticRouter } from './router';
 
 export async function render(url: string) {
   const router = createTrialStaticRouter(url, { authenticated: true });
-  await router.resolveCurrent();
+  await router.start();
   const appHtml = renderToString(<App router={router} static />);
   const hydrationData = serializeRouterState(router);
 

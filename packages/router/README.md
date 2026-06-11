@@ -65,7 +65,7 @@ const routes = defineRoutes([
 ] as const);
 
 const router = createRouter({ routes });
-await router.resolveCurrent();
+await router.start();
 
 const rendered = renderRouteMatch(router.state.match, {
   fallback: '<h1>Not found</h1>',
@@ -212,7 +212,7 @@ router.navigate.back();
 router.navigate.forward();
 router.navigate.go(delta);
 router.subscribe(listener);
-router.resolveCurrent();
+router.start();
 router.serialize();
 ```
 
@@ -305,7 +305,7 @@ See [Middleware](../../docs/middleware.md) and [Lifecycle](../../docs/lifecycle.
 import { createStaticRouter, deserializeRouterState, stringifyRouterState } from '@cookbook/router';
 
 const router = createStaticRouter({ routes, url: '/articles/typed-routing' });
-await router.resolveCurrent();
+await router.start();
 
 const hydrationJson = stringifyRouterState(router);
 const hydrationData = deserializeRouterState(hydrationJson);
@@ -387,7 +387,7 @@ Internal middleware runners, transition runners, slot resolvers, and intercept r
 ## Troubleshooting
 
 - If custom constraints are unknown, pass them to `defineRoutes(..., { pathConstraints })` or `createRouter({ pathConstraints })` for raw route arrays so URLKit can validate and compile route contracts.
-- If redirects do not run before first render, call `await router.resolveCurrent()` before rendering.
+- If redirects do not run before first render, call `await router.start()` before rendering.
 - If route types are too broad, run `@cookbook/router-cli generate` and include generated files in `tsconfig.json`.
 - If tests need navigation, use `createMemoryRouter()` instead of mocking internals.
 

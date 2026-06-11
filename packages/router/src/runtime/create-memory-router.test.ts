@@ -103,7 +103,7 @@ describe('create-memory-router', () => {
       initialEntries: ['/gallery/'],
     });
 
-    await router.resolveCurrent();
+    await router.start();
 
     expect(router.href('gallery')).toBe('/gallery');
     expect(router.state.location.href).toBe('/gallery');
@@ -118,7 +118,7 @@ describe('create-memory-router', () => {
       pathOptions: { prune: false },
     });
 
-    await router.resolveCurrent();
+    await router.start();
 
     expect(router.href('gallery')).toBe('/gallery/');
     expect(router.state.location.href).toBe('/gallery/');
@@ -166,7 +166,7 @@ describe('create-memory-router', () => {
       ] as const),
     });
 
-    await router.resolveCurrent();
+    await router.start();
 
     expect(router.state.location.href).toBe('/dashboard');
     expect(router.state.match?.id).toBe('dashboard');
@@ -182,7 +182,7 @@ describe('create-memory-router', () => {
       maxRedirectDepth: 1,
     });
 
-    await router.resolveCurrent();
+    await router.start();
 
     expect(router.state.navigation).toBe('error');
     expect((router.state.error as Error).message).toBe(
@@ -217,7 +217,7 @@ describe('create-memory-router', () => {
       ],
     });
 
-    await router.resolveCurrent();
+    await router.start();
 
     expect(router.state.location.href).toBe('/login?redirect=%2Fprivate');
     expect(router.state.match?.id).toBe('login');
@@ -236,11 +236,11 @@ describe('create-memory-router', () => {
       ],
     });
 
-    await router.resolveCurrent();
+    await router.start();
 
     expect(router.state.location.href).toBe('/login?redirect=%2Fprivate');
     expect(router.state.match?.id).toBe('login');
-    expect(router.resolveCurrent).toBeTypeOf('function');
+    expect(router.start).toBeTypeOf('function');
   });
 
   it('stops redirect loops as navigation errors', async () => {
@@ -330,7 +330,7 @@ describe('create-memory-router', () => {
       routes,
       initialEntries: ['/users/9?tab=settings#profile'],
     });
-    await staticLike.resolveCurrent();
+    await staticLike.start();
 
     const hydrated = createMemoryRouter({
       routes,

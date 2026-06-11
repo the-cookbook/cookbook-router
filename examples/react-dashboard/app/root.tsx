@@ -3,9 +3,10 @@ import { StrictMode } from 'react';
 import { App, createAppRouter } from './app';
 
 const rootElement = document.getElementById('root')!;
+
 const router = createAppRouter();
 
-router.resolveCurrent().then(() =>
+router.start().then(() =>
   createRoot(rootElement).render(
     <StrictMode>
       <App router={router} />

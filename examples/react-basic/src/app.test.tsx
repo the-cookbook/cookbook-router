@@ -11,7 +11,7 @@ interface ExpectedParams {
 describe('react-basic example', () => {
   it('renders typed params, search, and hash from workspace packages', async () => {
     const router = createTestRouter(['/users/42?tab=settings#profile']);
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<App router={router} />);
 
@@ -38,7 +38,7 @@ describe('react-basic example', () => {
 
   it('renders URLKit array format overrides from React calls', async () => {
     const router = createTestRouter(['/products?tags=router&tags=typescript']);
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<App router={router} />);
 
@@ -49,7 +49,7 @@ describe('react-basic example', () => {
   it('runs middleware and lifecycle around navigation', async () => {
     lifecycleEvents.length = 0;
     const router = createTestRouter(['/']);
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<App router={router} />);
     fireEvent.click(getByText('Ada Lovelace'));

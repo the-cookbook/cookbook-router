@@ -658,7 +658,7 @@ const router = createRouter({
   pathOptions: { prune: 'all' },
 });
 
-await router.resolveCurrent();
+await router.start();
 ```
 
 | Option                |                   Default | Purpose                                                                                                                            |
@@ -696,7 +696,7 @@ const router = createMemoryRouter({
   initialEntries: ['/users/42?tab=settings'],
 });
 
-await router.resolveCurrent();
+await router.start();
 ```
 
 Use this in tests, Storybook-like environments, and non-browser examples.
@@ -724,7 +724,7 @@ const router = createStaticRouter({
   url: '/articles/typed-routing?preview=true#summary',
 });
 
-await router.resolveCurrent();
+await router.start();
 ```
 
 Use the same route definitions and custom constraints on the server and client.
@@ -775,7 +775,7 @@ interface Router {
   subscribe(listener: (state: RouterState) => void): () => void;
   block(blocker: RouterBlocker): () => void;
   useMiddleware(middleware: readonly Middleware[]): () => void;
-  resolveCurrent(): Promise<RouterState>;
+  start(): Promise<RouterState>;
   serialize(): SerializedRouterState;
 }
 ```

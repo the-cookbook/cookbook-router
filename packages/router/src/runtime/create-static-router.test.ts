@@ -16,7 +16,7 @@ const routes = defineRoutes([
 describe('createStaticRouter', () => {
   it('resolves string URLs', async () => {
     const router = createStaticRouter({ routes, url: '/users/42?tab=settings#profile' });
-    await router.resolveCurrent();
+    await router.start();
     expect(router.state.location.href).toBe('/users/42?tab=settings#profile');
     expect(router.state.match?.route.id).toBe('users.show');
   });

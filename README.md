@@ -209,7 +209,7 @@ export const router = createRouter({
   routes,
 });
 
-await router.resolveCurrent();
+await router.start();
 ```
 
 ### 2.b. Using React? Add the React integration

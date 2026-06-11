@@ -421,7 +421,7 @@ describe('create-router URLKit runtime integration', () => {
       history: createMemoryHistory({ initialEntries: ['/'] }),
     });
 
-    await router.resolveCurrent();
+    await router.start();
 
     expect(router.state.location.href).toBe('/products?tags=a%2Cb');
     expect(router.state.match?.search).toEqual({ tags: ['a', 'b'] });

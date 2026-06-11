@@ -11,6 +11,6 @@ if (!rootElement) {
 
 const router = createAppRouter();
 
-void router.resolveCurrent().then(() => {
+void router.start().then(() => {
   createRoot(rootElement).render(<App router={router} />);
 });

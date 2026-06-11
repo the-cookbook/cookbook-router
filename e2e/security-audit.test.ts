@@ -24,7 +24,7 @@ describe('repository security audit regressions', () => {
       routes,
       initialEntries: ['/users/1?tab=</script>#profile'],
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const serialized = stringifyRouterState(router);
 

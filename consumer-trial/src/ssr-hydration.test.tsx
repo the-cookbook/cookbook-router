@@ -20,7 +20,7 @@ describe('consumer trial SSR and hydration setup', () => {
 
   it('hydrates from matching serialized state without mismatch errors', async () => {
     const staticRouter = createTrialStaticRouter('/blog/ssr-post', { authenticated: true });
-    await staticRouter.resolveCurrent();
+    await staticRouter.start();
     const hydrationData = serializeRouterState(staticRouter);
 
     window.history.replaceState(null, '', hydrationData.location.href);

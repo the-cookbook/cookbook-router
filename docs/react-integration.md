@@ -34,7 +34,7 @@ import { RouterProvider } from '@cookbook/router-react';
 import { routes } from './routes';
 
 const router = createRouter({ routes });
-await router.resolveCurrent();
+await router.start();
 
 export function App() {
   return <RouterProvider router={router} fallback={<h1>Not found</h1>} />;
@@ -355,7 +355,7 @@ Prefer `createMemoryRouter()` and render the real provider.
 
 ```tsx
 const router = createMemoryRouter({ routes, initialEntries: ['/users/42'] });
-await router.resolveCurrent();
+await router.start();
 
 render(<RouterProvider router={router} fallback={<h1>Not found</h1>} />);
 ```
@@ -364,7 +364,7 @@ Avoid mocking route matching, href generation, or middleware pipelines in view t
 
 ## Provider edge cases
 
-- Call `router.resolveCurrent()` before first render when initial redirects or middleware should resolve before UI appears.
+- Call `router.start()` before first render when initial redirects or middleware should resolve before UI appears.
 - `RouterProvider` suppresses redirect-only branches while resolving them.
 - If a route has neither `view` nor `layout`, it renders its child branch or fallback.
 - If no match exists, provider `fallback` is rendered.

@@ -20,7 +20,7 @@ function createTestRouter() {
 describe('useNavigate', () => {
   it('navigates through the router API', async () => {
     const router = createTestRouter();
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );
@@ -36,7 +36,7 @@ describe('useNavigate', () => {
 
   it('passes preventScrollReset through navigate options', async () => {
     const router = createTestRouter();
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );

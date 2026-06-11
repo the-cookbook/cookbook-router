@@ -55,7 +55,7 @@ describe('browser-like navigation', () => {
 
   it('Link clicks push to the address bar, back restores source route, and forward restores destination route', async () => {
     const router = createRouter({ routes });
-    await router.resolveCurrent();
+    await router.start();
     const view = render(<RouterProvider router={router} />);
 
     expect(view.getByText('Home /')).toBeTruthy();
@@ -77,7 +77,7 @@ describe('browser-like navigation', () => {
 
   it('replace navigation keeps the route state and browser URL synchronized', async () => {
     const router = createRouter({ routes });
-    await router.resolveCurrent();
+    await router.start();
     render(<RouterProvider router={router} />);
 
     await router.navigate.replace('user', {

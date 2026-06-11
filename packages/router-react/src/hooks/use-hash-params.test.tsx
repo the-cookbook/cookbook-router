@@ -21,7 +21,7 @@ describe('useHashParams', () => {
       ] as const),
       initialEntries: ['/users/42#profile'],
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );
@@ -44,7 +44,7 @@ describe('useHashParams', () => {
       ] as const),
       initialEntries: ['/users/42#settings'],
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );
@@ -59,7 +59,7 @@ describe('useHashParams', () => {
       routes: defineRoutes([{ id: 'user', path: '/page', view: Page }] as const),
       initialEntries: ['/page'],
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );

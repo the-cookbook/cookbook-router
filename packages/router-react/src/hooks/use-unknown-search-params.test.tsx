@@ -25,7 +25,7 @@ describe('useUnknownSearchParams', () => {
       initialEntries: ['/products?page=0&utm_source=website'],
       url: { unknownSearch: 'preserve' },
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );
@@ -49,7 +49,7 @@ describe('useUnknownSearchParams', () => {
       ] as const),
       initialEntries: ['/products?page=0&utm_source=website'],
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );

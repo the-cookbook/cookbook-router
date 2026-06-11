@@ -46,7 +46,7 @@ describe('create-router hardening', () => {
     expect(router.state.error).toBeUndefined();
     expect(router.state.location.href).toBe('/articles/typed-routing?preview=true');
 
-    await router.resolveCurrent();
+    await router.start();
 
     expect(router.state.location.href).toBe('/articles/typed-routing?preview=true#summary');
     expect(router.state.match?.hash).toBe('summary');

@@ -105,7 +105,7 @@ describe('RouterProvider', () => {
 
   it('renders the active layout, outlet, and page route', async () => {
     const router = createRouter();
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<RouterProvider router={router} />);
 
@@ -115,7 +115,7 @@ describe('RouterProvider', () => {
 
   it('rerenders when router state changes through navigation', async () => {
     const router = createRouter();
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(
       <RouterProvider router={router}>
@@ -176,7 +176,7 @@ describe('RouterProvider', () => {
       ] as const),
       initialEntries: ['/users/missing'],
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<RouterProvider router={router} />);
 
@@ -189,7 +189,7 @@ describe('RouterProvider', () => {
       routes: defineRoutes([{ id: 'home', path: '/', view: HomePage }] as const),
       initialEntries: ['/missing'],
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<RouterProvider router={router} fallback={<p>not found</p>} />);
 
@@ -255,7 +255,7 @@ describe('RouterProvider', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<RouterProvider router={router} />);
 
@@ -308,7 +308,7 @@ describe('RouterProvider', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText, getByTestId } = render(<RouterProvider router={router} />);
 
@@ -344,7 +344,7 @@ describe('RouterProvider', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText, getByTestId } = render(<RouterProvider router={router} />);
 
@@ -391,7 +391,7 @@ describe('RouterProvider', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText, getByTestId } = render(<RouterProvider router={router} />);
 
@@ -450,7 +450,7 @@ describe('RouterProvider', () => {
       ] as const),
       initialEntries: ['/overview'],
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText, getByTestId } = render(<RouterProvider router={router} />);
 
@@ -489,7 +489,7 @@ describe('RouterProvider', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText, queryByText } = render(
       <RouterProvider router={router} loadingFallback={<GlobalLoading />} />,
@@ -541,7 +541,7 @@ describe('RouterProvider', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText, getByTestId } = render(<RouterProvider router={router} />);
 
@@ -595,7 +595,7 @@ describe('RouterProvider', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText, getByTestId } = render(<RouterProvider router={router} />);
 
@@ -635,7 +635,7 @@ describe('RouterProvider', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText, queryByText } = render(<RouterProvider router={router} />);
 
@@ -650,7 +650,7 @@ describe('RouterProvider', () => {
       routes: defineRoutes([{ id: 'article', path: '/', view: LazyPage }] as const),
     });
 
-    await router.resolveCurrent();
+    await router.start();
 
     const { findByText } = render(
       <RouterProvider router={router} loadingFallback={<p>global loading</p>} />,
@@ -680,7 +680,7 @@ describe('RouterProvider', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<RouterProvider router={router} />);
 
@@ -709,7 +709,7 @@ describe('RouterProvider', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<RouterProvider router={router} />);
 
@@ -749,7 +749,7 @@ describe('RouterProvider', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText, getByTestId } = render(<RouterProvider router={router} />);
 
@@ -784,7 +784,7 @@ describe('RouterProvider', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText, queryByText } = render(
       <RouterProvider router={router} errorFallback={GlobalErrorFallback} />,
@@ -809,7 +809,7 @@ describe('RouterProvider', () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'broken', path: '/', view: BrokenPage }] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(
       <RouterProvider router={router} errorFallback={GlobalErrorFallback} />,
@@ -849,7 +849,7 @@ describe('RouterProvider', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<RouterProvider router={router} />);
 
@@ -865,7 +865,7 @@ describe('RouterProvider scroll restoration', () => {
   it('scrolls to the top on push navigation when enabled', async () => {
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     const router = createRouter();
-    await router.resolveCurrent();
+    await router.start();
 
     render(<RouterProvider router={router} scrollRestoration />);
 
@@ -887,7 +887,7 @@ describe('RouterProvider scroll restoration', () => {
   it('does not reset scroll when navigation opts out', async () => {
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     const router = createRouter();
-    await router.resolveCurrent();
+    await router.start();
 
     render(<RouterProvider router={router} scrollRestoration />);
 
@@ -921,7 +921,7 @@ describe('RouterProvider scroll restoration', () => {
       ] as const),
     });
 
-    await router.resolveCurrent();
+    await router.start();
 
     render(<RouterProvider router={router} scrollRestoration scrollBehavior="smooth" />);
 
@@ -947,7 +947,7 @@ describe('RouterProvider scroll restoration', () => {
       ] as const),
     });
 
-    await router.resolveCurrent();
+    await router.start();
 
     render(<RouterProvider router={router} scrollRestoration />);
 
@@ -988,7 +988,7 @@ describe('RouterProvider scroll restoration', () => {
       ] as const),
     });
 
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(
       <RouterProvider router={router} scrollRestoration scrollBehavior="smooth" />,
@@ -1036,7 +1036,7 @@ describe('RouterProvider scroll restoration', () => {
       initialEntries: ['/products?page=a'],
       url: { invalidSearch: 'error' },
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText, queryByText } = render(<RouterProvider router={router} />);
 

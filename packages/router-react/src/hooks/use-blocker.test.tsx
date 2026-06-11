@@ -19,7 +19,7 @@ describe('useBlocker', () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'home', path: '/', view: Page }] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { result } = renderHook(() => useBlocker({ when: true, message: 'Stop' }), {
       wrapper: createWrapper(router),
@@ -35,7 +35,7 @@ describe('useBlocker', () => {
         { id: 'about', path: '/about', view: Page },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
     const { unmount } = renderHook(() => useBlocker({ when: true, message: 'Stop' }), {
@@ -57,7 +57,7 @@ describe('useBlocker', () => {
         { id: 'about', path: '/about', view: Page },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     renderHook(() => useBlocker({ when: true, message: 'Continue?' }), {
@@ -74,7 +74,7 @@ describe('useBlocker', () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'home', path: '/', view: Page }] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
     const add = vi.spyOn(window, 'addEventListener');
     const remove = vi.spyOn(window, 'removeEventListener');
 

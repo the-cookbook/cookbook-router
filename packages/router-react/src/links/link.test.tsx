@@ -34,7 +34,7 @@ function createRouter() {
 describe('Link', () => {
   it('renders a real href with params, search, and hash', async () => {
     const router = createRouter();
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(
       <RouterProvider router={router}>
@@ -49,7 +49,7 @@ describe('Link', () => {
 
   it('forwards URL options to href generation and navigation', async () => {
     const router = createRouter();
-    await router.resolveCurrent();
+    await router.start();
     const navigate = vi.spyOn(router.navigate, 'to');
 
     const { getByText } = render(
@@ -78,7 +78,7 @@ describe('Link', () => {
 
   it('forwards default serialization options to href generation', async () => {
     const router = createRouter();
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(
       <RouterProvider router={router}>
@@ -93,7 +93,7 @@ describe('Link', () => {
 
   it('supports the to alias for lower-boilerplate links', async () => {
     const router = createRouter();
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(
       <RouterProvider router={router}>
@@ -108,7 +108,7 @@ describe('Link', () => {
 
   it('left click performs client navigation', async () => {
     const router = createRouter();
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(
       <RouterProvider router={router}>
@@ -126,7 +126,7 @@ describe('Link', () => {
 
   it('replace click performs replace navigation', async () => {
     const router = createRouter();
-    await router.resolveCurrent();
+    await router.start();
     const replace = vi.spyOn(router.navigate, 'replace');
 
     const { getByText } = render(
@@ -149,7 +149,7 @@ describe('Link', () => {
 
   it('passes preventScrollReset to navigation options', async () => {
     const router = createRouter();
-    await router.resolveCurrent();
+    await router.start();
     const navigate = vi.spyOn(router.navigate, 'to');
 
     const { getByText } = render(
@@ -172,7 +172,7 @@ describe('Link', () => {
 
   it('preserves native behavior for explicit same-origin hrefs without a route id', async () => {
     const router = createRouter();
-    await router.resolveCurrent();
+    await router.start();
     const navigate = vi.spyOn(router.navigate, 'to');
 
     const { getByText } = render(
@@ -193,7 +193,7 @@ describe('Link', () => {
 
   it('modifier and external clicks preserve browser behavior', async () => {
     const router = createRouter();
-    await router.resolveCurrent();
+    await router.start();
     const navigate = vi.spyOn(router.navigate, 'to');
 
     const { getByText } = render(
@@ -213,7 +213,7 @@ describe('Link', () => {
 
   it('respects prevented events', async () => {
     const router = createRouter();
-    await router.resolveCurrent();
+    await router.start();
     const navigate = vi.spyOn(router.navigate, 'to');
 
     const { getByText } = render(

@@ -19,7 +19,7 @@ export async function renderRequest(url: string | Request) {
     },
   });
 
-  await router.resolveCurrent();
+  await router.start();
 
   const appHtml = renderToString(<App router={router} staticRender />);
 

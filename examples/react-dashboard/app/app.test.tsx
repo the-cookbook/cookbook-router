@@ -14,7 +14,7 @@ describe('react-dashboard example', () => {
 
   it('redirects the entry route to the overview dashboard', async () => {
     const router = createTestRouter(['/']);
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<App router={router} />);
 
@@ -41,7 +41,7 @@ describe('react-dashboard example', () => {
     const router = createTestRouter([
       '/overview?page=a&pageSize=10&visitors=30d',
     ]);
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<App router={router} />);
 
@@ -72,7 +72,7 @@ describe('react-dashboard example', () => {
 
   it('keeps overview navigation active when search params are present', async () => {
     const router = createTestRouter(['/overview?visitors=30d']);
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<App router={router} />);
 
@@ -89,7 +89,7 @@ describe('react-dashboard example', () => {
 
   it('opens the create route as an automatic configured modal intercept from overview', async () => {
     const router = createTestRouter(['/overview']);
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<App router={router} />);
 
@@ -119,7 +119,7 @@ describe('react-dashboard example', () => {
 
   it('renders the canonical create page on direct visit without opening the modal intercept', async () => {
     const router = createTestRouter(['/create']);
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<App router={router} />);
 
@@ -145,7 +145,7 @@ describe('react-dashboard example', () => {
 
   it('renders user details through the custom slug constraint', async () => {
     const router = createTestRouter(['/users/eddie-lake']);
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<App router={router} />);
 
@@ -165,7 +165,7 @@ describe('react-dashboard example', () => {
 
   it('renders the broken page through the layout error fallback', async () => {
     const router = createTestRouter(['/broken-page']);
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<App router={router} />);
 
@@ -182,7 +182,7 @@ describe('react-dashboard example', () => {
 
   it('redirects missing user detail records to not found without freezing', async () => {
     const router = createTestRouter(['/users/missing-user']);
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<App router={router} />);
 
@@ -202,7 +202,7 @@ describe('react-dashboard example', () => {
 
   it('renders nested policy children declared with leading slash paths', async () => {
     const router = createTestRouter(['/policies/terms-of-service']);
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<App router={router} />);
 
@@ -218,7 +218,7 @@ describe('react-dashboard example', () => {
 
   it('renders reports from the sidebar navigation', async () => {
     const router = createTestRouter(['/overview']);
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<App router={router} />);
 
@@ -244,7 +244,7 @@ describe('react-dashboard example', () => {
 
     const router = createTestRouter(['/overview']);
 
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<App router={router} />);
 

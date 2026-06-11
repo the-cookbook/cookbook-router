@@ -13,7 +13,7 @@ describe('StaticRouterProvider', () => {
       routes: defineRoutes([{ id: 'page', path: '/page', view: Page }] as const),
       url: 'https://example.it/page?tab=a#top',
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<StaticRouterProvider router={router} />);
 

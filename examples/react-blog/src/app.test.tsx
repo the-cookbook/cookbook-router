@@ -10,7 +10,7 @@ describe('react-blog example', () => {
 
   it('renders a styled real-world blog home with navigation and custom slots', async () => {
     const router = createTestRouter(['/blog']);
-    await router.resolveCurrent();
+    await router.start();
     const { getByText } = render(<App router={router} />);
 
     expect(getByText('Cookbook Journal')).toBeTruthy();
@@ -22,7 +22,7 @@ describe('react-blog example', () => {
 
   it('flags the active blog navigation item from the current route', async () => {
     const homeRouter = createTestRouter(['/blog']);
-    await homeRouter.resolveCurrent();
+    await homeRouter.start();
     const homeView = render(<App router={homeRouter} />);
 
     const homeNav = within(homeView.getByRole('navigation', { name: 'Blog navigation' }));
@@ -31,7 +31,7 @@ describe('react-blog example', () => {
     homeView.unmount();
 
     const articlesRouter = createTestRouter(['/blog/articles?query=routing']);
-    await articlesRouter.resolveCurrent();
+    await articlesRouter.start();
     const articlesView = render(<App router={articlesRouter} />);
 
     const articlesNav = within(articlesView.getByRole('navigation', { name: 'Blog navigation' }));
@@ -42,7 +42,7 @@ describe('react-blog example', () => {
     articlesView.unmount();
 
     const archiveRouter = createTestRouter(['/blog/archive']);
-    await archiveRouter.resolveCurrent();
+    await archiveRouter.start();
     const archiveView = render(<App router={archiveRouter} />);
 
     const archiveNav = within(archiveView.getByRole('navigation', { name: 'Blog navigation' }));
@@ -56,7 +56,7 @@ describe('react-blog example', () => {
 
   it('keeps Articles active when an article is opened as an intercepted modal', async () => {
     const router = createTestRouter(['/blog/articles']);
-    await router.resolveCurrent();
+    await router.start();
     const { getAllByText, getByRole } = render(<App router={router} />);
 
     fireEvent.click(getAllByText('Read in modal')[0]!);
@@ -69,7 +69,7 @@ describe('react-blog example', () => {
 
   it('configured blog article interception renders a modal while preserving the article list', async () => {
     const router = createTestRouter(['/blog/articles']);
-    await router.resolveCurrent();
+    await router.start();
     const { getAllByText, getByRole, getByText } = render(<App router={router} />);
 
     fireEvent.click(getAllByText('Read in modal')[0]!);
@@ -85,7 +85,7 @@ describe('react-blog example', () => {
 
   it('call-site article interception is clone-safe and keeps the list route mounted', async () => {
     const router = createTestRouter(['/blog/articles']);
-    await router.resolveCurrent();
+    await router.start();
     const { getAllByText, getByText } = render(<App router={router} />);
 
     fireEvent.click(getAllByText('Read with call-site modal')[1]!);
@@ -100,7 +100,7 @@ describe('react-blog example', () => {
 
   it('article modal Back button returns to the previous route', async () => {
     const router = createTestRouter(['/blog/articles']);
-    await router.resolveCurrent();
+    await router.start();
     const { getAllByText, getByRole, queryByRole } = render(<App router={router} />);
 
     fireEvent.click(getAllByText('Read in modal')[0]!);
@@ -118,7 +118,7 @@ describe('react-blog example', () => {
 
   it('article modal closes when Escape is pressed', async () => {
     const router = createTestRouter(['/blog/articles']);
-    await router.resolveCurrent();
+    await router.start();
     const { getAllByText, getByRole, queryByRole } = render(<App router={router} />);
 
     fireEvent.click(getAllByText('Read in modal')[0]!);
@@ -133,7 +133,7 @@ describe('react-blog example', () => {
 
   it('direct visit renders the canonical full article page instead of the modal', async () => {
     const router = createTestRouter(['/blog/articles/modal-routes?ref=direct#share']);
-    await router.resolveCurrent();
+    await router.start();
 
     const { findByText, getByText, queryByText, queryByRole } = render(<App router={router} />);
 
@@ -149,7 +149,7 @@ describe('react-blog example', () => {
 
   it('search and archive routes provide real blog discovery flows', async () => {
     const searchRouter = createTestRouter(['/blog/articles?query=auth']);
-    await searchRouter.resolveCurrent();
+    await searchRouter.start();
     const searchView = render(<App router={searchRouter} />);
 
     expect(searchView.getByText('Search results for “auth”')).toBeTruthy();
@@ -157,7 +157,7 @@ describe('react-blog example', () => {
     expect(searchView.queryByText('Modal routes without losing context')).toBeNull();
 
     const archiveRouter = createTestRouter(['/blog/archive']);
-    await archiveRouter.resolveCurrent();
+    await archiveRouter.start();
     const archiveView = render(<App router={archiveRouter} />);
 
     expect(archiveView.getByText('Article archive')).toBeTruthy();
@@ -167,7 +167,7 @@ describe('react-blog example', () => {
 
   it('restricted area redirects to login and returns through the redirect search parameter', async () => {
     const router = createTestRouter(['/blog/members']);
-    await router.resolveCurrent();
+    await router.start();
     const { getByText } = render(<App router={router} />);
 
     await waitFor(() => expect(getByText('Sign in to continue')).toBeTruthy());
@@ -186,7 +186,7 @@ describe('react-blog example', () => {
 
   it('logout sends the user to login with a redirect back to the protected location', async () => {
     const router = createTestRouter(['/blog/members']);
-    await router.resolveCurrent();
+    await router.start();
     const { getByText } = render(<App router={router} />);
 
     fireEvent.click(await waitFor(() => getByText('Login')));

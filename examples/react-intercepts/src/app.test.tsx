@@ -5,7 +5,7 @@ import { App, createTestRouter } from './app';
 describe('react-intercepts example', () => {
   it('configured interception renders destination in modal slot and preserves source page', async () => {
     const router = createTestRouter(['/gallery']);
-    await router.resolveCurrent();
+    await router.start();
     const { getByText } = render(<App router={router} />);
 
     fireEvent.click(getByText('Open configured modal'));
@@ -18,7 +18,7 @@ describe('react-intercepts example', () => {
 
   it('call-site interception and direct visit behavior are distinct', async () => {
     const router = createTestRouter(['/gallery']);
-    await router.resolveCurrent();
+    await router.start();
     const intercepted = render(<App router={router} />);
 
     fireEvent.click(intercepted.getByText('Open call-site modal'));
@@ -27,7 +27,7 @@ describe('react-intercepts example', () => {
     intercepted.unmount();
 
     const directRouter = createTestRouter(['/photos/2?source=direct#comments']);
-    await directRouter.resolveCurrent();
+    await directRouter.start();
     const direct = render(<App router={directRouter} />);
 
     expect(direct.getByText('Photo page 2')).toBeTruthy();

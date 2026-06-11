@@ -18,7 +18,7 @@ describe('router context', () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'home', path: '/', view: Page }] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(
       <RouterProvider router={router}>

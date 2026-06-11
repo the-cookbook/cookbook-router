@@ -107,7 +107,7 @@ describe('repository-level router flows', () => {
       middleware: [middleware],
       lifecycle: { afterNavigate },
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<RouterProvider router={router} fallback={<h1>Not found</h1>} />);
 
@@ -161,7 +161,7 @@ describe('repository-level router flows', () => {
 
   it('handles not found routes through provider fallback without mocking matching internals', async () => {
     const router = createMemoryRouter({ routes, initialEntries: ['/does-not-exist'] });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<RouterProvider router={router} fallback={<h1>Not found</h1>} />);
 
@@ -184,7 +184,7 @@ describe('repository-level router flows', () => {
 
   it('serializes static SSR state and hydrates a memory router to the same route', async () => {
     const staticRouter = createStaticRouter({ routes, url: '/users/9?tab=settings#profile' });
-    await staticRouter.resolveCurrent();
+    await staticRouter.start();
     const hydrationData = serializeRouterState(staticRouter);
     const hydratedRouter = createMemoryRouter({ routes, hydrationData, initialEntries: ['/'] });
 

@@ -96,7 +96,7 @@ describe('example application integration', () => {
         },
       ],
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<BasicApp router={router} />);
 
@@ -112,7 +112,7 @@ describe('example application integration', () => {
 
   it('react-slots renders fallback, matched slot routes, overrides, and disabled slots', async () => {
     const router = createMemoryRouter({ routes: slotRoutes, initialEntries: ['/dashboard'] });
-    await router.resolveCurrent();
+    await router.start();
     const view = render(<SlotsApp router={router} />);
 
     expect(view.getByText('Overview')).toBeTruthy();
@@ -131,7 +131,7 @@ describe('example application integration', () => {
 
   it('react-intercepts supports configured, call-site, back, forward, and direct visit behavior', async () => {
     const router = createMemoryRouter({ routes: interceptRoutes, initialEntries: ['/gallery'] });
-    await router.resolveCurrent();
+    await router.start();
     const view = render(<InterceptsApp router={router} />);
 
     fireEvent.click(view.getByText('Open configured modal'));
@@ -159,7 +159,7 @@ describe('example application integration', () => {
       routes: interceptRoutes,
       initialEntries: ['/photos/2?source=direct#details'],
     });
-    await direct.resolveCurrent();
+    await direct.start();
     const directView = render(<InterceptsApp router={direct} />);
     expect(directView.getByText('Photo page 2')).toBeTruthy();
     expect(directView.queryByRole('dialog', { name: 'Photo modal' })).toBeNull();
@@ -167,7 +167,7 @@ describe('example application integration', () => {
 
   it('react-blog proves blog post modal interception and canonical full page direct visits', async () => {
     const router = createMemoryRouter({ routes: blogRoutes, initialEntries: ['/blog'] });
-    await router.resolveCurrent();
+    await router.start();
     const view = render(<BlogApp router={router} />);
 
     fireEvent.click(view.getAllByText('Read in modal')[0]);
@@ -188,7 +188,7 @@ describe('example application integration', () => {
     view.unmount();
 
     const direct = createMemoryRouter({ routes: blogRoutes, initialEntries: [hrefAfterModal] });
-    await direct.resolveCurrent();
+    await direct.start();
     const directView = render(<BlogApp router={direct} />);
 
     expect(await directView.findByText(/Full page route for/, {}, { timeout: 3000 })).toBeTruthy();
@@ -205,7 +205,7 @@ describe('example application integration', () => {
       routes: dashboardRoutes,
       initialEntries: ['/overview'],
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<DashboardApp router={router} />);
 
@@ -301,7 +301,7 @@ describe('example application integration', () => {
       routes: ssrRoutes,
       url: '/ssr/users/11?tab=settings',
     });
-    await staticRouter.resolveCurrent();
+    await staticRouter.start();
     const hydrationData = deserializeRouterState(serializeRouterState(staticRouter));
     const clientRouter = createMemoryRouter({ routes: ssrRoutes, hydrationData });
     const container = document.createElement('div');

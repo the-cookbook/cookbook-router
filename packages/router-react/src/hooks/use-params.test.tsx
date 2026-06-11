@@ -14,7 +14,7 @@ describe('useParams', () => {
       routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', view: Page }] as const),
       initialEntries: ['/users/42'],
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );
@@ -46,7 +46,7 @@ describe('useParams', () => {
       ),
       initialEntries: ['/articles/urlkit-react'],
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );

@@ -13,7 +13,7 @@ describe('useHref', () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', view: Page }] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );
@@ -30,7 +30,7 @@ describe('useHref', () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', view: Page }] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );
@@ -52,7 +52,7 @@ describe('useHref', () => {
       ] as const),
       url: { arrayFormat: 'repeat' },
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );
@@ -80,7 +80,7 @@ describe('useHref', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );

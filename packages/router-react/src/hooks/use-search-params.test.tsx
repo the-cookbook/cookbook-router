@@ -14,7 +14,7 @@ describe('useSearchParams', () => {
       routes: defineRoutes([{ id: 'user', path: '/page', view: Page }] as const),
       initialEntries: ['/page?tab=settings&empty='],
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );
@@ -42,7 +42,7 @@ describe('useSearchParams', () => {
       initialEntries: ['/products?page=2&tags=router&tags=typescript'],
       url: { arrayFormat: 'repeat' },
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );
@@ -66,7 +66,7 @@ describe('useSearchParams', () => {
       initialEntries: ['/products?tags=router,typescript'],
       url: { arrayFormat: 'repeat' },
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );

@@ -19,7 +19,7 @@ describe('renderReactRouteMatch', () => {
       routes: defineRoutes([{ id: 'page', path: '/page', view: Page }] as const),
       initialEntries: ['/page'],
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<>{renderReactRouteMatch(router.state.match, null)}</>);
 

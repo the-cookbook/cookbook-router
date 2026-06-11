@@ -24,7 +24,7 @@ describe('useMatches', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );

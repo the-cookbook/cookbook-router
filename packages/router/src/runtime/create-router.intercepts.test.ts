@@ -218,7 +218,7 @@ describe('createRouter intercepting routes', () => {
 
   it('does not intercept direct visits or static refresh resolution', async () => {
     const router = createMemoryRouter({ routes, initialEntries: ['/blog/hello-world'] });
-    const state = await router.resolveCurrent();
+    const state = await router.start();
 
     expect(state.match?.route.id).toBe('blog.posts.show');
     expect(state.match?.intercepted).toBeUndefined();

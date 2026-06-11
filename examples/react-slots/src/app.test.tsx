@@ -5,7 +5,7 @@ import { App, createTestRouter } from './app';
 describe('react-slots example', () => {
   it('redirects the entry route to the dashboard overview', async () => {
     const router = createTestRouter(['/']);
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<App router={router} />);
 
@@ -15,7 +15,7 @@ describe('react-slots example', () => {
 
   it('renders default slot fallback with typed outlet context', async () => {
     const router = createTestRouter(['/dashboard']);
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<App router={router} />);
 
@@ -26,7 +26,7 @@ describe('react-slots example', () => {
 
   it('renders slot route, child slot override, and declaration-only empty slot behavior', async () => {
     const router = createTestRouter(['/dashboard/activity']);
-    await router.resolveCurrent();
+    await router.start();
     const activity = render(<App router={router} />);
 
     expect(activity.getByText('Activity')).toBeTruthy();

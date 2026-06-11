@@ -59,7 +59,7 @@ export function RouterProvider(props: RouterProviderProps): ReactElement {
     }
 
     const unregister = props.router.useMiddleware(props.middleware);
-    void props.router.resolveCurrent();
+    void props.router.start();
 
     return unregister;
   }, [props.router, props.middleware]);
@@ -69,7 +69,7 @@ export function RouterProvider(props: RouterProviderProps): ReactElement {
       return;
     }
 
-    void props.router.resolveCurrent();
+    void props.router.start();
   }, [props.router, redirecting, state.location.href]);
 
   useLayoutEffect(() => {
@@ -117,7 +117,7 @@ function syncHydratedBrowserHash(router: Router, state: RouterState): void {
     return;
   }
 
-  void router.resolveCurrent();
+  void router.start();
 }
 
 function renderRouterState(
@@ -134,7 +134,7 @@ function renderRouterState(
       return fallback;
     }
 
-    return <ErrorFallback error={error} reset={() => void props.router.resolveCurrent()} />;
+    return <ErrorFallback error={error} reset={() => void props.router.start()} />;
   }
 
   return renderReactRouteMatch(activeMatch, fallback, {

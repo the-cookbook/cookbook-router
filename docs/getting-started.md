@@ -30,7 +30,7 @@ Create `src/routes.tsx`.
 
 ```tsx
 import { defineRoutes } from '@cookbook/router';
-import { HomePage, RootLayout, UserPage } from './pages';
+import { HomePage, RootLayout, UserPage, NotFoundPage } from './pages';
 
 export const routes = defineRoutes([
   {
@@ -56,6 +56,14 @@ export const routes = defineRoutes([
         meta: {
           title: 'User',
           requiresAuth: true,
+        },
+      },
+      {
+        id: 'not-found',
+        path: '{*path}',
+        view: NotFoundPage,
+        meta: {
+          title: 'Not found',
         },
       },
     ],
@@ -103,6 +111,10 @@ export function UserPage() {
     </article>
   );
 }
+
+export function NotFoundPage() {
+  return <h1>Not found</h1>;
+}
 ```
 
 ## Create the router
@@ -129,14 +141,16 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from '@cookbook/router-react';
 import { router } from './router';
 
-await router.resolveCurrent();
-
-createRoot(document.getElementById('root')!).render(
-  <RouterProvider router={router} fallback={<h1>Not found</h1>} />,
-);
+router
+  .start()
+  .then(() =>
+    createRoot(document.getElementById('root')!).render(<RouterProvider router={router} />),
+  );
 ```
 
-`resolveCurrent()` resolves the initial browser URL before the first render. This matters for route redirects, canonical trailing-slash cleanup, middleware redirects, and SSR-style hydration data.
+`start()` resolves the router's current history or static location before the
+first render, so redirects, canonical URL cleanup, middleware, lifecycle hooks,
+and SSR hydration state are applied before your UI mounts.
 
 ## Generate contracts
 

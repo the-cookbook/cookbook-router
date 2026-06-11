@@ -10,4 +10,4 @@ if (!rootElement) {
 
 const router = createAppRouter();
 
-void router.resolveCurrent().then(() => createRoot(rootElement).render(<App router={router} />));
+void router.start().then(() => createRoot(rootElement).render(<App router={router} />));

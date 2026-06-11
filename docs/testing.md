@@ -74,7 +74,7 @@ const router = createMemoryRouter({
   initialEntries: ['/'],
 });
 
-await router.resolveCurrent();
+await router.start();
 await router.navigate.to({ route: 'users.show', params: { id: 42 } });
 
 expect(router.state.location.href).toBe('/users/42');
@@ -86,7 +86,7 @@ Render a real provider.
 
 ```tsx
 const router = createMemoryRouter({ routes, initialEntries: ['/users/42'] });
-await router.resolveCurrent();
+await router.start();
 
 const view = render(<RouterProvider router={router} fallback={<h1>Not found</h1>} />);
 expect(view.getByText('User 42')).toBeTruthy();

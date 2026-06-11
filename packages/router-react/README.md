@@ -56,7 +56,7 @@ const routes = defineRoutes([
 ] as const);
 
 const router = createRouter({ routes });
-await router.resolveCurrent();
+await router.start();
 
 export function App() {
   return <RouterProvider router={router} fallback={<h1>Not found</h1>} />;
@@ -344,7 +344,7 @@ import { createStaticRouter, stringifyRouterState } from '@cookbook/router';
 import { StaticRouterProvider } from '@cookbook/router-react';
 
 const router = createStaticRouter({ routes, url: request });
-await router.resolveCurrent();
+await router.start();
 
 const app = <StaticRouterProvider router={router} fallback={<NotFoundPage />} />;
 const hydrationData = stringifyRouterState(router);
@@ -364,7 +364,7 @@ const router = createRouter({
 hydrateRoot(root, <RouterProvider router={router} />);
 ```
 
-Do not call `router.resolveCurrent()` before `hydrateRoot()` when hydrating server HTML.
+Do not call `router.start()` before `hydrateRoot()` when hydrating server HTML.
 HTTP requests do not include URL fragments, so the server may serialize
 `/articles/typed-routing?preview=true` while the browser address bar is
 `/articles/typed-routing?preview=true#summary`. `RouterProvider` keeps the
@@ -380,7 +380,7 @@ See [SSR](../../docs/ssr.md).
 - Route `loading`, `layout.loading`, and provider `loadingFallback` integrate with React Suspense. Layout loading fallbacks render inside that layout's outlet position so the same layout instance stays mounted while its route view or child routes load. The provider keeps the boundary shape stable around route content so unchanged layouts are reconciled instead of being remounted during navigation.
 - Suspense and error fallbacks are memoized by fallback view and owner route. Changing URL state or navigating between routes that reuse the same layout does not recreate fallback elements unless the active fallback actually changes.
 - Route `error`, `layout.error`, and provider `errorFallback` integrate with React error boundaries. Route-level fallbacks are local to that route; layout fallbacks are shared by the layout tree.
-- Call `router.resolveCurrent()` before first render when initial redirects, middleware, or lifecycle hooks should complete before UI appears.
+- Call `router.start()` before first render when initial redirects, middleware, or lifecycle hooks should complete before UI appears.
 - Outlet context is local to the nearest rendered `Outlet` or `Slot`.
 - URL state should use params, search, and hash rather than outlet context.
 

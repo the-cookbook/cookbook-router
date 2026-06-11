@@ -80,10 +80,10 @@ For entry redirects such as:
 }
 ```
 
-call `router.resolveCurrent()` before the initial render:
+call `router.start()` before the initial render:
 
 ```tsx
-await router.resolveCurrent();
+await router.start();
 createRoot(root).render(<RouterProvider router={router} fallback={<NotFound />} />);
 ```
 

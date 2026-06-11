@@ -151,7 +151,7 @@ export function createRouterRuntime(
     useMiddleware(middleware) {
       return middlewareRegistry.useMiddleware(middleware);
     },
-    resolveCurrent() {
+    start() {
       return transitionTo(options.history.location, 'replace', false);
     },
     serialize() {

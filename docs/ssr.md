@@ -28,7 +28,7 @@ export async function renderRequest(url: string | Request) {
     url,
   });
 
-  await router.resolveCurrent();
+  await router.start();
 
   const appHtml = renderToString(
     <StaticRouterProvider router={router} fallback={<h1>Not found</h1>} />,
@@ -106,7 +106,7 @@ For a direct request such as `/articles/typed-routing?preview=true#summary`, the
 server can only render and serialize `/articles/typed-routing?preview=true`.
 During React hydration, `RouterProvider` intentionally keeps that serialized
 server location for the first client render, then syncs the browser hash after
-hydration commits. Do not call `router.resolveCurrent()` before `hydrateRoot()`;
+hydration commits. Do not call `router.start()` before `hydrateRoot()`;
 doing so can make the client render `#summary` while the server HTML still says
 there is no hash.
 
@@ -141,7 +141,7 @@ Apps with production asset manifests should emit built CSS asset URLs instead.
 
 ## Redirects and external URLs
 
-Static history cannot mutate browser location. Internal redirects can still resolve router state during `resolveCurrent()`. External redirects should be represented in the server response by your server framework, because a static router cannot call `window.location`.
+Static history cannot mutate browser location. Internal redirects can still resolve router state during `start()`. External redirects should be represented in the server response by your server framework, because a static router cannot call `window.location`.
 
 For browser runtime external redirects, the browser history implementation delegates to `window.location.assign()` or `window.location.replace()`.
 

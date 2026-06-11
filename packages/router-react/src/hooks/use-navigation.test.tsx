@@ -13,7 +13,7 @@ describe('useNavigation', () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'home', path: '/', view: Page }] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );

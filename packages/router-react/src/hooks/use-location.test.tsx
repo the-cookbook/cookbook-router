@@ -14,7 +14,7 @@ describe('useLocation', () => {
       routes: defineRoutes([{ id: 'page', path: '/page', view: Page }] as const),
       initialEntries: ['/page?tab=a#top'],
     });
-    await router.resolveCurrent();
+    await router.start();
     const wrapper = ({ children }: { children: import('react').ReactNode }) => (
       <RouterProvider router={router}>{children}</RouterProvider>
     );

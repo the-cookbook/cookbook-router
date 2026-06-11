@@ -174,8 +174,13 @@ export interface Router {
   block(blocker: RouterBlocker): () => void;
   /** Adds runtime middleware for as long as the returned cleanup is retained. */
   useMiddleware(middleware: readonly Middleware[]): () => void;
-  /** Resolves the current history location; useful for bootstrapping direct entry. */
-  resolveCurrent(): Promise<RouterState>;
+  /**
+   * Starts the router by resolving the current history or static location.
+   *
+   * Runs redirects, middleware, and lifecycle hooks, then commits the resolved
+   * state. Calling it again re-resolves the current location.
+   */
+  start(): Promise<RouterState>;
   /** Returns hydration-safe state for SSR serialization. */
   serialize(): SerializedRouterState;
 }

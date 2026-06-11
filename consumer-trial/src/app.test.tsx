@@ -5,7 +5,7 @@ import { createTrialMemoryRouter } from './router';
 
 async function renderAt(path: string, authenticated = true) {
   const router = createTrialMemoryRouter([path], { authenticated });
-  await router.resolveCurrent();
+  await router.start();
   render(<App router={router} />);
   return router;
 }
@@ -34,7 +34,7 @@ describe('consumer trial app', () => {
 
   it('runs middleware registered on RouterProvider', async () => {
     const router = createTrialMemoryRouter(['/'], { authenticated: true });
-    await router.resolveCurrent();
+    await router.start();
     render(
       <App
         router={router}

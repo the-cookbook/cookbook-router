@@ -17,7 +17,7 @@ describe('NavLink', () => {
       ] as const),
       initialEntries: ['/settings'],
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(
       <RouterProvider router={router}>
@@ -36,7 +36,7 @@ describe('NavLink', () => {
       ] as const),
       initialEntries: ['/settings'],
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(
       <RouterProvider router={router}>
@@ -56,7 +56,7 @@ describe('NavLink', () => {
       ] as const),
       initialEntries: ['/settings'],
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(
       <RouterProvider router={router}>
@@ -71,7 +71,7 @@ describe('NavLink', () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'home', path: '/', view: Page }] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(
       <RouterProvider router={router}>
@@ -89,7 +89,7 @@ describe('NavLink', () => {
       routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', view: Page }] as const),
       initialEntries: ['/users/1?tab=settings'],
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(
       <RouterProvider router={router}>
@@ -111,7 +111,7 @@ describe('NavLink', () => {
       routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', view: Page }] as const),
       initialEntries: ['/users/1?tab=settings'],
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(
       <RouterProvider router={router}>
@@ -134,7 +134,7 @@ describe('NavLink', () => {
       routes: defineRoutes([{ id: 'user', path: '/users/{id:int}', view: Page }] as const),
       initialEntries: ['/users/1?tab=settings'],
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(
       <RouterProvider router={router}>
@@ -165,7 +165,7 @@ describe('NavLink', () => {
       initialEntries: ['/products?tags=router%2Ctypescript'],
       url: { arrayFormat: 'repeat' },
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(
       <RouterProvider router={router}>
@@ -196,7 +196,7 @@ describe('NavLink', () => {
       ] as const),
       initialEntries: ['/listing'],
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(
       <RouterProvider router={router}>
@@ -217,7 +217,7 @@ describe('NavLink', () => {
         { id: 'settings', path: '/settings', view: Page },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
     const navigate = vi.spyOn(router.navigate, 'to');
 
     const { getByText } = render(

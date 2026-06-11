@@ -45,7 +45,7 @@ describe('Outlet', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<RouterProvider router={router} />);
 
@@ -56,7 +56,7 @@ describe('Outlet', () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'page', path: '/', view: MissingContextPage }] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<RouterProvider router={router} />);
 
@@ -67,7 +67,7 @@ describe('Outlet', () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'page', path: '/', view: StrictMissingPage }] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     expect(() => render(<RouterProvider router={router} />)).toThrow(
       'Outlet context for route "dashboard.home" was requested in strict mode',
@@ -78,7 +78,7 @@ describe('Outlet', () => {
     const router = createMemoryRouter({
       routes: defineRoutes([{ id: 'page', path: '/', view: LeafPageWithOutlet }] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText, queryAllByText } = render(<RouterProvider router={router} />);
 

@@ -149,7 +149,7 @@ async function createRouter(initialEntries: readonly string[]): Promise<Router> 
       },
     ] as const),
   });
-  await router.resolveCurrent();
+  await router.start();
   return router;
 }
 
@@ -222,7 +222,7 @@ describe('Slot', () => {
         { id: 'modal.target', path: '/modal-target', view: ModalPage },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<RouterProvider router={router} />);
 
@@ -260,7 +260,7 @@ describe('Slot', () => {
         { id: 'modal.target', path: '/modal-target', view: ModalPage },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<RouterProvider router={router} />);
 
@@ -339,7 +339,7 @@ describe('Slot', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<RouterProvider router={router} />);
 
@@ -379,7 +379,7 @@ describe('Slot', () => {
       ] as const),
       initialEntries: ['/blog'],
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText, queryByText } = render(
       <RouterProvider
@@ -419,7 +419,7 @@ describe('Slot', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText, queryByText } = render(<RouterProvider router={router} />);
 
@@ -458,7 +458,7 @@ describe('Slot route provider fallbacks', () => {
         },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const { getByText } = render(<RouterProvider router={router} errorFallback={GlobalError} />);
 
@@ -504,7 +504,7 @@ describe('Slot route provider fallbacks', () => {
         { id: 'modal.target', path: '/modal-target', view: ModalPage },
       ] as const),
     });
-    await router.resolveCurrent();
+    await router.start();
 
     const view = render(<RouterProvider router={router} errorFallback={GlobalError} />);
 

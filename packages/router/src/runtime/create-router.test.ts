@@ -109,7 +109,7 @@ describe('create-router', () => {
       ],
     });
 
-    await redirectRouter.resolveCurrent();
+    await redirectRouter.start();
 
     expect(redirectRouter.state.location.href).toBe('/login?redirect=%2Fprivate');
     expect(redirectHistory.location.href).toBe('/login?redirect=%2Fprivate');
@@ -124,7 +124,7 @@ describe('create-router', () => {
       ],
     });
 
-    await rewriteRouter.resolveCurrent();
+    await rewriteRouter.start();
 
     expect(rewriteRouter.state.location.href).toBe('/login?redirect=%2Fprivate');
     expect(rewriteRouter.state.match?.id).toBe('login');
