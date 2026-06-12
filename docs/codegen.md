@@ -328,7 +328,7 @@ Include the generated `.cookbook-router` (or your custom name) directory in `tsc
 
 ```json
 {
-  "include": ["src", ".cookbook-router"]
+  "include": ["src", ".cookbook-router/*"]
 }
 ```
 

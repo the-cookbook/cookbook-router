@@ -10,5 +10,5 @@
     },
     "types": ["vite/client"]
   },
-  "include": ["src", ".cookbook-router/contracts.ts", ".cookbook-router/register.d.ts"]
+  "include": ["src", ".cookbook-router/*"]
 }

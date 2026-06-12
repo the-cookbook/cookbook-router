@@ -175,7 +175,7 @@ Add the generated directory to `tsconfig.json`.
 
 ```json
 {
-  "include": ["src", ".cookbook-router"]
+  "include": ["src", ".cookbook-router/*"]
 }
 ```
 

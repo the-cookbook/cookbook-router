@@ -271,7 +271,7 @@ Add the generated files to your `tsconfig.json` file.
 
 ```json
 {
-  "include": ["src", ".cookbook-router/contracts.ts", ".cookbook-router/register.d.ts"]
+  "include": ["src", ".cookbook-router/*"]
 }
 ```
 
@@ -302,7 +302,7 @@ Add the generated directory to your TypeScript program.
 
 ```json
 {
-  "include": ["src", ".cookbook-router"]
+  "include": ["src", ".cookbook-router/*"]
 }
 ```
 

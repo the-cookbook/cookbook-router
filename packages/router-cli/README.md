@@ -145,7 +145,7 @@ Include generated files in the app `tsconfig.json`:
 
 ```json
 {
-  "include": ["src", ".cookbook-router/contracts.ts", ".cookbook-router/register.d.ts"]
+  "include": ["src", ".cookbook-router/*"]
 }
 ```
 

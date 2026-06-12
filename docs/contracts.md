@@ -54,7 +54,7 @@ Include the generated files in `tsconfig.json`:
 
 ```json
 {
-  "include": ["src", ".cookbook-router/contracts.ts", ".cookbook-router/register.d.ts"]
+  "include": ["src", ".cookbook-router/*"]
 }
 ```
 
