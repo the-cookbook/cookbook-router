@@ -10,6 +10,7 @@ The examples are executable documentation for common routing patterns. Each exam
 - [`react-intercepts`](#react-intercepts)
 - [`react-blog`](#react-blog)
 - [`react-ssr`](#react-ssr)
+- [Scenario recipes](#scenario-recipes)
 - [When examples look stale](#when-examples-look-stale)
 
 ## Run examples
@@ -105,6 +106,10 @@ Shows:
 - server-included CSS
 
 Use this example when wiring SSR into a framework or custom Vite server.
+
+## Scenario recipes
+
+Use [`docs/recipes.md`](./recipes.md) for scenario-driven usage patterns such as React app bootstrap, protected routes, login redirects, metadata, URL filters, unknown search, hash tabs, code splitting, prefetching, route preload, intercepts, navigation blocking, slots, current-route refresh, memory-router tests, SSR response mapping, generated contracts, and custom path constraints.
 
 ## When examples look stale
 

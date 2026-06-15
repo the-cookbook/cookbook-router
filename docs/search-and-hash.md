@@ -723,7 +723,7 @@ export function ArticlePage() {
 }
 ```
 
-`useHashParams()` and `useHash()` return the parsed hash value without the leading `#`, or `null` when no hash is present.
+`useHashParams()` returns the parsed hash value without the leading `#`, or `null` when no hash is present.
 
 ## Runtime behavior
 

@@ -154,6 +154,18 @@ For browser runtime external redirects, the browser history implementation deleg
 
 ## Troubleshooting SSR
 
+### Static rendering throws because the router was not started
+
+`StaticRouterProvider` requires a resolved static router. Call `await router.start()` before `renderToString()` or any other static render. Register SSR middleware on `createStaticRouter()` before startup so middleware and lifecycle hooks finish before HTML and hydration state are produced.
+
+```tsx
+const router = createStaticRouter({ routes, url: request.url });
+
+await router.start();
+
+const html = renderToString(<StaticRouterProvider router={router} />);
+```
+
 ### Dev server returns an empty root div
 
 Your dev server is probably serving static `index.html` instead of calling the SSR renderer. Add a Vite middleware/plugin or framework SSR entry that calls `renderRequest()`.

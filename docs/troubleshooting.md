@@ -114,9 +114,9 @@ createRouter({ routes, pathOptions: { prune: false } });
 A route such as `/posts/{slug:slug}` only validates after `slug` has been registered.
 
 ```ts
-import { createConstraint, createRouter, defineRoutes } from '@cookbook/router';
+import { createPathConstraint, createRouter, defineRoutes } from '@cookbook/router';
 
-const slug = createConstraint({
+const slug = createPathConstraint({
   parse: (paramName, value) => {
     if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
       throw new Error(`Parameter "${paramName}" must be a valid slug.`);
@@ -150,6 +150,22 @@ createRouter({ routes, basename: '/foo' });
 Do not include the basename in route paths. Use `/blog`, not `/foo/blog`.
 
 Links should generate `/foo/...`, while route config and intercept patterns remain app-relative.
+
+## Slot error renders the route fallback instead of the slot fallback
+
+**Symptom**
+A sidebar, header, modal, or other slot throws during render and the route/provider error fallback replaces a larger part of the page than expected.
+
+**Cause**
+`<Slot />` was rendered without `errorFallback`, so slot errors intentionally bubble to the existing route/provider error boundary.
+
+**Fix**
+Pass a slot-local fallback. Use `errorFallback={null}` to render nothing, an inline function for custom UI, or a fallback component.
+
+```tsx
+<Slot name="modal" errorFallback={null} />
+<Slot name="modal" errorFallback={ModalError} />
+```
 
 ## Intercept throws missing configuration
 

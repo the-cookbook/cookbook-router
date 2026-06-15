@@ -141,16 +141,10 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from '@cookbook/router-react';
 import { router } from './router';
 
-router
-  .start()
-  .then(() =>
-    createRoot(document.getElementById('root')!).render(<RouterProvider router={router} />),
-  );
+createRoot(document.getElementById('root')!).render(<RouterProvider router={router} />);
 ```
 
-`start()` resolves the router's current history or static location before the
-first render, so redirects, canonical URL cleanup, middleware, lifecycle hooks,
-and SSR hydration state are applied before your UI mounts.
+`RouterProvider` starts the router automatically by default. Initial redirects, canonical URL cleanup, provider middleware, and lifecycle hooks resolve through the provider-owned startup path. Use `router.refresh()` later when you intentionally need to re-resolve the current location after a runtime condition changes.
 
 ## Generate contracts
 
@@ -171,17 +165,17 @@ Run generation:
 pnpm generate:routes
 ```
 
-Add the generated directory to `tsconfig.json`.
+Add the generated contract and registration files to `tsconfig.json`.
 
 ```json
 {
-  "include": ["src", ".cookbook-router/*"]
+  "include": ["src", ".cookbook-router/contracts.ts", ".cookbook-router/register.d.ts"]
 }
 ```
 
-Once `.cookbook-router` is included in your TypeScript program, it augments `@cookbook/router` with the generated route contracts.
+Once `.cookbook-router/register.d.ts` is included in your TypeScript program, it augments `@cookbook/router` and `@cookbook/router-react` with the generated route contracts from `.cookbook-router/contracts.ts`.
 
-Router APIs can then infer valid route IDs, exact route paths, path params, search values, hash values, and route metadata from the generated public types. Path params follow the generated constraint contract: numeric built-in constraints such as `{id:int}`, `{price:decimal}`, `{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` become `number`; unconstrained params, wildcards, string-shaped constraints such as `uuid`, `regex`, `list`, `minlength`, `maxlength`, and custom constraints are exposed as `string` unless combined with a numeric built-in constraint.
+Router APIs can then infer valid route IDs, exact route paths, path params, search values, hash values, and route metadata from the generated public types. Path params follow the generated constraint contract: numeric built-in constraints such as `{id:int}`, `{price:decimal}`, `{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` become `number`; unconstrained params, string-shaped constraints such as `uuid`, `regex`, `list`, `minlength`, `maxlength`, and custom constraints are exposed as `string` unless combined with a numeric built-in constraint. Wildcards such as `{*path}` are parsed as `readonly string[]`; generated route URL input accepts `string | readonly string[]` for wildcard params.
 
 ## Use typed navigation
 
@@ -239,7 +233,7 @@ For production route handling, prefer an explicit catch-all route:
 }
 ```
 
-A catch-all route participates in normal Cookbook Router matching. That means it
+A catch-all route participates in normal Cookbook Router matching. Static and dynamic routes rank above catch-all wildcards, so `/overview` and `/users/{id}` are checked before a root `/{*path}` not-found route. That means it
 can use the same routing features as any other route, including layouts,
 middleware, redirects, rewrites, lifecycle hooks, metadata, slots, and generated
 contracts.

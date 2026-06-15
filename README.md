@@ -85,11 +85,19 @@ Cookbook Router treats routes as contracts: validate the input, run the rules, a
 
 ## Packages
 
-| Package                  | Purpose                                                                                                                                                                                                 | Package docs                              | API reference                           |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | --------------------------------------- |
-| `@cookbook/router`       | Route definitions, validation, normalization, matching, href generation, middleware, lifecycle, SSR, histories, slots, intercepts, redirects, renderer-neutral traversal, and generated contract types. | [README](packages/router/README.md)       | [API](docs/api.md#cookbookrouter)       |
-| `@cookbook/router-react` | React provider, links, nav links, outlets, slots, hooks, outlet context, unload blockers, and static rendering integration.                                                                             | [README](packages/router-react/README.md) | [API](docs/api.md#cookbookrouter-react) |
-| `@cookbook/router-cli`   | Contract generation, manifest generation, route validation, static route extraction, watch mode, and programmatic generation APIs.                                                                      | [README](packages/router-cli/README.md)   | [API](docs/api.md#cookbookrouter-cli)   |
+| Package                           | Purpose                                                                                                                                                                                                 | Package docs                                       | API reference                           |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | --------------------------------------- |
+| `@cookbook/router`                | Route definitions, validation, normalization, matching, href generation, middleware, lifecycle, SSR, histories, slots, intercepts, redirects, renderer-neutral traversal, and generated contract types. | [README](packages/router/README.md)                | [API](docs/api.md#cookbookrouter)       |
+| `@cookbook/router-react`          | React provider, links, nav links, outlets, slots, hooks, outlet context, unload blockers, and static rendering integration.                                                                             | [README](packages/router-react/README.md)          | [API](docs/api.md#cookbookrouter-react) |
+| `@cookbook/router-cli`            | Contract generation, manifest generation, route validation, static route extraction, watch mode, and programmatic generation APIs.                                                                      | [README](packages/router-cli/README.md)            | [API](docs/api.md#cookbookrouter-cli)   |
+| `@cookbook/router-vite-plugin`    | Vite plugin that runs the shared route artifact generator before dev/build compilation.                                                                                                                 | [README](packages/router-vite-plugin/README.md)    | —                                       |
+| `@cookbook/router-webpack-plugin` | Webpack plugin that runs the shared route artifact generator before normal and watch compilation.                                                                                                       | [README](packages/router-webpack-plugin/README.md) | —                                       |
+| `@cookbook/router-rspack-plugin`  | Rspack plugin that wraps the Webpack-compatible generator integration with an explicit Rspack package/import.                                                                                           | [README](packages/router-rspack-plugin/README.md)  | —                                       |
+| `@cookbook/router-rollup-plugin`  | Rollup/Rolldown plugin that runs the shared route artifact generator from `buildStart`.                                                                                                                 | [README](packages/router-rollup-plugin/README.md)  | —                                       |
+| `@cookbook/router-esbuild-plugin` | esbuild plugin that runs the shared route artifact generator from `onStart`.                                                                                                                            | [README](packages/router-esbuild-plugin/README.md) | —                                       |
+| `@cookbook/router-bun-plugin`     | Bun bundler plugin that runs the shared route artifact generator from `PluginBuilder.onStart`.                                                                                                          | [README](packages/router-bun-plugin/README.md)     | —                                       |
+
+All builder plugins use the same `@cookbook/router-cli` generation runner and config discovery rules. They accept `cwd`, `configFile`, `routeFiles`, and `outDir` where supported by the target builder lifecycle.
 
 The root package does not expose runtime APIs. Use package-root imports from the packages above and avoid deep imports from `src` or `dist`.
 
@@ -134,6 +142,17 @@ pnpm add -D @cookbook/router-cli
 npm install -D @cookbook/router-cli
 
 yarn add -D @cookbook/router-cli
+```
+
+Install a build plugin when you want generation integrated into your bundler instead of a separate watch command.
+
+```sh
+pnpm add -D @cookbook/router-vite-plugin
+pnpm add -D @cookbook/router-webpack-plugin
+pnpm add -D @cookbook/router-rspack-plugin
+pnpm add -D @cookbook/router-rollup-plugin
+pnpm add -D @cookbook/router-esbuild-plugin
+bun add -d @cookbook/router-bun-plugin
 ```
 
 Use this. It keeps the punch, keeps the monorepo story, uses `view`, uses a catch-all route, and does **not** reduce Quick start back into boring docs.
@@ -271,7 +290,7 @@ Add the generated files to your `tsconfig.json` file.
 
 ```json
 {
-  "include": ["src", ".cookbook-router/*"]
+  "include": ["src", ".cookbook-router/contracts.ts", ".cookbook-router/register.d.ts"]
 }
 ```
 
@@ -302,7 +321,7 @@ Add the generated directory to your TypeScript program.
 
 ```json
 {
-  "include": ["src", ".cookbook-router/*"]
+  "include": ["src", ".cookbook-router"]
 }
 ```
 
@@ -310,11 +329,11 @@ Generate the files. Register the contracts. Let TypeScript do its job.
 
 ### What gets generated
 
-| File            | Purpose                                                                                        |
-| --------------- | ---------------------------------------------------------------------------------------------- |
-| `contracts.ts`  | Route IDs, paths, params, search, hash, metadata, outlet context, and router contract types.   |
-| `register.d.ts` | Registers generated contracts through `@cookbook/router` module augmentation.                  |
-| `manifest.json` | Tooling-friendly route manifest with route IDs, paths, hierarchy, and route-level URL options. |
+| File            | Purpose                                                                                                    |
+| --------------- | ---------------------------------------------------------------------------------------------------------- |
+| `contracts.ts`  | Route IDs, paths, params, search, hash, metadata, outlet context, and router contract types.               |
+| `register.d.ts` | Registers generated contracts through `@cookbook/router` and `@cookbook/router-react` module augmentation. |
+| `manifest.json` | Tooling-friendly route manifest with route IDs, paths, hierarchy, and route-level URL options.             |
 
 ### Recommended scripts
 
@@ -558,9 +577,9 @@ Some parameters are not just parameters. They carry the rules of your business: 
 ### Create a constraint
 
 ```ts
-import { createConstraint, createRouter, defineRoutes } from '@cookbook/router';
+import { createPathConstraint, createRouter, defineRoutes } from '@cookbook/router';
 
-const slug = createConstraint({
+const slug = createPathConstraint({
   parse: (paramName, value) => {
     if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
       throw new Error(`Parameter "${paramName}" must be a valid slug.`);
@@ -619,4 +638,3 @@ pnpm --filter react-dashboard dev
 | Render on the server              | [SSR](docs/ssr.md)                             | [React integration](docs/react-integration.md#static-provider), [API reference](docs/api.md#serialization-apis) |
 | Test routing behavior             | [Testing](docs/testing.md)                     | [Troubleshooting](docs/troubleshooting.md), [API reference](docs/api.md)                                        |
 | Debug a failing route             | [Troubleshooting](docs/troubleshooting.md)     | [Testing](docs/testing.md), [Route validation errors](docs/route-validation-errors.md)                          |
-| Contribute to the repository      | [Developing](docs/developing.md)               | [Contributing](CONTRIBUTING.md), [Git hooks](docs/git-hooks.md), [Releasing](docs/releasing.md)                 |

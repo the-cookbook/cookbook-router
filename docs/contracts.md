@@ -32,7 +32,7 @@ Output:
   manifest.json
 ```
 
-`contracts.ts` contains route-specific interfaces and constants. `register.d.ts` augments `@cookbook/router`. `manifest.json` is a tooling-friendly route list and preserves route-level `url` options such as `arrayFormat`, `defaults`, `invalidSearch`, `invalidHash`, and `unknownSearch` when present.
+`contracts.ts` contains route-specific type-only interfaces. `register.d.ts` augments `@cookbook/router` and `@cookbook/router-react`. `manifest.json` is a tooling-friendly route list and preserves route-level `url` options such as `arrayFormat`, `defaults`, `invalidSearch`, `invalidHash`, and `unknownSearch` when present.
 
 ## Register contracts
 
@@ -47,6 +47,12 @@ declare module '@cookbook/router' {
   }
 }
 
+declare module '@cookbook/router-react' {
+  interface Register {
+    contracts: RouterContracts;
+  }
+}
+
 export {};
 ```
 
@@ -54,7 +60,7 @@ Include the generated files in `tsconfig.json`:
 
 ```json
 {
-  "include": ["src", ".cookbook-router/*"]
+  "include": ["src", ".cookbook-router/contracts.ts", ".cookbook-router/register.d.ts"]
 }
 ```
 
@@ -137,6 +143,20 @@ export interface RouteSearch {
 
 Runtime match state, React hooks, middleware, and lifecycle contexts receive the same URLKit-parsed values.
 
+The generator also emits `RouteSearchInput` for href/navigation inputs. Fields with defaults are optional for navigation even when parsed state always includes them.
+
+```ts
+export interface RouteSearchInput {
+  'blog.articles': {
+    query?: string;
+    page?: number;
+    filters?: readonly string[];
+    publishedOn?: Date;
+    startsAt?: Date;
+  };
+}
+```
+
 ## Hash
 
 Hash values generate a union.
@@ -154,11 +174,11 @@ Generated contract:
 
 ```ts
 export interface RouteHash {
-  'articles.show': 'comments' | 'share';
+  'articles.show': 'comments' | 'share' | undefined;
 }
 ```
 
-Routes without hash values generate `never` for the route in `RouteHash`.
+Optional hash values include `undefined`; href/navigation inputs also accept `#`-prefixed values through `RouteHashInput`. Routes without hash values generate `never` for the route in `RouteHash`.
 
 ## Metadata
 

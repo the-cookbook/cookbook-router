@@ -7,6 +7,7 @@ Cookbook Router navigation is route-ID based. Paths declare URL matching; route 
 - [Href generation](#href-generation)
 - [Programmatic navigation](#programmatic-navigation)
 - [React links](#react-links)
+- [Route preload and link prefetch](#route-preload-and-link-prefetch)
 - [Active links](#active-links)
 - [Search and hash](#search-and-hash)
 - [URL options](#url-options)
@@ -36,7 +37,7 @@ Generated URL:
 /users/42?tab=settings#profile
 ```
 
-`{id:int}`, `{price:decimal}`, `{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` params use numbers in generated contracts and router state. `uuid`, `minlength`, `maxlength`, `list`, `regex`, unconstrained params, wildcards, and custom constraints remain strings unless the same constraint chain also includes a numeric built-in constraint. See [Path routes and constraints](path-routes.md) for all built-in constraints.
+`{id:int}`, `{price:decimal}`, `{value:range(1,10)}`, `{value:min(1)}`, and `{value:max(10)}` params use numbers in generated contracts and router state. `uuid`, `minlength`, `maxlength`, `list`, `regex`, unconstrained params, and custom constraints remain strings unless the same constraint chain also includes a numeric built-in constraint. Wildcards are parsed as `readonly string[]` path segments. See [Path routes and constraints](path-routes.md) for all built-in constraints.
 
 The two-argument form is also supported:
 
@@ -109,6 +110,69 @@ Use `href` for literal anchors that are not route-driven:
   External docs
 </Link>
 ```
+
+## Route preload and link prefetch
+
+Use `router.preload()` to warm a route without committing navigation, writing history, running middleware, or running navigation lifecycle hooks.
+
+```ts
+await router.preload('users.show', {
+  params: { id: 42 },
+});
+
+await router.preloadHref('/users/42');
+```
+
+React links can prefetch their route target on explicit triggers. Prefetch is disabled by default.
+
+```tsx
+<Link to="users.show" params={{ id: 42 }} prefetch="interaction">
+  User 42
+</Link>
+```
+
+Supported prefetch modes are:
+
+| Mode            | Trigger                     |
+| --------------- | --------------------------- |
+| `false`         | Never. This is the default. |
+| `"hover"`       | Pointer enters the link.    |
+| `"focus"`       | Link receives focus.        |
+| `"interaction"` | Hover or focus.             |
+| `"mount"`       | Link mounts.                |
+
+For static/manual lazy views, use `lazyRouteView` so route preload can warm the lazy import without an explicit route-level `preload`.
+
+```tsx
+const UsersPage = lazyRouteView(() => import('./users-page'));
+
+defineRoute({
+  id: 'users.index',
+  path: '/users',
+  view: UsersPage,
+});
+```
+
+Route-level `preload` is optional and should be used for application-owned warming such as query caches, images, permissions, or configuration. Generated/file-based route modules and `lazyRouteView` can be preloaded without an authored route-level `preload` callback.
+
+```ts
+defineRoute({
+  id: 'users.show',
+  path: '/users/{id:int}',
+  preload: async ({ params, signal }) => {
+    await queryClient.prefetchQuery({
+      queryKey: ['user', params.id],
+      queryFn: () => fetchUser(params.id, { signal }),
+    });
+  },
+});
+```
+
+### Route preload is not data loading
+
+Route `preload` is not a loader. It does not store data in the router, block rendering, serialize SSR data, or trigger revalidation. Use it to warm application-owned systems such as TanStack Query, SWR, Relay, Apollo, image caches, or configuration caches.
+
+Loaders, actions, mutations, and revalidation are intentionally outside the router data model for now.
 
 ## Active links
 
@@ -278,6 +342,19 @@ Inline interception:
 ```tsx
 <Link to="blog.articles.show" params={{ slug }} intercept={{ slot: 'modal', view: ArticleModal }}>
   Preview
+</Link>
+```
+
+Disable configured interception for one navigation when the destination should render as its canonical page, such as an auth redirect:
+
+```ts
+await router.navigate.replace('/blog/articles/hello-world', { intercept: false });
+await router.navigate.to('blog.articles.show', { params: { slug }, intercept: false });
+```
+
+```tsx
+<Link to="blog.articles.show" params={{ slug }} intercept={false}>
+  Open full page
 </Link>
 ```
 

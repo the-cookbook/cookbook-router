@@ -86,10 +86,9 @@ Render a real provider.
 
 ```tsx
 const router = createMemoryRouter({ routes, initialEntries: ['/users/42'] });
-await router.start();
 
 const view = render(<RouterProvider router={router} fallback={<h1>Not found</h1>} />);
-expect(view.getByText('User 42')).toBeTruthy();
+expect(await view.findByText('User 42')).toBeTruthy();
 ```
 
 When a test triggers navigation through router methods directly, wrap updates with React Testing Library helpers when needed.

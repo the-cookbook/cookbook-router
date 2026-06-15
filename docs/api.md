@@ -80,9 +80,9 @@ interface DefineRoutesOptions {
 Use `pathConstraints` here when route paths reference custom constraints. `defineRoutes()` validates immediately, so constraints must be registered before validation and URLKit route contract compilation.
 
 ```tsx
-import { createConstraint, defineRoutes } from '@cookbook/router';
+import { createPathConstraint, defineRoutes } from '@cookbook/router';
 
-const slug = createConstraint({
+const slug = createPathConstraint({
   parse(paramName, value) {
     if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
       throw new Error(`Parameter "${paramName}" must be a slug.`);
@@ -419,7 +419,7 @@ PathKit provides these built-in constraints, which Router forwards to URLKit for
 | `list`      | `{view:list(grid\|list\|details)}` | `grid`, `list`, `details`              | `table`, `detail`           | `string`               |
 | `regex`     | `{slug:regex([a-z0-9-]+)}`         | `hello-world`, `post-123`              | `HelloWorld`, `hello_world` | `string`               |
 
-URLKit infers parsed param types from the full constraint chain. If `int`, `decimal`, `range`, `min`, or `max` appears anywhere in the chain, router state, React hooks, middleware, lifecycle hooks, and generated contracts use `number`. `uuid`, `minlength`, `maxlength`, `list`, `regex`, unconstrained params, wildcards, and custom constraints expose `string` unless the same chain also includes a numeric constraint.
+URLKit infers parsed param types from the full constraint chain. If `int`, `decimal`, `range`, `min`, or `max` appears anywhere in the chain, router state, React hooks, middleware, lifecycle hooks, and generated contracts use `number`. `uuid`, `minlength`, `maxlength`, `list`, `regex`, unconstrained params, and custom constraints expose `string` unless the same chain also includes a numeric constraint. Wildcards expose `readonly string[]` in parsed router state.
 
 ```tsx
 const routes = defineRoutes([
@@ -452,12 +452,12 @@ interface RouterPathOptions {
 
 #### Custom path constraints
 
-Use `createConstraint()` for reusable validation rules that are not covered by the built-ins.
+Use `createPathConstraint()` for reusable validation rules that are not covered by the built-ins.
 
 ```ts
-import { createConstraint, defineRoutes } from '@cookbook/router';
+import { createPathConstraint, defineRoutes } from '@cookbook/router';
 
-const slug = createConstraint({
+const slug = createPathConstraint({
   parse(paramName, value) {
     if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
       throw new Error(`Parameter "${paramName}" must be a valid slug.`);
@@ -826,7 +826,7 @@ interface MatchOptions {
 }
 ```
 
-`HrefOptions.url` and `NavigateOptions.url` are build-only options. They accept `arrayFormat` and `defaults`. `MatchOptions.url` is a route-resolution override and accepts the full `RouterUrlOptions` policy set.
+`HrefOptions.url` and `NavigateOptions.url` are build-only options. They accept `arrayFormat` and `defaults`. `MatchOptions.url` is a route-resolution override and accepts the full `RouterUrlOptions` policy set. `intercept` accepts a configured slot name, a call-site intercept object, or `false` to bypass configured interception for one navigation.
 
 #### `RouterState`
 
@@ -943,7 +943,7 @@ Related: [Middleware](middleware.md), [Lifecycle](lifecycle.md).
 
 Slots and intercepts are resolved by the core router as part of route matching and rendering traversal. Application code should usually consume them through a framework integration, such as `<Slot name="..." />` from `@cookbook/router-react`, or through `renderRouteMatch()` when building a custom renderer.
 
-The package root exposes slot and intercept state types, but not the internal slot/intercept resolver helpers as public APIs.
+The package root exposes slot and intercept state types, but not the internal slot/intercept resolver helpers as public APIs. React `<Slot />` also accepts `errorFallback` to isolate slot render errors. Pass `null` to render nothing, or pass a component/function that receives `{ error, reset }`.
 
 Related: [Routing slots](routing.md#layout-slots), [Navigation interception](navigation.md#interception), [React slots](react-integration.md#slots).
 
@@ -976,7 +976,7 @@ Related: [SSR](ssr.md).
 `@cookbook/router` re-exports selected `@cookbook/pathkit` helpers for custom route params. Registered constraints are forwarded to URLKit before route validation, matching, href generation, CLI generation, and SSR/static router workflows.
 
 ```ts
-function createConstraint(definition: {
+function createPathConstraint(definition: {
   readonly parse: (
     paramName: string,
     value: string | number | boolean | undefined,
@@ -987,27 +987,27 @@ function createConstraint(definition: {
 }): RouterPathConstraint;
 
 function registerPathConstraints(constraints?: RouterPathConstraints): void;
-function hasConstraint(name: string): boolean;
-function getConstraint(name: string): RouterPathConstraint | undefined;
-function unregisterConstraint(name: string): void;
+function hasPathConstraint(name: string): boolean;
+function getPathConstraint(name: string): RouterPathConstraint | undefined;
+function unregisterPathConstraint(name: string): void;
 
 interface RouterPathConstraints {
   readonly [name: string]: RouterPathConstraint;
 }
 ```
 
-| API                         | Purpose                                                                                                                              |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `createConstraint()`        | Create a custom PathKit-compatible constraint with `parse`, `verify`, and `toRegExp`.                                                |
-| `registerPathConstraints()` | Register custom constraints globally and clear Router path caches. Prefer `defineRoutes(..., { pathConstraints })` in route modules. |
-| `hasConstraint()`           | Check whether a constraint is registered.                                                                                            |
-| `getConstraint()`           | Read a registered constraint for diagnostics or tests.                                                                               |
-| `unregisterConstraint()`    | Remove a registered constraint, mainly for isolated tests.                                                                           |
+| API                          | Purpose                                                                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `createPathConstraint()`     | Create a custom PathKit-compatible constraint with `parse`, `verify`, and `toRegExp`.                                                |
+| `registerPathConstraints()`  | Register custom constraints globally and clear Router path caches. Prefer `defineRoutes(..., { pathConstraints })` in route modules. |
+| `hasPathConstraint()`        | Check whether a constraint is registered.                                                                                            |
+| `getPathConstraint()`        | Read a registered constraint for diagnostics or tests.                                                                               |
+| `unregisterPathConstraint()` | Remove a registered constraint, mainly for isolated tests.                                                                           |
 
 Built-in PathKit constraints available in route paths are `decimal`, `int`, `uuid`, `min`, `max`, `range`, `minlength`, `maxlength`, `list`, and `regex`. See [Path routes and constraints](path-routes.md) for syntax, examples, parsed types, and custom-constraint guidance.
 
 ```ts
-const slug = createConstraint({
+const slug = createPathConstraint({
   parse(paramName, value) {
     if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
       throw new Error(`${paramName} must be a slug.`);
@@ -1155,7 +1155,7 @@ interface LinkProps<Route extends RouteId = RouteId> extends Omit<
 function Link<Route extends RouteId = RouteId>(props: LinkProps<Route>): JSX.Element;
 ```
 
-Use `to` for internal typed navigation and `href` for literal links. Params, search, and hash are URLKit-backed; `{id:int}` params are numbers, and static `date` / `date-time` search fields are parsed as UTC `Date` values. `url` accepts URL-building options such as `arrayFormat` and `defaults`. Route-resolution policies such as `invalidSearch`, `invalidHash`, and `unknownSearch` belong on the core router, route definitions, explicit match calls, or static router creation.
+Use `to` for internal typed navigation and `href` for literal links. Params, search, and hash are URLKit-backed; `{id:int}` params are numbers, and static `date` / `date-time` search fields are parsed as UTC `Date` values. `url` accepts URL-building options such as `arrayFormat` and `defaults`. `intercept={false}` bypasses configured interception for that click. Route-resolution policies such as `invalidSearch`, `invalidHash`, and `unknownSearch` belong on the core router, route definitions, explicit match calls, or static router creation.
 
 ```tsx
 <Link to="users.show" params={{ id: 42 }} search={{ tab: 'settings' }} hash="profile">
@@ -1384,6 +1384,7 @@ cbr --help
 ### CLI commands
 
 ```sh
+cookbook-router init --config router.config.ts --routes "app/**/*.route.{ts,tsx}" --out-dir .generated/router
 cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router
 cookbook-router validate --routes src/routes.tsx
 cookbook-router manifest --routes src/routes.tsx --out-dir .cookbook-router
@@ -1392,15 +1393,16 @@ cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router --wa
 
 Options:
 
-| Option            | Applies to                      | Purpose                                           |
-| ----------------- | ------------------------------- | ------------------------------------------------- |
-| `--routes <file>` | All commands                    | Route source file. May be repeated.               |
-| `--routes=<file>` | All commands                    | Equals-form route source file. May be repeated.   |
-| `--out-dir <dir>` | `generate`, `manifest`, `watch` | Output directory. Defaults to `.cookbook-router`. |
-| `--out-dir=<dir>` | `generate`, `manifest`, `watch` | Equals-form output directory.                     |
-| `--watch`         | `generate`                      | Generate once and keep watching route files.      |
-| `-h`, `--help`    | CLI                             | Print help.                                       |
-| `-v`, `--version` | CLI                             | Print version.                                    |
+| Option            | Applies to                              | Purpose                                                 |
+| ----------------- | --------------------------------------- | ------------------------------------------------------- |
+| `--config <file>` | All commands                            | Config file to load or create.                          |
+| `--routes <file>` | All commands                            | Route source file or glob. May be repeated.             |
+| `--routes=<file>` | All commands                            | Equals-form route source file or glob. May be repeated. |
+| `--out-dir <dir>` | `init`, `generate`, `manifest`, `watch` | Output directory. Defaults to `.cookbook-router`.       |
+| `--out-dir=<dir>` | `generate`, `manifest`, `watch`         | Equals-form output directory.                           |
+| `--watch`         | `generate`                              | Generate once and keep watching route files.            |
+| `-h`, `--help`    | CLI                                     | Print help.                                             |
+| `-v`, `--version` | CLI                                     | Print version.                                          |
 
 Exit behavior:
 
@@ -1450,7 +1452,7 @@ interface WatchHandle {
 }
 ```
 
-Generates once, watches route files, debounces rapid file-system events, and calls `onChange` for the initial result and each regeneration result. `routeFiles` is required because watch mode cannot observe in-memory route arrays.
+Generates once, watches route files/config roots, debounces rapid file-system events, refreshes watched roots when config `routeFiles` changes, and calls `onChange` for the initial result and each regeneration result. `routeFiles` is required because watch mode cannot observe in-memory route arrays.
 
 ```ts
 import { generateCommand, validateCommand, watchCommand } from '@cookbook/router-cli';
@@ -1549,7 +1551,11 @@ interface CliFileSystem {
 interface CliRouteOptions {
   readonly routes?: readonly RouteDefinition[];
   readonly routeFiles?: readonly string[];
+  readonly routeFileWatchPaths?: readonly string[];
   readonly outDir?: string;
+  readonly configFile?: string;
+  readonly cwd?: string;
+  readonly verbose?: boolean;
   readonly fs?: CliFileSystem;
 }
 
@@ -1557,6 +1563,7 @@ interface CommandResult {
   readonly ok: boolean;
   readonly files: readonly string[];
   readonly errors: readonly string[];
+  readonly changedFiles?: readonly string[];
 }
 
 interface WatchOptions extends CliRouteOptions {

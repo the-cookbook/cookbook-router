@@ -1,1479 +1,733 @@
 # Route validation errors
 
-Use this page when `defineRoutes()`, `validateRoutes()`, `createRouter()`, or the CLI `validate`/`generate` commands fail while validating route definitions.
-
-`defineRoutes()` validates immediately. The CLI also calls the same route validation after it loads a route file. Most errors include the route ID and field name that failed.
-
-## Table of contents
-
-- [Invalid route root](#invalid-route-root)
-- [Invalid route entry](#invalid-route-entry)
-- [Missing route ID](#missing-route-id)
-- [Duplicate route ID](#duplicate-route-id)
-- [Invalid `index`](#invalid-index)
-- [Invalid `path`](#invalid-path)
-- [Index route declares `path`](#index-route-declares-path)
-- [Index route declares `children`](#index-route-declares-children)
-- [Invalid `children`](#invalid-children)
-- [Removed route `errorFallback`](#removed-route-errorfallback)
-- [Invalid `layout`](#invalid-layout)
-- [Invalid `search` root](#invalid-search-root)
-- [Invalid `meta`](#invalid-meta)
-- [Unsafe `search` or `meta` key](#unsafe-search-or-meta-key)
-- [Invalid pathless route](#invalid-pathless-route)
-- [Empty path](#empty-path)
-- [Invalid path pattern](#invalid-path-pattern)
-- [Duplicate route path](#duplicate-route-path)
-- [Duplicate inherited param](#duplicate-inherited-param)
-- [Invalid static search descriptor](#invalid-static-search-descriptor)
-- [Invalid static hash descriptor](#invalid-static-hash-descriptor)
-- [Hash value includes `#`](#hash-value-includes-)
-- [Invalid redirect shape](#invalid-redirect-shape)
-- [Empty string redirect](#empty-string-redirect)
-- [Invalid redirect target](#invalid-redirect-target)
-- [Invalid redirect params](#invalid-redirect-params)
-- [Invalid redirect search](#invalid-redirect-search)
-- [Invalid redirect hash](#invalid-redirect-hash)
-- [Removed `layout.errorFallback`](#removed-layouterrorfallback)
-- [Layout fallback without layout view](#layout-fallback-without-layout-view)
-- [Slots without layout view](#slots-without-layout-view)
-- [Invalid `layout.slots`](#invalid-layoutslots)
-- [Empty slot name](#empty-slot-name)
-- [Slot not declared on an active layout](#slot-not-declared-on-an-active-layout)
-- [Invalid slot configuration](#invalid-slot-configuration)
-- [Removed slot ID](#removed-slot-id)
-- [Removed slot fallback](#removed-slot-fallback)
-- [Unsupported slot key](#unsupported-slot-key)
-- [Invalid slot metadata](#invalid-slot-metadata)
-- [Invalid slot routes](#invalid-slot-routes)
-- [Invalid `intercepts`](#invalid-intercepts)
-- [Empty intercept slot name](#empty-intercept-slot-name)
-- [Invalid intercept config](#invalid-intercept-config)
-- [Intercept slot not declared](#intercept-slot-not-declared)
-- [Intercept missing view](#intercept-missing-view)
-- [Intercept missing targets](#intercept-missing-targets)
-- [Intercept target contains an empty route ID](#intercept-target-contains-an-empty-route-id)
-
-## Invalid route root
+Use this catalog when `defineRoutes()`, `defineRouteTree()`, `validateRoutes()`, `createRouter()`, or the CLI `validate`/`generate` commands fail while validating route definitions.
 
-### Symptom
-
-Validation fails before checking individual routes:
-
-```txt
-Router routes must be an array.
-```
+Each entry uses this structure: error message, symptom, cause, and fix.
 
-### Cause
+Most messages include the route ID, field name, slot name, or target ID that failed. In this page, `...` marks the dynamic part of the message.
 
-The top-level route value is not an array.
+## Router routes must be an array.
 
-### Fix
+**Symptom**
+Validation stops before route entries are checked.
 
-Pass an array to `defineRoutes()` or `validateRoutes()`.
+**Cause**
+The value passed to defineRoutes(), validateRoutes(), createRouter(), or CLI route loading is not an array.
 
-```ts
-export const routes = defineRoutes([
-  {
-    id: 'home',
-    path: '/',
-    view: HomePage,
-  },
-] as const);
-```
+**Fix**
+Pass a readonly route array. For modular routes, make sure the generated or imported export is an array of route definitions.
 
-## Invalid route entry
+## Every route must be an object.
 
-### Symptom
+**Symptom**
+Validation fails while walking the route tree.
 
-Validation fails with:
+**Cause**
+A route entry is null, undefined, a primitive, or another non-object value.
 
-```txt
-Every route must be an object.
-```
+**Fix**
+Replace the entry with a route object containing at least id plus path/index or valid pathless group children.
 
-### Cause
+## Every route must define a non-empty string id.
 
-A route entry is `null`, `undefined`, a primitive, or another non-object value.
+**Symptom**
+Validation cannot identify a route.
 
-### Fix
+**Cause**
+A route is missing id, has an empty id, or uses a non-string id.
 
-Each item in the route tree must be a route object.
+**Fix**
+Give every route a stable non-empty string id. Route IDs must be unique across primary and slot route trees.
 
-```ts
-export const routes = defineRoutes([
-  {
-    id: 'home',
-    path: '/',
-    view: HomePage,
-  },
-] as const);
-```
+## Duplicate route id "...".
 
-## Missing route ID
+**Symptom**
+Validation fails after a repeated route ID is found.
 
-### Symptom
+**Cause**
+Two primary routes, slot routes, generated declarations, or fallback/internal routes use the same id.
 
-Validation fails with:
+**Fix**
+Rename one route. Prefer namespaced IDs such as users.index and users.details.
 
-```txt
-Every route must define a non-empty string id.
-```
+## Route "..." index must be a boolean when provided.
 
-### Cause
+**Symptom**
+Validation fails on the index field.
 
-A route is missing `id`, has an empty `id`, or uses a non-string `id`.
+**Cause**
+index was set to a non-boolean value such as "true", 1, or an object.
 
-### Fix
+**Fix**
+Use index: true for index routes or omit index for normal path routes.
 
-Give every route a stable non-empty string ID.
+## Route "..." path must be a string when provided.
 
-```ts
-{
-  id: 'users.show',
-  path: '/users/{id:int}',
-  view: UserPage,
-}
-```
+**Symptom**
+Validation fails on the path field.
 
-## Duplicate route ID
+**Cause**
+path was provided but is not a string.
 
-### Symptom
+**Fix**
+Use a string path, omit path for pathless layout/group routes, or use index: true for index routes.
 
-Validation fails with:
+## Route "..." is an index route and must not define path.
 
-```txt
-Duplicate route id "home".
-```
+**Symptom**
+An index route fails validation.
 
-### Cause
+**Cause**
+The route declares both index: true and path.
 
-Two routes use the same `id`. Route IDs are global across the primary route tree and slot route trees.
+**Fix**
+Remove path from the index route. Put the URL segment on the parent route.
 
-### Fix
+## Route "..." is an index route and must not define children.
 
-Rename one route. Prefer dotted IDs for nested routes.
+**Symptom**
+An index route fails validation.
 
-```ts
-[
-  { id: 'dashboard.home', path: '/dashboard', view: DashboardPage },
-  { id: 'dashboard.reports', path: '/dashboard/reports', view: ReportsPage },
-];
-```
+**Cause**
+Index routes cannot have child routes because they do not add a path segment or layout branch.
 
-## Invalid `index`
+**Fix**
+Move children to the parent route or make the route a non-index path route.
 
-### Symptom
+## Route "..." children must be an array.
 
-Validation fails with:
+**Symptom**
+Validation fails on children.
 
-```txt
-Route "home" index must be a boolean when provided.
-```
+**Cause**
+children was provided but is not an array.
 
-### Cause
+**Fix**
+Use children: [...] or omit children.
 
-`index` was provided with a non-boolean value such as `'true'`, `1`, or `{}`.
+## Route "..." preload must be a function when provided.
 
-### Fix
+**Symptom**
+Validation fails on preload.
 
-Use `index: true` for index routes or omit `index` for normal path routes.
+**Cause**
+preload was provided with a non-function value.
 
-```ts
-{
-  id: 'dashboard.index',
-  index: true,
-  view: DashboardIndexPage,
-}
-```
+**Fix**
+Use preload: async (context) => { ... } or remove preload. Route preload is optional and is not a data loader.
 
-## Invalid `path`
+## Route "..." modulePreload must be a function when provided.
 
-### Symptom
+**Symptom**
+Validation fails on modulePreload.
 
-Validation fails with:
+**Cause**
+modulePreload was provided with a non-function value.
 
-```txt
-Route "home" path must be a string when provided.
-```
+**Fix**
+Do not author modulePreload manually. It is an internal generated-route preload hook. Remove it or ensure generated artifacts are up to date.
 
-### Cause
+## Route "..." declares errorFallback, but route errorFallback is no longer supported. Use error instead.
 
-`path` was provided with a non-string value.
+**Symptom**
+A route using an old fallback API fails validation.
 
-### Fix
+**Cause**
+The removed route-level errorFallback field is still present.
 
-Use a string path, omit `path` for pathless layout/group routes, or use `index: true` for index routes.
+**Fix**
+Rename errorFallback to error.
 
-```ts
-{
-  id: 'users.show',
-  path: '/users/{id:int}',
-  view: UserPage,
-}
-```
+## Route "..." layout must be an object.
 
-## Index route declares `path`
+**Symptom**
+Validation fails on layout.
 
-### Symptom
+**Cause**
+layout was provided but is null, an array, or another non-object value.
 
-Validation fails with:
+**Fix**
+Use layout: { view, loading, error, slots } or remove layout.
 
-```txt
-Route "home" is an index route and must not define path.
-```
+## Route "..." search configuration must be an object.
 
-### Cause
+**Symptom**
+Validation fails on search before URLKit descriptor validation.
 
-A route declares both `index: true` and `path`.
+**Cause**
+search was provided but is null, an array, or another non-object value.
 
-### Fix
+**Fix**
+Use a static search descriptor object, defineSearch(...), mergeSearch(...), or remove search.
 
-Remove `path` from the index route. Put the parent path on the parent route.
+## Routes "..." and "..." are duplicate index routes under parent "...".
 
-```ts
-{
-  id: 'dashboard',
-  path: '/dashboard',
-  children: [
-    {
-      id: 'dashboard.index',
-      index: true,
-      view: DashboardHomePage,
-    },
-  ],
-}
-```
+**Symptom**
+Validation fails for sibling routes.
 
-## Index route declares `children`
+**Cause**
+The same parent has more than one child with index: true.
 
-### Symptom
+**Fix**
+Keep only one index child per parent or give one child a path.
 
-Validation fails with:
+## Route "..." must define either path or index. Pathless routes are only supported as layout/group routes with children.
 
-```txt
-Route "home" is an index route and must not define children.
-```
+**Symptom**
+Validation fails on a route with neither path nor index.
 
-### Cause
+**Cause**
+The route is pathless but is not a pure group/layout route with children, or it declares route-local render/navigation fields.
 
-Index routes cannot have child routes.
+**Fix**
+Add path, use index: true, or make it a pure pathless group with children and no route-local view, redirect, search, hash, intercepts, middleware, lifecycle, loading, or error.
 
-### Fix
+## Route "..." defines redirect and must not define children.
 
-Move children to a non-index parent route.
+**Symptom**
+Validation fails on a redirect route.
 
-```ts
-{
-  id: 'settings',
-  path: '/settings',
-  children: [
-    { id: 'settings.index', index: true, view: SettingsHomePage },
-    { id: 'settings.profile', path: 'profile', view: ProfilePage },
-  ],
-}
-```
+**Cause**
+Redirect routes are terminal and cannot also own child routes.
 
-## Invalid `children`
+**Fix**
+Move the children to a non-redirect parent or remove redirect.
 
-### Symptom
+## Route "..." redirect must be a non-empty string.
 
-Validation fails with:
+**Symptom**
+Validation fails on string redirect.
 
-```txt
-Route "home" children must be an array.
-```
+**Cause**
+redirect is an empty string.
 
-### Cause
+**Fix**
+Use a non-empty href string or a route target object.
 
-`children` was provided but is not an array.
+## Route "..." redirect must be a string or route target object.
 
-### Fix
+**Symptom**
+Validation fails on redirect.
 
-Use an array or omit `children`.
+**Cause**
+redirect is present but is neither a string nor an object.
 
-```ts
-{
-  id: 'dashboard',
-  path: '/dashboard',
-  children: [
-    { id: 'dashboard.index', index: true, view: DashboardHomePage },
-  ],
-}
-```
+**Fix**
+Use redirect: "/target" or redirect: { route: "target.id", params, search, hash }.
 
-## Removed route `errorFallback`
+## Route "..." redirect.route must be a non-empty string.
 
-### Symptom
+**Symptom**
+Validation fails on object redirect.
 
-Validation fails with:
+**Cause**
+Object-form redirect is missing route, has an empty route, or route is not a string.
 
-```txt
-Route "home" declares errorFallback, but route errorFallback is no longer supported. Use error instead.
-```
+**Fix**
+Set redirect.route to the target route id.
 
-### Cause
+## Route "..." redirect.params must be an object when provided.
 
-The route uses the removed `errorFallback` field.
+**Symptom**
+Validation fails on redirect params.
 
-### Fix
+**Cause**
+redirect.params is present but is not an object.
 
-Use route-local `error`.
+**Fix**
+Use an object keyed by path param name or omit params.
 
-```ts
-{
-  id: 'home',
-  path: '/',
-  view: HomePage,
-  error: HomeErrorPage,
-}
-```
+## Route "..." redirect.search must be an object when provided.
 
-## Invalid `layout`
+**Symptom**
+Validation fails on redirect search.
 
-### Symptom
+**Cause**
+redirect.search is present but is not an object.
 
-Validation fails with:
+**Fix**
+Use an object keyed by search param name or omit search.
 
-```txt
-Route "dashboard" layout must be an object.
-```
+## Route "..." redirect.hash must be a string or null when provided.
 
-### Cause
+**Symptom**
+Validation fails on redirect hash.
 
-`layout` was provided as an array, `null`, or a primitive.
+**Cause**
+redirect.hash is present but is neither a string nor null.
 
-### Fix
+**Fix**
+Use a bare hash string without #, null to clear hash, or omit hash.
 
-Use an object layout declaration.
+## Route "..." search contains unsafe key "...".
 
-```ts
-{
-  id: 'dashboard',
-  path: '/dashboard',
-  layout: {
-    view: DashboardLayout,
-  },
-  children: [{ id: 'dashboard.index', index: true, view: DashboardHomePage }],
-}
-```
+**Symptom**
+Validation fails on a search descriptor key.
 
-## Invalid `search` root
+**Cause**
+search contains **proto**, constructor, or prototype, which would be unsafe to merge into plain objects.
 
-### Symptom
+**Fix**
+Rename the key. Do not use prototype-polluting object keys in URL state descriptors.
 
-Validation fails with:
+## Route "..." meta contains unsafe key "...".
 
-```txt
-Route "home" search configuration must be an object.
-```
+**Symptom**
+Validation fails on a metadata key.
 
-### Cause
+**Cause**
+meta contains **proto**, constructor, or prototype, which would be unsafe to merge into plain objects.
 
-`search` was provided as an array, `null`, or a primitive.
+**Fix**
+Rename the key. Do not use prototype-polluting object keys in route metadata.
 
-### Fix
+## Route "..." meta must be an object.
 
-Use a URLKit Static search descriptor object.
+**Symptom**
+Validation fails on meta.
 
-```ts
-{
-  id: 'articles.index',
-  path: '/articles',
-  search: {
-    q: { type: 'string', optional: true },
-    page: { type: 'int', default: 1 },
-  },
-}
-```
+**Cause**
+meta was provided but is null, an array, or another non-object value.
 
-## Invalid `meta`
+**Fix**
+Use a plain metadata object or omit meta.
 
-### Symptom
+## Duplicate route path "..." declared by routes "..." and "...".
 
-Validation fails with:
+**Symptom**
+Validation fails after path normalization.
 
-```txt
-Route "home" meta must be an object.
-```
+**Cause**
+Two routes in the same path scope normalize to the same full path.
 
-or, for slot metadata:
+**Fix**
+Give one route a different path, make one an index route under a different parent, or move contextual UI into a slot route tree.
 
-```txt
-Route "dashboard.sidebar" meta must be an object.
-```
+## Route "..." defines an empty path.
 
-### Cause
+**Symptom**
+Validation fails on path.
 
-`meta` was provided as an array, `null`, or a primitive.
+**Cause**
+path is an empty string.
 
-### Fix
+**Fix**
+Use / for the root route, a non-empty child segment, or omit path for a valid pathless group.
 
-Use an object or omit `meta`.
+## Invalid path pattern or unknown path constraint.
 
-```ts
-{
-  id: 'home',
-  path: '/',
-  meta: {
-    title: 'Home',
-  },
-}
-```
+**Symptom**
+Validation fails with a PathKit/URLKit path-pattern error, such as an unknown constraint type.
 
-## Unsafe `search` or `meta` key
+**Cause**
+The route path is malformed or references a custom constraint that was not registered before validation.
 
-### Symptom
+**Fix**
+Fix the path pattern or register the custom constraint through defineRoutes(..., { pathConstraints }), defineRouteTree(...), createRouter(...), or the CLI config.
 
-Validation fails with one of:
+## Route "..." declares duplicate inherited param "...".
 
-```txt
-Route "bad" search contains unsafe key "constructor".
-Route "bad" meta contains unsafe key "prototype".
-```
+**Symptom**
+Validation fails while composing parent and child params.
 
-### Cause
-
-`search` or `meta` contains `__proto__`, `constructor`, or `prototype`. These keys are rejected to prevent prototype pollution and unsafe generated contracts.
-
-### Fix
-
-Rename the key or nest it in a safe application-owned value outside route declarations.
-
-```ts
-{
-  id: 'users.index',
-  path: '/users',
-  search: {
-    role: { type: 'string', optional: true },
-  },
-  meta: {
-    section: 'admin',
-  },
-}
-```
-
-## Invalid pathless route
-
-### Symptom
-
-Validation fails with:
-
-```txt
-Route "entry.redirect" must define either path or index. Pathless routes are only supported as layout/group routes with children.
-```
-
-### Cause
-
-A route omits both `path` and `index`, but it is not a pure pathless layout/group route with children. Pathless routes cannot be directly navigable and cannot declare renderable/navigable route-local fields such as `view`, `redirect`, `search`, `hash`, `intercepts`, `middleware`, `lifecycle`, `loading`, or `error`.
-
-### Fix
-
-Use `path`, `index: true`, or make the route a pure group route with children.
-
-```ts
-{
-  id: 'settings.group',
-  children: [
-    { id: 'settings.profile', path: '/settings/profile', view: ProfilePage },
-  ],
-}
-```
-
-For a redirect, make the route addressable:
-
-```ts
-{
-  id: 'entry.redirect',
-  index: true,
-  redirect: { route: 'overview' },
-}
-```
-
-## Empty path
-
-### Symptom
-
-Validation fails with:
-
-```txt
-Route "empty" defines an empty path.
-```
-
-### Cause
-
-`path` is an empty string.
-
-### Fix
-
-Use `/` for the root path, a non-empty path segment for children, or omit `path` for pathless groups.
-
-```ts
-{ id: 'home', path: '/', view: HomePage }
-```
-
-## Invalid path pattern
-
-### Symptom
-
-Validation fails with a PathKit or URLKit path-pattern error, for example:
-
-```txt
-Unknown constraint type: "slug"
-```
-
-### Cause
-
-The route path is not a valid PathKit pattern or references a custom constraint that has not been registered before validation.
-
-### Fix
-
-Fix the path pattern or register custom constraints through `defineRoutes(..., { pathConstraints })`.
-
-```ts
-import { createConstraint, defineRoutes } from '@cookbook/router';
-
-const slug = createConstraint({
-  parse(paramName, value) {
-    if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
-      throw new Error(`Parameter "${paramName}" must be a slug.`);
-    }
-  },
-  verify(_paramName, params) {
-    if (params) {
-      throw new Error('slug does not accept parameters.');
-    }
-  },
-  toRegExp() {
-    return '[a-z0-9-]+';
-  },
-});
-
-export const routes = defineRoutes(
-  [{ id: 'posts.show', path: '/posts/{slug:slug}', view: PostPage }] as const,
-  { pathConstraints: { slug } },
-);
-```
-
-## Duplicate route path
-
-### Symptom
-
-Validation fails with:
-
-```txt
-Duplicate route path "/same" declared by routes "one" and "two".
-```
-
-### Cause
-
-Two routes in the same path scope normalize to the same full path. Slot route trees have their own path scopes, so a slot route can share the same URL as the primary branch it decorates.
-
-### Fix
-
-Give one route a different full path, make one route an index route under a different parent, or move slot-specific UI into a slot route tree.
-
-```ts
-[
-  { id: 'users.index', path: '/users', view: UsersPage },
-  { id: 'users.show', path: '/users/{id:int}', view: UserPage },
-];
-```
-
-## Duplicate inherited param
-
-### Symptom
-
-Validation fails with:
-
-```txt
-Route "teams.users" declares duplicate inherited param "id".
-```
-
-### Cause
-
+**Cause**
 A child route declares a path param with the same name as an inherited parent param.
 
-### Fix
-
-Use distinct param names across a parent-to-child branch.
-
-```ts
-{
-  id: 'teams.show',
-  path: '/teams/{teamId:int}',
-  children: [
-    {
-      id: 'teams.users.show',
-      path: 'users/{userId:int}',
-      view: TeamUserPage,
-    },
-  ],
-}
-```
-
-## Invalid static search descriptor
-
-### Symptom
-
-Validation throws `UrlKitError` with code `invalid-descriptor`, usually with route/search-param context.
-
-### Cause
-
-`search` is not a valid URLKit Static search descriptor. Common causes include runtime builders, invalid `optional`/`many` flags, invalid defaults, invalid enum values, invalid date/date-time formats, or runtime date codec objects.
-
-### Fix
-
-Use the cleaned Static descriptor object shape.
-
-```ts
-{
-  id: 'articles.index',
-  path: '/articles',
-  search: {
-    q: { type: 'string', optional: true },
-    page: { type: 'int', default: 1 },
-    tags: { type: 'string', many: true, optional: true },
-    sort: { type: 'enum', values: ['newest', 'popular'], default: 'newest' },
-    publishedOn: { type: 'date', format: 'dd-MM-yyyy', optional: true },
-    startsAt: { type: 'date-time', format: "dd-MM-yyyy'T'HH:mm:ss'Z'", optional: true },
-  },
-}
-```
-
-Do not use runtime builders in route definitions:
+**Fix**
+Use distinct param names across a branch, such as teamId and userId instead of id and id.
 
-```ts
-// Invalid in Router static route definitions
-search: {
-  page: int().default(1),
-}
-```
+## Invalid static search descriptor.
 
-Do not use runtime date codecs in Static descriptors:
+**Symptom**
+Validation throws a URLKit descriptor error for route search.
 
-```ts
-// Invalid in Router static route definitions
-search: {
-  from: {
-    type: 'date',
-    format: {
-      parse(value) {
-        return new Date(value);
-      },
-      serialize(value) {
-        return value.toISOString();
-      },
-    },
-  },
-}
-```
+**Cause**
+search is not a valid static URLKit descriptor. Common causes include runtime builders, invalid defaults, invalid enum values, invalid optional/many combinations, or runtime date codec objects.
 
-Use a static format string instead.
+**Fix**
+Use static descriptor objects only. Do not use runtime URLKit builders or runtime date codec objects in route definitions.
 
-```ts
-search: {
-  from: { type: 'date', format: 'dd-MM-yyyy', optional: true },
-}
-```
+## Invalid static hash descriptor.
 
-## Invalid static hash descriptor
+**Symptom**
+Validation throws a URLKit descriptor error for route hash.
 
-### Symptom
+**Cause**
+hash is not a valid static URLKit hash descriptor. Common causes include unsupported shorthand, empty enum values, defaults outside enum values, optional: false, or optional: true combined with default.
 
-Validation throws `UrlKitError` with code `invalid-descriptor`.
+**Fix**
+Use an object hash descriptor with valid values/default/optional combinations.
 
-### Cause
+## Route "..." hash value "..." must not include a leading #.
 
-`hash` is not a valid URLKit Static hash descriptor. Common causes include array shorthand, string shorthand, empty enum values, defaults outside enum values, `optional: false`, or `optional: true` combined with `default`.
+**Symptom**
+Validation fails on hash descriptor values or defaults.
 
-### Fix
+**Cause**
+A hash enum value or default includes the leading #.
 
-Use an object hash descriptor.
+**Fix**
+Use bare hash values such as "comments". The router adds # when building URLs.
 
-```ts
-{
-  id: 'articles.show',
-  path: '/articles/{slug}',
-  hash: {
-    type: 'enum',
-    values: ['comments', 'share'],
-    optional: true,
-  },
-}
-```
+## Route "..." declares layout.errorFallback, but layout errorFallback is no longer supported. Use layout.error instead.
 
-For a default hash, omit `optional: true`.
+**Symptom**
+A layout using an old fallback API fails validation.
 
-```ts
-hash: {
-  type: 'enum',
-  values: ['overview', 'comments'],
-  default: 'overview',
-}
-```
+**Cause**
+The removed layout.errorFallback field is still present.
 
-## Hash value includes `#`
+**Fix**
+Rename layout.errorFallback to layout.error.
 
-### Symptom
+## Route "..." declares layout.loading/layout.error, but no active layout view exists.
 
-Validation fails with:
+**Symptom**
+Validation fails on layout fallback fields.
 
-```txt
-Route "home" hash value "#profile" must not include a leading #.
-```
+**Cause**
+layout.loading or layout.error is declared where neither the route nor an ancestor has layout.view.
 
-### Cause
+**Fix**
+Use route.loading/route.error for route-local fallbacks or declare layout.view on this route or an ancestor.
 
-A static hash descriptor value or default includes the leading hash sign. Descriptor values are bare hash values.
+## Route "..." declares layout.slots, but no active layout view exists in its ancestor tree.
 
-### Fix
+**Symptom**
+Validation fails on layout.slots.
 
-Remove `#` from the descriptor. Router adds `#` when building URLs.
+**Cause**
+Slots were declared without an active layout view to render them.
 
-```ts
-hash: {
-  type: 'enum',
-  values: ['profile', 'settings'],
-  optional: true,
-}
-```
+**Fix**
+Declare layout.view on the same route or an ancestor route, or remove layout.slots.
 
-## Invalid redirect shape
+## Route "..." layout.slots must be an object.
 
-### Symptom
+**Symptom**
+Validation fails on layout.slots.
 
-Validation fails with:
+**Cause**
+layout.slots was provided but is not an object.
 
-```txt
-Route "entry" redirect must be a string or route target object.
-```
+**Fix**
+Use layout.slots: { name: true } or layout.slots: { name: { view, meta, routes } }.
 
-### Cause
+## Route "..." defines a slot with an empty name.
 
-`redirect` is present but is not a string and not an object.
+**Symptom**
+Validation fails while reading slot entries.
 
-### Fix
+**Cause**
+layout.slots contains an empty-string key.
 
-Use a string href or a route target object.
+**Fix**
+Use a non-empty slot name such as header, sidebar, or modal.
 
-```ts
-{ id: 'legacy', path: '/legacy', redirect: '/new' }
-```
+## Missing slot "..." for route "...".
 
-```ts
-{ id: 'entry', path: '/', redirect: { route: 'dashboard.home' } }
-```
+**Symptom**
+Validation fails on a child slot declaration.
 
-## Empty string redirect
+**Cause**
+A child route declares layout.slots.<name>, but no active ancestor layout declares that slot and the current route does not own a layout view.
 
-### Symptom
+**Fix**
+Declare the slot on an active ancestor layout or remove the child slot declaration.
 
-Validation fails with:
+## Route "..." declares invalid configuration for slot "...".
 
-```txt
-Route "entry" redirect must be a non-empty string.
-```
+**Symptom**
+Validation fails on a slot value.
 
-### Cause
+**Cause**
+The slot is false, null, undefined, or otherwise not a supported slot declaration.
 
-`redirect` is an empty string.
+**Fix**
+Use true, a slot view component, or an object with view, meta, and/or routes.
 
-### Fix
+## Route "..." defines invalid configuration for slot "...".
 
-Provide a non-empty href or use a route target object.
+**Symptom**
+Validation fails on a slot config object.
 
-```ts
-{ id: 'entry', path: '/', redirect: { route: 'dashboard.home' } }
-```
+**Cause**
+The slot config is null, an array, or another invalid value where an object config was expected.
 
-## Invalid redirect target
+**Fix**
+Use a valid slot config object.
 
-### Symptom
+## Route "..." declares "layout.slots....id", but slot IDs are no longer supported.
 
-Validation fails with:
+**Symptom**
+Validation fails on a removed slot field.
 
-```txt
-Route "entry" redirect.route must be a non-empty string.
-```
+**Cause**
+The slot config still uses the removed id property.
 
-### Cause
+**Fix**
+Remove layout.slots.<name>.id. The slot key is the slot identity.
 
-Object-form `redirect` is missing `route` or has an empty/non-string `route`.
+## Unsupported slot fallback: slot fallbacks are no longer supported on route "...".
 
-### Fix
+**Symptom**
+Validation fails on a removed slot field.
 
-Provide the target route ID.
+**Cause**
+The slot config still uses the removed fallback property.
 
-```ts
-{
-  id: 'entry',
-  path: '/',
-  redirect: { route: 'dashboard.home' },
-}
-```
+**Fix**
+Remove layout.slots.<name>.fallback. Use the slot declaration itself and render fallback UI from the layout if needed.
 
-## Invalid redirect params
+## Unsupported slot key "..." on route "...".
 
-### Symptom
+**Symptom**
+Validation fails on an unknown slot config key.
 
-Validation fails with:
+**Cause**
+The slot config contains a key other than view, meta, or routes.
 
-```txt
-Route "entry" redirect.params must be an object when provided.
-```
+**Fix**
+Remove the unsupported key or move that information into slot meta.
 
-### Cause
+## Route "..." slot "..." routes must be an array.
 
-`redirect.params` was provided but is not an object.
+**Symptom**
+Validation fails on slot routes.
 
-### Fix
+**Cause**
+layout.slots.<name>.routes was provided but is not an array.
 
-Use an object or omit `params`.
+**Fix**
+Use routes: [...] or omit routes.
 
-```ts
-{
-  id: 'legacy.user',
-  path: '/u/{id:int}',
-  redirect: {
-    route: 'users.show',
-    params: { id: 42 },
-  },
-}
-```
+## Route "..." intercepts must be an object.
 
-## Invalid redirect search
+**Symptom**
+Validation fails on intercepts.
 
-### Symptom
+**Cause**
+intercepts was provided but is not an object.
 
-Validation fails with:
+**Fix**
+Use intercepts: { slotName: { to, view } } or remove intercepts.
 
-```txt
-Route "entry" redirect.search must be an object when provided.
-```
+## Route "..." defines an intercept with an empty slot name.
 
-### Cause
+**Symptom**
+Validation fails while reading intercept entries.
 
-`redirect.search` was provided but is not an object.
+**Cause**
+intercepts contains an empty-string key.
 
-### Fix
+**Fix**
+Use a non-empty slot name that matches a declared layout slot.
 
-Use an object or omit `search`.
+## Route "..." intercept for slot "..." must be an object.
 
-```ts
-{
-  id: 'articles.redirect',
-  path: '/old-articles',
-  redirect: {
-    route: 'articles.index',
-    search: { page: 1 },
-  },
-}
-```
+**Symptom**
+Validation fails on an intercept config.
 
-## Invalid redirect hash
+**Cause**
+The intercept slot value is missing, null, or not an object.
 
-### Symptom
+**Fix**
+Use { to: "target.route", view: InterceptView }.
 
-Validation fails with:
+## Invalid intercept slot "..." on route "...".
 
-```txt
-Route "entry" redirect.hash must be a string or null when provided.
-```
+**Symptom**
+Validation fails because the intercept slot is not declared.
 
-### Cause
+**Cause**
+The route configures an intercept for a slot that is not declared on this route or an active ancestor layout.
 
-`redirect.hash` was provided but is not a string and not `null`.
+**Fix**
+Declare layout.slots.<name> on the source route layout or an active ancestor layout, or remove the intercept.
 
-### Fix
+## Route "..." intercept for slot "..." must define view.
 
-Use a string hash value, `null`, or omit `hash`.
+**Symptom**
+Validation fails on an intercept config.
 
-```ts
-{
-  id: 'article.redirect',
-  path: '/old-article',
-  redirect: {
-    route: 'articles.show',
-    params: { slug: 'typed-routing' },
-    hash: 'comments',
-  },
-}
-```
+**Cause**
+The intercept config does not provide a view.
 
-## Removed `layout.errorFallback`
+**Fix**
+Add the intercept view component.
 
-### Symptom
+## Route "..." intercept for slot "..." must define at least one target route id.
 
-Validation fails with:
+**Symptom**
+Validation fails on intercept.to.
 
-```txt
-Route "dashboard" declares layout.errorFallback, but layout errorFallback is no longer supported. Use layout.error instead.
-```
+**Cause**
+The intercept target list is empty.
 
-### Cause
+**Fix**
+Provide a target route id string or a non-empty array of target route ids.
 
-The layout uses the removed `layout.errorFallback` field.
+## Route "..." intercept for slot "..." defines an empty target route id.
 
-### Fix
+**Symptom**
+Validation fails on intercept.to.
 
-Use `layout.error`.
+**Cause**
+The intercept target string or one of the target array entries is empty.
 
-```ts
-{
-  id: 'dashboard',
-  path: '/dashboard',
-  layout: {
-    view: DashboardLayout,
-    error: DashboardErrorPage,
-  },
-  children: [{ id: 'dashboard.index', index: true, view: DashboardHomePage }],
-}
-```
+**Fix**
+Replace it with a valid target route id.
 
-## Layout fallback without layout view
+## Route "..." intercept "..." targets unknown route id "...".
 
-### Symptom
+**Symptom**
+Validation fails after all routes have been collected.
 
-Validation fails with:
+**Cause**
+The intercept points to a route id that does not exist in the route tree.
 
-```txt
-Route "standalone" declares layout.loading/layout.error, but no active layout view exists. Use route.loading/route.error for route-local fallbacks, or declare layout.view.
-```
+**Fix**
+Fix the target route id or add the missing route.
 
-### Cause
+## defineRouteTree routes must be an array.
 
-`layout.loading` or `layout.error` is declared on a route that has no `layout.view` and no active ancestor layout view.
+**Symptom**
+Modular route tree composition fails before route declarations are collected.
 
-### Fix
+**Cause**
+defineRouteTree({ routes }) received a non-array routes value.
 
-For route-local fallback UI, use `loading` or `error` directly on the route.
+**Fix**
+Pass the array of defineRoute(...) declarations to defineRouteTree({ routes }).
 
-```ts
-{
-  id: 'standalone',
-  path: '/standalone',
-  view: StandalonePage,
-  loading: StandaloneLoading,
-  error: StandaloneError,
-}
-```
+## Every route declaration must be an object.
 
-For shared layout fallback UI, declare a layout view.
+**Symptom**
+Modular route tree composition fails while collecting declarations.
 
-```ts
-{
-  id: 'dashboard',
-  path: '/dashboard',
-  layout: {
-    view: DashboardLayout,
-    loading: DashboardLoading,
-    error: DashboardError,
-  },
-  children: [{ id: 'dashboard.index', index: true, view: DashboardHomePage }],
-}
-```
+**Cause**
+A defineRouteTree routes entry or inline child declaration is null, undefined, primitive, or otherwise not an object.
 
-## Slots without layout view
+**Fix**
+Export route declarations created with defineRoute({...}) and pass only those declarations to defineRouteTree.
 
-### Symptom
+## Every route declaration must define a non-empty string id.
 
-Validation fails with:
+**Symptom**
+Modular route tree composition cannot identify a declaration.
 
-```txt
-Route "standalone" declares layout.slots, but no active layout view exists in its ancestor tree. Slot declarations require layout.view on the same route or an ancestor route.
-```
+**Cause**
+A route declaration is missing id, has an empty id, or uses a non-string id.
 
-### Cause
+**Fix**
+Give every defineRoute declaration a stable non-empty string id.
 
-A route declares `layout.slots`, but there is no active layout view that can render those slots.
+## Route "..." parent must be a string when provided.
 
-### Fix
+**Symptom**
+defineRouteTree fails on parent.
 
-Declare `layout.view` on the same route or an ancestor route.
+**Cause**
+parent was provided but is not a string.
 
-```ts
-{
-  id: 'dashboard',
-  path: '/dashboard',
-  layout: {
-    view: DashboardLayout,
-    slots: {
-      sidebar: true,
-    },
-  },
-  children: [{ id: 'dashboard.index', index: true, view: DashboardHomePage }],
-}
-```
+**Fix**
+Use parent: "parent.route.id" or omit parent for root declarations.
 
-## Invalid `layout.slots`
+## Route "..." order must be a number when provided.
 
-### Symptom
+**Symptom**
+defineRouteTree fails on order.
 
-Validation fails with:
+**Cause**
+order was provided but is not a number.
 
-```txt
-Route "dashboard" layout.slots must be an object.
-```
+**Fix**
+Use a numeric order value or omit order.
 
-### Cause
+## Route "..." is declared inline under "..." but declares parent "...".
 
-`layout.slots` was provided but is not an object.
+**Symptom**
+defineRouteTree fails while collecting inline children.
 
-### Fix
+**Cause**
+An inline child declares a parent different from the containing route id.
 
-Use an object keyed by slot name.
+**Fix**
+Omit parent on inline children or set it to the containing route id.
 
-```ts
-layout: {
-  view: DashboardLayout,
-  slots: {
-    sidebar: true,
-  },
-}
-```
+## Route "..." declares parent "...", but no route with id "..." exists.
 
-## Empty slot name
+**Symptom**
+defineRouteTree fails while attaching parented routes.
 
-### Symptom
+**Cause**
+A declaration references a parent id that was not included in the route declaration array.
 
-Validation fails with:
+**Fix**
+Add the missing parent declaration or fix the parent id.
 
-```txt
-Route "dashboard" defines a slot with an empty name.
-```
+## Route "..." declares parent "...", but redirect routes cannot have children.
 
-### Cause
+**Symptom**
+defineRouteTree fails while attaching parented routes.
 
-`layout.slots` contains an empty string key.
+**Cause**
+The declared parent route has redirect, and redirect routes cannot own children.
 
-### Fix
+**Fix**
+Move the child to a different parent or remove redirect from the parent.
 
-Use a non-empty slot name.
+## Route parent cycle found: ....
 
-```ts
-layout: {
-  view: DashboardLayout,
-  slots: {
-    sidebar: true,
-  },
-}
-```
+**Symptom**
+defineRouteTree fails during parent cycle validation.
 
-## Slot not declared on an active layout
+**Cause**
+The parent graph contains a cycle, such as a -> b -> a.
 
-### Symptom
+**Fix**
+Break the cycle by changing or removing one parent reference.
 
-Validation fails with:
+## Route "..." has parent "..." but uses absolute path "...". Child route paths must be relative.
 
-```txt
-Missing slot "header" for route "users.details". Declare "layout.slots.header" on an active ancestor layout or remove the child slot declaration.
-```
+**Symptom**
+defineRouteTree fails during composition validation.
 
-### Cause
+**Cause**
+A route with parent uses an absolute path starting with /.
 
-A child route declares a slot that is not declared by the current layout route or an active ancestor layout.
+**Fix**
+Use a relative child path such as "details" instead of "/details".
 
-### Fix
+## Route "..." intercept "..." uses a slot that is not declared by the source route layout or an ancestor layout.
 
-Declare the slot on the route that owns the layout view or remove the child slot declaration.
+**Symptom**
+defineRouteTree fails during intercept validation.
 
-```ts
-{
-  id: 'users',
-  path: '/users',
-  layout: {
-    view: UsersLayout,
-    slots: {
-      header: true,
-    },
-  },
-  children: [
-    {
-      id: 'users.details',
-      path: '{id:int}',
-      layout: {
-        slots: {
-          header: { view: UserHeader },
-        },
-      },
-      view: UserPage,
-    },
-  ],
-}
-```
+**Cause**
+The source route configures an intercept for a slot that is not declared locally or by an ancestor layout.
 
-## Invalid slot configuration
+**Fix**
+Declare the slot in layout.slots on the source route or an ancestor route.
 
-### Symptom
+## Duplicate search descriptor key "..." passed to mergeSearch().
 
-Validation fails with one of:
+**Symptom**
+Reusable search descriptor merging fails.
 
-```txt
-Route "root" declares invalid configuration for slot "sidebar". Use a view, { view?, meta?, routes? }, or true.
-Route "root" defines invalid configuration for slot "sidebar".
-```
+**Cause**
+Two descriptors passed to mergeSearch() contain the same key.
 
-### Cause
+**Fix**
+Rename one key or merge the descriptors manually so the override is explicit.
 
-A slot value is `false`, `null`, `undefined`, an array, or another invalid value.
+## Router url.pathMatch.end: false is not supported yet.
 
-### Fix
+**Symptom**
+Router URL option validation fails.
 
-Use `true`, a view value, or an object with supported keys.
+**Cause**
+pathMatch.end was set to false, but prefix matching is not supported by the current route match state.
 
-```ts
-layout: {
-  view: AppLayout,
-  slots: {
-    sidebar: true,
-    modal: {
-      routes: [{ id: 'modal.compose', path: 'compose', view: ComposeModal }],
-    },
-  },
-}
-```
-
-## Removed slot ID
-
-### Symptom
-
-Validation fails with:
-
-```txt
-Route "root" declares "layout.slots.sidebar.id", but slot IDs are no longer supported. Use the slot key as the slot identity.
-```
-
-### Cause
-
-A slot config still declares `id`.
-
-### Fix
-
-Remove `id` and use the slot key as the identity.
-
-```ts
-layout: {
-  view: AppLayout,
-  slots: {
-    sidebar: { view: SidebarFallback },
-  },
-}
-```
-
-## Removed slot fallback
-
-### Symptom
-
-Validation fails with:
-
-```txt
-Unsupported slot fallback: slot fallbacks are no longer supported on route "root". Remove "layout.slots.sidebar.fallback"; use "layout.slots.sidebar" instead.
-```
-
-### Cause
-
-A slot config uses the removed `fallback` property.
-
-### Fix
-
-Put the fallback view directly on the slot config with `view`.
-
-```ts
-layout: {
-  view: AppLayout,
-  slots: {
-    sidebar: { view: SidebarFallback },
-  },
-}
-```
-
-## Unsupported slot key
-
-### Symptom
-
-Validation fails with:
-
-```txt
-Unsupported slot key "loader" on route "root". Remove "layout.slots.sidebar.loader". Supported slot keys are "view", "meta", and "routes".
-```
-
-### Cause
-
-A slot config contains a key other than `view`, `meta`, or `routes`.
-
-### Fix
-
-Remove the unsupported key or move the value to route metadata.
-
-```ts
-layout: {
-  view: AppLayout,
-  slots: {
-    sidebar: {
-      view: SidebarFallback,
-      meta: { chrome: true },
-    },
-  },
-}
-```
-
-## Invalid slot metadata
-
-### Symptom
-
-Validation fails with:
-
-```txt
-Route "root.sidebar" meta must be an object.
-```
-
-### Cause
-
-`layout.slots.<name>.meta` was provided as an array, `null`, or a primitive.
-
-### Fix
-
-Use an object or omit slot `meta`.
-
-```ts
-layout: {
-  view: AppLayout,
-  slots: {
-    sidebar: {
-      meta: { chrome: true },
-    },
-  },
-}
-```
-
-## Invalid slot routes
-
-### Symptom
-
-Validation fails with:
-
-```txt
-Route "root" slot "sidebar" routes must be an array.
-```
-
-### Cause
-
-`layout.slots.<name>.routes` was provided but is not an array.
-
-### Fix
-
-Use an array of route definitions.
-
-```ts
-layout: {
-  view: AppLayout,
-  slots: {
-    sidebar: {
-      routes: [{ id: 'dashboard.sidebar.activity', path: 'activity', view: ActivityPanel }],
-    },
-  },
-}
-```
-
-Slot routes are validated recursively. Any route validation error can also occur inside `layout.slots.<name>.routes`.
-
-## Invalid `intercepts`
-
-### Symptom
-
-Validation fails with:
-
-```txt
-Route "messages" intercepts must be an object.
-```
-
-### Cause
-
-`intercepts` was provided as an array, `null`, or a primitive.
-
-### Fix
-
-Use an object keyed by slot name.
-
-```ts
-intercepts: {
-  modal: {
-    to: ['messages.new'],
-    view: ComposeMessageModal,
-  },
-}
-```
-
-## Empty intercept slot name
-
-### Symptom
-
-Validation fails with:
-
-```txt
-Route "messages" defines an intercept with an empty slot name.
-```
-
-### Cause
-
-`intercepts` contains an empty string key.
-
-### Fix
-
-Use the name of a declared slot.
-
-```ts
-intercepts: {
-  modal: {
-    to: ['messages.new'],
-    view: ComposeMessageModal,
-  },
-}
-```
-
-## Invalid intercept config
-
-### Symptom
-
-Validation fails with:
-
-```txt
-Route "messages" intercept for slot "modal" must be an object.
-```
-
-### Cause
-
-The intercept entry is missing or is not an object.
-
-### Fix
-
-Use an object with `view` and `to`.
-
-```ts
-intercepts: {
-  modal: {
-    to: ['messages.new'],
-    view: ComposeMessageModal,
-  },
-}
-```
-
-## Intercept slot not declared
-
-### Symptom
-
-Validation fails with:
-
-```txt
-Invalid intercept slot "modal" on route "messages". The route configures this intercept slot, but neither this route nor an active ancestor layout declares "layout.slots.modal". Declare the slot or remove the intercept slot configuration.
-```
-
-### Cause
-
-The route configures an intercept for a slot that does not exist in the active layout tree.
-
-### Fix
-
-Declare the slot on the source route layout or an active ancestor layout.
-
-```ts
-{
-  id: 'messages',
-  path: '/messages',
-  layout: {
-    view: MessagesLayout,
-    slots: {
-      modal: true,
-    },
-  },
-  intercepts: {
-    modal: {
-      to: ['messages.new'],
-      view: ComposeMessageModal,
-    },
-  },
-  children: [{ id: 'messages.index', index: true, view: MessagesPage }],
-}
-```
-
-## Intercept missing view
-
-### Symptom
-
-Validation fails with:
-
-```txt
-Route "messages" intercept for slot "modal" must define view.
-```
-
-### Cause
-
-The intercept config does not define `view`.
-
-### Fix
-
-Add the view rendered when the intercept is active.
-
-```ts
-intercepts: {
-  modal: {
-    to: ['messages.new'],
-    view: ComposeMessageModal,
-  },
-}
-```
-
-## Intercept missing targets
-
-### Symptom
-
-Validation fails with:
-
-```txt
-Route "messages" intercept for slot "modal" must define at least one target route id.
-```
-
-### Cause
-
-`to` is missing, empty, or not a string/array.
-
-### Fix
-
-Provide one target route ID or a non-empty array of target route IDs.
-
-```ts
-intercepts: {
-  modal: {
-    to: ['messages.new'],
-    view: ComposeMessageModal,
-  },
-}
-```
-
-## Intercept target contains an empty route ID
-
-### Symptom
-
-Validation fails with:
-
-```txt
-Route "messages" intercept for slot "modal" defines an empty target route id.
-```
-
-### Cause
-
-The `to` array contains an empty string.
-
-### Fix
-
-Remove the empty entry or replace it with a valid target route ID.
-
-```ts
-intercepts: {
-  modal: {
-    to: ['messages.new'],
-    view: ComposeMessageModal,
-  },
-}
-```
+**Fix**
+Remove pathMatch.end: false. Use exact route matching until prefix matching is supported.

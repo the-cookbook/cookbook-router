@@ -239,7 +239,7 @@ const navigation = useNavigation();
 
 ### `useParams()`
 
-Reads URLKit-parsed params from the current match or a route in the active branch. Built-in numeric constraints parse to numbers, so `{id:int}`, `{price:decimal}`, and `{page:range(1,100)}` expose numbers. `list`, `regex`, unconstrained params, wildcards, and custom constraints expose `string` unless the generated contract says otherwise.
+Reads URLKit-parsed params from the current match or a route in the active branch. Built-in numeric constraints parse to numbers, so `{id:int}`, `{price:decimal}`, and `{page:range(1,100)}` expose numbers. `list`, `regex`, unconstrained params, and custom constraints expose `string` unless the generated contract says otherwise. Wildcards expose `readonly string[]` path segments.
 
 ```tsx
 const params = useParams('users.show');
@@ -315,6 +315,27 @@ Context is provided by the nearest rendered `Outlet` or `Slot`. It is intentiona
 
 Do not use outlet context as a replacement for URL state. Use params, search, and hash for state that belongs in the URL.
 
+## Slot error fallbacks
+
+By default, slot render errors bubble to the nearest route or provider error fallback. Pass `errorFallback` to isolate an error to the slot instead.
+
+```tsx
+<Slot name="modal" errorFallback={null} />
+```
+
+```tsx
+<Slot
+  name="modal"
+  errorFallback={({ error, reset }) => <ModalError error={error} onRetry={reset} />}
+/>
+```
+
+```tsx
+<Slot name="modal" errorFallback={ModalError} />
+```
+
+The fallback receives `error` and `reset`. `errorFallback={null}` renders nothing for slot errors.
+
 ## Interception in React
 
 Configured intercept:
@@ -330,6 +351,14 @@ Inline intercept:
 ```tsx
 <Link to="blog.articles.show" params={{ slug }} intercept={{ slot: 'modal', view: ArticleModal }}>
   Preview
+</Link>
+```
+
+Bypass a configured intercept for one link when the destination should render as the canonical page:
+
+```tsx
+<Link to="blog.articles.show" params={{ slug }} intercept={false}>
+  Open full page
 </Link>
 ```
 

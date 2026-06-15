@@ -25,7 +25,7 @@ Use this page when defining route paths, choosing built-in constraints, or addin
 - [Multiple constraints](#multiple-constraints)
 - [Parsed param types](#parsed-param-types)
 - [Custom constraints](#custom-constraints)
-- [`createConstraint()`](#createconstraint)
+- [`createPathConstraint()`](#createpathconstraint)
 - [Register custom constraints](#register-custom-constraints)
 - [Custom constraints and generated contracts](#custom-constraints-and-generated-contracts)
 - [Path options](#path-options)
@@ -175,11 +175,11 @@ and captures:
 
 ```ts
 {
-  path: 'images/logo.svg';
+  path: ['images', 'logo.svg'];
 }
 ```
 
-When building hrefs, wildcard params can be provided as a slash-delimited string or an array of primitive path segments:
+Router state exposes wildcard params as `readonly string[]` path segments. When building hrefs, wildcard params can be provided as a slash-delimited string or an array of primitive path segments:
 
 ```ts
 router.href('files.show', {
@@ -477,7 +477,7 @@ Router state, React hooks, middleware, lifecycle hooks, and generated contracts 
 | `{view:list(grid\|list)}`  | `string`               | Validated string.                                                                      |
 | `{slug:regex([a-z0-9-]+)}` | `string`               | Validated string.                                                                      |
 | `{slug:slug}`              | `string`               | Custom constraints expose `string` unless combined with a numeric built-in constraint. |
-| `{*path}`                  | `string`               | Captured wildcard path.                                                                |
+| `{*path}`                  | `readonly string[]`    | Captured wildcard path segments in parsed router state.                                |
 
 ```tsx
 function UserPage() {
@@ -494,14 +494,14 @@ Create custom constraints when the same path validation rule appears in multiple
 
 Custom constraints are process-level registrations. Register the same custom constraints in server, client, test, and CLI route-loading environments.
 
-## `createConstraint()`
+## `createPathConstraint()`
 
-`createConstraint()` creates a PathKit-compatible constraint.
+`createPathConstraint()` creates a PathKit-compatible constraint.
 
 ```ts
-import { createConstraint } from '@cookbook/router';
+import { createPathConstraint } from '@cookbook/router';
 
-const slug = createConstraint({
+const slug = createPathConstraint({
   parse(paramName, value) {
     if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
       throw new Error(`Parameter "${paramName}" must be a valid slug.`);
@@ -539,9 +539,9 @@ The methods are:
 When declaring routes with `defineRoutes()`, register custom constraints with `defineRoutes(..., { pathConstraints })`. `defineRoutes()` validates routes immediately, so custom constraint names must be registered there; otherwise, validation fails with an unknown constraint type error.
 
 ```tsx
-import { createConstraint, createRouter, defineRoutes } from '@cookbook/router';
+import { createPathConstraint, createRouter, defineRoutes } from '@cookbook/router';
 
-const slug = createConstraint({
+const slug = createPathConstraint({
   parse(paramName, value) {
     if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
       throw new Error(`Parameter "${paramName}" must be a valid slug.`);

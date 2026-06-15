@@ -271,7 +271,7 @@ Param inference uses the full PathKit constraint chain:
 | `{score:regex(\d+):min(1)}`                           | `number`              | Numeric because `min` appears anywhere in the chain.                     |
 | `{score:min(1):regex(\d+)}`                           | `number`              | Numeric for the same reason; constraint order does not change inference. |
 | `{slug:slug}`                                         | `string`              | Uses a registered custom constraint.                                     |
-| `{*path}`                                             | `string`              | Captures wildcard path data.                                             |
+| `{*path}`                                             | `readonly string[]`   | Captures wildcard path data as decoded path segments in router state.    |
 
 Optional params generate optional properties and are absent when the segment is not present:
 
@@ -495,6 +495,7 @@ Slot rules:
 - Slot configs support only `view`, `meta`, and `routes`.
 - Slot names are layout-scoped, not global.
 - Slot route IDs are generated because they are real URL-matched route definitions.
+- React slots can isolate render errors with `<Slot errorFallback={...} />`.
 - The removed `fallback`, `fallback.id`, and `id` slot forms fail validation; see [Route validation errors](route-validation-errors.md).
 
 When a slot route shares a URL with primary content, define both routes:
@@ -578,9 +579,22 @@ An inline interception is also supported. It does not require a route level `int
 </Link>
 ```
 
+Pass `intercept={false}` to bypass configured interception for one navigation and render the destination as a normal full page:
+
+```tsx
+<Link to="gallery.photo" params={{ slug }} intercept={false}>
+  Open full page
+</Link>
+```
+
+```ts
+await router.navigate.replace('/gallery/photo/a-snowy-landscape', { intercept: false });
+```
+
 Behavior:
 
 - Client click from `/gallery` to `/gallery/photo/a-snowy-landscape` can render `PhotoModal` in the active modal slot.
+- A navigation with `intercept: false` skips configured and call-site interception for that transition.
 - Direct entry to `/gallery/photo/a-snowy-landscape` renders `PhotoPage`.
 - Refresh on `/gallery/photo/a-snowy-landscape` still renders `PhotoModal`.
 - Browser back closes the modal by returning to the previous URL.
@@ -702,14 +716,14 @@ createRouter({ routes, maxRedirectDepth: 20 });
 
 ### `pathConstraints`
 
-Custom path constraints let route params use reusable validation rules beyond the built-in `decimal`, `int`, `uuid`, `min`, `max`, `range`, `minlength`, `maxlength`, `list`, and `regex` constraints. Create custom constraints with `createConstraint()` and register them through `defineRoutes(..., { pathConstraints })` before using them in route paths.
+Custom path constraints let route params use reusable validation rules beyond the built-in `decimal`, `int`, `uuid`, `min`, `max`, `range`, `minlength`, `maxlength`, `list`, and `regex` constraints. Create custom constraints with `createPathConstraint()` and register them through `defineRoutes(..., { pathConstraints })` before using them in route paths.
 
 `defineRoutes()` validates route patterns immediately, so any custom constraint referenced by a route path must already be registered. Cookbook Router forwards registered constraints to URLKit before descriptor validation, matching, parsing, and href building. For all built-in constraints, custom constraint APIs, and common mistakes, see [Path routes and constraints](path-routes.md).
 
 ```ts
-import { createConstraint, createRouter, defineRoutes } from '@cookbook/router';
+import { createPathConstraint, createRouter, defineRoutes } from '@cookbook/router';
 
-const slug = createConstraint({
+const slug = createPathConstraint({
   parse: (paramName, value) => {
     if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
       throw new Error(`Parameter "${paramName}" must be a valid slug.`);
@@ -766,7 +780,7 @@ Matching is deterministic:
 3. Index routes are prioritized for their parent path.
 4. Route IDs remain the primary lookup key for navigation and diagnostics.
 
-Matching uses normalized route paths and URLKit-backed route URL contracts. PathKit remains the lower-level path-pattern primitive beneath URLKit.
+Matching uses normalized route paths and URLKit-backed route URL contracts. PathKit remains the lower-level path-pattern primitive beneath URLKit. Catch-all wildcard routes are always ranked below concrete static and dynamic routes, so a root `/{*path}` not-found route cannot outrank `/overview` or `/users/{id}`.
 
 ## Validation diagnostics
 
