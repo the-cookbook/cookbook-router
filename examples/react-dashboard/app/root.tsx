@@ -6,10 +6,8 @@ const rootElement = document.getElementById('root')!;
 
 const router = createAppRouter();
 
-router.start().then(() =>
-  createRoot(rootElement).render(
-    <StrictMode>
-      <App router={router} />
-    </StrictMode>
-  )
+createRoot(rootElement).render(
+  <StrictMode>
+    <App router={router} />
+  </StrictMode>
 );

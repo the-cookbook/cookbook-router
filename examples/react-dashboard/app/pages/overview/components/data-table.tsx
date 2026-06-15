@@ -350,7 +350,7 @@ export function DataTable({
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pagination, setPagination] = React.useState({
-    pageIndex: search.page,
+    pageIndex: search.page ?? 0,
     pageSize: search.pageSize ?? 10,
   });
 

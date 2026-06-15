@@ -38,15 +38,16 @@ export function LoginForm({
       auth.authenticate();
 
       const [redirectTo] = toArray(redirect);
-      const hasMatchedRoute = redirectTo ? router.match(redirectTo) : false;
 
-      if (!hasMatchedRoute) {
-        navigate.to('overview');
+      const matchedRoute = redirectTo ? router.match(redirectTo) : undefined;
+
+      if (!redirectTo || !matchedRoute) {
+        navigate.replace('overview');
 
         return;
       }
 
-      navigate.replace(hasMatchedRoute.id, hasMatchedRoute);
+      navigate.replace(redirectTo, { intercept: false });
     },
     [navigate, router, redirect]
   );

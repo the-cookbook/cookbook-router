@@ -7,4 +7,10 @@ declare module '@cookbook/router' {
   }
 }
 
+declare module '@cookbook/router-react' {
+  interface Register {
+    contracts: RouterContracts;
+  }
+}
+
 export {};

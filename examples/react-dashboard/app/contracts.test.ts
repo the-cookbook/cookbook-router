@@ -13,7 +13,7 @@ describe('react-dashboard generated contracts', () => {
       slug: string;
     }>();
     expectTypeOf<RouteSearch['overview']>().toEqualTypeOf<{
-      page: number;
+      page?: number;
       pageSize?: number;
       visitors?: string;
     }>();
@@ -31,7 +31,7 @@ describe('react-dashboard generated contracts', () => {
 
       expectTypeOf(params).toEqualTypeOf<{ slug: string }>();
       expectTypeOf(search).toEqualTypeOf<{
-        page: number;
+        page?: number;
         pageSize?: number;
         visitors?: string;
       }>();

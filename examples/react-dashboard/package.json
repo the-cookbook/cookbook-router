@@ -9,9 +9,9 @@
     "test:watch": "vitest --config vitest.config.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint app --ext .ts,.tsx",
-    "routes:generate": "node ../../packages/router-cli/dist/index.js generate --routes app/routes.ts --out-dir .cookbook-router",
-    "routes:watch": "node ../../packages/router-cli/dist/index.js generate --routes app/routes.ts --out-dir .cookbook-router --watch",
-    "routes:validate": "node ../../packages/router-cli/dist/index.js validate --routes app/routes.ts"
+    "routes:generate": "node ../../packages/router-cli/dist/index.js generate",
+    "routes:watch": "node ../../packages/router-cli/dist/index.js generate --watch",
+    "routes:validate": "node ../../packages/router-cli/dist/index.js validate"
   },
   "dependencies": {
     "@cookbook/router": "workspace:*",
@@ -39,6 +39,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@cookbook/router-cli": "workspace:*",
+    "@cookbook/router-vite-plugin": "workspace:*",
     "@tailwindcss/vite": "^4.3.0",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^25",

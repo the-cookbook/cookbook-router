@@ -90,6 +90,7 @@ export function DocumentCard({ document }: DocumentCardProps) {
             slot: 'modal',
             view: DocumentPreview,
           }}
+          preventScrollReset={true}
           className="inline-flex items-center text-sm font-medium text-foreground hover:underline"
         >
           Preview document

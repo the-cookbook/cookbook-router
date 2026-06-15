@@ -189,6 +189,7 @@ const columns: ColumnDef<DashboardUser>[] = [
           <Link
             to="users.details"
             params={{ slug: user.username.replace('.', '-') }}
+            prefetch="mount"
           >
             <Avatar className="size-9 border">
               <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
@@ -200,6 +201,7 @@ const columns: ColumnDef<DashboardUser>[] = [
               <Link
                 to="users.details"
                 params={{ slug: user.username.replace('.', '-') }}
+                prefetch="mount"
               >
                 {user.name}
               </Link>
@@ -208,6 +210,7 @@ const columns: ColumnDef<DashboardUser>[] = [
               <Link
                 to="users.details"
                 params={{ slug: user.username.replace('.', '-') }}
+                prefetch="mount"
               >
                 <Mail className="size-3" />
                 {user.email}

@@ -34,7 +34,7 @@ const data = {
       icon: <LayoutDashboard />,
       link: {
         route: 'overview',
-        end: { search: 'ignore' },
+        end: false,
       },
     },
     {
@@ -42,7 +42,7 @@ const data = {
       icon: <Users />,
       link: {
         route: 'users.index',
-        end: { search: 'ignore' },
+        end: false,
       },
     },
     {
@@ -88,7 +88,7 @@ export function AppSidebar({
               className="data-[slot=sidebar-menu-button]:p-1.5!"
               asChild
             >
-              <Link route="overview">
+              <Link route="main">
                 <ChefHat className="size-5!" />
                 <span className="text-base font-semibold">Cookbook</span>
               </Link>

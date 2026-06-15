@@ -6,7 +6,7 @@ import {
   type Router,
 } from '@cookbook/router';
 import { RouterProvider } from '@cookbook/router-react';
-import { routes } from './routes';
+import { routes } from '../.cookbook-router/routes';
 import { ErrorPage } from './pages/error';
 import { auth } from './state/auth';
 

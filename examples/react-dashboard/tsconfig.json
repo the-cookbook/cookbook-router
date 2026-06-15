@@ -13,5 +13,9 @@
     "types": ["vite/client"],
     "ignoreDeprecations": "6.0"
   },
-  "include": ["app", ".cookbook-router/*"]
+  "include": [
+    "app",
+    ".cookbook-router/contracts.ts",
+    ".cookbook-router/register.d.ts"
+  ]
 }

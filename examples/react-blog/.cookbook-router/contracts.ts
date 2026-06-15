@@ -12,7 +12,29 @@ export interface RouteParams {
   'blog.login': {};
 }
 
+export interface RouteParamsInput {
+  entry: {};
+  blog: {};
+  'blog.home': {};
+  'blog.articles': {};
+  'blog.articles.show': { slug: string };
+  'blog.archive': {};
+  'blog.members': {};
+  'blog.login': {};
+}
+
 export interface RouteSearch {
+  entry: {};
+  blog: {};
+  'blog.home': { query?: string };
+  'blog.articles': { query?: string };
+  'blog.articles.show': { ref?: string; filters?: readonly string[] };
+  'blog.archive': {};
+  'blog.members': {};
+  'blog.login': { redirect?: string };
+}
+
+export interface RouteSearchInput {
   entry: {};
   blog: {};
   'blog.home': { query?: string };
@@ -28,7 +50,7 @@ export interface RouteHash {
   blog: never;
   'blog.home': never;
   'blog.articles': never;
-  'blog.articles.show': 'comments' | 'share';
+  'blog.articles.show': 'comments' | 'share' | undefined;
   'blog.archive': never;
   'blog.members': never;
   'blog.login': never;
@@ -67,21 +89,11 @@ export interface RouteOutletContext {
   'blog.login': {};
 }
 
-export const routeIds = ['entry', 'blog', 'blog.home', 'blog.articles', 'blog.articles.show', 'blog.archive', 'blog.members', 'blog.login'] as const;
-export const routePaths = {
-  entry: '/',
-  blog: '/blog',
-  'blog.home': '/blog',
-  'blog.articles': '/blog/articles',
-  'blog.articles.show': '/blog/articles/{slug:regex([a-z0-9-]+)}',
-  'blog.archive': '/blog/archive',
-  'blog.members': '/blog/members',
-  'blog.login': '/blog/login',
-} as const;
-
 export interface RouterContracts {
   params: RouteParams;
+  paramsInput: RouteParamsInput;
   search: RouteSearch;
+  searchInput: RouteSearchInput;
   hash: RouteHash;
   meta: RouteMeta;
   paths: RoutePaths;

@@ -68,7 +68,7 @@ export function Navigation({ items }: { items: NavigationItem[] }) {
 
             return (
               <SidebarMenuItem key={item.title}>
-                <NavLink {...item.link}>
+                <NavLink {...item.link} prefetch="interaction">
                   {({ isActive }) => (
                     <SidebarMenuButton
                       tooltip={item.title}

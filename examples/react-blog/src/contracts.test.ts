@@ -11,7 +11,9 @@ import type {
 describe('react-blog generated contracts', () => {
   it('exposes generated route IDs, params, hash values, metadata, and paths', () => {
     expectTypeOf<RouteParams['blog.articles.show']>().toEqualTypeOf<{ slug: string }>();
-    expectTypeOf<RouteHash['blog.articles.show']>().toEqualTypeOf<'comments' | 'share'>();
+    expectTypeOf<RouteHash['blog.articles.show']>().toEqualTypeOf<
+      'comments' | 'share' | undefined
+    >();
     expectTypeOf<
       RoutePaths['blog.articles.show']
     >().toEqualTypeOf<'/blog/articles/{slug:regex([a-z0-9-]+)}'>();

@@ -1,56 +1,38 @@
 {
   "routes": [
     {
-      "id": "entry",
+      "id": "main",
       "path": "/",
       "index": false
     },
     {
-      "id": "entry.redirect",
+      "id": "main.redirect",
       "path": "/",
-      "parentId": "entry",
+      "parentId": "main",
       "index": true
-    },
-    {
-      "id": "create",
-      "path": "/create",
-      "parentId": "entry",
-      "index": false
     },
     {
       "id": "new-message",
       "path": "/messages/new",
-      "parentId": "entry",
+      "parentId": "main",
       "index": false
     },
     {
-      "id": "overview",
-      "path": "/overview",
-      "parentId": "entry",
+      "id": "broken-page",
+      "path": "/broken-page",
+      "parentId": "main",
       "index": false
     },
     {
-      "id": "users",
-      "path": "/users",
-      "parentId": "entry",
-      "index": false
-    },
-    {
-      "id": "users.index",
-      "path": "/users",
-      "parentId": "users",
-      "index": true
-    },
-    {
-      "id": "users.details",
-      "path": "/users/{slug:slug}",
-      "parentId": "users",
+      "id": "create",
+      "path": "/create",
+      "parentId": "main",
       "index": false
     },
     {
       "id": "documents",
       "path": "/documents",
-      "parentId": "entry",
+      "parentId": "main",
       "index": false
     },
     {
@@ -66,27 +48,21 @@
       "index": false
     },
     {
-      "id": "reports",
-      "path": "/reports",
-      "parentId": "entry",
+      "id": "login",
+      "path": "/login",
+      "parentId": "main",
       "index": false
     },
     {
-      "id": "broken-page",
-      "path": "/broken-page",
-      "parentId": "entry",
+      "id": "overview",
+      "path": "/overview",
+      "parentId": "main",
       "index": false
     },
     {
       "id": "policies",
       "path": "/policies",
-      "parentId": "entry",
-      "index": false
-    },
-    {
-      "id": "terms-of-service",
-      "path": "/policies/terms-of-service",
-      "parentId": "policies",
+      "parentId": "main",
       "index": false
     },
     {
@@ -96,13 +72,39 @@
       "index": false
     },
     {
-      "id": "login",
-      "path": "/login",
+      "id": "terms-of-service",
+      "path": "/policies/terms-of-service",
+      "parentId": "policies",
+      "index": false
+    },
+    {
+      "id": "reports",
+      "path": "/reports",
+      "parentId": "main",
+      "index": false
+    },
+    {
+      "id": "users",
+      "path": "/users",
+      "parentId": "main",
+      "index": false
+    },
+    {
+      "id": "users.index",
+      "path": "/users",
+      "parentId": "users",
+      "index": true
+    },
+    {
+      "id": "users.details",
+      "path": "/users/{slug:slug}",
+      "parentId": "users",
       "index": false
     },
     {
       "id": "not-found",
       "path": "/{*path}",
+      "parentId": "main",
       "index": false
     }
   ]

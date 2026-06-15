@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, Slot, useMatches } from '@cookbook/router-react';
+import { Outlet, Slot, useRouteMeta } from '@cookbook/router-react';
 import { toast } from 'sonner';
 import { Toaster } from '@/components/ui/sonner';
 import { AppSidebar } from '@/components/app-sidebar';
@@ -22,7 +22,10 @@ export function RootLayoutPage() {
 }
 
 export function LayoutPage() {
-  const matches = useMatches();
+  const meta = useRouteMeta({
+    includeAncestors: true,
+    merge: 'leaf',
+  });
 
   React.useEffect(() => {
     const ref = toast.warning(
@@ -36,23 +39,9 @@ export function LayoutPage() {
   }, []);
 
   const headerDimensions = React.useMemo(() => {
-    const filtered = matches.filter(
-      (match) =>
-        match.route.meta?.headerHeight !== null &&
-        match.route.meta?.headerHeight !== undefined
-    );
-
-    const result = { height: 12 };
-
-    for (let i = 0; i < filtered.length; i++) {
-      const entry = filtered[i]!;
-
-      result.height =
-        (entry.route.meta?.headerHeight as number | undefined) ?? result.height;
-    }
-
-    return result;
-  }, [matches]);
+    // @ts-expect-error: headerHeight meta may or may not exist on route tree
+    return { height: meta?.headerHeight ?? 12 };
+  }, [meta]);
 
   return (
     <SidebarProvider
@@ -75,7 +64,22 @@ export function LayoutPage() {
               </div>
             }
           >
-            <Slot name="header" />
+            <Slot
+              name="header"
+              errorFallback={({ error }) => {
+                const msg =
+                  error instanceof Error
+                    ? error.message
+                    : typeof error === 'string'
+                      ? error
+                      : '';
+                return (
+                  <div className="text-xs">
+                    Oops: <span className="font-mono">{msg}</span>
+                  </div>
+                );
+              }}
+            />
           </React.Suspense>
         </Header>
         <Outlet />

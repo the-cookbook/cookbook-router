@@ -152,6 +152,10 @@ export function ChartAreaInteractive(props: { timeRange: string | undefined }) {
     isValidTimeRange(props.timeRange) ? props.timeRange : '90d'
   );
 
+  if (isValidTimeRange(props.timeRange) && props.timeRange !== timeRange) {
+    setTimeRange(isValidTimeRange(props.timeRange) ? props.timeRange : '90d');
+  }
+
   React.useEffect(() => {
     if (isMobile) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
