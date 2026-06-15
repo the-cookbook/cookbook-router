@@ -94,6 +94,20 @@ describe('createRouter intercepting routes', () => {
     });
   });
 
+  it('bypasses configured interception when navigation opts out', async () => {
+    const router = createMemoryRouter({ routes, initialEntries: ['/blog'] });
+
+    const state = await router.navigate.to('blog.posts.show', {
+      params: { slug: 'hello-world' },
+      intercept: false,
+    });
+
+    expect(state.location.href).toBe('/blog/hello-world');
+    expect(state.previousLocation).toBeUndefined();
+    expect(state.match?.route.id).toBe('blog.posts.show');
+    expect(state.match?.intercepted).toBeUndefined();
+  });
+
   it('keeps automatic configured interception restorable through back and forward', async () => {
     const router = createMemoryRouter({ routes, initialEntries: ['/blog'] });
 

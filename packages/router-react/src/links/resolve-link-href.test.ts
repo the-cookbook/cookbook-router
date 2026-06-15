@@ -10,6 +10,7 @@ describe('resolveLinkHrefOptions', () => {
         hash: 'top',
         url: { arrayFormat: 'comma' },
         preventScrollReset: true,
+        intercept: false,
       }),
     ).toEqual({
       params: { id: 1 },
@@ -17,6 +18,7 @@ describe('resolveLinkHrefOptions', () => {
       hash: 'top',
       url: { arrayFormat: 'comma' },
       preventScrollReset: true,
+      intercept: false,
     });
   });
 });

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { resetConstraints } from '@cookbook/pathkit';
 import { createMemoryHistory } from '../history/memory-history';
-import { createConstraint } from '../path';
+import { createPathConstraint } from '../path';
 import { defineRoutes } from '../route-config/define-routes';
 import { createRouter, deserializeRouterState, serializeRouterState } from './create-router';
 
@@ -40,7 +40,7 @@ describe('create-router', () => {
   });
 
   it('registers custom path constraints before route validation and href generation', () => {
-    const slug = createConstraint({
+    const slug = createPathConstraint({
       parse: (paramName, value) => {
         if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
           throw new Error(`Parameter "${paramName}" must be a valid slug`);
@@ -70,7 +70,7 @@ describe('create-router', () => {
   });
 
   it('registers createRouter path constraints before validation and normalization', () => {
-    const slug = createConstraint({
+    const slug = createPathConstraint({
       parse: (paramName, value) => {
         if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
           throw new Error(`Parameter "${paramName}" must be a valid slug`);

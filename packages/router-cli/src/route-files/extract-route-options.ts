@@ -1,5 +1,5 @@
 import {
-  createConstraint,
+  createPathConstraint,
   type DefineRoutesOptions,
   type RouterPathConstraints,
 } from '@cookbook/router';
@@ -54,7 +54,7 @@ export function extractDefineRoutesOptionsLiteral(
     [
       'The CLI could not statically evaluate defineRoutes options.',
       'Supported forms are defineRoutes(routes, { pathConstraints: constraints })',
-      'and defineRoutes(routes, { pathConstraints: { slug: createConstraint(...) } }).',
+      'and defineRoutes(routes, { pathConstraints: { slug: createPathConstraint(...) } }).',
     ].join(' '),
   );
 }
@@ -68,7 +68,7 @@ export function extractRouteOptions(
     return undefined;
   }
 
-  const pathOptions = extractPathOptions(path, optionsLiteral);
+  const pathOptions = extractPathOptions(path, optionsLiteral, contents);
   const pathConstraints = extractPathConstraints(path, contents, optionsLiteral);
 
   if (pathOptions === undefined && pathConstraints === undefined) {
@@ -84,22 +84,34 @@ export function extractRouteOptions(
 export function extractPathOptions(
   path: string,
   optionsLiteral: string,
+  contents = '',
 ): DefineRoutesOptions['pathOptions'] {
-  const pathOptionsLiteral = extractObjectPropertyValue(optionsLiteral, 'pathOptions');
+  const pathOptionsLiteral = extractObjectPropertyValueOrShorthand(optionsLiteral, 'pathOptions');
 
   if (pathOptionsLiteral === undefined) {
     return undefined;
   }
 
+  const pathOptionsObject = resolveStaticObjectValue(contents, pathOptionsLiteral);
+
+  if (pathOptionsObject === undefined) {
+    throw new Error(
+      [
+        `Route file "${path}" uses pathOptions that the CLI cannot statically evaluate.`,
+        'Use an inline static object literal or a static object declaration for pathOptions.',
+      ].join(' '),
+    );
+  }
+
   try {
     return new Function(
-      `"use strict"; return (${pathOptionsLiteral});`,
+      `"use strict"; return (${stripTypeScriptConstAssertions(pathOptionsObject)});`,
     )() as DefineRoutesOptions['pathOptions'];
   } catch (error) {
     throw new Error(
       [
         `Route file "${path}" uses pathOptions that the CLI cannot statically evaluate.`,
-        'Use a static object literal for defineRoutes pathOptions.',
+        'Use an inline static object literal or a static object declaration for pathOptions.',
       ].join(' '),
       { cause: error },
     );
@@ -111,24 +123,25 @@ export function extractPathConstraints(
   contents: string,
   optionsLiteral: string,
 ): RouterPathConstraints | undefined {
-  const pathConstraintsLiteral = extractObjectPropertyValue(optionsLiteral, 'pathConstraints');
+  const pathConstraintsLiteral = extractObjectPropertyValueOrShorthand(
+    optionsLiteral,
+    'pathConstraints',
+  );
 
   if (pathConstraintsLiteral === undefined) {
     return undefined;
   }
 
-  const trimmed = pathConstraintsLiteral.trim();
-  const constraintsObject = trimmed.startsWith('{')
-    ? trimmed
-    : findStaticObjectDeclaration(contents, trimmed);
+  const constraintsObject = resolveStaticObjectValue(contents, pathConstraintsLiteral);
 
   if (constraintsObject === undefined) {
     throw new Error(
       [
         `Route file "${path}" uses pathConstraints that the CLI cannot statically evaluate.`,
-        'Supported forms are defineRoutes(routes, { pathConstraints: constraints })',
-        'with a static object declaration and',
-        'defineRoutes(routes, { pathConstraints: { slug: createConstraint(...) } }).',
+        'Supported forms are defineRoutes(routes, { pathConstraints })',
+        'with a static object declaration,',
+        'defineRoutes(routes, { pathConstraints: constraints }), and',
+        'defineRoutes(routes, { pathConstraints: { slug: createPathConstraint(...) } }).',
       ].join(' '),
     );
   }
@@ -137,10 +150,10 @@ export function extractPathConstraints(
 }
 
 export function createCliPathConstraints(names: readonly string[]): RouterPathConstraints {
-  const constraints: Record<string, ReturnType<typeof createConstraint>> = {};
+  const constraints: Record<string, ReturnType<typeof createPathConstraint>> = {};
 
   for (const name of names) {
-    constraints[name] = createConstraint({
+    constraints[name] = createPathConstraint({
       parse: (paramName: string, value: unknown) => {
         if (typeof value !== 'string') {
           throw new Error(`Parameter "${paramName}" must be a string.`);
@@ -198,6 +211,61 @@ export function extractConstraintNames(path: string, objectLiteral: string): rea
   throw new Error(`Route file "${path}" contains an unterminated pathConstraints object.`);
 }
 
+export function extractObjectPropertyValueOrShorthand(
+  source: string,
+  propertyName: string,
+): string | undefined {
+  const explicitValue = extractObjectPropertyValue(source, propertyName);
+
+  if (explicitValue !== undefined) {
+    return explicitValue;
+  }
+
+  let index = 0;
+
+  while (index < source.length) {
+    index = skipTrivia(source, index);
+    const char = source[index];
+
+    if (!char) {
+      return undefined;
+    }
+
+    if (isQuote(char)) {
+      index = readQuoted(source, index);
+      continue;
+    }
+
+    if (startsLineComment(source, index)) {
+      index = readLineComment(source, index);
+      continue;
+    }
+
+    if (startsBlockComment(source, index)) {
+      index = readBlockComment(source, index);
+      continue;
+    }
+
+    const token = source.slice(index, index + propertyName.length);
+    const before = index === 0 ? '' : (source[index - 1] ?? '');
+    const afterIndex = index + propertyName.length;
+    const after = source[afterIndex] ?? '';
+
+    if (
+      token === propertyName &&
+      !/[\w$]/.test(before) &&
+      !/[\w$]/.test(after) &&
+      source[skipTrivia(source, afterIndex)] !== ':'
+    ) {
+      return propertyName;
+    }
+
+    index += 1;
+  }
+
+  return undefined;
+}
+
 export function extractObjectPropertyValue(
   source: string,
   propertyName: string,
@@ -247,6 +315,19 @@ export function extractObjectPropertyValue(
   return undefined;
 }
 
+export function resolveStaticObjectValue(
+  contents: string,
+  valueLiteral: string,
+): string | undefined {
+  const trimmed = stripTypeScriptConstAssertions(valueLiteral).trim();
+
+  if (trimmed.startsWith('{')) {
+    return trimmed;
+  }
+
+  return findStaticObjectDeclaration(contents, trimmed);
+}
+
 export function findStaticObjectDeclaration(
   contents: string,
   identifier: string,
@@ -256,7 +337,7 @@ export function findStaticObjectDeclaration(
   }
 
   const declaration = new RegExp(
-    `(?:export\\s+)?(?:const|let|var)\\s+${escapeRegExp(identifier)}\\s*=`,
+    `(?:export\\s+)?(?:const|let|var)\\s+${escapeRegExp(identifier)}(?:\\s*:\\s*[^=]+)?\\s*=`,
   ).exec(contents);
 
   if (declaration?.index === undefined) {
@@ -270,4 +351,8 @@ export function findStaticObjectDeclaration(
   }
 
   return extractBalancedObject(identifier, contents, objectStart);
+}
+
+function stripTypeScriptConstAssertions(source: string): string {
+  return source.replace(/\s+as\s+const\b/g, '');
 }

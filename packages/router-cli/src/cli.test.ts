@@ -32,7 +32,7 @@ describe('CLI executable runner', () => {
       runCli(['bad-command'], { stderr: (message) => stderr.push(message) }),
     ).resolves.toBe(1);
 
-    expect(stderr.join('\n')).toContain('Unknown command "bad-command"');
+    expect(stderr.join('\n')).toContain("unknown command 'bad-command'");
   });
 
   it('prints command errors and returns non-zero exit code', async () => {
@@ -70,6 +70,58 @@ describe('CLI executable runner', () => {
         'users.show',
       );
       expect(stdout.join('\n')).toContain('Generated 3 files.');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('prints JSON command results', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'cookbook-router-cli-json-'));
+    const routeFile = join(dir, 'routes.json');
+    const stdout: string[] = [];
+
+    try {
+      await writeFile(routeFile, JSON.stringify({ routes: sampleRoutes }));
+
+      await expect(
+        runCli(['validate', '--routes', routeFile, '--json'], {
+          stdout: (message) => stdout.push(message),
+        }),
+      ).resolves.toBe(0);
+
+      expect(JSON.parse(stdout.join('\n'))).toEqual({ ok: true, files: [], errors: [] });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolves config and route globs from --cwd', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'cookbook-router-cli-cwd-'));
+    const appDir = join(dir, 'app');
+    const stdout: string[] = [];
+
+    try {
+      await import('node:fs/promises').then(({ mkdir }) => mkdir(appDir, { recursive: true }));
+      await writeFile(
+        join(dir, 'cookbook-router.config.ts'),
+        `import { defineRouterConfig } from '@cookbook/router-cli';
+export default defineRouterConfig({ routeFiles: 'app/**/*.route.tsx' } as const);
+`,
+      );
+      await writeFile(
+        join(appDir, 'home.route.tsx'),
+        `import { defineRoute } from '@cookbook/router';
+export const homeRoute = defineRoute({ id: 'home', path: '/' } as const);
+`,
+      );
+
+      await expect(
+        runCli(['generate', '--cwd', dir], { stdout: (message) => stdout.push(message) }),
+      ).resolves.toBe(0);
+
+      await expect(
+        readFile(join(dir, '.cookbook-router/manifest.json'), 'utf8'),
+      ).resolves.toContain('home');
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

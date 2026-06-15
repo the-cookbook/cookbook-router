@@ -68,12 +68,13 @@
     "lint": "eslint src --ext .ts,.tsx",
     "prepack": "pnpm build",
     "test": "vitest --config ../../vitest.config.ts --run",
+    "test:watch": "vitest --config ../../vitest.config.ts",
     "test:coverage": "vitest --config ../../vitest.config.ts --run --coverage",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@cookbook/router": "workspace:*"
-  },
-  "peerDependencies": {},
-  "devDependencies": {}
+    "@cookbook/router": "workspace:*",
+    "ajv": "8.20.0",
+    "commander": "^14.0.0"
+  }
 }

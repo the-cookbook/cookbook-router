@@ -110,6 +110,20 @@ describe('resolveIntercept', () => {
     });
   });
 
+  it('does not resolve configured interception when a call site opts out', () => {
+    const source = matchRoutes(routes, '/blog');
+    const destination = matchRoutes(routes, '/blog/hello-world');
+
+    expect(
+      resolveIntercept({
+        source,
+        destination,
+        destinationPathname: '/blog/hello-world',
+        intercept: false,
+      }),
+    ).toBeNull();
+  });
+
   it('uses a string intercept option only as configured slot disambiguation', () => {
     const source = matchRoutes(routes, '/blog');
     const destination = matchRoutes(routes, '/blog/hello-world');

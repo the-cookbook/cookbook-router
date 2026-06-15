@@ -6,7 +6,7 @@ import {
   prunePathname,
   matchPathPattern,
   validatePathPattern,
-  createConstraint,
+  createPathConstraint,
   registerPathConstraints,
 } from './index';
 
@@ -153,8 +153,8 @@ describe('pathkit integration adapter', () => {
 });
 
 describe('custom path constraints', () => {
-  it('registers constraints created with createConstraint', () => {
-    const slug = createConstraint({
+  it('registers constraints created with createPathConstraint', () => {
+    const slug = createPathConstraint({
       parse: (paramName, value) => {
         if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
           throw new Error(`Parameter "${paramName}" must be a valid slug`);
@@ -184,7 +184,7 @@ describe('custom path constraints', () => {
   });
 
   it('clears pathkit caches when replacing a registered constraint', () => {
-    const first = createConstraint({
+    const first = createPathConstraint({
       parse: (_paramName, value) => {
         if (value !== 'first') {
           throw new Error('expected first');
@@ -193,7 +193,7 @@ describe('custom path constraints', () => {
       verify: () => {},
       toRegExp: () => 'first',
     });
-    const second = createConstraint({
+    const second = createPathConstraint({
       parse: (_paramName, value) => {
         if (value !== 'second') {
           throw new Error('expected second');
@@ -212,7 +212,7 @@ describe('custom path constraints', () => {
   });
 
   it('rejects empty custom constraint names', () => {
-    const constraint = createConstraint({
+    const constraint = createPathConstraint({
       parse: () => {},
       verify: () => {},
       toRegExp: () => '.+',
@@ -222,4 +222,19 @@ describe('custom path constraints', () => {
       'Router path constraint names must be non-empty strings.',
     );
   });
+});
+
+it('supports PathKit 1.0 match options including wildcard arrays and decoding', () => {
+  expect(
+    matchPathPattern('/files/{*path}', '/files/a%2Fb/c%20d', {
+      wildcardFormat: 'array',
+      decode: true,
+    }),
+  ).toEqual({ path: ['a/b', 'c d'] });
+
+  expect(matchPathPattern('/Users/{name}', '/users/Ada')).toEqual({ name: 'Ada' });
+  expect(matchPathPattern('/Users/{name}', '/users/Ada', { sensitive: true })).toBeNull();
+  expect(
+    matchPathPattern('/users/{name}', '/users/Ada/', { trailing: false, prune: false }),
+  ).toBeNull();
 });

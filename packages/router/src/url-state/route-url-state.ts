@@ -5,13 +5,14 @@ import {
   parseHash as parseUrlKitHash,
   parseSearch as parseUrlKitSearch,
 } from '@cookbook/urlkit/router-runtime';
-import { matchPathPattern, type RouterPathConstraints } from '../path';
+import { type RouterPathConstraints, type RouterPathMatchOptions } from '../path';
 import type { NormalizedRoute } from '../route-config/contracts';
 import type { RouterUnknownSearchParams, RouterUrlOptions } from './contracts';
 import { createRouteUrlContract } from './create-route-url-contract';
 import {
   toUrlKitHashParseOptions,
   toUrlKitBuildOptions,
+  toUrlKitPathMatchOptions,
   toUrlKitSearchParseOptions,
 } from './map-router-url-options';
 import { resolveUrlOptions } from './resolve-url-options';
@@ -245,38 +246,71 @@ function parseRoutePathParamsOrThrow(
   pathname: string,
   options: RouteUrlStateOptions,
 ): Record<string, unknown> {
+  const urlOptions = resolveRouteUrlOptions(route, options);
   const contract = createNormalizedRouteUrlContract(route, options);
-  const params = contract.parsePathname(pathname) as Record<string, unknown>;
+  const params = contract.parsePathname(
+    pathname,
+    toRoutePathMatchOptions(route, urlOptions),
+  ) as Record<string, unknown>;
 
-  return mergeWildcardParamsFromPathkit(route, pathname, params);
+  return normalizeRoutePathParams(route, params);
 }
 
-function mergeWildcardParamsFromPathkit(
+function toRoutePathMatchOptions(
   route: NormalizedRoute,
-  pathname: string,
+  urlOptions: RouterUrlOptions,
+): RouterPathMatchOptions {
+  const pathMatch = toUrlKitPathMatchOptions(urlOptions);
+
+  if (!route.params.some((param) => param.wildcard)) {
+    return pathMatch;
+  }
+
+  return {
+    ...pathMatch,
+    wildcardFormat: 'array',
+  };
+}
+
+function normalizeRoutePathParams(
+  route: NormalizedRoute,
   params: Record<string, unknown>,
 ): Record<string, unknown> {
-  const missingWildcardParams = route.params.filter(
-    (param) => param.wildcard && params[param.name] === undefined,
-  );
+  let normalized = params;
 
-  if (!missingWildcardParams.length || !route.fullPath) {
-    return params;
+  for (const param of route.params) {
+    if (!param.wildcard) {
+      continue;
+    }
+
+    const value = normalized[param.name];
+
+    if (value === undefined) {
+      continue;
+    }
+
+    if (normalized === params) {
+      normalized = { ...params };
+    }
+
+    normalized[param.name] = toWildcardSegments(value);
   }
 
-  // URLKit validates PathKit catch-all routes but may not always
-  // return wildcard captures through parsed pathname contracts. Keep this bridge
-  // internal so Router state still includes wildcard values when needed.
-  const pathkitParams = matchPathPattern(route.fullPath, pathname);
+  return normalized;
+}
 
-  if (!pathkitParams) {
-    return params;
+function toWildcardSegments(value: unknown): readonly string[] {
+  const segments = Array.isArray(value) ? value.map(String) : String(value).split('/');
+
+  if (segments.length === 1 && segments[0] === '') {
+    return [];
   }
 
-  return missingWildcardParams.reduce<Record<string, unknown>>(
-    (next, param) => ({ ...next, [param.name]: pathkitParams[param.name] }),
-    params,
-  );
+  if (segments[segments.length - 1] === '') {
+    return segments.slice(0, -1);
+  }
+
+  return segments;
 }
 
 function createNormalizedRouteUrlContract(route: NormalizedRoute, options: RouteUrlStateOptions) {

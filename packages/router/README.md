@@ -342,9 +342,9 @@ See [Contracts](../../docs/contracts.md) and [Code generation](../../docs/codege
 ## Custom path constraints
 
 ```ts
-import { createConstraint, defineRoutes } from '@cookbook/router';
+import { createPathConstraint, defineRoutes } from '@cookbook/router';
 
-const slug = createConstraint({
+const slug = createPathConstraint({
   parse(paramName, value) {
     if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
       throw new Error(`${paramName} must be a slug.`);
@@ -367,9 +367,9 @@ const routes = defineRoutes([{ id: 'posts.show', path: '/posts/{slug:slug}' }] a
 Also exported:
 
 - `registerPathConstraints()`
-- `hasConstraint()`
-- `getConstraint()`
-- `unregisterConstraint()`
+- `hasPathConstraint()`
+- `getPathConstraint()`
+- `unregisterPathConstraint()`
 
 ## Advanced public helpers
 
@@ -387,7 +387,7 @@ Internal middleware runners, transition runners, slot resolvers, and intercept r
 ## Troubleshooting
 
 - If custom constraints are unknown, pass them to `defineRoutes(..., { pathConstraints })` or `createRouter({ pathConstraints })` for raw route arrays so URLKit can validate and compile route contracts.
-- If redirects do not run before first render, call `await router.start()` before rendering.
+- In React apps, `RouterProvider` starts the router automatically. For custom renderers, call `await router.start()` before rendering from `router.state.match`.
 - If route types are too broad, run `@cookbook/router-cli generate` and include generated files in `tsconfig.json`.
 - If tests need navigation, use `createMemoryRouter()` instead of mocking internals.
 

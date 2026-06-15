@@ -10,10 +10,12 @@ describe('package entrypoint', () => {
     expect(module.StaticRouterProvider).toBeTypeOf('function');
     expect(module.Link).toBeTypeOf('function');
     expect(module.NavLink).toBeTypeOf('function');
+    expect(module.lazyRouteView).toBeTypeOf('function');
     expect(module.Outlet).toBeTypeOf('function');
     expect(module.useNavigate).toBeTypeOf('function');
     expect(module.useHashParams).toBeTypeOf('function');
     expect(module.useSearchParams).toBeTypeOf('function');
     expect(module.useUnknownSearchParams).toBeTypeOf('function');
+    expect(module.useRouteMeta).toBeTypeOf('function');
   });
 });

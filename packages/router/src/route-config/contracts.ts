@@ -71,6 +71,29 @@ export type RouteRedirect =
     };
 
 /**
+ * Context passed to route preload callbacks.
+ *
+ * Preload callbacks warm route modules, lazy views, or userland resources without
+ * committing navigation, running middleware, or mutating router state.
+ */
+export interface RoutePreloadContext<Route extends string = string> {
+  readonly route: MatchedRoute;
+  readonly match: RouteMatch<Route>;
+  readonly location: RouterLocation;
+  readonly params: Record<string, unknown>;
+  readonly search: ParsedRouteSearch | Record<string, unknown>;
+  readonly unknownSearch?: ParsedUnknownRouteSearch;
+  readonly hash: ParsedRouteHash | unknown;
+  readonly signal: AbortSignal;
+}
+
+/** Optional route-level preload hook for route-aware userland warming. */
+export type RoutePreload = (context: RoutePreloadContext) => void | Promise<void>;
+
+/** Internal route-module preloader used by generated/runtime integrations. */
+export type RouteModulePreload = () => void | Promise<void>;
+
+/**
  * Authored configuration for a named layout slot.
  *
  * A slot can provide a fallback view, its own nested route tree, and metadata
@@ -124,6 +147,23 @@ export interface RouteLayoutDefinition {
  * records into `NormalizedRoute` entries with full paths, params, ranks, slot
  * ownership, and intercept metadata.
  */
+
+/**
+ * Authored route declaration used by `defineRoute` and `defineRouteTree`.
+ *
+ * `parent` and `order` are composition-only fields. They are consumed while
+ * building a nested route tree and are stripped from the runtime route
+ * definitions returned by `defineRouteTree`.
+ */
+export interface RouteDeclaration extends Omit<RouteDefinition, 'children'> {
+  /** Parent route id used by explicit modular route composition. */
+  readonly parent?: string;
+  /** Deterministic sibling ordering hint used only during composition. */
+  readonly order?: number;
+  /** Inline route declarations owned by this declaration. */
+  readonly children?: readonly RouteDeclaration[];
+}
+
 export interface RouteDefinition {
   /**
    * Stable identifier used for typed navigation, href generation, route matching,
@@ -159,6 +199,21 @@ export interface RouteDefinition {
   readonly hash?: RouteHashSchema;
   /** User-defined metadata copied into normalized routes and matches. */
   readonly meta?: RouteMeta;
+  /**
+   * Optional route-aware preload hook.
+   *
+   * Use this for application-owned warming such as query cache prefetching,
+   * permissions/config lookup, images, or non-standard lazy-loading patterns.
+   */
+  readonly preload?: RoutePreload;
+  /**
+   * Internal route-module preloader used by generated/runtime integrations.
+   * Public route declarations should prefer `preload` or adapter helpers such as
+   * `lazyRouteView`.
+   *
+   * @internal
+   */
+  readonly modulePreload?: RouteModulePreload;
   /**
    * Loading fallback for this route's own view.
    *

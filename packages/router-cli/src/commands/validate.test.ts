@@ -35,10 +35,10 @@ describe('validateCommand', () => {
 
   it('validates route files with custom path constraints from defineRoutes options', async () => {
     const fs = createMemoryFileSystem({
-      'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
+      'routes.tsx': `import { createPathConstraint, defineRoutes } from '@cookbook/router';
 
 const constraints = {
-  slug: createConstraint({
+  slug: createPathConstraint({
     parse: () => undefined,
     verify: () => undefined,
     toRegExp: () => '[a-z0-9-]+',

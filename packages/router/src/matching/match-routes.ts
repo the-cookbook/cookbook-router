@@ -51,7 +51,7 @@ export function matchRouteCandidates(
       route,
       branch,
       params,
-      slots: resolveSlots(branch, pathname, pathOptions),
+      slots: resolveSlots(branch, pathname, pathOptions, options),
     });
   }
 

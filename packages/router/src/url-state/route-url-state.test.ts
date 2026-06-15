@@ -190,3 +190,25 @@ describe('route URL state helpers', () => {
     ).toBe('?tags=router&tags=typescript');
   });
 });
+
+it('parses wildcard route params as stable arrays and builds from strings or arrays', () => {
+  const route = {
+    ...normalizedRoute({ id: 'files', path: '/files/{*path}' }),
+    params: [
+      {
+        name: 'path',
+        constraints: [],
+        wildcard: true,
+        optional: false,
+        token: '{*path}',
+      },
+    ],
+  } as NormalizedRoute;
+
+  expect(parseRoutePathParams(route, '/files/docs/readme')).toEqual({ path: ['docs', 'readme'] });
+  expect(
+    parseRoutePathParams(route, '/files/a%2Fb/c%20d', { callUrl: { pathMatch: { decode: true } } }),
+  ).toEqual({ path: ['a/b', 'c d'] });
+  expect(buildRoutePath(route, { path: ['docs', 'readme'] })).toBe('/files/docs/readme');
+  expect(buildRoutePath(route, { path: 'docs/readme' })).toBe('/files/docs/readme');
+});

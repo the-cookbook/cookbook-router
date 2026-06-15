@@ -1,4 +1,11 @@
-import type { AnchorHTMLAttributes, MouseEvent, ReactNode } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import type {
+  AnchorHTMLAttributes,
+  FocusEvent as ReactFocusEvent,
+  MouseEvent,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+} from 'react';
 import type { HrefOptions, InterceptInput, RouteId } from '@cookbook/router';
 import { useRouter } from '../hooks/use-router';
 import { resolveLinkHrefOptions } from './resolve-link-href';
@@ -10,6 +17,8 @@ import { resolveLinkHrefOptions } from './resolve-link-href';
  * external or should bypass route-id generation. Params/search/hash are inferred
  * from generated contracts when `Register` is augmented.
  */
+export type LinkPrefetch = false | 'hover' | 'focus' | 'interaction' | 'mount';
+
 export interface LinkProps<Route extends RouteId = RouteId> extends Omit<
   AnchorHTMLAttributes<HTMLAnchorElement>,
   'href'
@@ -25,10 +34,12 @@ export interface LinkProps<Route extends RouteId = RouteId> extends Omit<
    * overriding route-level and router-level defaults.
    */
   readonly url?: HrefOptions<Route>['url'];
-  readonly intercept?: InterceptInput;
+  readonly intercept?: InterceptInput | false;
   readonly context?: HrefOptions<Route>['context'];
   readonly preventScrollReset?: boolean;
   readonly replace?: boolean;
+  /** Preloads the target route on the selected user/browser trigger. Defaults to false. */
+  readonly prefetch?: LinkPrefetch;
   readonly children?: ReactNode;
 }
 
@@ -50,7 +61,10 @@ export function Link<Route extends RouteId = RouteId>(props: LinkProps<Route>) {
     context,
     preventScrollReset,
     replace,
+    prefetch = false,
     onClick,
+    onFocus,
+    onPointerEnter,
     children,
     ...anchorProps
   } = props;
@@ -68,6 +82,49 @@ export function Link<Route extends RouteId = RouteId>(props: LinkProps<Route>) {
   const routeHref = routeId ? router.href(routeId, hrefOptions) : undefined;
   const href = explicitHref ?? routeHref ?? '';
   const navigate = router.navigate;
+  const prefetchedHrefOnMount = useRef<string | undefined>(undefined);
+
+  const prefetchRoute = useCallback(() => {
+    if (!href || isDisabledLink(anchorProps['aria-disabled']) || isExternalHref(href)) {
+      return;
+    }
+
+    void router
+      .preloadHref(
+        href,
+        hrefOptions?.url === undefined
+          ? undefined
+          : {
+              url: hrefOptions.url,
+            },
+      )
+      .catch(() => undefined);
+  }, [anchorProps, href, hrefOptions, router]);
+
+  useEffect(() => {
+    if (prefetch !== 'mount' || prefetchedHrefOnMount.current === href) {
+      return;
+    }
+
+    prefetchedHrefOnMount.current = href;
+    prefetchRoute();
+  }, [href, prefetch, prefetchRoute]);
+
+  function handlePointerEnter(event: ReactPointerEvent<HTMLAnchorElement>) {
+    onPointerEnter?.(event);
+
+    if (prefetch === 'hover' || prefetch === 'interaction') {
+      prefetchRoute();
+    }
+  }
+
+  function handleFocus(event: ReactFocusEvent<HTMLAnchorElement>) {
+    onFocus?.(event);
+
+    if (prefetch === 'focus' || prefetch === 'interaction') {
+      prefetchRoute();
+    }
+  }
 
   async function handleClick(event: MouseEvent<HTMLAnchorElement>) {
     onClick?.(event);
@@ -91,7 +148,13 @@ export function Link<Route extends RouteId = RouteId>(props: LinkProps<Route>) {
   }
 
   return (
-    <a {...anchorProps} href={href} onClick={handleClick}>
+    <a
+      {...anchorProps}
+      href={href}
+      onClick={handleClick}
+      onFocus={handleFocus}
+      onPointerEnter={handlePointerEnter}
+    >
       {children}
     </a>
   );
@@ -146,4 +209,8 @@ function isExternalHref(href: string): boolean {
   }
 
   return new URL(href, window.location.href).origin !== window.location.origin;
+}
+
+function isDisabledLink(value: AnchorHTMLAttributes<HTMLAnchorElement>['aria-disabled']): boolean {
+  return value === true || value === 'true';
 }

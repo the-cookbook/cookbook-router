@@ -1,6 +1,6 @@
 import type { RouterPathConstraints, RouterPathOptions } from '../path';
 import { registerUrlPathConstraints } from '../url-state/register-url-path-constraints';
-import { validateRoutes } from '../route-config/validate-routes';
+import { validateRoutes } from './validate-routes';
 import type { RouteDefinition } from './contracts';
 
 /**
@@ -15,6 +15,11 @@ export interface DefineRoutesOptions {
 }
 
 const definedRouteOptions = new WeakMap<readonly RouteDefinition[], DefineRoutesOptions>();
+const DEFINE_ROUTES_OPTIONS_SYMBOL = Symbol.for('cookbook.router.defineRoutesOptions');
+
+type RouteArrayWithDefineRoutesOptions = readonly RouteDefinition[] & {
+  readonly [DEFINE_ROUTES_OPTIONS_SYMBOL]?: DefineRoutesOptions;
+};
 
 /**
  * Defines, validates, and tags an authored route tree for typed router workflows.
@@ -29,10 +34,29 @@ export function defineRoutes<const Routes extends readonly RouteDefinition[]>(
 ): Routes {
   registerUrlPathConstraints(options?.pathConstraints);
   validateRoutes(routes, options?.pathOptions);
-
-  definedRouteOptions.set(routes, options ?? {});
+  setDefineRoutesOptions(routes, options ?? {});
 
   return routes;
+}
+
+/**
+ * Attaches define-routes options to a route array returned by a route helper.
+ *
+ * This is intentionally internal to route-config helpers. Runtime creation reads
+ * these options so route arrays preserve path-options and custom-constraint
+ * behavior after composition.
+ */
+export function setDefineRoutesOptions(
+  routes: readonly RouteDefinition[],
+  options: DefineRoutesOptions,
+): void {
+  definedRouteOptions.set(routes, options);
+  Object.defineProperty(routes, DEFINE_ROUTES_OPTIONS_SYMBOL, {
+    value: options,
+    enumerable: false,
+    configurable: true,
+    writable: false,
+  });
 }
 
 /**
@@ -44,5 +68,8 @@ export function defineRoutes<const Routes extends readonly RouteDefinition[]>(
 export function getDefineRoutesOptions(
   routes: readonly RouteDefinition[],
 ): DefineRoutesOptions | undefined {
-  return definedRouteOptions.get(routes);
+  return (
+    definedRouteOptions.get(routes) ??
+    (routes as RouteArrayWithDefineRoutesOptions)[DEFINE_ROUTES_OPTIONS_SYMBOL]
+  );
 }

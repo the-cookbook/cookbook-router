@@ -1,12 +1,14 @@
 import { registerUrlPathConstraints } from '@cookbook/router';
 import { generateManifest, serializeManifest } from '../generation/generate-manifest';
-import { resolveRouteInput } from './generate';
+import { writeGeneratedFile } from '../generation/write-generated-file';
+import { resolveRouteInputWithOptions } from '../generation/resolve-route-input';
 import type { CliFileSystem, CliRouteOptions, CommandResult } from '../contracts';
 import {
   assertGeneratedOutputDoesNotClobberRouteFiles,
   resolveGeneratedOutputPaths,
 } from '../security/safe-paths';
 import { nodeFileSystem } from '../fs/node-file-system';
+import { formatCommandError } from './format-command-error';
 
 const defaultFs: CliFileSystem = nodeFileSystem;
 
@@ -16,25 +18,31 @@ export interface ManifestOptions extends CliRouteOptions {}
 /** Generates `manifest.json` for a route tree without writing type contracts. */
 export async function manifestCommand(options: ManifestOptions): Promise<CommandResult> {
   try {
-    const fs = options.fs ?? defaultFs;
-    const output = resolveGeneratedOutputPaths(options.outDir);
-    assertGeneratedOutputDoesNotClobberRouteFiles(output, options.routeFiles);
-    const routeFile = await resolveRouteInput(options);
+    const { routeFile, options: effectiveOptions } = await resolveRouteInputWithOptions(options);
+    const fs = effectiveOptions.fs ?? defaultFs;
+    const output = resolveGeneratedOutputPaths(effectiveOptions.outDir);
+    assertGeneratedOutputDoesNotClobberRouteFiles(output, effectiveOptions.routeFiles);
     const { outDir, manifestPath } = output;
 
     registerUrlPathConstraints(routeFile.routeOptions?.pathConstraints);
     await fs.mkdir(outDir, { recursive: true });
-    await fs.writeFile(
+    const changed = await writeGeneratedFile(
+      fs,
       manifestPath,
       serializeManifest(generateManifest(routeFile.routes, routeFile.routeOptions ?? {})),
     );
 
-    return { ok: true, files: [manifestPath], errors: [] };
+    return {
+      ok: true,
+      files: [manifestPath],
+      errors: [],
+      changedFiles: changed ? [manifestPath] : [],
+    };
   } catch (error) {
     return {
       ok: false,
       files: [],
-      errors: [error instanceof Error ? error.message : String(error)],
+      errors: [formatCommandError(error, options.verbose)],
     };
   }
 }

@@ -4,6 +4,7 @@ export interface RouterStateStore {
   readonly getState: () => RouterState;
   readonly setState: (nextState: RouterState) => RouterState;
   readonly subscribe: (listener: (state: RouterState) => void) => () => void;
+  readonly clearListeners: () => void;
 }
 
 export function createRouterStateStore(initialState: RouterState): RouterStateStore {
@@ -26,6 +27,9 @@ export function createRouterStateStore(initialState: RouterState): RouterStateSt
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);
+    },
+    clearListeners() {
+      listeners.clear();
     },
   };
 }

@@ -1,20 +1,20 @@
 import type { RouteHash, RouteId } from '@cookbook/router';
 import { useRouterContext } from '../provider/router-context';
 
+type ResolvedRouteHash<Route extends RouteId> = Exclude<RouteHash<Route>, undefined> | null;
+
 /**
  * Returns the URLKit-parsed current hash fragment.
  *
- * When generated contracts are registered, passing a route id narrows the hash
- * value to that route's allowed hash union. The hook reads already-resolved
- * router state and does not accept URL options; configure URL resolution
- * policies at router, route, match, or static-router level instead.
+ * Returns null when there is no active match, when the requested route is not
+ * active, or when the active route has no hash fragment.
  */
 export function useHashParams<Route extends RouteId = RouteId>(
   routeId?: Route,
-): RouteHash<Route> | null;
+): ResolvedRouteHash<Route>;
 export function useHashParams<Route extends RouteId = RouteId>(
   routeId?: Route,
-): RouteHash<Route> | RouteHash<RouteId> | null {
+): ResolvedRouteHash<Route> | ResolvedRouteHash<RouteId> {
   const { state } = useRouterContext();
   const match = state.match;
 
@@ -26,5 +26,5 @@ export function useHashParams<Route extends RouteId = RouteId>(
     return null;
   }
 
-  return (match.hash ?? null) as RouteHash<Route> | null;
+  return (match.hash ?? null) as ResolvedRouteHash<Route>;
 }

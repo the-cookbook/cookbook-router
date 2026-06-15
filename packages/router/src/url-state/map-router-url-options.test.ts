@@ -15,8 +15,13 @@ describe('map-router-url-options', () => {
         invalidSearch: 'error',
         invalidHash: 'error',
         defaults: 'omit',
+        pathMatch: { sensitive: true, wildcardFormat: 'array', decode: true },
       }),
-    ).toEqual({ arrayFormat: 'comma', unknownSearch: 'preserve' });
+    ).toEqual({
+      arrayFormat: 'comma',
+      unknownSearch: 'preserve',
+      pathMatch: { sensitive: true, wildcardFormat: 'array', decode: true },
+    });
   });
 
   it('maps recover and omitted search policies to URLKit omit recovery', () => {
@@ -41,8 +46,15 @@ describe('map-router-url-options', () => {
         arrayFormat: 'comma',
         unknownSearch: 'strip',
         invalidSearch: 'recover',
+        pathMatch: { trailing: false, wildcardFormat: 'array' },
       }),
-    ).toEqual({ arrayFormat: 'comma', unknownSearch: 'strip', invalidSearch: 'omit' });
+    ).toEqual({
+      arrayFormat: 'comma',
+      unknownSearch: 'strip',
+      trailing: false,
+      wildcardFormat: 'array',
+      invalidSearch: 'omit',
+    });
   });
 
   it('maps hash recovery policies to URLKit hash options', () => {
@@ -56,6 +68,12 @@ describe('map-router-url-options', () => {
     expect(toUrlKitHashParseOptions({ invalidHash: 'no-match' })).toEqual({
       invalidHash: 'error',
     });
+  });
+
+  it('rejects unsupported prefix path matching', () => {
+    expect(() => toUrlKitContractOptions({ pathMatch: { end: false } })).toThrow(
+      'pathMatch.end: false is not supported',
+    );
   });
 
   it('maps build options without forwarding parse-only options', () => {

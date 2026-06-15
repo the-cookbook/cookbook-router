@@ -10,9 +10,10 @@ describe('evaluateStaticRouteModule', () => {
     expect(routes).toEqual([{ id: 'home', path: '/', view: expect.any(Function) }]);
   });
 
-  it('wraps evaluation errors', () => {
+  it('wraps evaluation errors with the underlying static-evaluation reason', () => {
     expect(() => evaluateStaticRouteModule('routes.ts', '[broken')).toThrow(
       'could not be evaluated as a static route declaration',
     );
+    expect(() => evaluateStaticRouteModule('routes.ts', '[broken')).toThrow('Unexpected token');
   });
 });

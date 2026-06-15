@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { renderParamType, renderRouteParams } from './generate-route-params';
+import {
+  renderParamInputType,
+  renderParamType,
+  renderRouteParams,
+  renderRouteParamsInput,
+} from './generate-route-params';
 
 function param(
   name: string,
@@ -42,7 +47,12 @@ describe('generate-route-params', () => {
     ).toBe('string');
     expect(renderParamType(param('view', ['list'], '{view:list(grid|list)}'))).toBe('string');
     expect(renderParamType(param('slug', ['slug'], '{slug:slug}'))).toBe('string');
-    expect(renderParamType(param('path', [], '{*path}', { wildcard: true }))).toBe('string');
+    expect(renderParamType(param('path', [], '{*path}', { wildcard: true }))).toBe(
+      'readonly string[]',
+    );
+    expect(renderParamInputType(param('path', [], '{*path}', { wildcard: true }))).toBe(
+      'string | readonly string[]',
+    );
   });
 
   it('renders an inline params object', () => {
@@ -55,5 +65,12 @@ describe('generate-route-params', () => {
         param('page', ['min'], '{page:min(1)?}', { optional: true }),
       ]),
     ).toBe("{ id: number; price: number; quantity: number; 'bad-key': string; page?: number }");
+  });
+
+  it('renders wildcard params as stable arrays and accepts strings or arrays as input', () => {
+    const params = [param('path', [], '{*path}', { wildcard: true })];
+
+    expect(renderRouteParams(params)).toBe('{ path: readonly string[] }');
+    expect(renderRouteParamsInput(params)).toBe('{ path: string | readonly string[] }');
   });
 });

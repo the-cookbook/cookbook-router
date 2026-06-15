@@ -96,6 +96,40 @@ describe('create-memory-router', () => {
     expect(states).toContain('idle:/users/2');
   });
 
+  it('navigates to validated internal hrefs without treating them as route ids', async () => {
+    const router = createMemoryRouter({ routes, initialEntries: ['/'] });
+
+    await router.navigate.to('/users/2?tab=settings#profile');
+
+    expect(router.state.location.href).toBe('/users/2?tab=settings#profile');
+    expect(router.state.match?.id).toBe('users.show');
+    expect(router.state.match?.params).toEqual({ id: 2 });
+    expect(router.state.match?.search).toEqual({ tab: 'settings' });
+    expect(router.state.match?.hash).toBe('profile');
+
+    await router.navigate.replace('/files/docs/readme.md');
+
+    expect(router.state.location.href).toBe('/files/docs/readme.md');
+    expect(router.state.match?.id).toBe('files');
+    expect(router.state.match?.params).toEqual({ path: ['docs', 'readme.md'] });
+  });
+
+  it('rejects unregistered and unsafe href-shaped navigation targets', async () => {
+    const router = createMemoryRouter({ routes, initialEntries: ['/'] });
+
+    expect(() => router.navigate.to('/missing')).toThrow('not registered');
+    expect(() => router.navigate.to('//evil.example' as never)).toThrow('not registered');
+    expect(() => router.navigate.to('https://evil.example' as never)).toThrow('not registered');
+  });
+
+  it('rejects route URL construction options when navigating to an internal href', async () => {
+    const router = createMemoryRouter({ routes, initialEntries: ['/'] });
+
+    expect(() =>
+      router.navigate.replace('/users/2', { search: { tab: 'settings' } } as never),
+    ).toThrow('Cannot navigate to internal href "/users/2" with route option "search".');
+  });
+
   it('uses prune all by default for hrefs and canonical startup URLs', async () => {
     const trailingRoutes = defineRoutes([{ id: 'gallery', path: '/gallery/' }] as const);
     const router = createMemoryRouter({

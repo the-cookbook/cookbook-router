@@ -56,6 +56,7 @@ const routes = defineRoutes([
 ] as const);
 
 const router = createRouter({ routes });
+
 await router.start();
 
 export function App() {
@@ -235,9 +236,15 @@ Renders the next primary child route and can provide context to that child branc
 ### `Slot`
 
 ```ts
+interface SlotErrorFallbackProps {
+  readonly error: unknown;
+  readonly reset: () => void;
+}
+
 interface SlotProps<T = unknown> {
   readonly name: string;
   readonly context?: T;
+  readonly errorFallback?: ComponentType<SlotErrorFallbackProps> | null;
 }
 ```
 
@@ -247,7 +254,12 @@ Renders a named layout slot.
 <Slot name="modal" context={{ source: 'dashboard' }} />
 ```
 
-A slot can render a matched slot route, fallback, intercepted destination, route-level not-found view, or nothing.
+A slot can render a matched slot route, fallback, intercepted destination, route-level not-found view, or nothing. Slot render errors bubble to route/provider error fallbacks unless `errorFallback` is provided.
+
+```tsx
+<Slot name="modal" errorFallback={null} />
+<Slot name="modal" errorFallback={ModalError} />
+```
 
 ## Hooks
 
@@ -326,6 +338,14 @@ Call-site intercepts can provide a view:
 ```tsx
 <Link to="articles.show" params={{ slug }} intercept={{ slot: 'modal', view: ArticlePreview }}>
   Preview
+</Link>
+```
+
+Pass `intercept={false}` when a single link should bypass configured intercepts and open the destination as a normal page:
+
+```tsx
+<Link to="articles.show" params={{ slug }} intercept={false}>
+  Open full page
 </Link>
 ```
 

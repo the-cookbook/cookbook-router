@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createConstraint } from '@cookbook/router';
+import { createPathConstraint } from '@cookbook/router';
 import { sampleRoutes } from '../test-helpers';
 import { generateManifest, serializeManifest } from './generate-manifest';
 
@@ -45,7 +45,7 @@ describe('generateManifest', () => {
   it('generates manifest with custom path constraints from defineRoutes options', () => {
     const manifest = generateManifest([{ id: 'post.show', path: '/posts/{slug:slug}' }], {
       pathConstraints: {
-        slug: createConstraint({
+        slug: createPathConstraint({
           parse: () => undefined,
           verify: () => undefined,
           toRegExp: () => '[a-z0-9-]+',

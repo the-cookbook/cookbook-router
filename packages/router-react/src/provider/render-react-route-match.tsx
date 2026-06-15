@@ -16,6 +16,7 @@ import {
   OutletContext,
   OutletRenderContext,
   RouteRenderContext,
+  SlotErrorIsolationContext,
   SlotRenderContext,
 } from './router-context';
 import type { RenderBoundaryOptions } from './router-context';
@@ -67,6 +68,7 @@ interface RouteErrorBoundaryProps {
   readonly match: MatchedRoute;
   readonly fallback?: ComponentType<RouteErrorFallbackProps> | undefined;
   readonly globalFallback?: ComponentType<RouterErrorFallbackProps> | undefined;
+  readonly isolateSlotErrors?: boolean;
   readonly children: ReactNode;
 }
 
@@ -263,24 +265,29 @@ export function renderRouteBoundary(
   const ErrorFallback = asReactView<RouteErrorFallbackProps>(resolvedFallbacks.error?.view);
 
   return (
-    <RouteErrorBoundary
-      match={resolvedFallbacks.error?.match ?? match}
-      {...(ErrorFallback ? { fallback: ErrorFallback } : {})}
-      {...(options.errorFallback ? { globalFallback: options.errorFallback } : {})}
-    >
-      <Suspense
-        fallback={
-          <MemoizedRouteLoadingFallback
-            fallback={resolvedFallbacks.loading}
-            {...(options.loadingFallback === undefined
-              ? {}
-              : { globalFallback: options.loadingFallback })}
-          />
-        }
-      >
-        {element}
-      </Suspense>
-    </RouteErrorBoundary>
+    <SlotErrorIsolationContext.Consumer>
+      {(slotErrorIsolation) => (
+        <RouteErrorBoundary
+          match={resolvedFallbacks.error?.match ?? match}
+          {...(ErrorFallback ? { fallback: ErrorFallback } : {})}
+          {...(options.errorFallback ? { globalFallback: options.errorFallback } : {})}
+          {...(slotErrorIsolation ? { isolateSlotErrors: true } : {})}
+        >
+          <Suspense
+            fallback={
+              <MemoizedRouteLoadingFallback
+                fallback={resolvedFallbacks.loading}
+                {...(options.loadingFallback === undefined
+                  ? {}
+                  : { globalFallback: options.loadingFallback })}
+              />
+            }
+          >
+            {element}
+          </Suspense>
+        </RouteErrorBoundary>
+      )}
+    </SlotErrorIsolationContext.Consumer>
   );
 }
 
@@ -351,6 +358,10 @@ class RouteErrorBoundary extends Component<RouteErrorBoundaryProps, RouteErrorBo
 
   render(): ReactNode {
     if (this.state.error !== undefined) {
+      if (this.props.isolateSlotErrors) {
+        throw this.state.error;
+      }
+
       const reset = (): void => this.setState({ error: undefined });
 
       if (this.props.fallback) {

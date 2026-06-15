@@ -12,6 +12,7 @@ export interface RunNavigationBlockersOptions {
 export interface NavigationBlockerRegistry {
   readonly add: (blocker: RouterBlocker) => () => void;
   readonly run: (context: Omit<RunNavigationBlockersOptions, 'blockers'>) => Promise<boolean>;
+  readonly clear: () => void;
 }
 
 export function createNavigationBlockerRegistry(): NavigationBlockerRegistry {
@@ -24,6 +25,9 @@ export function createNavigationBlockerRegistry(): NavigationBlockerRegistry {
     },
     run(context) {
       return runNavigationBlockers({ blockers, ...context });
+    },
+    clear() {
+      blockers.clear();
     },
   };
 }

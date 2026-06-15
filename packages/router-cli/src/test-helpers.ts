@@ -33,6 +33,39 @@ export function createMemoryFileSystem(
     async mkdir(path) {
       files.set(`${path}/.dir`, '');
     },
+    async readdir(path) {
+      const prefix = path === '.' ? '' : path.endsWith('/') ? path : `${path}/`;
+      const entries = new Set<string>();
+
+      for (const filePath of files.keys()) {
+        if (!filePath.startsWith(prefix)) {
+          continue;
+        }
+
+        const remainder = filePath.slice(prefix.length);
+        const [entry] = remainder.split('/');
+
+        if (entry) {
+          entries.add(entry);
+        }
+      }
+
+      return [...entries].sort();
+    },
+    async stat(path) {
+      if (files.has(path)) {
+        return { mtimeMs: 0, isFile: () => true, isDirectory: () => false };
+      }
+
+      const prefix = path === '.' ? '' : path.endsWith('/') ? path : `${path}/`;
+      for (const filePath of files.keys()) {
+        if (filePath.startsWith(prefix)) {
+          return { mtimeMs: 0, isFile: () => false, isDirectory: () => true };
+        }
+      }
+
+      throw new Error(`ENOENT: ${path}`);
+    },
     watch(path, listener) {
       const listeners = watchers.get(path) ?? [];
       listeners.push(listener);

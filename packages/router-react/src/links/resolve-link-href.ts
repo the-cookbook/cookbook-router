@@ -5,7 +5,7 @@ export interface ResolveLinkHrefOptionsInput<Route extends RouteId> {
   readonly search?: HrefOptions<Route>['search'] | undefined;
   readonly hash?: HrefOptions<Route>['hash'] | undefined;
   readonly url?: HrefOptions<Route>['url'] | undefined;
-  readonly intercept?: InterceptInput | undefined;
+  readonly intercept?: false | InterceptInput | undefined;
   readonly context?: HrefOptions<Route>['context'] | undefined;
   readonly preventScrollReset?: boolean | undefined;
 }

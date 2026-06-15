@@ -7,6 +7,7 @@ describe('generateRegister', () => {
 
     expect(output).toContain("import type { RouterContracts } from './contracts';");
     expect(output).toContain("declare module '@cookbook/router'");
+    expect(output).toContain("declare module '@cookbook/router-react'");
     expect(output).toContain('contracts: RouterContracts;');
     expect(output).toContain('export {};');
   });

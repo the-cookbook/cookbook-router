@@ -1,5 +1,6 @@
 import type { UnknownSearchBehavior, UnknownSearchParams } from '@cookbook/urlkit';
-import type { RouterPathConstraints } from '../path';
+import type { RouterPathConstraints, RouterPathMatchOptions } from '../path';
+export type { RouterPathMatchOptions };
 import type {
   RouteDefinition,
   RouteHashSchema,
@@ -65,6 +66,8 @@ export interface RouterUrlOptions {
    * unknown query-string keys are omitted from typed parsed search state.
    */
   readonly unknownSearch?: RouterUnknownSearchPolicy;
+  /** Controls supported path matching behavior for serialized URL input. */
+  readonly pathMatch?: RouterPathMatchOptions;
 }
 
 /**
@@ -112,7 +115,7 @@ export interface CreateRouterRouteUrlContractOptions {
 }
 
 /** URLKit route-contract parse options after router policy mapping. */
-export interface RouterRouteSearchParseOptions {
+export interface RouterRouteSearchParseOptions extends RouterPathMatchOptions {
   readonly arrayFormat?: RouterUrlArrayFormat;
   readonly unknownSearch?: RouterUnknownSearchPolicy;
   readonly invalidSearch?: 'error' | 'omit';
@@ -128,7 +131,7 @@ export interface RouterRouteUrlContract {
   parse(input: string | URL, options?: RouterRouteSearchParseOptions): unknown;
   match(input: string | URL, options?: RouterRouteSearchParseOptions): boolean;
   build(input: unknown, options?: RouterUrlBuildOptions): string;
-  parsePathname: ((pathname: string) => unknown) | never;
+  parsePathname: ((pathname: string, options?: RouterPathMatchOptions) => unknown) | never;
   buildPath: ((params: unknown) => string) | never;
   parseSearch(input: string | URLSearchParams, options?: RouterRouteSearchParseOptions): unknown;
   buildSearch(search: unknown, options?: RouterUrlBuildOptions): string;

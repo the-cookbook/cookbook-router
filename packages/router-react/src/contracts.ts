@@ -8,6 +8,7 @@ export type {
   RouteOutletContext,
   RouteParams,
   RouteSearch,
+  RouteSearchInput,
   RouteUrlOptions,
   RouterUrlBuildOptions,
   RouterUnknownSearchPolicy,

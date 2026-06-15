@@ -19,6 +19,24 @@ export interface RouterPathOptions {
   readonly prune?: PathPruneOption;
 }
 
+/** Controls PathKit matching for serialized path input. */
+export interface RouterPathMatchOptions {
+  /** Allows one final delimiter during matching. */
+  readonly trailing?: boolean;
+  /** Enables strict constraint errors instead of ordinary route misses. */
+  readonly strict?: boolean;
+  /** Enables case-sensitive matching. */
+  readonly sensitive?: boolean;
+  /** Reserved for prefix routing. */
+  readonly end?: boolean;
+  /** Controls whether wildcard captures are returned as strings or segments. */
+  readonly wildcardFormat?: 'string' | 'array';
+  /** Decodes matched path params with decodeURIComponent or a custom decoder. */
+  readonly decode?: boolean | ((value: string) => string);
+}
+
+export type PathkitMatchedParams = Record<string, string | readonly string[]>;
+
 export const DEFAULT_PATH_OPTIONS: Required<RouterPathOptions> = {
   prune: 'all',
 };
@@ -36,6 +54,8 @@ export type PathkitCompileParams = Record<
 >;
 
 const matchers = new Map<string, ReturnType<typeof match>>();
+const decoderIds = new WeakMap<(value: string) => string, number>();
+let nextDecoderId = 0;
 const compilers = new Map<string, ReturnType<typeof compile>>();
 const tokens = new Map<string, readonly RouteSegment[]>();
 
@@ -50,11 +70,8 @@ setPathConstraintRegistry({ clearCaches: clearPathCaches });
 /**
  * Validates a route path pattern against built-in and registered constraints.
  */
-export function validatePathPattern(pattern: string, options?: RouterPathOptions): void {
-  (validateRoute as (pattern: string, options?: Required<RouterPathOptions>) => void)(
-    pattern,
-    normalizePathOptions(options),
-  );
+export function validatePathPattern(pattern: string, _options?: RouterPathOptions): void {
+  validateRoute(pattern);
 }
 
 /**
@@ -99,20 +116,19 @@ export function getPathParams(pattern: string): readonly RouteParamDefinition[] 
 export function matchPathPattern(
   pattern: string,
   pathname: string,
-  options?: RouterPathOptions,
-): Record<string, string> | null {
+  options?: RouterPathOptions & RouterPathMatchOptions,
+): PathkitMatchedParams | null {
   const normalizedOptions = normalizePathOptions(options);
-  const cacheKey = createPathkitCacheKey(pattern, normalizedOptions);
+  const matchOptions = normalizePathMatchOptions(options);
+  const cacheKey = createPathkitCacheKey(pattern, normalizedOptions, matchOptions);
   let matcher = matchers.get(cacheKey);
 
   if (!matcher) {
-    matcher = (
-      match as (pattern: string, options?: Required<RouterPathOptions>) => ReturnType<typeof match>
-    )(pattern, normalizedOptions);
+    matcher = match(pattern, matchOptions);
     matchers.set(cacheKey, matcher);
   }
 
-  const result = matcher(pathname);
+  const result = matcher(prunePathname(pathname, normalizedOptions));
 
   if (!result.match || !result.params) {
     return null;
@@ -171,22 +187,72 @@ export function prunePathname(pathname: string, options?: RouterPathOptions): st
   return next || '/';
 }
 
-function createPathkitCacheKey(pattern: string, options: Required<RouterPathOptions>): string {
-  return `${pattern}::prune=${String(options.prune)}`;
+function normalizePathMatchOptions(options?: RouterPathMatchOptions): RouterPathMatchOptions {
+  return {
+    ...(options?.trailing === undefined ? {} : { trailing: options.trailing }),
+    ...(options?.strict === undefined ? {} : { strict: options.strict }),
+    ...(options?.sensitive === undefined ? {} : { sensitive: options.sensitive }),
+    ...(options?.end === undefined ? {} : { end: options.end }),
+    ...(options?.wildcardFormat === undefined ? {} : { wildcardFormat: options.wildcardFormat }),
+    ...(options?.decode === undefined ? {} : { decode: options.decode }),
+  };
 }
 
-function normalizeMatchedParams(params: MatchedParam): Record<string, string> {
-  const normalized: Record<string, string> = {};
+function createPathkitCacheKey(
+  pattern: string,
+  options: Required<RouterPathOptions>,
+  matchOptions: RouterPathMatchOptions = {},
+): string {
+  return [
+    pattern,
+    `prune=${String(options.prune)}`,
+    `trailing=${String(matchOptions.trailing)}`,
+    `strict=${String(matchOptions.strict)}`,
+    `sensitive=${String(matchOptions.sensitive)}`,
+    `end=${String(matchOptions.end)}`,
+    `wildcardFormat=${String(matchOptions.wildcardFormat)}`,
+    `decode=${getDecodeCacheKey(matchOptions.decode)}`,
+  ].join('::');
+}
+
+function getDecodeCacheKey(decode: RouterPathMatchOptions['decode']): string {
+  if (typeof decode !== 'function') {
+    return String(decode);
+  }
+
+  const existing = decoderIds.get(decode);
+
+  if (existing !== undefined) {
+    return `fn:${existing}`;
+  }
+
+  const next = nextDecoderId++;
+  decoderIds.set(decode, next);
+  return `fn:${next}`;
+}
+
+function normalizeMatchedParams(params: MatchedParam): PathkitMatchedParams {
+  const normalized: Record<string, string | readonly string[]> = {};
 
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined || value === null) {
       continue;
     }
 
-    normalized[key] = Array.isArray(value) ? value.join('/') : String(value);
+    normalized[key] = Array.isArray(value) ? normalizeWildcardSegments(value) : String(value);
   }
 
   return normalized;
+}
+
+function normalizeWildcardSegments(value: readonly unknown[]): readonly string[] {
+  const segments = value.map(String);
+
+  if (segments[segments.length - 1] === '') {
+    return segments.slice(0, -1);
+  }
+
+  return segments;
 }
 
 function segmentToToken(segment: Extract<RouteSegment, { readonly type: 'parameter' }>): string {

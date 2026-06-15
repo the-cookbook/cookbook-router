@@ -15,6 +15,10 @@ export const nodeFileSystem: CliFileSystem = {
     await nodeFs.mkdir(path, options);
   },
 
+  async readdir(path) {
+    return nodeFs.readdir(path);
+  },
+
   async stat(path) {
     return nodeFs.stat(path);
   },

@@ -1,4 +1,4 @@
-import { act, fireEvent, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import {
   createMemoryRouter,
   createRouter as createBrowserRouter,
@@ -53,6 +53,115 @@ function createRouter() {
 }
 
 describe('RouterProvider', () => {
+  it('starts the router automatically by default', async () => {
+    const router = createRouter();
+    const start = vi.spyOn(router, 'start');
+
+    const { findByText } = render(<RouterProvider router={router} />);
+
+    expect(await findByText('home')).toBeTruthy();
+    await waitFor(() => expect(start).toHaveBeenCalled());
+  });
+
+  it('does not start the router automatically when autoStart is false', () => {
+    const router = createRouter();
+    const start = vi.spyOn(router, 'start');
+
+    render(<RouterProvider router={router} autoStart={false} />);
+
+    expect(start).not.toHaveBeenCalled();
+  });
+
+  it('warns when provider middleware is registered after the router was already started', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const router = createRouter();
+
+    try {
+      await router.start();
+
+      render(<RouterProvider router={router} middleware={[() => undefined]} />);
+
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'RouterProvider received middleware after the router was already started',
+        ),
+      );
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('does not warn for manual startup when provider auto-start is disabled', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const router = createRouter();
+
+    try {
+      await router.start();
+
+      render(<RouterProvider router={router} autoStart={false} middleware={[() => undefined]} />);
+
+      expect(warn).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('registers provider middleware before auto-starting the memory router', async () => {
+    const middleware = vi.fn(({ route, redirect }) =>
+      route.id === 'private' ? redirect('/login') : undefined,
+    );
+
+    const router = createMemoryRouter({
+      initialEntries: ['/private'],
+      routes: defineRoutes([
+        {
+          id: 'private',
+          path: '/private',
+          view: () => <h1>Private</h1>,
+        },
+        {
+          id: 'login',
+          path: '/login',
+          view: () => <h1>Login</h1>,
+        },
+      ] as const),
+    });
+
+    const { findByRole } = render(<RouterProvider router={router} middleware={[middleware]} />);
+
+    expect(await findByRole('heading', { name: 'Login' })).toBeTruthy();
+    expect(router.state.location.href).toBe('/login');
+
+    expect(middleware.mock.calls.map(([context]) => context.route.id)).toEqual([
+      'private',
+      'login',
+    ]);
+  });
+
+  it('does not re-resolve the current route when provider middleware changes after startup', async () => {
+    const router = createRouter();
+    const initialMiddleware = vi.fn();
+    const nextMiddleware = vi.fn();
+
+    const { findByText, rerender } = render(
+      <RouterProvider router={router} middleware={[initialMiddleware]} />,
+    );
+
+    expect(await findByText('home')).toBeTruthy();
+    expect(initialMiddleware).toHaveBeenCalledTimes(1);
+
+    rerender(<RouterProvider router={router} middleware={[nextMiddleware]} />);
+
+    await waitFor(() => expect(router.started).toBe(true));
+    expect(nextMiddleware).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await router.navigate.to('users.show', { params: { id: 1 } });
+    });
+
+    expect(nextMiddleware).toHaveBeenCalledTimes(1);
+  });
+
   it('runs provider middleware for the current route and writes redirects to history', async () => {
     const router = createMemoryRouter({
       routes: defineRoutes([

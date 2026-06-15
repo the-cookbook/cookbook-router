@@ -22,6 +22,77 @@ describe('validateRouteFiles', () => {
     expect(sources.map((source) => source.path)).toEqual(['a.json', 'b.json']);
   });
 
+  it('validates multiple static route-tree files without forcing modular composition rules', async () => {
+    const fs = createMemoryFileSystem({
+      'src/a.route.tsx': `import { defineRoutes } from '@cookbook/router';
+export const routes = defineRoutes([
+  {
+    id: 'a',
+    path: '/a',
+    children: [
+      { id: 'a.details', path: '/a/details' },
+    ],
+  },
+] as const);
+`,
+      'src/b.route.tsx': `import { defineRoutes } from '@cookbook/router';
+export const routes = defineRoutes([
+  { id: 'b', path: '/b' },
+] as const);
+`,
+    });
+
+    await expect(
+      validateRouteFiles({ routeFiles: ['src/a.route.tsx', 'src/b.route.tsx'], fs }),
+    ).resolves.toHaveLength(2);
+  });
+
+  it('rejects conflicting pathOptions across route files during validation', async () => {
+    const fs = createMemoryFileSystem({
+      'src/a.route.tsx': `import { defineRoutes } from '@cookbook/router';
+export const routes = defineRoutes([
+  { id: 'a', path: '/a' },
+] as const, { pathOptions: { prune: 'all' } });
+`,
+      'src/b.route.tsx': `import { defineRoutes } from '@cookbook/router';
+export const routes = defineRoutes([
+  { id: 'b', path: '/b' },
+] as const, { pathOptions: { prune: 'trailing' } });
+`,
+    });
+
+    await expect(
+      validateRouteFiles({ routeFiles: ['src/a.route.tsx', 'src/b.route.tsx'], fs }),
+    ).rejects.toThrow('Conflicting pathOptions');
+  });
+
+  it('rejects duplicate path constraint names across route files during validation', async () => {
+    const fs = createMemoryFileSystem({
+      'src/a.route.tsx': `import { createPathConstraint, defineRoutes } from '@cookbook/router';
+export const routes = defineRoutes([
+  { id: 'a', path: '/a/{slug:slug}' },
+] as const, {
+  pathConstraints: {
+    slug: createPathConstraint({ parse: () => undefined, verify: () => undefined }),
+  },
+});
+`,
+      'src/b.route.tsx': `import { createPathConstraint, defineRoutes } from '@cookbook/router';
+export const routes = defineRoutes([
+  { id: 'b', path: '/b/{slug:slug}' },
+] as const, {
+  pathConstraints: {
+    slug: createPathConstraint({ parse: () => undefined, verify: () => undefined }),
+  },
+});
+`,
+    });
+
+    await expect(
+      validateRouteFiles({ routeFiles: ['src/a.route.tsx', 'src/b.route.tsx'], fs }),
+    ).rejects.toThrow('Duplicate path constraint name "slug"');
+  });
+
   it('rejects route file paths with null bytes before reading', async () => {
     const fs = createMemoryFileSystem({ 'routes.json': JSON.stringify({ routes: sampleRoutes }) });
 
@@ -101,6 +172,73 @@ export const routes = defineRoutes([
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+
+  it('defers configured intercept target validation until all modular route files are merged', async () => {
+    const fs = createMemoryFileSystem({
+      'app/pages/root.route.tsx': `import { defineRoute } from '@cookbook/router';
+
+export const rootRoute = defineRoute({
+  id: 'root',
+  path: '/',
+  layout: {
+    view: RootLayout,
+    slots: {
+      modal: true,
+    },
+  },
+  intercepts: {
+    modal: {
+      to: ['new-message'],
+      view: ModalView,
+    },
+  },
+} as const);
+`,
+      'app/pages/messages/new/new-message.route.tsx': `import { defineRoute } from '@cookbook/router';
+
+export const newMessageRoute = defineRoute({
+  id: 'new-message',
+  parent: 'root',
+  path: 'messages/new',
+} as const);
+`,
+    });
+
+    await expect(
+      validateRouteFiles({
+        routeFiles: ['app/pages/root.route.tsx', 'app/pages/messages/new/new-message.route.tsx'],
+        fs,
+      }),
+    ).resolves.toHaveLength(2);
+  });
+
+  it('rejects configured intercept targets that are still missing after merge', async () => {
+    const fs = createMemoryFileSystem({
+      'app/pages/root.route.tsx': `import { defineRoute } from '@cookbook/router';
+
+export const rootRoute = defineRoute({
+  id: 'root',
+  path: '/',
+  layout: {
+    view: RootLayout,
+    slots: {
+      modal: true,
+    },
+  },
+  intercepts: {
+    modal: {
+      to: ['new-message'],
+      view: ModalView,
+    },
+  },
+} as const);
+`,
+    });
+
+    await expect(
+      validateRouteFiles({ routeFiles: ['app/pages/root.route.tsx'], fs }),
+    ).rejects.toThrow(/new-message/);
   });
 
   it('loads static route modules with slot view shorthand and declaration-only slots', async () => {
@@ -287,10 +425,10 @@ export const routes = defineRoutes([
 
   it('loads defineRoutes options with referenced custom path constraints', async () => {
     const fs = createMemoryFileSystem({
-      'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
+      'routes.tsx': `import { createPathConstraint, defineRoutes } from '@cookbook/router';
 
 const constraints = {
-  slug: createConstraint({
+  slug: createPathConstraint({
     parse: () => undefined,
     verify: () => undefined,
     toRegExp: () => '[a-z0-9-]+',
@@ -315,7 +453,7 @@ export const routes = defineRoutes([
 
   it('loads defineRoutes options with inline custom path constraints', async () => {
     const fs = createMemoryFileSystem({
-      'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
+      'routes.tsx': `import { createPathConstraint, defineRoutes } from '@cookbook/router';
 
 function PostPage() { return null; }
 
@@ -323,7 +461,7 @@ export const routes = defineRoutes([
   { id: 'post.show', path: '/posts/{slug:slug}', view: PostPage },
 ] as const, {
   pathConstraints: {
-    slug: createConstraint({
+    slug: createPathConstraint({
       parse: () => undefined,
       verify: () => undefined,
       toRegExp: () => '[a-z0-9-]+',
@@ -353,16 +491,16 @@ export const routes = defineRoutes([
 
   it('extracts options while skipping comments and escaped quoted text', async () => {
     const fs = createMemoryFileSystem({
-      'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
+      'routes.tsx': `import { createPathConstraint, defineRoutes } from '@cookbook/router';
 
 const constraints = {
-  // ignored: { bad: createConstraint() }
-  slug: createConstraint({
+  // ignored: { bad: createPathConstraint() }
+  slug: createPathConstraint({
     parse: () => undefined,
     verify: () => undefined,
     toRegExp: () => '[a-z0-9-]+',
   }),
-  /* ignoredBlock: createConstraint({}) */
+  /* ignoredBlock: createPathConstraint({}) */
 };
 
 export const routes = defineRoutes([
@@ -447,7 +585,7 @@ export const routes = defineRoutes([
 export const routes = defineRoutes([
   { id: 'home', path: '/' },
 ] as const, {
-  pathOptions: { trailingSlash: missingValue },
+  pathOptions: { prune: missingValue },
 });
 `,
     });
@@ -461,7 +599,7 @@ export const routes = defineRoutes([
     const fs = createMemoryFileSystem({
       'routes.tsx': `import { defineRoutes } from '@cookbook/router';
 
-const constraints = createConstraintsSomewhereElse();
+const constraints = createPathConstraintsSomewhereElse();
 
 export const routes = defineRoutes([
   { id: 'post.show', path: '/posts/{slug:slug}' },
@@ -473,6 +611,190 @@ export const routes = defineRoutes([
 
     await expect(loadRouteFiles({ routeFiles: ['routes.tsx'], fs })).rejects.toThrow(
       'pathConstraints that the CLI cannot statically evaluate',
+    );
+  });
+
+  it('loads defineRoute modules with imported reusable URL descriptors', async () => {
+    const fs = createMemoryFileSystem({
+      'src/url-state.ts': `import { defineHash, defineSearch, mergeSearch } from '@cookbook/router';
+const querySearch = defineSearch({ q: { type: 'string', optional: true } } as const);
+export const articleSearch = mergeSearch(querySearch, { page: { type: 'int', default: 1 } } as const);
+export const articleHash = defineHash({ type: 'enum', values: ['comments'], optional: true } as const);
+`,
+      'src/article.route.tsx': `import { defineRoute } from '@cookbook/router';
+import { articleHash, articleSearch as search } from './url-state';
+
+export const articleRoute = defineRoute({
+  id: 'article',
+  path: '/articles/{slug}',
+  search,
+  hash: articleHash,
+} as const);
+`,
+    });
+
+    const sources = await loadRouteFiles({ routeFiles: ['src/article.route.tsx'], fs });
+
+    expect(sources[0]?.routes[0]?.search).toEqual({
+      q: { type: 'string', optional: true },
+      page: { type: 'int', default: 1 },
+    });
+    expect(sources[0]?.routes[0]?.hash).toEqual({
+      type: 'enum',
+      values: ['comments'],
+      optional: true,
+    });
+  });
+
+  it('loads imported reusable URL descriptors exported through named aliases', async () => {
+    const fs = createMemoryFileSystem({
+      'src/url-state.ts': `import { defineHash, defineSearch, mergeSearch } from '@cookbook/router';
+const baseSearch = defineSearch({ q: { type: 'string', optional: true } } as const);
+const fullSearch = mergeSearch(baseSearch, { page: { type: 'int', default: 1 } } as const);
+const sectionHash = defineHash({ type: 'enum', values: ['comments'], optional: true } as const);
+export { fullSearch as articleSearch, sectionHash as articleHash };
+`,
+      'src/article.route.tsx': `import { defineRoute } from '@cookbook/router';
+import { articleHash, articleSearch as search } from './url-state';
+
+export const articleRoute = defineRoute({
+  id: 'article',
+  path: '/articles/{slug}',
+  search,
+  hash: articleHash,
+} as const);
+`,
+    });
+
+    const sources = await loadRouteFiles({ routeFiles: ['src/article.route.tsx'], fs });
+
+    expect(sources[0]?.routes[0]?.search).toEqual({
+      q: { type: 'string', optional: true },
+      page: { type: 'int', default: 1 },
+    });
+    expect(sources[0]?.routes[0]?.hash).toEqual({
+      type: 'enum',
+      values: ['comments'],
+      optional: true,
+    });
+  });
+
+  it('loads imported static constants exported through named aliases', async () => {
+    const fs = createMemoryFileSystem({
+      'src/route-data.ts': `const articleId = 'article.show' as const;
+const articleMeta = { title: 'Article' } as const;
+export { articleId as routeId, articleMeta as meta };
+`,
+      'src/article.route.tsx': `import { defineRoute } from '@cookbook/router';
+import { meta, routeId as id } from './route-data';
+
+export const articleRoute = defineRoute({
+  id,
+  path: '/articles/{slug}',
+  meta,
+} as const);
+`,
+    });
+
+    const sources = await loadRouteFiles({ routeFiles: ['src/article.route.tsx'], fs });
+
+    expect(sources[0]?.routes[0]).toMatchObject({
+      id: 'article.show',
+      meta: { title: 'Article' },
+    });
+  });
+
+  it('rejects path aliases when they are required by route metadata', async () => {
+    const fs = createMemoryFileSystem({
+      'app/pages/overview/overview.route.tsx': `import { defineRoute, mergeSearch } from '@cookbook/router';
+import { paginationSearch } from '@/lib/routes/filters/pagination';
+
+const overviewSearch = {
+  visitors: { type: 'string', optional: true },
+} as const;
+
+export const overviewRoute = defineRoute({
+  id: 'overview',
+  path: '/overview',
+  search: mergeSearch(overviewSearch, paginationSearch),
+} as const);
+`,
+    });
+
+    await expect(
+      loadRouteFiles({ routeFiles: ['app/pages/overview/overview.route.tsx'], fs }),
+    ).rejects.toThrow('must use relative or absolute file paths');
+  });
+
+  it('ignores path aliases when they are only used by runtime route fields', async () => {
+    const fs = createMemoryFileSystem({
+      'app/pages/overview/overview.route.tsx': `import { defineRoute } from '@cookbook/router';
+import { OverviewPage } from '@/pages/overview/page';
+
+export const overviewRoute = defineRoute({
+  id: 'overview',
+  path: '/overview',
+  view: OverviewPage,
+} as const);
+`,
+    });
+
+    const sources = await loadRouteFiles({
+      routeFiles: ['app/pages/overview/overview.route.tsx'],
+      fs,
+    });
+
+    expect(sources[0]?.routes[0]?.id).toBe('overview');
+  });
+
+  it('loads static route metadata from absolute file imports', async () => {
+    const fs = createMemoryFileSystem({
+      '/project/app/lib/routes/filters/pagination.ts': `import { defineSearch } from '@cookbook/router';
+export const paginationSearch = defineSearch({
+  page: { type: 'int', optional: true },
+} as const);
+`,
+      '/project/app/pages/overview/overview.route.tsx': `import { defineRoute, mergeSearch } from '@cookbook/router';
+import { paginationSearch } from '/project/app/lib/routes/filters/pagination';
+
+const overviewSearch = {
+  visitors: { type: 'string', optional: true },
+} as const;
+
+export const overviewRoute = defineRoute({
+  id: 'overview',
+  path: '/overview',
+  search: mergeSearch(overviewSearch, paginationSearch),
+} as const);
+`,
+    });
+
+    const sources = await loadRouteFiles({
+      routeFiles: ['/project/app/pages/overview/overview.route.tsx'],
+      fs,
+    });
+
+    expect(sources[0]?.routes[0]?.search).toEqual({
+      visitors: { type: 'string', optional: true },
+      page: { type: 'int', optional: true },
+    });
+  });
+
+  it('reports unresolved imports when they are required by route metadata', async () => {
+    const fs = createMemoryFileSystem({
+      'src/article.route.tsx': `import { defineRoute } from '@cookbook/router';
+import { articleSearch } from './missing-url-state';
+
+export const articleRoute = defineRoute({
+  id: 'article',
+  path: '/article',
+  search: articleSearch,
+} as const);
+`,
+    });
+
+    await expect(loadRouteFiles({ routeFiles: ['src/article.route.tsx'], fs })).rejects.toThrow(
+      'imports static route metadata from "./missing-url-state"',
     );
   });
 });

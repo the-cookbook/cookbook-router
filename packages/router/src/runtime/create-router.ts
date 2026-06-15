@@ -7,6 +7,8 @@ export type {
   HrefOptions,
   MatchOptions,
   NavigateOptions,
+  PreloadHrefOptions,
+  PreloadOptions,
   Router,
   RouterBlocker,
   RouterBlockerContext,

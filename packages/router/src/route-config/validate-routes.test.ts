@@ -565,3 +565,49 @@ it('rejects removed route and layout errorFallback properties', () => {
     ]),
   ).toThrow('layout errorFallback is no longer supported');
 });
+
+it('rejects duplicate index children in static route trees', () => {
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'root',
+        path: '/',
+        children: [
+          { id: 'root.index', index: true },
+          { id: 'root.home', index: true },
+        ],
+      },
+    ]),
+  ).toThrow('duplicate index routes');
+});
+
+it('rejects redirect routes with children in static route trees', () => {
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'entry',
+        path: '/',
+        redirect: { route: 'home' },
+        children: [{ id: 'entry.child', path: 'child' }],
+      },
+    ]),
+  ).toThrow('must not define children');
+});
+
+it('rejects static intercept targets that are missing from the resolved tree', () => {
+  expect(() =>
+    validateRoutes([
+      {
+        id: 'dashboard',
+        path: '/',
+        layout: {
+          view: {},
+          slots: { modal: true },
+        },
+        intercepts: {
+          modal: { to: 'missing.route', view: {} },
+        },
+      },
+    ]),
+  ).toThrow('targets missing route "missing.route"');
+});

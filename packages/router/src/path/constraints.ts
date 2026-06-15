@@ -1,20 +1,20 @@
 import {
-  createConstraint,
-  getConstraint,
-  hasConstraint,
+  createConstraint as createPathConstraint,
+  getConstraint as getPathConstraint,
+  hasConstraint as hasPathConstraint,
+  unregisterConstraint as unregisterPathConstraint,
   registerConstraint,
-  unregisterConstraint,
 } from '@cookbook/pathkit';
 import type { ConstraintValidation } from '@cookbook/pathkit';
 
 /**
  * Re-exported path constraint helpers from `@cookbook/pathkit`.
  *
- * Use `createConstraint` to author custom constraints, `hasConstraint` and
- * `getConstraint` for diagnostics, and `unregisterConstraint` in tests that need
+ * Use `createPathConstraint` to author custom constraints, `hasPathConstraint` and
+ * `getPathConstraint` for diagnostics, and `unregisterPathConstraint` in tests that need
  * to isolate global constraint registration.
  */
-export { createConstraint, getConstraint, hasConstraint, unregisterConstraint };
+export { createPathConstraint, getPathConstraint, hasPathConstraint, unregisterPathConstraint };
 
 /**
  * Validation contract for a custom path constraint.

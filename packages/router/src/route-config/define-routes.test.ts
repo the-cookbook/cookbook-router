@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, expectTypeOf, it } from 'vitest';
 import { resetConstraints } from '@cookbook/pathkit';
-import { createConstraint } from '../path';
-import { defineRoutes } from './define-routes';
+import { createPathConstraint } from '../path';
+import { defineRoutes, getDefineRoutesOptions } from './define-routes';
 
 afterEach(() => {
   resetConstraints();
@@ -48,7 +48,7 @@ describe('defineRoutes', () => {
   });
 
   it('registers custom path constraints before immediate validation', () => {
-    const slug = createConstraint({
+    const slug = createPathConstraint({
       parse: (paramName, value) => {
         if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
           throw new Error(`Parameter "${paramName}" must be a valid slug`);
@@ -67,6 +67,24 @@ describe('defineRoutes', () => {
     });
 
     expect(routes[0]?.path).toBe('/posts/{slug:slug}');
+  });
+
+  it('stores route options on the returned array using a shared non-enumerable symbol', () => {
+    const slug = createPathConstraint({
+      parse: () => undefined,
+      verify: () => undefined,
+      toRegExp: () => '[a-z0-9-]+',
+    });
+    const routes = defineRoutes([{ id: 'post', path: '/posts/{slug:slug}' }] as const, {
+      pathConstraints: { slug },
+    });
+    const sharedOptions = (routes as unknown as Record<symbol, unknown>)[
+      Symbol.for('cookbook.router.defineRoutesOptions')
+    ];
+
+    expect(sharedOptions).toEqual({ pathConstraints: { slug } });
+    expect(getDefineRoutesOptions(routes)).toEqual({ pathConstraints: { slug } });
+    expect(Object.keys(routes)).toEqual(['0']);
   });
 
   it('applies path options during immediate validation', () => {

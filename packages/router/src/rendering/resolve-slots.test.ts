@@ -144,3 +144,34 @@ describe('resolveSlots', () => {
     expect(getResolvedSlot(match.slots, 'dashboard', 'missing')).toBeUndefined();
   });
 });
+
+it('matches slot routes with the same pathMatch behavior as primary routes', () => {
+  const routes = normalizeRoutes([
+    {
+      id: 'dashboard',
+      path: '/dashboard',
+      layout: {
+        view: DashboardLayout,
+        slots: {
+          inspector: {
+            routes: [{ id: 'dashboard.inspector.files', path: 'files/{*path}' }],
+          },
+        },
+      },
+      children: [{ id: 'dashboard.files', path: 'files/{*path}' }],
+    },
+  ]);
+  const match = matchRoutes(
+    routes,
+    '/dashboard/files/a%2Fb/c',
+    {},
+    {
+      callUrl: { pathMatch: { decode: true } },
+    },
+  );
+
+  expect(getResolvedSlot(match?.slots ?? {}, 'dashboard', 'inspector')).toMatchObject({
+    status: 'matched',
+    params: { path: ['a/b', 'c'] },
+  });
+});

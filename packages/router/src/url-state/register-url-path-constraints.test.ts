@@ -1,16 +1,20 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { resetConstraints } from '@cookbook/pathkit';
-import { hasPathConstraint } from '@cookbook/urlkit/router-runtime';
-import { compilePathPattern, createConstraint, matchPathPattern } from '../path';
+import {
+  hasPathConstraint,
+  compilePathPattern,
+  createPathConstraint,
+  matchPathPattern,
+} from '../path';
 import { registerUrlPathConstraints } from './register-url-path-constraints';
 
-afterEach(() => {
-  resetConstraints();
-});
-
 describe('registerUrlPathConstraints', () => {
+  afterEach(() => {
+    resetConstraints();
+  });
+
   it('registers custom constraints with PathKit and URLKit', () => {
-    const slug = createConstraint({
+    const slug = createPathConstraint({
       parse: (paramName, value) => {
         if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
           throw new Error(`Parameter "${paramName}" must be a valid slug`);

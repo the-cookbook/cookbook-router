@@ -1,12 +1,7 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { generateCommand } from '../commands/generate';
-import { manifestCommand } from '../commands/manifest';
-import { validateCommand } from '../commands/validate';
-import { watchCommand } from '../commands/watch';
-import { HELP_TEXT } from './help-text';
-import { parseCliArguments } from './parse-cli-arguments';
-import { reportCommandResult } from './report-command-result';
+import { CommanderError } from 'commander';
+import { createCliProgram } from './create-program';
 
 /** Options for embedding or testing the CLI runner. */
 export interface CliRunnerOptions {
@@ -22,58 +17,40 @@ export async function runCli(
   argv: readonly string[],
   runnerOptions: CliRunnerOptions = {},
 ): Promise<number> {
-  const parsed = parseCliArguments(argv);
-  const writeStdout =
-    runnerOptions.stdout ??
-    ((message) => {
-      process.stdout.write(`${message}\n`);
-    });
-  const writeStderr =
-    runnerOptions.stderr ??
-    ((message) => {
-      process.stderr.write(`${message}\n`);
-    });
+  let exitCode = 0;
+  const program = createCliProgram({
+    ...runnerOptions,
+    setExitCode(code) {
+      exitCode = code;
+    },
+  });
 
-  if (parsed.version) {
-    writeStdout(runnerOptions.version ?? '0.0.0');
+  if (!argv.length) {
+    const writeStdout =
+      runnerOptions.stdout ??
+      ((message: string) => {
+        process.stdout.write(`${message}\n`);
+      });
+    writeStdout(program.helpInformation().replace(/\n$/, ''));
     return 0;
   }
 
-  if (parsed.help || !parsed.command) {
-    writeStdout(HELP_TEXT);
-    return parsed.errors[0] ? 1 : 0;
-  }
-
-  if (parsed.errors[0]) {
-    writeStderr(parsed.errors.join('\n'));
-    return 1;
-  }
-
-  if (parsed.command === 'generate') {
-    if (parsed.watch) {
-      const handle = watchCommand({
-        ...parsed.options,
-        onChange(result) {
-          reportCommandResult(result, writeStdout, writeStderr);
-        },
-      });
-      const initial = await handle.initial;
-      return initial.ok ? 0 : 1;
+  try {
+    await program.parseAsync(argv, { from: 'user' });
+    return exitCode;
+  } catch (error) {
+    if (error instanceof CommanderError) {
+      return error.exitCode;
     }
 
-    return reportCommandResult(await generateCommand(parsed.options), writeStdout, writeStderr);
+    const writeStderr =
+      runnerOptions.stderr ??
+      ((message: string) => {
+        process.stderr.write(`${message}\n`);
+      });
+    writeStderr(error instanceof Error ? error.message : String(error));
+    return 1;
   }
-
-  if (parsed.command === 'manifest') {
-    return reportCommandResult(await manifestCommand(parsed.options), writeStdout, writeStderr);
-  }
-
-  if (parsed.command === 'validate') {
-    return reportCommandResult(await validateCommand(parsed.options), writeStdout, writeStderr);
-  }
-
-  writeStderr(`Unknown command "${parsed.command}".\n\n${HELP_TEXT}`);
-  return 1;
 }
 
 /** Returns true when the current module URL is the process entrypoint. */

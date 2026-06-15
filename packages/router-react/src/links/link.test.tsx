@@ -147,6 +147,29 @@ describe('Link', () => {
     );
   });
 
+  it('forwards intercept false to route navigation so callers can bypass configured intercepts', async () => {
+    const router = createRouter();
+    await router.start();
+    const navigate = vi.spyOn(router.navigate, 'to');
+
+    const { getByText } = render(
+      <RouterProvider router={router}>
+        <Link route="user" params={{ id: 10 }} intercept={false}>
+          full page
+        </Link>
+      </RouterProvider>,
+    );
+
+    fireEvent.click(getByText('full page'));
+
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith('user', {
+        params: { id: 10 },
+        intercept: false,
+      }),
+    );
+  });
+
   it('passes preventScrollReset to navigation options', async () => {
     const router = createRouter();
     await router.start();
@@ -231,5 +254,123 @@ describe('Link', () => {
     fireEvent.click(getByText('blocked'));
 
     expect(navigate).not.toHaveBeenCalled();
+  });
+  it('prefetches on hover when requested', async () => {
+    const router = createRouter();
+    await router.start();
+    const preload = vi.spyOn(router, 'preloadHref').mockResolvedValue(undefined);
+
+    const { getByText } = render(
+      <RouterProvider router={router}>
+        <Link route="user" params={{ id: 11 }} prefetch="hover">
+          preload user
+        </Link>
+      </RouterProvider>,
+    );
+
+    fireEvent.pointerEnter(getByText('preload user'));
+
+    expect(preload).toHaveBeenCalledWith('/users/11', undefined);
+  });
+
+  it('prefetches on focus for interaction mode and swallows failures', async () => {
+    const router = createRouter();
+    await router.start();
+    const preload = vi.spyOn(router, 'preloadHref').mockRejectedValue(new Error('preload failed'));
+
+    const { getByText } = render(
+      <RouterProvider router={router}>
+        <Link route="user" params={{ id: 12 }} prefetch="interaction">
+          focus preload
+        </Link>
+      </RouterProvider>,
+    );
+
+    fireEvent.focus(getByText('focus preload'));
+
+    expect(preload).toHaveBeenCalledWith('/users/12', undefined);
+  });
+
+  it('prefetches on mount when requested', async () => {
+    const router = createRouter();
+    await router.start();
+    const preload = vi.spyOn(router, 'preloadHref').mockResolvedValue(undefined);
+
+    render(
+      <RouterProvider router={router}>
+        <Link route="user" params={{ id: 13 }} prefetch="mount">
+          mount preload
+        </Link>
+      </RouterProvider>,
+    );
+
+    await waitFor(() => expect(preload).toHaveBeenCalledWith('/users/13', undefined));
+  });
+
+  it('prefetches on mount again when the target href changes', async () => {
+    const router = createRouter();
+    await router.start();
+    const preload = vi.spyOn(router, 'preloadHref').mockResolvedValue(undefined);
+
+    const { rerender } = render(
+      <RouterProvider router={router}>
+        <Link route="user" params={{ id: 13 }} prefetch="mount">
+          mount preload
+        </Link>
+      </RouterProvider>,
+    );
+
+    await waitFor(() => expect(preload).toHaveBeenCalledWith('/users/13', undefined));
+
+    rerender(
+      <RouterProvider router={router}>
+        <Link route="user" params={{ id: 14 }} prefetch="mount">
+          mount preload
+        </Link>
+      </RouterProvider>,
+    );
+
+    await waitFor(() => expect(preload).toHaveBeenCalledWith('/users/14', undefined));
+    expect(preload).toHaveBeenCalledTimes(2);
+  });
+
+  it('prefetches explicit internal hrefs through preloadHref', async () => {
+    const router = createRouter();
+    await router.start();
+    const preload = vi.spyOn(router, 'preloadHref').mockResolvedValue(undefined);
+
+    const { getByText } = render(
+      <RouterProvider router={router}>
+        <Link href="/users/16" prefetch="hover">
+          internal href preload
+        </Link>
+      </RouterProvider>,
+    );
+
+    fireEvent.pointerEnter(getByText('internal href preload'));
+
+    expect(preload).toHaveBeenCalledWith('/users/16', undefined);
+  });
+
+  it('does not prefetch disabled or external links', async () => {
+    const router = createRouter();
+    await router.start();
+    const preload = vi.spyOn(router, 'preloadHref').mockResolvedValue(undefined);
+
+    const { getByText } = render(
+      <RouterProvider router={router}>
+        <Link route="user" params={{ id: 15 }} prefetch="interaction" aria-disabled="true">
+          disabled preload
+        </Link>
+        <Link href="https://example.com" prefetch="interaction">
+          external preload
+        </Link>
+      </RouterProvider>,
+    );
+
+    fireEvent.pointerEnter(getByText('disabled preload'));
+    fireEvent.focus(getByText('external preload'));
+
+    expect(preload).not.toHaveBeenCalled();
   });
 });

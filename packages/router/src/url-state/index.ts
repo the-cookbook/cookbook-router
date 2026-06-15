@@ -5,6 +5,7 @@ export type {
   RouterRouteUrlContract,
   RouterRouteUrlDescriptor,
   RouterInvalidUrlStatePolicy,
+  RouterPathMatchOptions,
   RouterUrlArrayFormat,
   RouterUrlBuildOptions,
   RouterUnknownSearchPolicy,

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { resetConstraints } from '@cookbook/pathkit';
 import { createMemoryHistory } from '../history/memory-history';
-import { createConstraint } from '../path';
+import { createPathConstraint } from '../path';
 import { defineRoutes } from '../route-config/define-routes';
 import { createRouter } from './create-router';
 
@@ -24,7 +24,7 @@ describe('create-router URLKit runtime integration', () => {
   });
 
   it('keeps custom constraint params as strings and rejects invalid values', () => {
-    const slug = createConstraint({
+    const slug = createPathConstraint({
       parse: (paramName, value) => {
         if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
           throw new Error(`Parameter "${paramName}" must be a slug`);
@@ -50,7 +50,7 @@ describe('create-router URLKit runtime integration', () => {
   });
 
   it('registers createRouter path constraints before URLKit contract usage', () => {
-    const tenant = createConstraint({
+    const tenant = createPathConstraint({
       parse: (paramName, value) => {
         if (typeof value !== 'string' || !/^t_[a-z]+$/.test(value)) {
           throw new Error(`Parameter "${paramName}" must be a tenant id`);

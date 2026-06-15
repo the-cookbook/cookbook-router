@@ -4,8 +4,13 @@ export function evaluateStaticRouteModule(path: string, sanitizedRoutesLiteral: 
       `"use strict"; const __cookbookRouteView = () => null; return (${sanitizedRoutesLiteral});`,
     )() as unknown;
   } catch (error) {
-    throw new Error(`Route file "${path}" could not be evaluated as a static route declaration.`, {
-      cause: error,
-    });
+    const detail = error instanceof Error && error.message ? ` ${error.message}` : '';
+
+    throw new Error(
+      `Route file "${path}" could not be evaluated as a static route declaration.${detail}`,
+      {
+        cause: error,
+      },
+    );
   }
 }

@@ -9,10 +9,10 @@ describe('sanitize-route-module', () => {
   it('replaces view-bearing route properties with placeholders', () => {
     expect(
       sanitizeRoutesLiteral(
-        '[{ id: "home", view: HomePage, loading: Loading, middleware: [auth] }]',
+        '[{ id: "home", view: HomePage, loading: Loading, middleware: [auth], preload: warmRoute }]',
       ),
     ).toBe(
-      '[{ id: "home", view: __cookbookRouteView, loading: __cookbookRouteView, middleware: [] }]',
+      '[{ id: "home", view: __cookbookRouteView, loading: __cookbookRouteView, middleware: [], preload: undefined }]',
     );
   });
 

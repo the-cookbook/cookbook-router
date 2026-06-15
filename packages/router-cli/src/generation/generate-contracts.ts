@@ -1,4 +1,4 @@
-import { normalizeRoutes, registerUrlPathConstraints, validateRoutes } from '@cookbook/router';
+import { registerUrlPathConstraints, validateResolvedRouteTree } from '@cookbook/router';
 import type {
   DefineRoutesOptions,
   NormalizedRoute,
@@ -7,14 +7,16 @@ import type {
 } from '@cookbook/router';
 import { flattenNormalizedRoutes } from './flatten-normalized-routes';
 import { renderRouteHash } from './generate-route-hash';
-import { renderRouteParams } from './generate-route-params';
-import { renderRouteSearch } from './generate-route-search';
+import { renderRouteParams, renderRouteParamsInput } from './generate-route-params';
+import { renderRouteSearch, renderRouteSearchInput } from './generate-route-search';
 import { quote, quoteProperty, renderInterface, renderObject } from './render-types';
 
 interface GeneratedRouteContract {
   readonly id: string;
   readonly params: string;
+  readonly paramsInput: string;
   readonly search: string;
+  readonly searchInput: string;
   readonly hash: string;
   readonly meta: string;
   readonly path: string;
@@ -23,8 +25,8 @@ interface GeneratedRouteContract {
 /**
  * Generates the TypeScript route contract file from normalized routes.
  *
- * The generated output includes params, search, hash, meta, paths, outlet
- * context, route ids, and route paths. Custom path constraints supplied through
+ * The generated output includes params, search, hash, meta, paths, and outlet
+ * context. Custom path constraints supplied through
  * `defineRoutes` options are registered with URLKit before validation so the
  * generated params/search/hash state follows URLKit parsing semantics.
  */
@@ -33,8 +35,7 @@ export function generateContracts(
   options: DefineRoutesOptions | RouterPathOptions = {},
 ): string {
   const pathOptions = resolveGenerationPathOptions(options);
-  validateRoutes(routes, pathOptions);
-  const normalized = flattenNormalizedRoutes(normalizeRoutes(routes, pathOptions));
+  const normalized = flattenNormalizedRoutes(validateResolvedRouteTree(routes, pathOptions));
   const contracts = normalized.map(toGeneratedRouteContract);
 
   return [
@@ -47,8 +48,18 @@ export function generateContracts(
     ),
     '',
     renderInterface(
+      'RouteParamsInput',
+      contracts.map((contract) => [contract.id, contract.paramsInput]),
+    ),
+    '',
+    renderInterface(
       'RouteSearch',
       contracts.map((contract) => [contract.id, contract.search]),
+    ),
+    '',
+    renderInterface(
+      'RouteSearchInput',
+      contracts.map((contract) => [contract.id, contract.searchInput]),
     ),
     '',
     renderInterface(
@@ -71,16 +82,11 @@ export function generateContracts(
       contracts.map((contract) => [contract.id, '{}']),
     ),
     '',
-    'export const routeIds = [' +
-      contracts.map((contract) => quote(contract.id)).join(', ') +
-      '] as const;',
-    'export const routePaths = {' +
-      contracts.map((contract) => `\n  ${quoteProperty(contract.id)}: ${contract.path},`).join('') +
-      '\n} as const;',
-    '',
     'export interface RouterContracts {',
     '  params: RouteParams;',
+    '  paramsInput: RouteParamsInput;',
     '  search: RouteSearch;',
+    '  searchInput: RouteSearchInput;',
     '  hash: RouteHash;',
     '  meta: RouteMeta;',
     '  paths: RoutePaths;',
@@ -96,7 +102,9 @@ function toGeneratedRouteContract(route: NormalizedRoute): GeneratedRouteContrac
   return {
     id: route.id,
     params: renderRouteParams(route.params),
+    paramsInput: renderRouteParamsInput(route.params),
     search: renderRouteSearch(route.route.search),
+    searchInput: renderRouteSearchInput(route.route.search),
     hash: renderRouteHash(route.route.hash),
     meta: renderMeta(route.route.meta),
     path: route.fullPath === undefined ? 'never' : quote(route.fullPath),

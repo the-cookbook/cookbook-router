@@ -1,7 +1,9 @@
 import { getPathParams, prunePathname, validatePathPattern, type RouterPathOptions } from '../path';
 import { registerUrlPathConstraints } from '../url-state/register-url-path-constraints';
 import { validateRouteUrlDescriptor } from './validate-route-url-descriptor';
+import { normalizeRoutes } from './normalize-routes';
 import type {
+  NormalizedRoute,
   RouteDefinition,
   RouteMeta,
   RouteSlotConfig,
@@ -18,6 +20,13 @@ interface ValidationContext {
   readonly declaredSlots: ReadonlySet<string>;
   readonly inheritedParams: readonly string[];
   readonly pathScope: string;
+  readonly interceptTargets: InterceptTargetValidation[];
+}
+
+interface InterceptTargetValidation {
+  readonly routeId: string;
+  readonly slotName: string;
+  readonly targetRouteId: string;
 }
 
 export function validateRoutes(
@@ -38,11 +47,26 @@ export function validateRoutes(
     declaredSlots: new Set<string>(),
     pathScope: 'primary',
     pathOptions,
+    interceptTargets: [],
   };
 
   for (const route of routes) {
     validateRoute(route, context);
   }
+
+  validateCollectedInterceptTargets(context);
+}
+
+/**
+ * Validates and normalizes a complete resolved route tree through the same path
+ * used by runtime matching. Use this before writing generated artifacts.
+ */
+export function validateResolvedRouteTree(
+  routes: readonly RouteDefinition[],
+  pathOptions: RouterPathOptions = {},
+): readonly NormalizedRoute[] {
+  validateRoutes(routes, pathOptions);
+  return normalizeRoutes(routes, pathOptions);
 }
 
 function validateRoute(route: RouteDefinition, context: ValidationContext): void {
@@ -100,6 +124,7 @@ function createChildValidationContext(
     inheritedParams,
     pathScope: context.pathScope,
     pathOptions: context.pathOptions,
+    interceptTargets: context.interceptTargets,
     declaredSlots,
     ...(activeLayoutRouteId === undefined ? {} : { activeLayoutRouteId }),
     ...(parentPath === undefined ? {} : { parentPath }),
@@ -139,6 +164,14 @@ function validateRouteShape(route: RouteDefinition): void {
     throw new Error(`Route "${route.id}" children must be an array.`);
   }
 
+  if (route.preload !== undefined && typeof route.preload !== 'function') {
+    throw new Error(`Route "${route.id}" preload must be a function when provided.`);
+  }
+
+  if (route.modulePreload !== undefined && typeof route.modulePreload !== 'function') {
+    throw new Error(`Route "${route.id}" modulePreload must be a function when provided.`);
+  }
+
   if (Object.prototype.hasOwnProperty.call(route, 'errorFallback')) {
     throw new Error(
       `Route "${route.id}" declares errorFallback, but route errorFallback is no longer supported. Use error instead.`,
@@ -159,10 +192,29 @@ function validateRouteShape(route: RouteDefinition): void {
     throw new Error(`Route "${route.id}" search configuration must be an object.`);
   }
 
+  validateDuplicateIndexChildren(route);
   validateRedirect(route);
   validateRecordKeys(route.id, 'search', route.search);
   validateRecordKeys(route.id, 'meta', route.meta);
   validatePathlessRouteShape(route);
+}
+
+function validateDuplicateIndexChildren(route: RouteDefinition): void {
+  let indexRouteId: string | undefined;
+
+  for (const child of route.children ?? []) {
+    if (child.index !== true) {
+      continue;
+    }
+
+    if (indexRouteId !== undefined) {
+      throw new Error(
+        `Routes "${indexRouteId}" and "${child.id}" are duplicate index routes under parent "${route.id}".`,
+      );
+    }
+
+    indexRouteId = child.id;
+  }
 }
 
 function validatePathlessRouteShape(route: RouteDefinition): void {
@@ -194,6 +246,10 @@ function validateRedirect(route: RouteDefinition): void {
 
   if (redirect === undefined) {
     return;
+  }
+
+  if (route.children?.length) {
+    throw new Error(`Route "${route.id}" defines redirect and must not define children.`);
   }
 
   if (typeof redirect === 'string') {
@@ -492,7 +548,21 @@ function validateIntercepts(
           `Route "${route.id}" intercept for slot "${slotName}" defines an empty target route id.`,
         );
       }
+
+      context.interceptTargets.push({ routeId: route.id, slotName, targetRouteId });
     }
+  }
+}
+
+function validateCollectedInterceptTargets(context: ValidationContext): void {
+  for (const target of context.interceptTargets) {
+    if (context.ids.has(target.targetRouteId)) {
+      continue;
+    }
+
+    throw new Error(
+      `Route "${target.routeId}" intercept "${target.slotName}" targets unknown route id "${target.targetRouteId}" (targets missing route "${target.targetRouteId}").`,
+    );
   }
 }
 
@@ -501,11 +571,11 @@ function normalizeInterceptTargetIds(targets: unknown): readonly string[] {
     return [targets];
   }
 
-  if (Array.isArray(targets)) {
-    return targets;
+  if (!Array.isArray(targets)) {
+    return [];
   }
 
-  return [];
+  return targets.filter((target): target is string => typeof target === 'string');
 }
 
 function mergeParamNames(

@@ -7,6 +7,7 @@ export interface GeneratedOutputPaths {
   readonly registerPath: string;
 }
 
+const GENERATED_ROUTES_FILENAME = 'routes.ts';
 const GENERATED_FILENAMES = ['contracts.ts', 'manifest.json', 'register.d.ts'] as const;
 
 export function resolveGeneratedOutputPaths(outDir = '.cookbook-router'): GeneratedOutputPaths {
@@ -28,6 +29,12 @@ export function resolveGeneratedOutputPaths(outDir = '.cookbook-router'): Genera
   };
 }
 
+export function resolveGeneratedRoutesPath(output: GeneratedOutputPaths): string {
+  const routesPath = join(output.outDir, GENERATED_ROUTES_FILENAME);
+  assertOutputPathWithinRoot(resolve(output.outDir), routesPath, GENERATED_ROUTES_FILENAME);
+  return routesPath;
+}
+
 export function assertSafeRouteFilePaths(routeFiles: readonly string[]): void {
   for (const routeFile of routeFiles) {
     assertSafeCliPath('routeFiles', routeFile);
@@ -39,6 +46,7 @@ export function assertGeneratedOutputDoesNotClobberRouteFiles(
   routeFiles: readonly string[] = [],
 ): void {
   const generatedPaths = new Set([
+    resolve(resolveGeneratedRoutesPath(output)),
     resolve(output.contractsPath),
     resolve(output.manifestPath),
     resolve(output.registerPath),

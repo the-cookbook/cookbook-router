@@ -256,9 +256,5 @@ function scorePath(path: string, index: boolean): number {
 }
 
 function scoreLiteralSegments(value: string): number {
-  if (value === '/') {
-    return 4;
-  }
-
   return value.split('/').filter(Boolean).length * 5;
 }

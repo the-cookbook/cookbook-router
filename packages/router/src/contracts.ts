@@ -22,8 +22,10 @@ export interface Register {}
  */
 export interface RouterContracts {
   params?: Record<string, Record<string, unknown>>;
+  paramsInput?: Record<string, Record<string, unknown>>;
   search?: Record<string, Record<string, unknown>>;
-  hash?: Record<string, string | never>;
+  searchInput?: Record<string, Record<string, unknown>>;
+  hash?: Record<string, string | undefined | never>;
   meta?: Record<string, Record<string, unknown>>;
   paths?: Record<string, string>;
   outletContext?: Record<string, unknown>;
@@ -71,6 +73,18 @@ export type RouteParams<Route extends string> = RegisteredContracts extends {
   : Record<string, unknown>;
 
 /**
+ * Params input contract for href generation and navigation. Wildcard params
+ * accept a slash-delimited string or an array of path segments.
+ */
+export type RouteParamsInput<Route extends string> = RegisteredContracts extends {
+  paramsInput: infer ParamsInput;
+}
+  ? Route extends keyof ParamsInput
+    ? ParamsInput[Route]
+    : RouteParams<Route>
+  : RouteParams<Route>;
+
+/**
  * Search contract for a route id generated from the route's `search` schema.
  */
 export type RouteSearch<Route extends string> = RegisteredContracts extends {
@@ -80,6 +94,19 @@ export type RouteSearch<Route extends string> = RegisteredContracts extends {
     ? Search[Route]
     : Record<string, unknown>
   : Record<string, unknown>;
+
+/**
+ * Search input contract for a route id used by href generation and navigation.
+ * Fields with descriptor defaults are optional here even though they are present
+ * in parsed route state.
+ */
+export type RouteSearchInput<Route extends string> = RegisteredContracts extends {
+  searchInput: infer SearchInput;
+}
+  ? Route extends keyof SearchInput
+    ? SearchInput[Route]
+    : RouteSearch<Route>
+  : RouteSearch<Route>;
 
 /**
  * Allowed hash fragment contract for a route id.
@@ -99,10 +126,16 @@ export type RouteHash<Route extends string> = RegisteredContracts extends {
  * `null` to omit the hash when the route allows one. Routes with `never` hashes
  * reject hash input in typed call sites.
  */
-export type RouteHashInput<Route extends string> =
-  RouteHash<Route> extends never
-    ? never
-    : RouteHash<Route> | null | (RouteHash<Route> extends string ? `#${RouteHash<Route>}` : never);
+export type RouteHashInput<Route extends string> = [RouteHash<Route>] extends [never]
+  ? never
+  :
+      | RouteHash<Route>
+      | null
+      | (Extract<RouteHash<Route>, string> extends infer HashString
+          ? HashString extends string
+            ? `#${HashString}`
+            : never
+          : never);
 
 /**
  * Metadata contract for a route id.
@@ -131,8 +164,8 @@ export type RouteOutletContext<Route extends string> = RegisteredContracts exten
  * navigation methods.
  */
 export interface RouteUrlOptions<Route extends string> {
-  readonly params?: RouteParams<Route>;
-  readonly search?: RouteSearch<Route>;
+  readonly params?: RouteParamsInput<Route>;
+  readonly search?: RouteSearchInput<Route>;
   readonly hash?: RouteHashInput<Route>;
 }
 

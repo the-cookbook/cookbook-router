@@ -22,10 +22,10 @@ describe('static source scanner', () => {
   });
 
   it('reads static property keys and values', () => {
-    const source = 'slug: createConstraint({ toRegExp() { return "[^/]+"; } }), next: true';
+    const source = 'slug: createPathConstraint({ toRegExp() { return "[^/]+"; } }), next: true';
     const key = readObjectPropertyKey(source, 0);
     expect(key).toEqual({ name: 'slug', end: 4 });
-    expect(source.slice(6, readPropertyValue(source, 6))).toContain('createConstraint');
+    expect(source.slice(6, readPropertyValue(source, 6))).toContain('createPathConstraint');
   });
 
   it('skips comments and whitespace', () => {

@@ -12,6 +12,7 @@ export type {
   RankedRoute,
   RouteView,
   RouteDefinition,
+  RouteDeclaration,
   RouteInterceptConfig,
   RouteIntercepts,
   RouteLayoutDefinition,
@@ -23,6 +24,9 @@ export type {
   ResolvedSlot,
   ResolvedSlots,
   RouteMeta,
+  RoutePreload,
+  RoutePreloadContext,
+  RouteModulePreload,
   RouteParamDefinition,
   RouteParamConstraint,
   RouteHashSchema,
@@ -31,7 +35,12 @@ export type {
   RouteSlotDefinition,
   RouteSlotDefinitions,
 } from './route-config/contracts';
-export type { RouterPathConstraint, RouterPathConstraints, RouterPathOptions } from './path';
+export type {
+  RouterPathConstraint,
+  RouterPathConstraints,
+  RouterPathMatchOptions,
+  RouterPathOptions,
+} from './path';
 export type {
   CreateRouterRouteUrlContractOptions,
   ResolveUrlOptionsInput,
@@ -54,7 +63,9 @@ export type {
   RouteMeta as RegisteredRouteMeta,
   RouteOutletContext,
   RouteParams,
+  RouteParamsInput,
   RouteSearch,
+  RouteSearchInput,
   RouteUrlOptions,
   RouterContracts,
 } from './contracts';
@@ -71,6 +82,8 @@ export type {
   HrefOptions,
   NavigateOptions,
   MatchOptions,
+  PreloadHrefOptions,
+  PreloadOptions,
   CreateRouterOptions,
 } from './runtime/create-router';
 export type { CreateStaticRouterOptions } from './runtime/create-static-router';
@@ -83,6 +96,15 @@ export type {
 } from './rendering/resolve-intercepts';
 export type { RouterNavigationState } from './transition/run-transition';
 export type { DefineRoutesOptions } from './route-config/define-routes';
+export type { DefineRouteTreeOptions } from './route-config/define-route';
+export type { MergedSearchDescriptors } from './url-state/define-url-descriptors';
+export type {
+  RouteMetaEntry,
+  RouteMetaChainOptions,
+  RouteMetaMergeMode,
+  RouteMetaMergeOptions,
+  RouteMetaMergeInput,
+} from './runtime/route-meta';
 export type {
   RenderRouteMatchOptions,
   ResolvedRouteFallback,
@@ -96,19 +118,27 @@ export type {
   RouteViewContext,
 } from './rendering';
 export {
-  hasConstraint,
-  getConstraint,
-  unregisterConstraint,
-  createConstraint,
+  hasPathConstraint,
+  getPathConstraint,
+  unregisterPathConstraint,
+  createPathConstraint,
   registerPathConstraints,
 } from './path';
 export { createRouteUrlContract, registerUrlPathConstraints, resolveUrlOptions } from './url-state';
 export { defineRoutes } from './route-config/define-routes';
+export { defineRoute, defineRouteTree } from './route-config/define-route';
+export { defineHash, defineSearch, mergeSearch } from './url-state/define-url-descriptors';
 export { renderRouteMatch } from './rendering';
+export {
+  getActiveRouteMetaChain,
+  getRouteMeta,
+  getRouteMetaChain,
+  mergeRouteMetaChain,
+} from './runtime/route-meta';
 export { matchRoutes } from './matching/match-routes';
 export { flattenRoutes, rankRoutes } from './matching/rank-routes';
 export { normalizeRoutes } from './route-config/normalize-routes';
-export { validateRoutes } from './route-config/validate-routes';
+export { validateResolvedRouteTree, validateRoutes } from './route-config/validate-routes';
 export { createMemoryHistory, parseHref } from './history/memory-history';
 export { createStaticHistory } from './history/static-history';
 export { createBrowserHistory } from './history/browser-history';

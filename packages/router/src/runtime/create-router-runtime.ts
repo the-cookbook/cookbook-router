@@ -6,16 +6,19 @@ import {
 } from '../rendering/resolve-intercepts';
 import { completeTransition, runTransition } from '../transition/run-transition';
 import type { RegisteredRouteMatch, RouteMatch } from '../route-config/contracts';
+import { createUnknownRouteError } from '../diagnostics/router-errors';
 import type {
   CreateRouterOptions,
   HrefOptions,
   NavigateOptions,
+  PreloadHrefOptions,
+  PreloadOptions,
   Router,
   RouterState,
 } from './contracts';
 import { type RouterUrlBuildOptions, type RouterUrlOptions } from '../url-state';
 import { createRouteHref } from './create-href';
-import { normalizeNavigateTarget } from './navigation-target';
+import { normalizeNavigateTarget, resolveNavigationTarget } from './navigation-target';
 import { createScrollHistoryState } from './scroll-history-state';
 import { createRouterState } from './router-state';
 import { initializeRouterHydration } from './hydration-state';
@@ -34,6 +37,7 @@ import {
   resolveNavigationIntercept,
   restorePreviousSource,
 } from './intercept-navigation';
+import { runRoutePreload } from './route-preload';
 
 /**
  * Creates a router from an explicit history implementation.
@@ -64,12 +68,27 @@ export function createRouterRuntime(
   const middlewareRegistry = createRuntimeMiddlewareRegistry(options.middleware);
   const activeNavigationTracker = createActiveNavigationTracker();
   let transitionVersion = 0;
+  let started = false;
+  let starting = false;
+  let disposed = false;
+  let unlistenHistory: (() => void) | undefined;
+  let startPromise: Promise<RouterState> | undefined;
+  const activePreloads = new Map<string, Promise<void>>();
 
   const router: Router = {
     routes: normalizedRoutes,
     rankedRoutes,
     get state() {
       return store.getState();
+    },
+    get started() {
+      return started;
+    },
+    get starting() {
+      return starting;
+    },
+    get disposed() {
+      return disposed;
     },
     href(routeOrOptions: string | NavigateOptions<string>, hrefOptions?: HrefOptions<string>) {
       const target = normalizeNavigateTarget(
@@ -103,55 +122,128 @@ export function createRouterRuntime(
     match(href, matchOptions) {
       return matchHref(href, matchOptions?.url) as RegisteredRouteMatch | null;
     },
+    preload(
+      routeOrOptions: string | (NavigateOptions<string> & { readonly signal?: AbortSignal }),
+      preloadOptions?: PreloadOptions<string>,
+    ) {
+      assertNotDisposed();
+      const target = normalizeNavigateTarget(
+        routeOrOptions as string | NavigateOptions<string>,
+        preloadOptions as HrefOptions<string> | undefined,
+      );
+      const signal = getPreloadSignal(routeOrOptions, preloadOptions);
+      const hrefOptions = removePreloadSignal(target.options);
+      const href = router.href(target.route, hrefOptions);
+      return preloadMatchedHref(href, {
+        ...(hrefOptions?.url === undefined ? {} : { url: hrefOptions.url }),
+        ...(signal === undefined ? {} : { signal }),
+      });
+    },
+    preloadHref(href: string, preloadOptions?: PreloadHrefOptions) {
+      assertNotDisposed();
+      return preloadMatchedHref(href, preloadOptions);
+    },
     navigate: {
       to(routeOrOptions: string | NavigateOptions<string>, hrefOptions?: HrefOptions<string>) {
-        const target = normalizeNavigateTarget(
+        assertNotDisposed();
+        const target = resolveNavigationTarget(
           routeOrOptions as string | NavigateOptions<string>,
           hrefOptions as HrefOptions<string> | undefined,
+          {
+            createRouteHref: (routeId, routeOptions) => router.href(routeId, routeOptions),
+            matchHref,
+            routes: routeLookup,
+          },
         );
         return navigateTo(
-          router.href(target.route, target.options),
+          target.href,
           'push',
-          target.options?.intercept,
-          target.options?.context,
-          target.options?.preventScrollReset,
-          target.options?.url,
+          target.intercept,
+          target.context,
+          target.preventScrollReset,
+          target.url,
         );
       },
       replace(routeOrOptions: string | NavigateOptions<string>, hrefOptions?: HrefOptions<string>) {
-        const target = normalizeNavigateTarget(
+        assertNotDisposed();
+        const target = resolveNavigationTarget(
           routeOrOptions as string | NavigateOptions<string>,
           hrefOptions as HrefOptions<string> | undefined,
+          {
+            createRouteHref: (routeId, routeOptions) => router.href(routeId, routeOptions),
+            matchHref,
+            routes: routeLookup,
+          },
         );
         return navigateTo(
-          router.href(target.route, target.options),
+          target.href,
           'replace',
-          target.options?.intercept,
-          target.options?.context,
-          target.options?.preventScrollReset,
-          target.options?.url,
+          target.intercept,
+          target.context,
+          target.preventScrollReset,
+          target.url,
         );
       },
       back() {
+        assertNotDisposed();
         options.history.back();
       },
       forward() {
+        assertNotDisposed();
         options.history.forward();
       },
       go(delta) {
+        assertNotDisposed();
         options.history.go(delta);
       },
     },
     subscribe(listener) {
+      if (disposed) {
+        return () => undefined;
+      }
+
       return store.subscribe(listener);
     },
     block(blocker) {
+      assertNotDisposed();
       return blockerRegistry.add(blocker);
     },
     useMiddleware(middleware) {
+      assertNotDisposed();
       return middlewareRegistry.useMiddleware(middleware);
     },
     start() {
+      assertNotDisposed();
+
+      if (started) {
+        return Promise.resolve(store.getState());
+      }
+
+      if (startPromise) {
+        return startPromise;
+      }
+
+      starting = true;
+      startPromise = transitionTo(options.history.location, 'replace', false)
+        .then((state) => {
+          if (!disposed) {
+            started = true;
+          }
+
+          return state;
+        })
+        .finally(() => {
+          if (!disposed) {
+            starting = false;
+          }
+
+          startPromise = undefined;
+        });
+
+      return startPromise;
+    },
+    refresh() {
+      assertNotDisposed();
       return transitionTo(options.history.location, 'replace', false);
     },
     serialize() {
@@ -160,11 +252,32 @@ export function createRouterRuntime(
         navigation: store.getState().navigation,
       };
     },
+    dispose() {
+      if (disposed) {
+        return;
+      }
+
+      disposed = true;
+      starting = false;
+      started = false;
+      startPromise = undefined;
+      transitionVersion += 1;
+      activePreloads.clear();
+      unlistenHistory?.();
+      unlistenHistory = undefined;
+      blockerRegistry.clear();
+      middlewareRegistry.clear();
+      store.clearListeners();
+    },
   };
 
   let ignoreNextHistoryEvent = false;
 
-  options.history.listen((event) => {
+  unlistenHistory = options.history.listen((event) => {
+    if (disposed) {
+      return;
+    }
+
     if (ignoreNextHistoryEvent) {
       ignoreNextHistoryEvent = false;
       return;
@@ -180,12 +293,47 @@ export function createRouterRuntime(
     createState,
   });
 
+  function assertNotDisposed(): void {
+    if (!disposed) {
+      return;
+    }
+
+    throw new Error(
+      'Router has been disposed. Create a new router instance before starting, navigating, refreshing, or preloading.',
+    );
+  }
+
   function matchHref(href: string, callUrl?: RouterUrlOptions): RouteMatch | null {
     return matcher.matchHref(href, callUrl);
   }
 
   function matchHrefResult(href: string, callUrl?: RouterUrlOptions) {
     return matcher.matchHrefResult(href, callUrl);
+  }
+
+  function preloadMatchedHref(href: string, preloadOptions?: PreloadHrefOptions): Promise<void> {
+    const match = matchHref(href, preloadOptions?.url);
+
+    if (!match) {
+      throw createUnknownRouteError(href);
+    }
+
+    if (preloadOptions?.signal !== undefined) {
+      return runRoutePreload({ match, signal: preloadOptions.signal });
+    }
+
+    const key = createPreloadKey(href, preloadOptions?.url);
+    const active = activePreloads.get(key);
+
+    if (active) {
+      return active;
+    }
+
+    const promise = runRoutePreload({ match }).finally(() => {
+      activePreloads.delete(key);
+    });
+    activePreloads.set(key, promise);
+    return promise;
   }
 
   function createState(
@@ -208,7 +356,37 @@ export function createRouterRuntime(
   }
 
   function setState(nextState: RouterState): RouterState {
+    if (disposed) {
+      return store.getState();
+    }
+
     return store.setState(nextState);
+  }
+
+  function getPreloadSignal(
+    routeOrOptions: string | (NavigateOptions<string> & { readonly signal?: AbortSignal }),
+    preloadOptions: PreloadOptions<string> | undefined,
+  ): AbortSignal | undefined {
+    if (typeof routeOrOptions === 'object' && routeOrOptions !== null) {
+      return routeOrOptions.signal ?? preloadOptions?.signal;
+    }
+
+    return preloadOptions?.signal;
+  }
+
+  function removePreloadSignal(
+    preloadOptions: PreloadOptions<string> | undefined,
+  ): HrefOptions<string> | undefined {
+    if (!preloadOptions) {
+      return undefined;
+    }
+
+    const { signal: _signal, ...hrefOptions } = preloadOptions;
+    return hrefOptions;
+  }
+
+  function createPreloadKey(href: string, callUrl: RouterUrlOptions | undefined): string {
+    return callUrl === undefined ? href : `${href}::${JSON.stringify(callUrl)}`;
   }
 
   function navigateTo(
@@ -261,6 +439,7 @@ export function createRouterRuntime(
     preventScrollReset?: boolean,
     callUrl?: RouterUrlBuildOptions,
   ): Promise<RouterState> {
+    assertNotDisposed();
     const currentTransitionVersion = ++transitionVersion;
 
     if (redirectDepth > maxRedirectDepth) {

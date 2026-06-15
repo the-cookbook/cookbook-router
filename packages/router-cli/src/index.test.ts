@@ -7,6 +7,7 @@ import {
   generateCommand,
   generateContracts,
   generateManifest,
+  initCommand,
   runCli,
   validateCommand,
   watchCommand,
@@ -16,6 +17,7 @@ describe('package entrypoint', () => {
   it('exports CLI commands and generators', () => {
     expect(generateCommand).toBeTypeOf('function');
     expect(validateCommand).toBeTypeOf('function');
+    expect(initCommand).toBeTypeOf('function');
     expect(watchCommand).toBeTypeOf('function');
     expect(generateContracts(sampleRoutes)).toContain('RouterContracts');
     expect(generateManifest(sampleRoutes).routes.map((route) => route.id)).toContain('users.show');

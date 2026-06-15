@@ -228,6 +228,52 @@ describe('watchCommand', () => {
     handle.close();
   });
 
+  it('refreshes watched route roots when config routeFiles changes', async () => {
+    const fs = createMemoryFileSystem({
+      'cookbook-router.config.ts': `import { defineRouterConfig } from '@cookbook/router-cli';
+export default defineRouterConfig({ routeFiles: 'src/**/*.route.tsx' } as const);
+`,
+      'src/home.route.tsx': `import { defineRoute } from '@cookbook/router';
+export const homeRoute = defineRoute({ id: 'home', path: '/' } as const);
+`,
+    });
+    const results: boolean[] = [];
+    const handle = watchCommand({
+      configFile: 'cookbook-router.config.ts',
+      fs,
+      debounceMs: 0,
+      onChange: (result) => {
+        results.push(result.ok);
+      },
+    });
+    await handle.initial;
+
+    expect(fs.watchers.get('cookbook-router.config.ts')).toHaveLength(1);
+    expect(fs.watchers.get('src')).toHaveLength(1);
+
+    fs.files.set(
+      'cookbook-router.config.ts',
+      `import { defineRouterConfig } from '@cookbook/router-cli';
+export default defineRouterConfig({ routeFiles: 'app/**/*.route.tsx' } as const);
+`,
+    );
+    fs.files.set(
+      'app/about.route.tsx',
+      `import { defineRoute } from '@cookbook/router';
+export const aboutRoute = defineRoute({ id: 'about', path: '/about' } as const);
+`,
+    );
+    fs.emit('cookbook-router.config.ts');
+    await nextTick();
+    await nextTick();
+
+    expect(results).toEqual([true, true]);
+    expect(fs.watchers.get('src')).toEqual([]);
+    expect(fs.watchers.get('app')).toHaveLength(1);
+    expect(fs.files.get('.cookbook-router/manifest.json')).toContain('about');
+    handle.close();
+  });
+
   it('close is idempotent and prevents pending regenerations', async () => {
     const fs = createMemoryFileSystem({
       'routes.json': JSON.stringify({ routes: [{ id: 'home', path: '/' }] }),
@@ -255,10 +301,10 @@ describe('watchCommand', () => {
 
   it('generates in watch mode with custom path constraints from defineRoutes options', async () => {
     const fs = createMemoryFileSystem({
-      'routes.tsx': `import { createConstraint, defineRoutes } from '@cookbook/router';
+      'routes.tsx': `import { createPathConstraint, defineRoutes } from '@cookbook/router';
 
 const constraints = {
-  slug: createConstraint({
+  slug: createPathConstraint({
     parse: () => undefined,
     verify: () => undefined,
     toRegExp: () => '[a-z0-9-]+',
@@ -288,6 +334,88 @@ export const routes = defineRoutes([
     expect(fs.files.get('.cookbook-router/contracts.ts')).toContain(
       "'post.show': { slug: string };",
     );
+    handle.close();
+  });
+
+  it('watches route glob roots so newly added matching route files regenerate', async () => {
+    const fs = createMemoryFileSystem({
+      'cookbook-router.config.ts': `import { defineRouterConfig } from '@cookbook/router-cli';
+
+export default defineRouterConfig({
+  routeFiles: 'src/**/*.route.{ts,tsx}',
+} as const);
+`,
+      'src/blog.route.tsx': `import { defineRoute } from '@cookbook/router';
+export const blogRoute = defineRoute({ id: 'blog', path: '/blog' } as const);
+`,
+    });
+    const results: boolean[] = [];
+    const handle = watchCommand({
+      fs,
+      debounceMs: 0,
+      onChange: (result) => {
+        results.push(result.ok);
+      },
+    });
+    await handle.initial;
+
+    fs.files.set(
+      'src/article.route.tsx',
+      `import { defineRoute } from '@cookbook/router';
+export const articleRoute = defineRoute({
+  id: 'blog.article',
+  parent: 'blog',
+  path: 'articles/{slug}',
+} as const);
+`,
+    );
+    fs.emit('src', 'rename');
+    await nextTick();
+    await nextTick();
+
+    expect(results).toEqual([true, true]);
+    expect(fs.watchers.get('cookbook-router.config.ts')).toHaveLength(1);
+    expect(fs.watchers.get('src')).toHaveLength(1);
+    expect(fs.files.get('.cookbook-router/contracts.ts')).toContain(
+      "'blog.article': { slug: string };",
+    );
+    handle.close();
+  });
+
+  it('keeps watching configured glob roots even when no route files exist yet', async () => {
+    const fs = createMemoryFileSystem({
+      'cookbook-router.config.ts': `import { defineRouterConfig } from '@cookbook/router-cli';
+
+export default defineRouterConfig({
+  routeFiles: 'src/**/*.route.{ts,tsx}',
+} as const);
+`,
+      'src/.keep': '',
+    });
+    const results: boolean[] = [];
+    const handle = watchCommand({
+      fs,
+      debounceMs: 0,
+      onChange: (result) => {
+        results.push(result.ok);
+      },
+    });
+
+    await expect(handle.initial).resolves.toMatchObject({ ok: false });
+    expect(fs.watchers.get('src')).toHaveLength(1);
+
+    fs.files.set(
+      'src/blog.route.tsx',
+      `import { defineRoute } from '@cookbook/router';
+export const blogRoute = defineRoute({ id: 'blog', path: '/blog' } as const);
+`,
+    );
+    fs.emit('src', 'rename');
+    await nextTick();
+    await nextTick();
+
+    expect(results).toEqual([false, true]);
+    expect(fs.files.get('.cookbook-router/contracts.ts')).toContain('blog');
     handle.close();
   });
 });

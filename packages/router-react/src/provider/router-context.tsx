@@ -38,11 +38,16 @@ export interface SlotRenderContextValue {
   readonly renderOptions?: RenderReactRouteMatchOptions;
 }
 
+export interface SlotErrorIsolationContextValue {
+  readonly enabled: true;
+}
+
 export const RouterContext = createContext<RouterContextValue | null>(null);
 export const OutletContext = createContext<OutletContextValue | null>(null);
 export const OutletRenderContext = createContext<OutletRenderContextValue | null>(null);
 export const RouteRenderContext = createContext<RouteRenderContextValue | null>(null);
 export const SlotRenderContext = createContext<SlotRenderContextValue | null>(null);
+export const SlotErrorIsolationContext = createContext<SlotErrorIsolationContextValue | null>(null);
 
 export function useRouterContext(): RouterContextValue {
   const value = useContext(RouterContext);

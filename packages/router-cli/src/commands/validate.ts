@@ -1,6 +1,7 @@
 import { registerUrlPathConstraints, validateRoutes } from '@cookbook/router';
-import { resolveRouteInput } from './generate';
+import { resolveRouteInput } from '../generation/resolve-route-input';
 import type { CliRouteOptions, CommandResult } from '../contracts';
+import { formatCommandError } from './format-command-error';
 
 /** Options for validating routes without writing generated artifacts. */
 export interface ValidateOptions extends CliRouteOptions {}
@@ -17,7 +18,7 @@ export async function validateCommand(options: ValidateOptions): Promise<Command
     return {
       ok: false,
       files: [],
-      errors: [error instanceof Error ? error.message : String(error)],
+      errors: [formatCommandError(error, options.verbose)],
     };
   }
 }

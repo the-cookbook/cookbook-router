@@ -12,7 +12,8 @@ import type {
  * `router.navigate`.
  *
  * Use this for overrides or disambiguation. Route-configured intercepts remain
- * automatic when the active source route declares them.
+ * automatic when the active source route declares them unless a call site passes
+ * `intercept: false`.
  */
 export interface CallSiteInterceptInput {
   readonly slot: string;
@@ -22,10 +23,11 @@ export interface CallSiteInterceptInput {
 /**
  * Intercept request accepted by href and navigation APIs.
  *
- * A string selects a configured slot. An object manually declares the slot and
- * view to render for this navigation.
+ * `false` disables configured interception for one call site. A string selects a
+ * configured slot. An object manually declares the slot and view to render for
+ * this navigation.
  */
-export type InterceptInput = string | CallSiteInterceptInput;
+export type InterceptInput = false | string | CallSiteInterceptInput;
 
 /**
  * History state stored while an intercepted navigation is active.
@@ -102,7 +104,7 @@ function normalizeInterceptTargets(target: string | readonly string[]): readonly
 export function normalizeCallSiteIntercept(
   intercept: InterceptInput | undefined,
 ): CallSiteInterceptInput | null {
-  if (!intercept || typeof intercept === 'string') {
+  if (intercept === false || !intercept || typeof intercept === 'string') {
     return null;
   }
 
@@ -130,7 +132,7 @@ export function normalizeCallSiteIntercept(
  * intercepts declared by the active source branch.
  */
 export function resolveIntercept(options: ResolveInterceptOptions): ResolvedIntercept | null {
-  if (!options.source || !options.destination) {
+  if (!options.source || !options.destination || options.intercept === false) {
     return null;
   }
 
@@ -265,7 +267,7 @@ export function validateInterceptTargets(routes: readonly NormalizedRoute[]): vo
     for (const intercept of route.intercepts) {
       if (!routeIds.has(intercept.targetRouteId)) {
         throw new Error(
-          `Route "${route.id}" intercept for slot "${intercept.slot}" targets unknown route id "${intercept.targetRouteId}".`,
+          `Route "${route.id}" intercept for slot "${intercept.slot}" targets unknown route id "${intercept.targetRouteId}" (targets missing route "${intercept.targetRouteId}").`,
         );
       }
     }

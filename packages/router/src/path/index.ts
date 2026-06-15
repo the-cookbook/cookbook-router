@@ -1,9 +1,9 @@
 export {
-  createConstraint,
-  getConstraint,
-  hasConstraint,
+  createPathConstraint,
+  getPathConstraint,
+  hasPathConstraint,
   registerPathConstraints,
-  unregisterConstraint,
+  unregisterPathConstraint,
 } from './constraints';
 export type { RouterPathConstraint, RouterPathConstraints } from './constraints';
 export {
@@ -16,4 +16,10 @@ export {
   prunePathname,
   validatePathPattern,
 } from './patterns';
-export type { PathkitCompileParams, PathPruneOption, RouterPathOptions } from './patterns';
+export type {
+  PathkitCompileParams,
+  PathkitMatchedParams,
+  PathPruneOption,
+  RouterPathMatchOptions,
+  RouterPathOptions,
+} from './patterns';

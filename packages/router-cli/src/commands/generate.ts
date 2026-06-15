@@ -1,115 +1,25 @@
-import { registerUrlPathConstraints } from '@cookbook/router';
-import type { DefineRoutesOptions, RouteDefinition } from '@cookbook/router';
-import { generateContracts } from '../generation/generate-contracts';
-import { generateManifest, serializeManifest } from '../generation/generate-manifest';
-import { generateRegister } from '../generation/generate-register';
-import { loadRouteFiles } from '../route-files/load-route-files';
-import type { CliFileSystem, CliRouteOptions, CommandResult, RouteFile } from '../contracts';
+import type { CliRouteOptions, CommandResult } from '../contracts';
 import {
-  assertGeneratedOutputDoesNotClobberRouteFiles,
-  resolveGeneratedOutputPaths,
-} from '../security/safe-paths';
-import { nodeFileSystem } from '../fs/node-file-system';
+  generateRouterArtifacts,
+  type GenerateRouterArtifactsOptions,
+} from '../generation/generate-router-artifacts';
+import { formatCommandError } from './format-command-error';
+export { resolveRouteInput, resolveRoutes } from '../generation/resolve-route-input';
 
-const defaultFs: CliFileSystem = nodeFileSystem;
-
-/** Options for generating contracts, register declarations, and manifest JSON. */
+/** Options for generating routes, contracts, register declarations, and manifest JSON. */
 export interface GenerateOptions extends CliRouteOptions {}
 
 /**
- * Generates `contracts.ts`, `register.d.ts`, and `manifest.json`.
- *
- * Route files are loaded from TypeScript modules when provided. `defineRoutes`
- * options, including custom `pathConstraints`, are registered before generation.
+ * Generates `routes.ts`, `contracts.ts`, `register.d.ts`, and `manifest.json`.
  */
 export async function generateCommand(options: GenerateOptions): Promise<CommandResult> {
   try {
-    const fs = options.fs ?? defaultFs;
-    const output = resolveGeneratedOutputPaths(options.outDir);
-    assertGeneratedOutputDoesNotClobberRouteFiles(output, options.routeFiles);
-    const routeFile = await resolveRouteInput(options);
-    const { outDir, contractsPath, manifestPath, registerPath } = output;
-
-    registerUrlPathConstraints(routeFile.routeOptions?.pathConstraints);
-    await fs.mkdir(outDir, { recursive: true });
-    await fs.writeFile(
-      contractsPath,
-      generateContracts(routeFile.routes, routeFile.routeOptions ?? {}),
-    );
-    await fs.writeFile(
-      manifestPath,
-      serializeManifest(generateManifest(routeFile.routes, routeFile.routeOptions ?? {})),
-    );
-    await fs.writeFile(registerPath, generateRegister());
-
-    return { ok: true, files: [contractsPath, manifestPath, registerPath], errors: [] };
+    return await generateRouterArtifacts(options as GenerateRouterArtifactsOptions);
   } catch (error) {
     return {
       ok: false,
       files: [],
-      errors: [error instanceof Error ? error.message : String(error)],
+      errors: [formatCommandError(error, options.verbose)],
     };
   }
-}
-
-/** Resolves route definitions from direct CLI options or route files. */
-export async function resolveRoutes(options: CliRouteOptions): Promise<readonly RouteDefinition[]> {
-  const routeFile = await resolveRouteInput(options);
-  return routeFile.routes;
-}
-
-/**
- * Resolves a complete route file model from direct routes or loaded route files.
- *
- * Multiple route files are merged, including path options and custom constraints.
- */
-export async function resolveRouteInput(options: CliRouteOptions): Promise<RouteFile> {
-  if (options.routes) {
-    return {
-      routes: options.routes,
-      ...(options.routeOptions === undefined ? {} : { routeOptions: options.routeOptions }),
-    };
-  }
-
-  if (options.routeFiles?.[0]) {
-    const sources = await loadRouteFiles({
-      routeFiles: options.routeFiles,
-      ...(options.fs === undefined ? {} : { fs: options.fs }),
-    });
-    const routeOptions = mergeRouteOptions(sources.map((source) => source.routeOptions));
-
-    return {
-      routes: sources.flatMap((source) => source.routes),
-      ...(routeOptions === undefined ? {} : { routeOptions }),
-    };
-  }
-
-  throw new Error('No routes or routeFiles were provided.');
-}
-
-function mergeRouteOptions(
-  routeOptions: readonly (DefineRoutesOptions | undefined)[],
-): DefineRoutesOptions | undefined {
-  let merged: DefineRoutesOptions | undefined;
-
-  for (const options of routeOptions) {
-    if (options === undefined) {
-      continue;
-    }
-
-    merged = {
-      ...(merged?.pathOptions === undefined ? {} : { pathOptions: merged.pathOptions }),
-      ...(options.pathOptions === undefined ? {} : { pathOptions: options.pathOptions }),
-      pathConstraints: {
-        ...(merged?.pathConstraints ?? {}),
-        ...(options.pathConstraints ?? {}),
-      },
-    };
-  }
-
-  if (merged?.pathConstraints && !Object.keys(merged.pathConstraints)[0]) {
-    return merged.pathOptions === undefined ? undefined : { pathOptions: merged.pathOptions };
-  }
-
-  return merged;
 }

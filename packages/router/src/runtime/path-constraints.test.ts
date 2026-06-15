@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { createConstraint } from '../path';
+import { createPathConstraint } from '../path';
 import { mergePathConstraints } from './path-constraints';
 
 describe('mergePathConstraints', () => {
-  const left = createConstraint({ parse() {}, verify() {}, toRegExp: () => '[a-z]+' });
-  const right = createConstraint({ parse() {}, verify() {}, toRegExp: () => '[a-z0-9]+' });
-  const uuid = createConstraint({ parse() {}, verify() {}, toRegExp: () => '[a-f0-9-]+' });
+  const left = createPathConstraint({ parse() {}, verify() {}, toRegExp: () => '[a-z]+' });
+  const right = createPathConstraint({ parse() {}, verify() {}, toRegExp: () => '[a-z0-9]+' });
+  const uuid = createPathConstraint({ parse() {}, verify() {}, toRegExp: () => '[a-f0-9-]+' });
 
   it('returns either side when only one side is defined', () => {
     const constraints = { slug: left };

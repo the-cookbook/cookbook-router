@@ -45,6 +45,8 @@ export function sanitizeRoutesLiteral(source: string): string {
       loading: '__cookbookRouteView',
       error: '__cookbookRouteView',
       middleware: '[]',
+      preload: 'undefined',
+      modulePreload: 'undefined',
     }),
   );
 }

@@ -1,6 +1,6 @@
 import type { AnchorHTMLAttributes, ReactNode } from 'react';
 import type { HrefOptions, InterceptInput, RouteId } from '@cookbook/router';
-import { Link } from './link';
+import { Link, type LinkPrefetch } from './link';
 import { useLocation } from '../hooks/use-location';
 import { useRouter } from '../hooks/use-router';
 import { resolveLinkHrefOptions } from './resolve-link-href';
@@ -30,9 +30,10 @@ export interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
    */
   readonly url?: HrefOptions<Route>['url'];
   readonly replace?: boolean;
-  readonly intercept?: InterceptInput;
+  readonly intercept?: false | InterceptInput;
   readonly context?: HrefOptions<Route>['context'];
   readonly preventScrollReset?: boolean;
+  readonly prefetch?: LinkPrefetch;
   readonly end?: NavLinkEnd;
   readonly children?: ReactNode | ((props: NavLinkRenderProps) => ReactNode);
 }
@@ -65,7 +66,15 @@ export function NavLink<Route extends RouteId = RouteId>(props: NavLinkProps<Rou
   }
 
   const router = useRouter();
-  const routeHrefOptions = resolveLinkHrefOptions<Route>({ params, search, hash, url });
+  const routeHrefOptions = resolveLinkHrefOptions<Route>({
+    params,
+    search,
+    hash,
+    url,
+    intercept,
+    context,
+    preventScrollReset,
+  });
   const href = explicitHref ?? router.href(routeId as Route, routeHrefOptions);
   const location = useLocation();
   const { isActive } = resolveNavLinkState(location.href, location.pathname, href, end);

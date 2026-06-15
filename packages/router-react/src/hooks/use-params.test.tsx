@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { createConstraint, createMemoryRouter, defineRoutes } from '@cookbook/router';
+import { createPathConstraint, createMemoryRouter, defineRoutes } from '@cookbook/router';
 import { describe, expect, it, expectTypeOf } from 'vitest';
 import { RouterProvider } from '../provider/router-provider';
 import { useParams } from './use-params';
@@ -26,7 +26,7 @@ describe('useParams', () => {
   });
 
   it('returns string params for custom constraints', async () => {
-    const slug = createConstraint({
+    const slug = createPathConstraint({
       parse(_paramName, value) {
         if (!/^[a-z0-9-]+$/.test(String(value))) {
           throw new Error('Invalid slug.');
@@ -54,6 +54,23 @@ describe('useParams', () => {
     const { result } = renderHook(() => useParams('article'), { wrapper });
 
     expect(result.current).toEqual({ slug: 'urlkit-react' });
+  });
+
+  it('returns empty params for inactive route ids', async () => {
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        { id: 'home', path: '/', view: Page },
+        { id: 'user', path: '/users/{id:int}', view: Page },
+      ] as const),
+    });
+    await router.start();
+    const wrapper = ({ children }: { children: import('react').ReactNode }) => (
+      <RouterProvider router={router}>{children}</RouterProvider>
+    );
+
+    const { result } = renderHook(() => useParams('user'), { wrapper });
+
+    expect(result.current).toEqual({});
   });
 
   it('infers params for slot route IDs', () => {

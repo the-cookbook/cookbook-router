@@ -3,23 +3,35 @@ import { quote, quoteProperty, renderObject } from './render-types';
 
 type StaticSearchField = RouteSearchSchema[string];
 
-/** Renders generated search contracts from URLKit static descriptors. */
+/** Renders generated parsed-search contracts from URLKit static descriptors. */
 export function renderRouteSearch(search: RouteSearchSchema | undefined): string {
-  if (!search) {
-    return '{}';
-  }
+  return renderSearchObject(search, isOptionalParsedSearchField);
+}
 
-  const entries = Object.entries(search).map(([key, field]) => {
-    const optional = isOptionalSearchField(field) ? '?' : '';
-    return `${quoteProperty(key)}${optional}: ${renderSearchFieldType(field)}`;
-  });
-
-  return renderObject(entries);
+/** Renders generated navigation/search input contracts from URLKit static descriptors. */
+export function renderRouteSearchInput(search: RouteSearchSchema | undefined): string {
+  return renderSearchObject(search, isOptionalSearchInputField);
 }
 
 export function renderSearchFieldType(field: StaticSearchField): string {
   const element = renderSearchScalarType(field);
   return field.many === true ? `readonly ${element}[]` : element;
+}
+
+function renderSearchObject(
+  search: RouteSearchSchema | undefined,
+  isOptional: (field: StaticSearchField) => boolean,
+): string {
+  if (!search) {
+    return '{}';
+  }
+
+  const entries = Object.entries(search).map(([key, field]) => {
+    const optional = isOptional(field) ? '?' : '';
+    return `${quoteProperty(key)}${optional}: ${renderSearchFieldType(field)}`;
+  });
+
+  return renderObject(entries);
 }
 
 function renderSearchScalarType(field: StaticSearchField): string {
@@ -46,6 +58,10 @@ function renderSearchScalarType(field: StaticSearchField): string {
   return 'unknown';
 }
 
-function isOptionalSearchField(field: StaticSearchField): boolean {
+function isOptionalParsedSearchField(field: StaticSearchField): boolean {
   return field.optional === true && !Object.prototype.hasOwnProperty.call(field, 'default');
+}
+
+function isOptionalSearchInputField(field: StaticSearchField): boolean {
+  return field.optional === true || Object.prototype.hasOwnProperty.call(field, 'default');
 }

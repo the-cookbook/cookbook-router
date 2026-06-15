@@ -1,19 +1,37 @@
 import { extractDefineRoutesOptionsLiteral } from './extract-route-options';
-import { extractBalancedArray } from './static-source-scanner';
+import { extractNamedExportMap, resolveRouteExportNames } from './extract-define-route-calls';
+import { extractBalancedArray, skipTrivia } from './static-source-scanner';
 
 export interface ExtractedRouteModuleLiterals {
   readonly routesLiteral: string;
+  /** Internal parser metadata. Kept non-enumerable so public extractor tests only see the documented literal fields. */
+  readonly kind: 'defineRoutes' | 'staticArray';
   readonly optionsLiteral?: string;
+  readonly exportName?: string;
 }
 
 export function extractRouteModuleLiterals(
   path: string,
   contents: string,
 ): ExtractedRouteModuleLiterals {
-  const defineRoutesCall = /\bdefineRoutes\s*\(/g;
+  const namedExports = extractNamedExportMap(contents);
+  const defineRoutesCall =
+    /(?:(export)\s+)?const\s+([A-Za-z_$][\w$]*)(?:\s*:\s*[^=]+)?\s*=\s*defineRoutes\s*\(/g;
   let defineRoutesMatch: RegExpExecArray | null;
 
   while ((defineRoutesMatch = defineRoutesCall.exec(contents)) !== null) {
+    const localName = defineRoutesMatch[2] ?? 'routes';
+    const exportNames = resolveRouteExportNames({
+      localName,
+      directExport: defineRoutesMatch[1] === 'export',
+      exportedOnly: true,
+      namedExports,
+    });
+
+    if (!exportNames[0]) {
+      continue;
+    }
+
     const callStart = defineRoutesMatch.index + defineRoutesMatch[0].length;
     const arrayStart = contents.indexOf('[', callStart);
 
@@ -23,24 +41,73 @@ export function extractRouteModuleLiterals(
         contents,
         arrayStart + routesLiteral.length,
       );
-      return {
-        routesLiteral,
-        ...(optionsLiteral === undefined ? {} : { optionsLiteral }),
-      };
+
+      return withInternalKind(
+        {
+          routesLiteral,
+          exportName: exportNames[0],
+          ...(optionsLiteral === undefined ? {} : { optionsLiteral }),
+        },
+        'defineRoutes',
+      );
     }
   }
 
-  const routesAssignment = /(?:export\s+)?const\s+routes\s*=/.exec(contents);
+  const routesAssignment = /(?:(export)\s+)?const\s+([A-Za-z_$][\w$]*)(?:\s*:\s*[^=]+)?\s*=/g;
+  let routesAssignmentMatch: RegExpExecArray | null;
 
-  if (routesAssignment?.index !== undefined) {
-    const arrayStart = contents.indexOf('[', routesAssignment.index);
+  while ((routesAssignmentMatch = routesAssignment.exec(contents)) !== null) {
+    const localName = routesAssignmentMatch[2] ?? 'routes';
+    const exportNames = resolveRouteExportNames({
+      localName,
+      directExport: routesAssignmentMatch[1] === 'export',
+      exportedOnly: true,
+      namedExports,
+    });
 
-    if (arrayStart >= 0) {
-      return { routesLiteral: extractBalancedArray(path, contents, arrayStart) };
+    if (!exportNames[0]) {
+      continue;
     }
+
+    if (localName !== 'routes' && !exportNames.includes('routes')) {
+      continue;
+    }
+
+    const valueStart = skipTrivia(
+      contents,
+      routesAssignmentMatch.index + routesAssignmentMatch[0].length,
+    );
+
+    if (contents[valueStart] !== '[') {
+      continue;
+    }
+
+    return withInternalKind(
+      {
+        routesLiteral: extractBalancedArray(path, contents, valueStart),
+        exportName: exportNames[0],
+      },
+      'staticArray',
+    );
   }
 
   throw new Error(
-    `Route file "${path}" must export routes from defineRoutes([...]) or a static routes array.`,
+    `Route file "${path}" must export routes from defineRoutes([...]), defineRouteTree({ routes: [...] }), defineRoute({...}), or a static routes array.`,
   );
+}
+
+function withInternalKind<T extends Omit<ExtractedRouteModuleLiterals, 'kind'>>(
+  literal: T,
+  kind: ExtractedRouteModuleLiterals['kind'],
+): ExtractedRouteModuleLiterals {
+  const literalWithKind = literal as T & Pick<ExtractedRouteModuleLiterals, 'kind'>;
+
+  Object.defineProperty(literalWithKind, 'kind', {
+    value: kind,
+    enumerable: false,
+    configurable: false,
+    writable: false,
+  });
+
+  return literalWithKind;
 }

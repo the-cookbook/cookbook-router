@@ -37,6 +37,8 @@ export type RouterScrollBehavior = ScrollBehavior;
  */
 export interface RouterProviderProps {
   readonly router: Router;
+  /** Starts the router after mount. Enabled by default. */
+  readonly autoStart?: boolean;
   readonly children?: ReactNode;
   readonly fallback?: ReactNode;
   readonly loadingFallback?: ReactNode;
@@ -54,23 +56,24 @@ export function RouterProvider(props: RouterProviderProps): ReactElement {
   const redirecting = state.error === undefined && isRedirectMatch(state);
 
   useEffect(() => {
-    if (!props.middleware?.length) {
-      return;
+    if (shouldWarnAboutLateProviderMiddleware(props)) {
+      console.warn(
+        'Cookbook Router warning: RouterProvider received middleware after the router was already started.\n' +
+          'Provider middleware only applies to future navigations in this case.\n' +
+          'Remove the manual `await router.start()` before rendering `<RouterProvider />`, ' +
+          'or register middleware with `router.useMiddleware(...)` before starting the router and render with `autoStart={false}`.',
+      );
     }
 
-    const unregister = props.router.useMiddleware(props.middleware);
-    void props.router.start();
+    const unregister = props.middleware ? props.router.useMiddleware(props.middleware) : undefined;
+
+    if (!props.router.started && props.autoStart !== false) {
+      void props.router.start();
+    }
 
     return unregister;
-  }, [props.router, props.middleware]);
-
-  useEffect(() => {
-    if (!redirecting) {
-      return;
-    }
-
-    void props.router.start();
-  }, [props.router, redirecting, state.location.href]);
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
+  }, [props.router, props.middleware, props.autoStart]);
 
   useLayoutEffect(() => {
     syncHydratedBrowserHash(props.router, state);
@@ -102,6 +105,29 @@ export function RouterProvider(props: RouterProviderProps): ReactElement {
   return <RouterContext.Provider value={contextValue}>{rendered}</RouterContext.Provider>;
 }
 
+function shouldWarnAboutLateProviderMiddleware({
+  router,
+  middleware,
+  autoStart,
+}: RouterProviderProps): boolean {
+  return (
+    !isProductionEnvironment() &&
+    autoStart !== false &&
+    router.started &&
+    middleware?.[0] !== undefined
+  );
+}
+
+function isProductionEnvironment(): boolean {
+  return (
+    (
+      globalThis as {
+        readonly process?: { readonly env?: { readonly NODE_ENV?: string } };
+      }
+    ).process?.env?.NODE_ENV === 'production'
+  );
+}
+
 function syncHydratedBrowserHash(router: Router, state: RouterState): void {
   if (typeof globalThis.window === 'undefined') {
     return;
@@ -117,7 +143,7 @@ function syncHydratedBrowserHash(router: Router, state: RouterState): void {
     return;
   }
 
-  void router.start();
+  void (router.started ? router.refresh() : router.start());
 }
 
 function renderRouterState(
@@ -134,7 +160,14 @@ function renderRouterState(
       return fallback;
     }
 
-    return <ErrorFallback error={error} reset={() => void props.router.start()} />;
+    return (
+      <ErrorFallback
+        error={error}
+        reset={() => {
+          void (props.router.started ? props.router.refresh() : props.router.start());
+        }}
+      />
+    );
   }
 
   return renderReactRouteMatch(activeMatch, fallback, {

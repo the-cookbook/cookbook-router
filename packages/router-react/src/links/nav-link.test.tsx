@@ -234,4 +234,27 @@ describe('NavLink', () => {
       expect(navigate).toHaveBeenCalledWith('settings', { preventScrollReset: true }),
     );
   });
+
+  it('forwards intercept false to Link navigation so configured intercepts can be bypassed', async () => {
+    const router = createMemoryRouter({
+      routes: defineRoutes([
+        { id: 'home', path: '/', view: Page },
+        { id: 'settings', path: '/settings', view: Page },
+      ] as const),
+    });
+    await router.start();
+    const navigate = vi.spyOn(router.navigate, 'to');
+
+    const { getByText } = render(
+      <RouterProvider router={router}>
+        <NavLink route="settings" intercept={false}>
+          settings full page
+        </NavLink>
+      </RouterProvider>,
+    );
+
+    fireEvent.click(getByText('settings full page'));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('settings', { intercept: false }));
+  });
 });

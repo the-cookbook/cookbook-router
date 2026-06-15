@@ -71,7 +71,7 @@ describe('matchRoutes', () => {
   it('supports wildcard and trailing-slash matches', () => {
     const routes = normalizeRoutes([{ id: 'not-found', path: '/{*path}' }]);
 
-    expect(matchRoutes(routes, '/missing/page/')?.params).toEqual({ path: 'missing/page/' });
+    expect(matchRoutes(routes, '/missing/page/')?.params).toEqual({ path: ['missing', 'page'] });
   });
 
   it('returns null for non-matches and pathkit constraint failures', () => {
@@ -80,4 +80,30 @@ describe('matchRoutes', () => {
     expect(matchRoutes(routes, '/teams/1')).toBeNull();
     expect(matchRoutes(routes, '/users/abc')).toBeNull();
   });
+});
+
+it('matches concrete descendants before root catch-all routes after modular composition order', () => {
+  const routes = normalizeRoutes([
+    { id: 'login', path: '/login' },
+    { id: 'not-found', path: '/{*path}' },
+    {
+      id: 'entry',
+      path: '/',
+      children: [{ id: 'overview', path: 'overview' }],
+    },
+  ]);
+
+  expect(matchRoutes(routes, '/overview')).toMatchObject({ id: 'overview' });
+});
+
+it('matches static, dynamic, then wildcard routes by specificity regardless of declaration order', () => {
+  const routes = normalizeRoutes([
+    { id: 'users.catch', path: '/users/{*path}' },
+    { id: 'users.show', path: '/users/{id:int}' },
+    { id: 'users.new', path: '/users/new' },
+  ]);
+
+  expect(matchRoutes(routes, '/users/new')?.id).toBe('users.new');
+  expect(matchRoutes(routes, '/users/42')?.id).toBe('users.show');
+  expect(matchRoutes(routes, '/users/unknown/path')?.id).toBe('users.catch');
 });

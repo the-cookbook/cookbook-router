@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createConstraint } from '@cookbook/router';
+import { createPathConstraint } from '@cookbook/router';
 import { sampleRoutes } from '../test-helpers';
 import { generateContracts } from './generate-contracts';
 
@@ -16,9 +16,11 @@ describe('generateContracts', () => {
     expect(output).toContain('filters?: readonly string[]');
     expect(output).toContain("'profile' | 'settings'");
     expect(output).toContain("'users.show': '/users/{id:int}';");
+    expect(output).toContain('paramsInput: RouteParamsInput;');
+    expect(output).toContain('searchInput: RouteSearchInput;');
     expect(output).toContain('outletContext: RouteOutletContext;');
-    expect(output).toContain("export const routeIds = ['root', 'home', 'users.show'] as const;");
-    expect(output).toContain('export const routePaths = {');
+    expect(output).not.toContain('export const routeIds');
+    expect(output).not.toContain('export const routePaths');
   });
 
   it('generates empty contracts for routes without optional URL state', () => {
@@ -27,7 +29,7 @@ describe('generateContracts', () => {
     expect(output).toContain('about: {};');
     expect(output).toContain('about: never;');
     expect(output).toContain("about: '/about';");
-    expect(output).toContain("export const routeIds = ['about'] as const;");
+    expect(output).not.toContain('export const routeIds');
     expect(output).toContain('/* eslint-disable */');
     expect(output).toContain('/* eslint-enable */');
   });
@@ -83,6 +85,9 @@ describe('generateContracts', () => {
     expect(output).toContain(
       "'products.show': { page: number; featured?: boolean; tags: readonly string[]; sort?: 'new' | 'top' };",
     );
+    expect(output).toContain(
+      "'products.show': { page?: number; featured?: boolean; tags: readonly string[]; sort?: 'new' | 'top' };",
+    );
     expect(output).toContain("'products.show': 'details' | 'reviews' | undefined;");
   });
 
@@ -102,10 +107,18 @@ describe('generateContracts', () => {
     expect(output).toContain("'optional.page': { page?: number };");
   });
 
+  it('generates stable wildcard array params and flexible wildcard input params', () => {
+    const output = generateContracts([{ id: 'files', path: '/files/{*path}' }]);
+
+    expect(output).toContain('files: { path: readonly string[] };');
+    expect(output).toContain('files: { path: string | readonly string[] };');
+    expect(output).toContain('paramsInput: RouteParamsInput;');
+  });
+
   it('keeps custom path constraints as strings in generated params', () => {
     const output = generateContracts([{ id: 'post.show', path: '/posts/{slug:slug}' }], {
       pathConstraints: {
-        slug: createConstraint({
+        slug: createPathConstraint({
           parse: () => undefined,
           verify: () => undefined,
           toRegExp: () => '[a-z0-9-]+',

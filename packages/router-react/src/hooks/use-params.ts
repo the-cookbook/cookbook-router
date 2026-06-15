@@ -31,5 +31,5 @@ export function useParams<Route extends RouteId>(
   }
 
   const branchMatch = match.branch.find((entry) => entry.id === routeId);
-  return (branchMatch?.params ?? match.params) as RouteParams<Route>;
+  return (branchMatch?.params ?? {}) as RouteParams<Route>;
 }

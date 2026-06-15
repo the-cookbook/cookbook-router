@@ -1,6 +1,8 @@
 export { Link, shouldPreserveBrowserBehavior } from './links/link';
-export type { LinkProps } from './links/link';
+export type { LinkPrefetch, LinkProps } from './links/link';
 export { NavLink } from './links/nav-link';
+export { lazyRouteView } from './lazy-route-view';
+export type { LazyRouteViewComponent } from './lazy-route-view';
 export type {
   NavLinkEnd,
   NavLinkEndOptions,
@@ -25,7 +27,7 @@ export type {
 export { StaticRouterProvider } from './provider/static-router-provider';
 export type { StaticRouterProviderProps } from './provider/static-router-provider';
 export { Slot } from './outlets/slot';
-export type { SlotProps } from './outlets/slot';
+export type { SlotErrorFallbackProps, SlotProps } from './outlets/slot';
 export {
   RouterContext,
   OutletContext,
@@ -50,6 +52,8 @@ export { useNavigation } from './hooks/use-navigation';
 export { useOutletContext } from './hooks/use-outlet-context';
 export type { OutletContextOptions } from './hooks/use-outlet-context';
 export { useParams } from './hooks/use-params';
+export { useRouteMeta } from './hooks/use-route-meta';
+export type { UseRouteMetaOptions } from './hooks/use-route-meta';
 export { useRouter } from './hooks/use-router';
 export { useSearchParams } from './hooks/use-search-params';
 export { useUnknownSearchParams } from './hooks/use-unknown-search-params';

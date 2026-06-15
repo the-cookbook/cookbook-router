@@ -41,13 +41,34 @@ export interface CreateRouterOptions {
 /**
  * Options used when generating an href or navigating to a route id.
  *
- * `intercept` explicitly requests or disambiguates a slot intercept. Configured
- * route intercepts are still automatic when the active source route declares
- * them. `context` is carried to intercepted rendering state.
+ * `intercept` explicitly requests, disambiguates, or disables a slot intercept.
+ * Configured route intercepts are automatic when the active source route declares
+ * them unless `intercept: false` is passed. `context` is carried to intercepted
+ * rendering state.
  */
 export interface HrefOptions<Route extends string> extends RouteUrlOptions<Route> {
   /** Per-call URLKit build options that override route-level and router-level defaults. */
   readonly url?: RouterUrlBuildOptions;
+  readonly intercept?: InterceptInput;
+  readonly context?: unknown;
+  readonly preventScrollReset?: boolean;
+}
+
+/** Options used when preloading a route target without committing navigation. */
+export interface PreloadOptions<Route extends string> extends HrefOptions<Route> {
+  readonly signal?: AbortSignal;
+}
+
+/** Options used when preloading an arbitrary href. */
+export interface PreloadHrefOptions extends MatchOptions {
+  readonly signal?: AbortSignal;
+}
+
+/** App-internal href accepted by navigation methods after route matching. */
+export type InternalHref = `/${string}`;
+
+/** Options that affect navigation behavior without rebuilding the href. */
+export interface NavigationOptions {
   readonly intercept?: InterceptInput;
   readonly context?: unknown;
   readonly preventScrollReset?: boolean;
@@ -123,6 +144,12 @@ export interface Router {
   readonly rankedRoutes: readonly RankedRoute[];
   /** Latest router state snapshot. Subscribe to receive updates. */
   readonly state: RouterState;
+  /** Whether `start()` has resolved the router at least once. */
+  readonly started: boolean;
+  /** Whether the router is currently resolving its initial startup. */
+  readonly starting: boolean;
+  /** Whether this router has been disposed and will no longer process transitions. */
+  readonly disposed: boolean;
   /**
    * Generates a URL for a route id without navigating.
    *
@@ -143,14 +170,27 @@ export interface Router {
   resolve<Route extends string>(options: NavigateOptions<Route>): RegisteredRouteMatch;
   /** Matches an arbitrary href against the ranked routes and returns URLKit-parsed match state. */
   match(href: string, options?: MatchOptions): RegisteredRouteMatch | null;
+  /** Preloads route modules, lazy route views, and route-level preload hooks. */
+  preload<Route extends RouteId>(routeId: Route, options?: PreloadOptions<Route>): Promise<void>;
+  preload<Route extends string>(routeId: Route, options?: PreloadOptions<Route>): Promise<void>;
+  preload<Route extends RouteId>(
+    options: NavigateOptions<Route> & { readonly signal?: AbortSignal },
+  ): Promise<void>;
+  preload<Route extends string>(
+    options: NavigateOptions<Route> & { readonly signal?: AbortSignal },
+  ): Promise<void>;
+  /** Preloads an arbitrary app href without committing navigation. */
+  preloadHref(href: string, options?: PreloadHrefOptions): Promise<void>;
   /** Programmatic navigation methods. */
   navigate: {
     /** Pushes a new history entry and resolves the transition. */
+    to(href: InternalHref, options?: NavigationOptions): Promise<RouterState>;
     to<Route extends RouteId>(routeId: Route, options?: HrefOptions<Route>): Promise<RouterState>;
     to<Route extends string>(routeId: Route, options?: HrefOptions<Route>): Promise<RouterState>;
     to<Route extends RouteId>(options: NavigateOptions<Route>): Promise<RouterState>;
     to<Route extends string>(options: NavigateOptions<Route>): Promise<RouterState>;
     /** Replaces the current history entry and resolves the transition. */
+    replace(href: InternalHref, options?: NavigationOptions): Promise<RouterState>;
     replace<Route extends RouteId>(
       routeId: Route,
       options?: HrefOptions<Route>,
@@ -177,10 +217,24 @@ export interface Router {
   /**
    * Starts the router by resolving the current history or static location.
    *
-   * Runs redirects, middleware, and lifecycle hooks, then commits the resolved
-   * state. Calling it again re-resolves the current location.
+   * Concurrent calls share the same in-flight startup. Once started, calling
+   * `start()` again returns the current state without re-running navigation work.
    */
   start(): Promise<RouterState>;
+  /**
+   * Re-resolves the current history or static location without pushing history.
+   *
+   * Use this to retry the current route, recover from browser-only hash hydration,
+   * or explicitly re-run current-location middleware and lifecycle hooks.
+   */
+  refresh(): Promise<RouterState>;
   /** Returns hydration-safe state for SSR serialization. */
   serialize(): SerializedRouterState;
+  /**
+   * Disposes the router runtime.
+   *
+   * Removes the history listener, clears runtime middleware/blockers/subscribers,
+   * and prevents future navigation/start/refresh/preload work.
+   */
+  dispose(): void;
 }

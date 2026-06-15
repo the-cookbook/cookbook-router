@@ -7,7 +7,12 @@ describe('manifestCommand', () => {
     const fs = createMemoryFileSystem();
     const result = await manifestCommand({ routes: sampleRoutes, outDir: 'generated', fs });
 
-    expect(result).toEqual({ ok: true, files: ['generated/manifest.json'], errors: [] });
+    expect(result).toEqual({
+      ok: true,
+      files: ['generated/manifest.json'],
+      errors: [],
+      changedFiles: ['generated/manifest.json'],
+    });
     expect(fs.files.get('generated/contracts.ts')).toBeUndefined();
     expect(JSON.parse(fs.files.get('generated/manifest.json') ?? '{}').routes).toHaveLength(3);
   });

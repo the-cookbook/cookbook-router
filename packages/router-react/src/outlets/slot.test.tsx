@@ -6,6 +6,7 @@ import { Outlet } from './outlet';
 import { RouterProvider } from '../provider/router-provider';
 import type { RouterErrorFallbackProps } from '../provider/router-provider';
 import { Slot } from './slot';
+import type { SlotErrorFallbackProps } from './slot';
 import { useOutletContext } from '../hooks/use-outlet-context';
 import { useParams } from '../hooks/use-params';
 
@@ -511,6 +512,218 @@ describe('Slot route provider fallbacks', () => {
     fireEvent.click(view.getByText('open modal'));
 
     await waitFor(() => expect(view.getByText('global modal error:modal.target')).toBeTruthy());
+    consoleError.mockRestore();
+  });
+
+  it('isolates slot route render errors when errorFallback is null', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    function BrokenSlot(): never {
+      throw new Error('slot failed');
+    }
+
+    function SlotLayout() {
+      return (
+        <section>
+          <Slot name="sidebar" errorFallback={null} />
+          <Outlet />
+        </section>
+      );
+    }
+
+    function GlobalError(props: RouterErrorFallbackProps) {
+      return <p>global slot error:{props.route?.id}</p>;
+    }
+
+    const router = createMemoryRouter({
+      initialEntries: ['/dashboard/broken'],
+      routes: defineRoutes([
+        {
+          id: 'dashboard',
+          path: '/dashboard',
+          layout: {
+            view: SlotLayout,
+            slots: {
+              sidebar: {
+                routes: [{ id: 'dashboard.sidebar.broken', path: 'broken', view: BrokenSlot }],
+              },
+            },
+          },
+          children: [{ id: 'dashboard.broken', path: 'broken', view: DashboardPage }],
+        },
+      ] as const),
+    });
+    await router.start();
+
+    const { getByText, queryByText } = render(
+      <RouterProvider router={router} errorFallback={GlobalError} />,
+    );
+
+    expect(getByText('dashboard')).toBeTruthy();
+    expect(queryByText('global slot error:dashboard.sidebar.broken')).toBeNull();
+    consoleError.mockRestore();
+  });
+
+  it('renders an inline slot error fallback with error and reset props', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    function BrokenSlot(): never {
+      throw new Error('inline slot failed');
+    }
+
+    function SlotLayout() {
+      return (
+        <section>
+          <Slot
+            name="sidebar"
+            errorFallback={({ error, reset }) => (
+              <button type="button" onClick={reset}>
+                inline slot fallback:{error instanceof Error ? error.message : 'unknown'}
+              </button>
+            )}
+          />
+          <Outlet />
+        </section>
+      );
+    }
+
+    const router = createMemoryRouter({
+      initialEntries: ['/dashboard/broken'],
+      routes: defineRoutes([
+        {
+          id: 'dashboard',
+          path: '/dashboard',
+          layout: {
+            view: SlotLayout,
+            slots: {
+              sidebar: {
+                routes: [{ id: 'dashboard.sidebar.broken', path: 'broken', view: BrokenSlot }],
+              },
+            },
+          },
+          children: [{ id: 'dashboard.broken', path: 'broken', view: DashboardPage }],
+        },
+      ] as const),
+    });
+    await router.start();
+
+    const { getByText } = render(<RouterProvider router={router} />);
+
+    expect(getByText('inline slot fallback:inline slot failed')).toBeTruthy();
+    expect(getByText('dashboard')).toBeTruthy();
+    consoleError.mockRestore();
+  });
+
+  it('renders a component slot error fallback for intercepted route errors', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    function BrokenModal(): never {
+      throw new Error('modal failed');
+    }
+
+    function ModalError(props: SlotErrorFallbackProps) {
+      return (
+        <p>modal slot fallback:{props.error instanceof Error ? props.error.message : 'unknown'}</p>
+      );
+    }
+
+    function GlobalError(props: RouterErrorFallbackProps) {
+      return <p>global modal error:{props.route?.id}</p>;
+    }
+
+    function ModalLayout() {
+      return (
+        <section>
+          <Slot name="modal" errorFallback={ModalError} />
+          <Outlet />
+        </section>
+      );
+    }
+
+    const router = createMemoryRouter({
+      initialEntries: ['/modal-source'],
+      routes: defineRoutes([
+        {
+          id: 'modal.source',
+          path: '/modal-source',
+          layout: {
+            view: ModalLayout,
+            slots: { modal: true },
+          },
+          intercepts: {
+            modal: { to: ['modal.target'], view: BrokenModal },
+          },
+          children: [{ id: 'modal.source.index', index: true, view: ModalSourcePage }],
+        },
+        { id: 'modal.target', path: '/modal-target', view: ModalPage },
+      ] as const),
+    });
+    await router.start();
+
+    const view = render(<RouterProvider router={router} errorFallback={GlobalError} />);
+
+    fireEvent.click(view.getByText('open modal'));
+
+    await waitFor(() => expect(view.getByText('modal slot fallback:modal failed')).toBeTruthy());
+    expect(view.queryByText('global modal error:modal.target')).toBeNull();
+    consoleError.mockRestore();
+  });
+
+  it('uses slot errorFallback instead of the slot route error fallback', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    function BrokenSlot(): never {
+      throw new Error('slot failed before route fallback');
+    }
+
+    function RouteFallback() {
+      return <p>route slot fallback</p>;
+    }
+
+    function SlotFallback() {
+      return <p>slot fallback wins</p>;
+    }
+
+    function SlotLayout() {
+      return (
+        <section>
+          <Slot name="sidebar" errorFallback={SlotFallback} />
+          <Outlet />
+        </section>
+      );
+    }
+
+    const router = createMemoryRouter({
+      initialEntries: ['/dashboard/broken'],
+      routes: defineRoutes([
+        {
+          id: 'dashboard',
+          path: '/dashboard',
+          layout: {
+            view: SlotLayout,
+            slots: {
+              sidebar: {
+                routes: [
+                  {
+                    id: 'dashboard.sidebar.broken',
+                    path: 'broken',
+                    view: BrokenSlot,
+                    error: RouteFallback,
+                  },
+                ],
+              },
+            },
+          },
+          children: [{ id: 'dashboard.broken', path: 'broken', view: DashboardPage }],
+        },
+      ] as const),
+    });
+    await router.start();
+
+    const { getByText, queryByText } = render(<RouterProvider router={router} />);
+
+    expect(getByText('slot fallback wins')).toBeTruthy();
+    expect(queryByText('route slot fallback')).toBeNull();
     consoleError.mockRestore();
   });
 });

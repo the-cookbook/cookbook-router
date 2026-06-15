@@ -1,6 +1,6 @@
 /**
  * Generates the module augmentation file that registers generated contracts with
- * `@cookbook/router`.
+ * the core router package and the React adapter package.
  */
 export function generateRegister(): string {
   return [
@@ -8,6 +8,12 @@ export function generateRegister(): string {
     "import type { RouterContracts } from './contracts';",
     '',
     "declare module '@cookbook/router' {",
+    '  interface Register {',
+    '    contracts: RouterContracts;',
+    '  }',
+    '}',
+    '',
+    "declare module '@cookbook/router-react' {",
     '  interface Register {',
     '    contracts: RouterContracts;',
     '  }',

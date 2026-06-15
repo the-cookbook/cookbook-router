@@ -3,6 +3,7 @@ import type { Middleware } from '../route-config/contracts';
 export interface RuntimeMiddlewareRegistry {
   readonly getActiveMiddleware: () => readonly Middleware[];
   readonly useMiddleware: (middleware: readonly Middleware[]) => () => void;
+  readonly clear: () => void;
 }
 
 export function createRuntimeMiddlewareRegistry(
@@ -28,6 +29,9 @@ export function createRuntimeMiddlewareRegistry(
           runtimeMiddleware.delete(entry);
         }
       };
+    },
+    clear() {
+      runtimeMiddleware.clear();
     },
   };
 }

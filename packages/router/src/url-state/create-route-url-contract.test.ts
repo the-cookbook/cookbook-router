@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { resetConstraints } from '@cookbook/pathkit';
-import { createConstraint } from '../path';
+import { createPathConstraint } from '../path';
 import { createRouteUrlContract } from './create-route-url-contract';
 
 afterEach(() => {
@@ -19,7 +19,7 @@ describe('createRouteUrlContract', () => {
   });
 
   it('forwards custom path constraints to URLKit', () => {
-    const slug = createConstraint({
+    const slug = createPathConstraint({
       parse: (paramName, value) => {
         if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
           throw new Error(`Parameter "${paramName}" must be a valid slug`);
@@ -189,5 +189,36 @@ describe('createRouteUrlContract', () => {
     expect(contract.build({ search: { tags: ['router', 'typescript'] } })).toBe(
       '/products?tags=router&tags=typescript',
     );
+  });
+
+  it('forwards supported pathMatch options, wildcard arrays, and rejects unsupported prefix mode', () => {
+    const sensitive = createRouteUrlContract({
+      path: '/Users/{name}',
+      url: { pathMatch: { sensitive: true } },
+    });
+
+    expect(sensitive.match('/Users/Ada')).toBe(true);
+    expect(sensitive.match('/users/Ada')).toBe(false);
+
+    const decoded = createRouteUrlContract({
+      path: '/users/{name}',
+      url: { pathMatch: { decode: true } },
+    });
+
+    expect(decoded.parsePathname('/users/John%20Doe')).toEqual({ name: 'John Doe' });
+
+    expect(() =>
+      createRouteUrlContract({
+        path: '/api',
+        url: { pathMatch: { end: false } },
+      }),
+    ).toThrow('pathMatch.end: false is not supported');
+
+    const wildcard = createRouteUrlContract({
+      path: '/files/{*path}',
+      url: { pathMatch: { wildcardFormat: 'array', decode: true } },
+    });
+
+    expect(wildcard.parsePathname('/files/a%2Fb/c')).toEqual({ path: ['a/b', 'c'] });
   });
 });

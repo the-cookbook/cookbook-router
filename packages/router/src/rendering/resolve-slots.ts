@@ -1,4 +1,5 @@
-import { matchPathPattern, type RouterPathOptions } from '../path';
+import type { RouterPathOptions } from '../path';
+import { parseRoutePathParams, type RouteUrlStateOptions } from '../url-state/route-url-state';
 import type {
   MatchedRoute,
   NormalizedRouteSlotConfig,
@@ -17,6 +18,7 @@ export function resolveSlots(
   branch: readonly MatchedRoute[],
   pathname: string,
   pathOptions: RouterPathOptions = {},
+  urlOptions: RouteUrlStateOptions = {},
 ): ResolvedSlots {
   const resolved: Record<string, Record<string, ResolvedSlot>> = {};
 
@@ -38,6 +40,7 @@ export function resolveSlots(
         index,
         pathname,
         pathOptions,
+        urlOptions,
       );
     }
   }
@@ -64,6 +67,7 @@ function resolveSlot(
   ownerIndex: number,
   pathname: string,
   pathOptions: RouterPathOptions,
+  urlOptions: RouteUrlStateOptions,
 ): ResolvedSlot {
   const config = getEffectiveSlotConfig(initialConfig, slotName, branch, ownerIndex);
 
@@ -77,7 +81,7 @@ function resolveSlot(
     };
   }
 
-  const matchedSlotRoute = matchSlotRoute(config, pathname, pathOptions);
+  const matchedSlotRoute = matchSlotRoute(config, pathname, pathOptions, urlOptions);
 
   if (matchedSlotRoute) {
     return {
@@ -158,7 +162,8 @@ function getEffectiveSlotConfig(
 function matchSlotRoute(
   config: NormalizedRouteSlotConfig,
   pathname: string,
-  pathOptions: RouterPathOptions,
+  _pathOptions: RouterPathOptions,
+  urlOptions: RouteUrlStateOptions,
 ): { readonly match: MatchedRoute; readonly branch: readonly MatchedRoute[] } | null {
   const index = getRouteMatchIndex(config.routes);
 
@@ -167,7 +172,7 @@ function matchSlotRoute(
       continue;
     }
 
-    const params = matchPathPattern(route.fullPath, pathname, pathOptions);
+    const params = parseRoutePathParams(route, pathname, urlOptions);
 
     if (!params) {
       continue;
