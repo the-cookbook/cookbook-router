@@ -1,0 +1,71 @@
+{
+  "name": "@cookbook/router-webpack-plugin",
+  "version": "0.0.0",
+  "description": "Webpack plugin for Cookbook Router generated route artifacts.",
+  "license": "MIT",
+  "author": "The Cookbook",
+  "homepage": "https://github.com/the-cookbook/cookbook-router#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/the-cookbook/cookbook-router.git"
+  },
+  "bugs": {
+    "url": "https://github.com/the-cookbook/cookbook-router/issues"
+  },
+  "keywords": [
+    "webpack",
+    "webpack-plugin",
+    "router",
+    "routing",
+    "typed-routes",
+    "route-codegen",
+    "cookbook-router"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rollup -c ../../rollup.config.mjs",
+    "lint": "eslint src --ext .ts,.tsx",
+    "prepack": "pnpm build",
+    "test": "vitest --config ../../vitest.config.ts --run",
+    "test:coverage": "vitest --config ../../vitest.config.ts --run --coverage",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@cookbook/router-cli": "workspace:*"
+  },
+  "peerDependencies": {
+    "webpack": ">=5"
+  },
+  "peerDependenciesMeta": {
+    "webpack": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "webpack": "^5.103.0"
+  }
+}
