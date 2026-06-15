@@ -25,7 +25,17 @@ const requiredFiles = [
   'docs/contracts.md',
   'docs/react-integration.md',
 ];
-const packageDirectories = ['packages/router', 'packages/router-react', 'packages/router-cli'];
+const packageDirectories = [
+  'packages/router',
+  'packages/router-react',
+  'packages/router-cli',
+  'packages/router-vite-plugin',
+  'packages/router-webpack-plugin',
+  'packages/router-rspack-plugin',
+  'packages/router-rollup-plugin',
+  'packages/router-esbuild-plugin',
+  'packages/router-bun-plugin',
+];
 const failures = [];
 
 for (const file of requiredFiles) {

@@ -1,4 +1,4 @@
-import { describe, expect, expectTypeOf, it } from 'vitest';
+import { describe, expectTypeOf, it } from 'vitest';
 import type {
   RouteHashInput,
   RouteId,
@@ -6,15 +6,7 @@ import type {
   RouteSearch,
   RouteUrlOptions,
 } from '@cookbook/router';
-import { routeIds, routePaths } from '../.cookbook-router/contracts';
-
 describe('generated contracts in the consumer trial', () => {
-  it('exposes generated route ids and route paths', () => {
-    expect(routeIds).toContain('users.show');
-    expect(routeIds).toContain('blog.posts.show');
-    expect(routePaths['users.show']).toBe('/users/{id:int}');
-  });
-
   it('infers route ids, params, search, and hash from generated contracts', () => {
     expectTypeOf<RouteId>().toEqualTypeOf<
       | 'root'

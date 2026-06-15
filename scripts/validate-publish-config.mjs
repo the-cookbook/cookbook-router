@@ -1,7 +1,17 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-const packages = ['router', 'router-react', 'router-cli'];
+const packages = [
+  'router',
+  'router-react',
+  'router-cli',
+  'router-vite-plugin',
+  'router-webpack-plugin',
+  'router-rspack-plugin',
+  'router-rollup-plugin',
+  'router-esbuild-plugin',
+  'router-bun-plugin',
+];
 const failures = [];
 
 for (const packageName of packages) {

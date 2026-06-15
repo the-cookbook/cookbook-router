@@ -16,5 +16,10 @@
     "jsx": "react-jsx",
     "types": ["vitest/globals", "vite/client"]
   },
-  "include": ["src", ".cookbook-router/*", "vite.config.ts"]
+  "include": [
+    "src",
+    ".cookbook-router/contracts.ts",
+    ".cookbook-router/register.d.ts",
+    "vite.config.ts"
+  ]
 }

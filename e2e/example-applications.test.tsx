@@ -18,7 +18,7 @@ import { routes as interceptRoutes } from '../examples/react-intercepts/src/rout
 import { App as BlogApp } from '../examples/react-blog/src/app';
 import { routes as blogRoutes } from '../examples/react-blog/src/routes';
 import { App as DashboardApp } from '../examples/react-dashboard/app/app';
-import { routes as dashboardRoutes } from '../examples/react-dashboard/app/routes';
+import { routes as dashboardRoutes } from '../examples/react-dashboard/.cookbook-router/routes';
 import { App as SsrApp } from '../examples/react-ssr/src/app';
 import { renderRequest } from '../examples/react-ssr/src/server';
 import { routes as ssrRoutes, ssrEvents } from '../examples/react-ssr/src/routes';

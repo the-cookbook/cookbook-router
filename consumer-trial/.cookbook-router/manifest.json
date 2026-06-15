@@ -1,38 +1,38 @@
 {
   "routes": [
     {
-      "id": "root",
+      "id": "main",
       "path": "/",
       "index": false
     },
     {
       "id": "home",
       "path": "/",
-      "parentId": "root",
+      "parentId": "main",
       "index": true
     },
     {
       "id": "users.show",
       "path": "/users/{id:int}",
-      "parentId": "root",
+      "parentId": "main",
       "index": false
     },
     {
       "id": "login",
       "path": "/login",
-      "parentId": "root",
+      "parentId": "main",
       "index": false
     },
     {
       "id": "private.dashboard",
       "path": "/private",
-      "parentId": "root",
+      "parentId": "main",
       "index": false
     },
     {
       "id": "blog",
       "path": "/blog",
-      "parentId": "root",
+      "parentId": "main",
       "index": false
     },
     {
@@ -44,13 +44,13 @@
     {
       "id": "blog.posts.show",
       "path": "/blog/{slug:regex([a-z0-9-]+)}",
-      "parentId": "root",
+      "parentId": "main",
       "index": false
     },
     {
       "id": "root.sidebar.user",
       "path": "/users/{id:int}",
-      "parentId": "root",
+      "parentId": "main",
       "index": false
     }
   ]

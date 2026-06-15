@@ -3,7 +3,17 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const packageDirectories = ['packages/router', 'packages/router-react', 'packages/router-cli'];
+const packageDirectories = [
+  'packages/router',
+  'packages/router-react',
+  'packages/router-cli',
+  'packages/router-vite-plugin',
+  'packages/router-webpack-plugin',
+  'packages/router-rspack-plugin',
+  'packages/router-rollup-plugin',
+  'packages/router-esbuild-plugin',
+  'packages/router-bun-plugin',
+];
 const failures = [];
 
 for (const packageDirectory of packageDirectories) {
