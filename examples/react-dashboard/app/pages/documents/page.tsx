@@ -38,7 +38,7 @@ export function DocumentPreview() {
 
 export function DocumentsPage() {
   return (
-    <main className="flex min-h-screen flex-col gap-6 bg-background p-6">
+    <main className="flex min-h-screen animate-in flex-col gap-6 bg-background p-6 duration-500 fade-in slide-in-from-bottom-2">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -65,8 +65,16 @@ export function DocumentsPage() {
       </div>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {documents.map((document) => (
-          <DocumentCard key={document.id} document={document} />
+        {documents.map((document, idx) => (
+          <DocumentCard
+            key={document.id}
+            document={document}
+            className="animate-in duration-500 fade-in slide-in-from-bottom-2"
+            style={{
+              animationDelay: `${idx * 40}ms`,
+              animationFillMode: 'both',
+            }}
+          />
         ))}
       </section>
     </main>

@@ -18,7 +18,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { ProgressBar } from '@/components/progress-bar';
 import { Separator } from '@/components/ui/separator';
 
 import { getDocumentById } from '../data/documents';
@@ -57,7 +57,7 @@ export function DocumentDetailPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col gap-6 bg-background p-6">
+    <main className="flex min-h-screen animate-in flex-col gap-6 bg-background p-6 duration-500 fade-in slide-in-from-bottom-2">
       <div className="flex flex-col gap-4">
         <Button asChild variant="outline" className="w-fit">
           <Link to="documents">
@@ -155,7 +155,7 @@ export function DocumentDetailPage() {
                   </span>
                 </div>
 
-                <Progress value={document.completion} />
+                <ProgressBar value={document.completion} />
               </div>
 
               <Separator />

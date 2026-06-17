@@ -1,16 +1,11 @@
 import { defineRoute } from '@cookbook/router';
 import { lazyRouteView } from '@cookbook/router-react';
-import { LAZY_PAGE_DELAY_MS } from '@/lib/routes/config';
 import { LayoutPage } from '../layout';
 
 export const AsyncReportsPage = lazyRouteView(() =>
-  import('./page').then(async ({ ReportsPage }) => {
-    await new Promise((resolve) => setTimeout(resolve, LAZY_PAGE_DELAY_MS));
-
-    return {
-      default: ReportsPage,
-    };
-  })
+  import('./page').then(async ({ ReportsPage }) => ({
+    default: ReportsPage,
+  }))
 );
 
 export const AsyncReportsSidebarWidget = lazyRouteView(() =>

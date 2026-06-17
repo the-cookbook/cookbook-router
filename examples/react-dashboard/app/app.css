@@ -55,7 +55,7 @@
   --card-foreground: oklch(0.141 0.005 285.823);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.457 0.24 277.023);
+  --primary: oklch(0.55 0.27 278.7);
   --primary-foreground: oklch(0.962 0.018 272.314);
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
@@ -81,6 +81,22 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
+
+  --toast-success-bg: var(--color-emerald-100);
+  --toast-success-text: var(--color-emerald-950);
+  --toast-success-border: var(--color-emerald-400);
+
+  --toast-info-bg: var(--background);
+  --toast-info-text: var(--color-blue-950);
+  --toast-info-border: var(--color-blue-200);
+
+  --toast-warning-bg: var(--color-amber-50);
+  --toast-warning-text: var(--color-amber-950);
+  --toast-warning-border: var(--color-amber-200);
+
+  --toast-error-bg: var(--color-red-100);
+  --toast-error-text: var(--color-red-950);
+  --toast-error-border: var(--color-red-400);
 }
 
 .dark {
@@ -90,7 +106,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.21 0.006 285.885);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.398 0.195 277.366);
+  --primary: oklch(0.42 0.25 272.05);
   --primary-foreground: oklch(0.962 0.018 272.314);
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
@@ -115,6 +131,22 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+
+  --toast-success-bg: var(--color-emerald-950);
+  --toast-success-text: var(--color-emerald-100);
+  --toast-success-border: var(--color-emerald-800);
+
+  --toast-info-bg: var(--color-blue-950);
+  --toast-info-text: var(--color-blue-100);
+  --toast-info-border: var(--color-blue-900);
+
+  --toast-warning-bg: var(--color-amber-950);
+  --toast-warning-text: var(--color-amber-100);
+  --toast-warning-border: var(--color-amber-800);
+
+  --toast-error-bg: var(--color-red-950);
+  --toast-error-text: var(--color-red-100);
+  --toast-error-border: var(--color-red-800);
 }
 
 @layer base {

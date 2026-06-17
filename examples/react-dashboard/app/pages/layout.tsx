@@ -15,7 +15,7 @@ export function RootLayoutPage() {
       <TooltipProvider>
         <Outlet />
         <Slot name="modal" />
-        <Toaster />
+        <Toaster richColors />
       </TooltipProvider>
     </ThemeProvider>
   );

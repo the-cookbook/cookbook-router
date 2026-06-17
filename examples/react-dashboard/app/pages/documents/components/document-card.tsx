@@ -8,20 +8,31 @@ import {
   CardFooter,
   CardHeader,
 } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { ProgressBar } from '@/components/progress-bar';
 
 import type { DocumentItem } from '../data/documents';
 
 import { DocumentStatusBadge } from './document-status-badge';
 import { DocumentPreview } from '../page';
+import { cn } from '@/lib/utils';
 
-interface DocumentCardProps {
+interface DocumentCardProps extends Pick<
+  React.ComponentProps<'div'>,
+  'className' | 'style'
+> {
   document: DocumentItem;
 }
 
-export function DocumentCard({ document }: DocumentCardProps) {
+export function DocumentCard({
+  document,
+  className,
+  style,
+}: DocumentCardProps) {
   return (
-    <Card className="group transition-colors hover:bg-muted/30">
+    <Card
+      className={cn('group transition-colors hover:bg-muted/30', className)}
+      style={style}
+    >
       <CardHeader className="space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
@@ -41,6 +52,7 @@ export function DocumentCard({ document }: DocumentCardProps) {
               to="documents.details"
               params={{ documentId: document.id }}
               className="hover:underline"
+              prefetch="mount"
             >
               {document.title}
             </Link>
@@ -78,7 +90,7 @@ export function DocumentCard({ document }: DocumentCardProps) {
             </span>
           </div>
 
-          <Progress value={document.completion} />
+          <ProgressBar value={document.completion} />
         </div>
       </CardContent>
 

@@ -1,7 +1,7 @@
 import { Link } from '@cookbook/router-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { ProgressBar } from '@/components/progress-bar';
 
 import { usernameToSlug } from '../../users/details/components/utils';
 
@@ -59,10 +59,7 @@ export function ReviewerWorkloadCard({ reviewers }: ReviewerWorkloadCardProps) {
                   </span>
                 </div>
 
-                <Progress
-                  value={percentage}
-                  className="*:data-[slot=progress-indicator]:bg-indigo-600"
-                />
+                <ProgressBar value={percentage} />
               </div>
 
               <div className="mt-4 grid grid-cols-3 gap-2 text-sm">

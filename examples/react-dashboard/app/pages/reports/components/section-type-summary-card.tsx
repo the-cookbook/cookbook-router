@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { ProgressBar } from '@/components/progress-bar';
 
 import type { SectionTypeSummary } from './utils/reports';
 import { getProgressPercentage } from './utils/reports';
@@ -33,7 +33,7 @@ export function SectionTypeSummaryCard({ items }: SectionTypeSummaryCardProps) {
                 <Badge variant="secondary">{item.total} total</Badge>
               </div>
 
-              <Progress value={percentage} />
+              <ProgressBar value={percentage} />
             </div>
           );
         })}

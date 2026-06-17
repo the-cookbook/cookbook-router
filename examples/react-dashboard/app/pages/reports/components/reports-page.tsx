@@ -5,8 +5,6 @@ import {
   FileText,
 } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-
 import {
   recentExports,
   reportProgress,
@@ -26,7 +24,7 @@ const statIcons = [FileText, CheckCircle2, CircleDashed, AlertTriangle];
 
 export function Reports() {
   return (
-    <main className="flex min-h-screen flex-col gap-6 bg-background p-6">
+    <main className="flex min-h-screen animate-in flex-col gap-6 bg-background p-6 duration-500 fade-in slide-in-from-bottom-2">
       <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Reports</h1>

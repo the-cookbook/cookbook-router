@@ -1,16 +1,11 @@
 import { defineRoute } from '@cookbook/router';
 import { lazyRouteView } from '@cookbook/router-react';
-import { LAZY_PAGE_DELAY_MS } from '@/lib/routes/config';
 import { LayoutPage } from '../layout';
 
 export const AsyncDocumentsPage = lazyRouteView(() =>
-  import('./page').then(async ({ DocumentsPage }) => {
-    await new Promise((resolve) => setTimeout(resolve, LAZY_PAGE_DELAY_MS));
-
-    return {
-      default: DocumentsPage,
-    };
-  })
+  import('./page').then(async ({ DocumentsPage }) => ({
+    default: DocumentsPage,
+  }))
 );
 
 export const AsyncDocumentsLayoutHeader = lazyRouteView(() =>

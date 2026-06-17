@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { ProgressBar } from '@/components/progress-bar';
 
 import type { ReportProgress } from './utils/reports';
 import { getProgressPercentage } from './utils/reports';
@@ -28,7 +28,7 @@ export function ReportProgressCard({ items }: ReportProgressCardProps) {
                 </span>
               </div>
 
-              <Progress
+              <ProgressBar
                 value={percentage}
                 className="*:data-[slot=progress-indicator]:bg-emerald-600"
               />

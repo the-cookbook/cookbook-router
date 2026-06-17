@@ -12,14 +12,31 @@ export default defineConfig({
   },
   plugins: [tsconfigPaths()],
   resolve: {
-    alias: {
-      '@': resolve(exampleDir, 'app'),
-      '@cookbook/router': resolve(rootDir, 'packages/router/src/index.ts'),
-      '@cookbook/router-react': resolve(
-        rootDir,
-        'packages/router-react/src/index.ts'
-      ),
-    },
+    alias: [
+      {
+        find: /^@cookbook\/router\/route-config$/,
+        replacement: resolve(
+          rootDir,
+          'packages/router/src/route-config/index.ts'
+        ),
+      },
+      {
+        find: /^@cookbook\/router-react$/,
+        replacement: resolve(rootDir, 'packages/router-react/src/index.ts'),
+      },
+      {
+        find: /^@cookbook\/router$/,
+        replacement: resolve(rootDir, 'packages/router/src/index.ts'),
+      },
+      {
+        find: /^@\//,
+        replacement: `${resolve(exampleDir, 'app')}/`,
+      },
+      {
+        find: /^@$/,
+        replacement: resolve(exampleDir, 'app'),
+      },
+    ],
   },
   test: {
     environment: 'jsdom',
