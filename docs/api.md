@@ -1,6 +1,6 @@
 # API reference
 
-This page documents the package-root public APIs exported by `@cookbook/router`, `@cookbook/router-react`, and `@cookbook/router-cli`.
+This page documents the public APIs and package entrypoints exported by `@cookbook/router`, `@cookbook/router-react`, and `@cookbook/router-cli`.
 
 Use this page with the package guides:
 
@@ -17,6 +17,7 @@ Use this page with the package guides:
 ## Table of contents
 
 - [`@cookbook/router`](#cookbookrouter)
+  - [Entry points](#entry-points)
   - [Route definition APIs](#route-definition-apis)
   - [Path route pattern APIs](#path-route-pattern-apis)
   - [Router creation APIs](#router-creation-apis)
@@ -57,7 +58,32 @@ Requirements:
 
 - Node.js `>=18`
 - ESM package with CommonJS build output available through package exports
-- `@cookbook/urlkit` and `@cookbook/pathkit` are installed transitively
+- `@cookbook/urlkit` is installed transitively
+
+### Entry points
+
+`@cookbook/router` publishes the following supported entrypoints. Use the focused subpaths when an application, integration, or generated module needs only one part of the Router API; the root entrypoint remains the complete compatibility surface.
+
+| Entry point                     | Purpose                                                                       |
+| ------------------------------- | ----------------------------------------------------------------------------- |
+| `@cookbook/router`              | Complete public Router API                                                    |
+| `@cookbook/router/route-config` | Route declarations, validation, normalization, and route types                |
+| `@cookbook/router/runtime`      | Router factories, router contracts, serialization, and route metadata helpers |
+| `@cookbook/router/history`      | Browser, memory, and static history adapters                                  |
+| `@cookbook/router/matching`     | Route matching, flattening, and ranking helpers                               |
+| `@cookbook/router/path`         | Path analysis, path options, and custom path constraints                      |
+| `@cookbook/router/url-state`    | Route URL contracts and path, search, and hash state helpers                  |
+| `@cookbook/router/rendering`    | Renderer-neutral route traversal and rendering contracts                      |
+| `@cookbook/router/diagnostics`  | Public Router diagnostic error factories                                      |
+| `@cookbook/router/package.json` | Package metadata                                                              |
+
+Examples:
+
+```ts
+import { defineRoutes } from '@cookbook/router/route-config';
+import { createMemoryRouter } from '@cookbook/router/runtime';
+import { createMemoryHistory } from '@cookbook/router/history';
+```
 
 ### Route definition APIs
 
@@ -385,7 +411,7 @@ Descriptor values must be bare values such as `'comments'`, not `'#comments'`. R
 
 ### Path route pattern APIs
 
-Router path patterns use `@cookbook/pathkit` syntax under URLKit route-runtime contracts. The full guide is [Path routes and constraints](path-routes.md).
+Router path patterns use URLKit path-pattern syntax. The full guide is [Path routes and constraints](path-routes.md).
 
 #### Path syntax
 
@@ -404,7 +430,7 @@ There is no built-in `{param:number}` or `{param:string}` constraint. Use `{para
 
 #### Built-in path constraints
 
-PathKit provides these built-in constraints, which Router forwards to URLKit for route validation, matching, href generation, static router workflows, and generated contracts.
+URLKit provides these built-in constraints, which Router forwards to URLKit for route validation, matching, href generation, static router workflows, and generated contracts.
 
 | Constraint  | Syntax                             | Valid examples                         | Invalid examples            | Runtime/generated type |
 | ----------- | ---------------------------------- | -------------------------------------- | --------------------------- | ---------------------- |
@@ -588,18 +614,6 @@ interface ResolveUrlOptionsInput {
 
 Precedence is call-site, then route-level, then router-level. This helper is useful for tests and integrations that need to inspect the effective URL policy without creating a full router.
 
-#### `registerUrlPathConstraints(constraints?)`
-
-Registers Router custom path constraints with URLKit before descriptor compilation.
-
-```ts
-function registerUrlPathConstraints(constraints?: RouterPathConstraints): void;
-```
-
-Use this only when building lower-level integrations. Normal applications should pass constraints through `defineRoutes(routes, { pathConstraints })` or `createRouter({ pathConstraints })`.
-
-### Router creation APIs
-
 #### `createRouter(options)`
 
 Creates a browser-capable router. In non-browser environments, it falls back to memory history unless a `history` is supplied.
@@ -669,7 +683,7 @@ await router.start();
 | `lifecycle`           |                      `{}` | Global lifecycle hooks.                                                                                                            |
 | `hydrationData`       |               `undefined` | State from SSR serialization.                                                                                                      |
 | `history`             | Browser or memory history | Custom history implementation.                                                                                                     |
-| `pathOptions`         |        `{ prune: 'all' }` | Pathkit behavior.                                                                                                                  |
+| `pathOptions`         |        `{ prune: 'all' }` | Router path policy.                                                                                                                |
 | `pathConstraints`     |               `undefined` | Custom constraints for unvalidated route arrays. Prefer `defineRoutes(..., { pathConstraints })`.                                  |
 | `url`                 |           URLKit defaults | Router-level URL options. `unknownSearch` defaults to `'strip'`; `invalidSearch`/`invalidHash` default to Router recover behavior. |
 | `maxRedirectDepth`    |    Implementation default | Redirect loop guard.                                                                                                               |
@@ -973,7 +987,7 @@ Related: [SSR](ssr.md).
 
 ### Path constraint APIs
 
-`@cookbook/router` re-exports selected `@cookbook/pathkit` helpers for custom route params. Registered constraints are forwarded to URLKit before route validation, matching, href generation, CLI generation, and SSR/static router workflows.
+`@cookbook/router` re-exports URLKit-backed path constraint helpers for custom route params. Registered constraints are forwarded to URLKit before route validation, matching, href generation, CLI generation, and SSR/static router workflows.
 
 ```ts
 function createPathConstraint(definition: {
@@ -998,13 +1012,13 @@ interface RouterPathConstraints {
 
 | API                          | Purpose                                                                                                                              |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `createPathConstraint()`     | Create a custom PathKit-compatible constraint with `parse`, `verify`, and `toRegExp`.                                                |
+| `createPathConstraint()`     | Create a custom URLKit path constraint with `parse`, `verify`, and `toRegExp`.                                                       |
 | `registerPathConstraints()`  | Register custom constraints globally and clear Router path caches. Prefer `defineRoutes(..., { pathConstraints })` in route modules. |
 | `hasPathConstraint()`        | Check whether a constraint is registered.                                                                                            |
 | `getPathConstraint()`        | Read a registered constraint for diagnostics or tests.                                                                               |
 | `unregisterPathConstraint()` | Remove a registered constraint, mainly for isolated tests.                                                                           |
 
-Built-in PathKit constraints available in route paths are `decimal`, `int`, `uuid`, `min`, `max`, `range`, `minlength`, `maxlength`, `list`, and `regex`. See [Path routes and constraints](path-routes.md) for syntax, examples, parsed types, and custom-constraint guidance.
+Built-in URLKit path constraints available in route paths are `decimal`, `int`, `uuid`, `min`, `max`, `range`, `minlength`, `maxlength`, `list`, and `regex`. See [Path routes and constraints](path-routes.md) for syntax, examples, parsed types, and custom-constraint guidance.
 
 ```ts
 const slug = createPathConstraint({

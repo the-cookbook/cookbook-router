@@ -5,6 +5,7 @@
 ## Table of contents
 
 - [Install](#install)
+- [Public entrypoints](#public-entrypoints)
 - [Provider setup](#provider-setup)
 - [Static provider](#static-provider)
 - [Links](#links)
@@ -14,7 +15,7 @@
 - [Hooks](#hooks)
 - [Outlet and slot context](#outlet-and-slot-context)
 - [Interception in React](#interception-in-react)
-- [Blocking unload](#blocking-unload)
+- [Blocking navigation](#blocking-navigation)
 - [Testing React routes](#testing-react-routes)
 - [Provider edge cases](#provider-edge-cases)
 
@@ -25,6 +26,19 @@ pnpm add @cookbook/router @cookbook/router-react react react-dom
 ```
 
 React and React DOM are peer dependencies of `@cookbook/router-react`.
+
+## Public entrypoints
+
+The root entrypoint exports the complete React API. Focused public entrypoints are available for hooks, links, outlets, and providers:
+
+```tsx
+import { useNavigate, useRouteMeta } from '@cookbook/router-react/hooks';
+import { Link, NavLink } from '@cookbook/router-react/links';
+import { Outlet, Slot } from '@cookbook/router-react/outlets';
+import { RouterProvider, StaticRouterProvider } from '@cookbook/router-react/provider';
+```
+
+Use these package subpaths instead of private source-file imports. Root imports remain supported.
 
 ## Provider setup
 
@@ -121,7 +135,7 @@ export function DashboardLayout() {
 A slot can render:
 
 - a matched slot route
-- a slot fallback
+- the slot's declared default view
 - an intercepted destination
 - nothing, when the slot is empty or disabled
 - a slot-level not-found view, when applicable
@@ -263,7 +277,7 @@ const unknownSearch = useUnknownSearchParams();
 
 `RouterProvider` does not define separate URL defaults; configure framework-agnostic defaults on the core router.
 
-### `useHashParams()` / `useHash()`
+### `useHashParams()`
 
 Reads URLKit-parsed hash state from the active match, or `null` when no hash is present.
 
@@ -283,6 +297,22 @@ unknownSearch.utm_source;
 ```
 
 It returns an empty object when no unknown search params were preserved.
+
+### `useRouteMeta()`
+
+Reads route metadata for the current rendered route or an explicit route ID.
+
+```tsx
+const localMeta = useRouteMeta();
+const mergedMeta = useRouteMeta({ includeAncestors: true });
+const metaChain = useRouteMeta({ includeAncestors: true, merge: false });
+```
+
+Use an explicit route ID to read metadata outside that route's active render context:
+
+```tsx
+const usersMeta = useRouteMeta('users.index', { includeAncestors: true });
+```
 
 ### `useOutletContext()`
 

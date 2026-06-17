@@ -12,11 +12,11 @@ Use this guide when routing behavior, generated contracts, examples, SSR, or tes
 - [Basename routes do not work](#basename-routes-do-not-work)
 - [Intercept throws missing configuration](#intercept-throws-missing-configuration)
 - [Call-site intercept throws `DataCloneError`](#call-site-intercept-throws-datacloneerror)
-- [Slot fallback IDs are missing from contracts](#slot-fallback-ids-are-missing-from-contracts)
+- [Default slot views do not have route IDs](#default-slot-views-do-not-have-route-ids)
 - [Generated contracts are stale](#generated-contracts-are-stale)
 - [`useParams()` returns `number` for numeric path constraints](#useparams-returns-number-for-numeric-path-constraints)
 - [`uuid`, `minlength`, `maxlength`, `list`, and `regex` params remain `string`](#uuid-minlength-maxlength-list-and-regex-params-remain-string)
-- [Regex path constraints with `/.../` delimiters fail](#regex-path-constraints-with--delimiters-fail)
+- [Regex path constraints with delimiters fail](#regex-path-constraints-with-delimiters-fail)
 - [Custom constraint params remain `string`](#custom-constraint-params-remain-string)
 - [Invalid path params fail during URLKit-backed validation](#invalid-path-params-fail-during-urlkit-backed-validation)
 - [Search params parse differently after URLKit integration](#search-params-parse-differently-after-urlkit-integration)
@@ -47,7 +47,7 @@ Use this guide when routing behavior, generated contracts, examples, SSR, or tes
 
 ## Route validation fails
 
-`defineRoutes()`, `validateRoutes()`, `createRouter()`, and CLI generation all validate route definitions. For the complete list of validation errors with symptoms, causes, and fixes, see [Route validation errors](route-validation-errors.md).
+`defineRoutes()`, `validateRoutes()`, `createRouter()`, and CLI generation all validate route definitions. For route-validation details plus runtime, React, SSR, CLI, and build errors, see [Router error reference](route-validation-errors.md).
 
 Start with that catalog when the error mentions route IDs, paths, layout slots, intercepts, redirects, search descriptors, hash descriptors, duplicate params, or unsafe keys.
 
@@ -151,7 +151,7 @@ Do not include the basename in route paths. Use `/blog`, not `/foo/blog`.
 
 Links should generate `/foo/...`, while route config and intercept patterns remain app-relative.
 
-## Slot error renders the route fallback instead of the slot fallback
+## Slot error renders the route fallback instead of the slot error fallback
 
 **Symptom**
 A sidebar, header, modal, or other slot throws during render and the route/provider error fallback replaces a larger part of the page than expected.
@@ -204,11 +204,11 @@ pnpm build:packages
 
 Also avoid putting function values in custom `history.state`.
 
-## Slot fallback IDs are missing from contracts
+## Default slot views do not have route IDs
 
-That is expected. Slot fallbacks are render defaults, not navigable routes.
+That is expected. A slot `view` is default render content, not a navigable route.
 
-Use generic outlet context typing in fallback components:
+Use generic outlet context typing in default slot view components:
 
 ```tsx
 const context = useOutletContext<{ user: string }>();
@@ -272,7 +272,7 @@ params.slug; // string
 
 Use `min(...)` and `max(...)` for numeric bounds. Use `minlength(...)` and `maxlength(...)` for string length.
 
-## Regex path constraints with `/.../` delimiters fail
+## Regex path constraints with delimiters fail
 
 PathKit expects a raw regex source inside `regex(...)`, not a JavaScript regex literal.
 

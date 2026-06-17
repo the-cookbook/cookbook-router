@@ -9,6 +9,7 @@ The examples are executable documentation for common routing patterns. Each exam
 - [`react-slots`](#react-slots)
 - [`react-intercepts`](#react-intercepts)
 - [`react-blog`](#react-blog)
+- [`react-dashboard`](#react-dashboard)
 - [`react-ssr`](#react-ssr)
 - [Scenario recipes](#scenario-recipes)
 - [When examples look stale](#when-examples-look-stale)
@@ -21,6 +22,7 @@ From the repository root:
 pnpm install
 pnpm build:packages
 pnpm --filter react-blog dev
+pnpm --filter react-dashboard dev
 ```
 
 Build every example:
@@ -54,7 +56,7 @@ Use this example when learning the minimal app setup and URL option precedence.
 Shows:
 
 - layout slots
-- slot fallbacks
+- default slot views
 - matched slot routes
 - disabled inherited slots
 - outlet and slot context
@@ -92,6 +94,22 @@ Shows a fuller real-world app:
 - styled responsive UI
 
 This is the best example for app-level architecture.
+
+## `react-dashboard`
+
+Shows a production-style application with:
+
+- route files composed through `defineRoute()` and generated route artifacts
+- preloadable lazy route views and explicit link prefetch modes
+- shared layout loading and error fallbacks
+- default and route-specific layout slot views
+- configured and link-level interception through a modal slot
+- navigation blocking for unsaved form state
+- provider middleware and public-route metadata
+- custom path constraints and reusable search descriptors
+- generated route-contract inference across a larger feature tree
+
+Use this example when validating application architecture, code generation, prefetching, middleware, slots, intercepts, and error handling together.
 
 ## `react-ssr`
 

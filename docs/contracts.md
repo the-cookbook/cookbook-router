@@ -32,7 +32,7 @@ Output:
   manifest.json
 ```
 
-`contracts.ts` contains route-specific type-only interfaces. `register.d.ts` augments `@cookbook/router` and `@cookbook/router-react`. `manifest.json` is a tooling-friendly route list and preserves route-level `url` options such as `arrayFormat`, `defaults`, `invalidSearch`, `invalidHash`, and `unknownSearch` when present.
+`contracts.ts` contains route-specific type-only interfaces. `register.d.ts` augments `@cookbook/router` and `@cookbook/router-react`. `manifest.json` is a tooling-friendly route list and preserves route-level `url` options such as `arrayFormat`, `defaults`, `invalidSearch`, `invalidHash`, and `unknownSearch` when present. The focused `@cookbook/router-react/hooks` entrypoint uses the same shared contract registry, so generated hook inference is preserved when hooks are imported from the subpath.
 
 ## Register contracts
 
@@ -249,7 +249,7 @@ Generated contracts improve TypeScript inference. They do not replace runtime va
 - Params are validated and parsed by URLKit-backed path matching/compilation.
 - Search and hash descriptors generate TypeScript contracts and URLKit-backed runtime parsed state.
 - Metadata shapes come from declared literal values.
-- Slot fallback IDs are not generated as route contracts.
+- Default slot views are not generated as route contracts.
 - Slot route IDs are generated when they are declared under `layout.slots.<name>.routes`.
 
 ## Troubleshooting contracts
@@ -266,9 +266,9 @@ Regenerate contracts:
 cookbook-router generate --routes src/routes.tsx --out-dir .cookbook-router
 ```
 
-### A slot fallback route ID disappeared
+### A default slot view has no route ID
 
-That is expected. Slot fallbacks are fallback render definitions, not navigable routes. Use generics for fallback context:
+That is expected. A default slot `view` is render content, not a navigable route. Use generics for its outlet context:
 
 ```tsx
 const context = useOutletContext<{ user: string }>();

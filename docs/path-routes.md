@@ -1,6 +1,6 @@
 # Path routes and constraints
 
-Route `path` values describe the URL pathname matched by a route. Cookbook Router delegates path pattern syntax and constraint validation to [`@cookbook/pathkit`](https://github.com/the-cookbook/pathkit), and delegates parsed URL state to [`@cookbook/urlkit`](https://github.com/the-cookbook/urlkit).
+Route `path` values describe the URL pathname matched by a route. Cookbook Router delegates path-pattern syntax, constraint validation, matching, parsed URL state, and URL building to [`@cookbook/urlkit`](https://github.com/the-cookbook/urlkit).
 
 Use this page when defining route paths, choosing built-in constraints, or adding a custom path constraint.
 
@@ -34,7 +34,7 @@ Use this page when defining route paths, choosing built-in constraints, or addin
 
 ## Path route basics
 
-A route path is a [PathKit](https://github.com/the-cookbook/pathkit) pattern:
+A route path is a URLKit path pattern:
 
 ```tsx
 export const routes = defineRoutes([
@@ -135,7 +135,7 @@ The generated and runtime param type is:
 }
 ```
 
-Do not write `{slug:string}`. `string` is not a built-in PathKit constraint but the **default type**. Use `{slug}` for an unconstrained string segment, or use `regex(...)` / a custom constraint when the segment needs validation.
+Do not write `{slug:string}`. `string` is not a built-in URLKit path constraint but the **default type**. Use `{slug}` for an unconstrained string segment, or use `regex(...)` / a custom constraint when the segment needs validation.
 
 ## Optional params
 
@@ -195,7 +195,7 @@ Optional wildcards use `?`:
 
 ## Built-in constraints
 
-PathKit provides these built-in constraints, and Router forwards them through URLKit for validation, matching, href generation, SSR, and generated contracts:
+URLKit provides these built-in constraints, and Router forwards them through URLKit for validation, matching, href generation, SSR, and generated contracts:
 
 | Constraint  | Syntax                             | Matches                                              | Generated/runtime param type |
 | ----------- | ---------------------------------- | ---------------------------------------------------- | ---------------------------- |
@@ -496,7 +496,7 @@ Custom constraints are process-level registrations. Register the same custom con
 
 ## `createPathConstraint()`
 
-`createPathConstraint()` creates a PathKit-compatible constraint.
+`createPathConstraint()` creates a URLKit path constraint.
 
 ```ts
 import { createPathConstraint } from '@cookbook/router';
@@ -607,7 +607,7 @@ If you need a numeric path param, prefer built-in numeric constraints:
 
 ## Path options
 
-Router path options are forwarded to PathKit validation, matching, href compilation, and canonicalization.
+Router path options are Router-owned pathname policy used during validation, matching, href generation, and canonicalization.
 
 ```ts
 createRouter({
@@ -659,7 +659,7 @@ During matching, constrained values that do not satisfy the route pattern become
 
 ### Using `{id:number}`
 
-`number` is not a built-in PathKit constraint.
+`number` is not a built-in URLKit path constraint.
 
 Use:
 
@@ -677,7 +677,7 @@ for integers.
 
 ### Using `{slug:string}`
 
-`string` is not a built-in PathKit constraint.
+`string` is not a built-in URLKit path constraint.
 
 Use:
 

@@ -11,7 +11,7 @@ This guide creates a typed React app with route definitions, generated contracts
 - [Render React](#render-react)
 - [Generate contracts](#generate-contracts)
 - [Use typed navigation](#use-typed-navigation)
-- [Add a not-found fallback](#add-a-not-found-fallback)
+- [Add a router-level fallback](#router-level-fallback)
 - [Run locally](#run-locally)
 - [Next steps](#next-steps)
 
@@ -23,6 +23,15 @@ pnpm add -D @cookbook/router-cli
 ```
 
 `@cookbook/router-react` declares React as a peer dependency, so the app must install `react` and `react-dom`. `@cookbook/urlkit` and `@cookbook/pathkit` are installed transitively by `@cookbook/router`.
+
+Focused React entrypoints are available when a file only needs hooks, links, outlets, or providers:
+
+```tsx
+import { useNavigate } from '@cookbook/router-react/hooks';
+import { Link } from '@cookbook/router-react/links';
+import { Outlet } from '@cookbook/router-react/outlets';
+import { RouterProvider } from '@cookbook/router-react/provider';
+```
 
 ## Define routes
 

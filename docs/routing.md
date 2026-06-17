@@ -490,13 +490,13 @@ export function DashboardLayout() {
 
 Slot rules:
 
-- `true` enables a declared slot without fallback content.
+- `true` declares the slot without a default slot view.
 - A slot `view` renders when no slot route or intercept is active for that slot.
 - Slot configs support only `view`, `meta`, and `routes`.
 - Slot names are layout-scoped, not global.
 - Slot route IDs are generated because they are real URL-matched route definitions.
 - React slots can isolate render errors with `<Slot errorFallback={...} />`.
-- The removed `fallback`, `fallback.id`, and `id` slot forms fail validation; see [Route validation errors](route-validation-errors.md).
+- The removed `fallback`, `fallback.id`, and `id` slot forms fail validation; see [Router error reference](route-validation-errors.md).
 
 When a slot route shares a URL with primary content, define both routes:
 
@@ -786,7 +786,7 @@ Matching uses normalized route paths and URLKit-backed route URL contracts. Path
 
 `defineRoutes()`, `validateRoutes()`, router creation, and CLI generation validate route trees before they are used. Error messages include route IDs or invalid field names where possible.
 
-For the full catalog of route validation failures with symptoms, causes, and fixes, see [Route validation errors](route-validation-errors.md).
+For the full catalog of route validation failures with symptoms, causes, and fixes, see [Router error reference](route-validation-errors.md).
 
 ## Best practices
 
