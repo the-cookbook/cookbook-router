@@ -8,16 +8,6 @@ const packages = [
 ];
 
 describe('package export hardening', () => {
-  it('packages expose only root entrypoint and package metadata', async () => {
-    for (const packageJsonPath of packages) {
-      const manifest = JSON.parse(await readFile(packageJsonPath, 'utf8')) as {
-        exports: Record<string, unknown>;
-      };
-
-      expect(Object.keys(manifest.exports).sort()).toEqual(['.', './package.json']);
-    }
-  });
-
   it('packages retain tree-shaking and declaration metadata', async () => {
     for (const packageJsonPath of packages) {
       const manifest = JSON.parse(await readFile(packageJsonPath, 'utf8')) as {

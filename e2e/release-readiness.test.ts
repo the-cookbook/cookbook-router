@@ -33,8 +33,8 @@ describe('production release readiness', () => {
 
       if (packageName === 'router-cli') {
         expect(packageJson.bin).toEqual({
-          'cookbook-router': './dist/index.js',
-          cbr: './dist/index.js',
+          'cookbook-router': './dist/bin.js',
+          cbr: './dist/bin.js',
         });
       }
     }

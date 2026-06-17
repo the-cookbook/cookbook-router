@@ -1,6 +1,7 @@
 import { describe, expectTypeOf, it } from 'vitest';
 import type {
   RouteHashInput,
+  RouteHash,
   RouteId,
   RouteParams,
   RouteSearch,
@@ -21,8 +22,10 @@ describe('generated contracts in the consumer trial', () => {
     >();
     expectTypeOf<RouteParams<'users.show'>>().toEqualTypeOf<{ id: number }>();
     expectTypeOf<RouteSearch<'users.show'>>().toEqualTypeOf<{ tab?: string; preview?: string }>();
+    expectTypeOf<RouteHash<'users.show'>>().toEqualTypeOf<'profile' | 'settings' | undefined>();
+
     expectTypeOf<RouteHashInput<'users.show'>>().toEqualTypeOf<
-      'profile' | 'settings' | '#profile' | '#settings' | null
+      'profile' | 'settings' | '#profile' | '#settings' | null | undefined
     >();
     expectTypeOf<RouteUrlOptions<'blog.posts.show'>>().toEqualTypeOf<{
       readonly params?: { slug: string };

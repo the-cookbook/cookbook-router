@@ -3,7 +3,18 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const sourceRoot = fileURLToPath(new URL('../src/', import.meta.url));
-const allowed = new Set(['@cookbook/router', '@cookbook/router-react']);
+const allowed = new Set([
+  '@cookbook/router',
+  '@cookbook/router/diagnostics',
+  '@cookbook/router/history',
+  '@cookbook/router/matching',
+  '@cookbook/router/path',
+  '@cookbook/router/rendering',
+  '@cookbook/router/route-config',
+  '@cookbook/router/runtime',
+  '@cookbook/router/url-state',
+  '@cookbook/router-react',
+]);
 const files = await collectFiles(sourceRoot);
 const offenders = [];
 
@@ -19,7 +30,7 @@ for (const file of files) {
 }
 
 if (offenders.length) {
-  throw new Error(`Consumer trial must not use deep package imports:\n${offenders.join('\n')}`);
+  throw new Error(`Consumer trial must not use private package imports:\n${offenders.join('\n')}`);
 }
 
 async function collectFiles(directory) {

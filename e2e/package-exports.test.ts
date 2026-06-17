@@ -31,6 +31,10 @@ import {
   useRouter,
   useSearchParams,
 } from '@cookbook/router-react';
+import { useRouteMeta as useRouteMetaFromHooks } from '@cookbook/router-react/hooks';
+import { Link as LinkFromLinks } from '@cookbook/router-react/links';
+import { Outlet as OutletFromOutlets } from '@cookbook/router-react/outlets';
+import { RouterProvider as RouterProviderFromProvider } from '@cookbook/router-react/provider';
 import {
   generateCommand,
   generateContracts,
@@ -70,6 +74,10 @@ const exportedFunctions = [
   useParams,
   useRouter,
   useSearchParams,
+  useRouteMetaFromHooks,
+  LinkFromLinks,
+  OutletFromOutlets,
+  RouterProviderFromProvider,
   generateCommand,
   generateContracts,
   generateManifest,
@@ -88,10 +96,16 @@ describe('package exports and generated contract types', () => {
     expectTypeOf<keyof BlogContracts['params']>().toEqualTypeOf<
       'blog' | 'blog.index' | 'blog.posts.show'
     >();
-    expectTypeOf<BlogContracts['params']['blog.posts.show']>().toEqualTypeOf<{ slug: string }>();
-    expectTypeOf<BlogContracts['search']['blog.posts.show']>().toEqualTypeOf<{ ref?: string }>();
+    expectTypeOf<BlogContracts['params']['blog.posts.show']>().toEqualTypeOf<{
+      slug: string;
+    }>();
+    expectTypeOf<BlogContracts['search']['blog.posts.show']>().toEqualTypeOf<{
+      ref?: string;
+    }>();
     expectTypeOf<BlogContracts['hash']['blog.posts.show']>().toEqualTypeOf<'comments' | 'share'>();
-    expectTypeOf<BlogContracts['meta']['blog.posts.show']>().toEqualTypeOf<{ title?: string }>();
+    expectTypeOf<BlogContracts['meta']['blog.posts.show']>().toEqualTypeOf<{
+      title?: string;
+    }>();
     expectTypeOf<
       BlogContracts['paths']['blog.posts.show']
     >().toEqualTypeOf<'/blog/{slug:regex([a-z0-9-]+)}'>();

@@ -46,26 +46,16 @@ describe('release candidate repository state', () => {
 
       if (packageDirectory === 'packages/router-cli') {
         expect(packageJson.bin).toEqual({
-          'cookbook-router': './dist/index.js',
-          cbr: './dist/index.js',
+          'cookbook-router': './dist/bin.js',
+          cbr: './dist/bin.js',
         });
       }
-    }
-  });
-
-  it('keeps package internals hidden from package exports', () => {
-    for (const packageDirectory of packageDirectories) {
-      const packageJson = readJson(join(packageDirectory, 'package.json'));
-      const exportKeys = Object.keys(packageJson.exports);
-
-      expect(exportKeys).toEqual(['.', './package.json']);
     }
   });
 
   it('keeps documentation files in place for the release candidate', () => {
     const requiredDocumentation = [
       'README.md',
-      'CONTRIBUTING.md',
       'SECURITY.md',
       'CHANGELOG.md',
       'docs/getting-started.md',

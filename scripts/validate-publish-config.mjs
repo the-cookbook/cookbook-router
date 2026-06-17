@@ -44,7 +44,7 @@ for (const packageName of packages) {
   }
 
   if (packageJson.name === '@cookbook/router-cli') {
-    const expectedBin = { cbr: './dist/index.js', 'cookbook-router': './dist/index.js' };
+    const expectedBin = { cbr: './dist/bin.js', 'cookbook-router': './dist/bin.js' };
 
     if (JSON.stringify(packageJson.bin) !== JSON.stringify(expectedBin)) {
       failures.push('@cookbook/router-cli must publish cookbook-router and cbr binaries.');
