@@ -28,7 +28,7 @@ pnpm test:e2e
 
 The repository uses a pnpm workspace. Packages live under `packages/`, examples live under `examples/`, and repository-level integration tests live under `e2e/`.
 
-For the day-to-day contributor workflow, including targeted validation commands and changeset timing during PR work, see [Developing](docs/developing.md).
+Use the targeted package commands in this guide during development, then run `pnpm test:ci` before opening or updating a pull request.
 
 ## Git hooks
 
@@ -46,7 +46,7 @@ pnpm hooks:pre-commit
 pnpm hooks:pre-push
 ```
 
-See [Git hooks](docs/git-hooks.md) for installation details, skipping, and troubleshooting.
+Hooks are installed by `pnpm install`. Use the visible scripts above to reproduce hook failures without bypassing validation.
 
 ## Project structure
 
@@ -162,7 +162,7 @@ Releases are managed with Changesets.
 4. Review generated package versions and changelog entries.
 5. Merging the version PR publishes packages to npm with provenance enabled.
 
-See [Releasing](docs/releasing.md) for the full maintainer workflow.
+The maintainer workflow is the version-PR process described above; `pnpm validate:release` is the required local release gate.
 
 ## Local release validation
 

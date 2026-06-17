@@ -10,6 +10,20 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      '@cookbook/router-react/hooks': resolve(rootDir, 'packages/router-react/src/hooks/index.ts'),
+      '@cookbook/router-react/links': resolve(rootDir, 'packages/router-react/src/links/index.ts'),
+      '@cookbook/router-react/outlets': resolve(
+        rootDir,
+        'packages/router-react/src/outlets/index.ts',
+      ),
+      '@cookbook/router-react/provider': resolve(
+        rootDir,
+        'packages/router-react/src/provider/index.ts',
+      ),
+      '@cookbook/router/route-config': resolve(
+        rootDir,
+        'packages/router/src/route-config/index.ts',
+      ),
       '@cookbook/router': resolve(rootDir, 'packages/router/src/index.ts'),
       '@cookbook/router-react': resolve(rootDir, 'packages/router-react/src/index.ts'),
       '@cookbook/router-cli': resolve(rootDir, 'packages/router-cli/src/index.ts'),

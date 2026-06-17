@@ -85,19 +85,19 @@ Cookbook Router treats routes as contracts: validate the input, run the rules, a
 
 ## Packages
 
-| Package                           | Purpose                                                                                                                                                                                                 | Package docs                                       | API reference                           |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | --------------------------------------- |
-| `@cookbook/router`                | Route definitions, validation, normalization, matching, href generation, middleware, lifecycle, SSR, histories, slots, intercepts, redirects, renderer-neutral traversal, and generated contract types. | [README](packages/router/README.md)                | [API](docs/api.md#cookbookrouter)       |
-| `@cookbook/router-react`          | React provider, links, nav links, outlets, slots, hooks, outlet context, unload blockers, and static rendering integration.                                                                             | [README](packages/router-react/README.md)          | [API](docs/api.md#cookbookrouter-react) |
-| `@cookbook/router-cli`            | Contract generation, manifest generation, route validation, static route extraction, watch mode, and programmatic generation APIs.                                                                      | [README](packages/router-cli/README.md)            | [API](docs/api.md#cookbookrouter-cli)   |
-| `@cookbook/router-vite-plugin`    | Vite plugin that runs the shared route artifact generator before dev/build compilation.                                                                                                                 | [README](packages/router-vite-plugin/README.md)    | —                                       |
-| `@cookbook/router-webpack-plugin` | Webpack plugin that runs the shared route artifact generator before normal and watch compilation.                                                                                                       | [README](packages/router-webpack-plugin/README.md) | —                                       |
-| `@cookbook/router-rspack-plugin`  | Rspack plugin that wraps the Webpack-compatible generator integration with an explicit Rspack package/import.                                                                                           | [README](packages/router-rspack-plugin/README.md)  | —                                       |
-| `@cookbook/router-rollup-plugin`  | Rollup/Rolldown plugin that runs the shared route artifact generator from `buildStart`.                                                                                                                 | [README](packages/router-rollup-plugin/README.md)  | —                                       |
-| `@cookbook/router-esbuild-plugin` | esbuild plugin that runs the shared route artifact generator from `onStart`.                                                                                                                            | [README](packages/router-esbuild-plugin/README.md) | —                                       |
-| `@cookbook/router-bun-plugin`     | Bun bundler plugin that runs the shared route artifact generator from `PluginBuilder.onStart`.                                                                                                          | [README](packages/router-bun-plugin/README.md)     | —                                       |
+| Package                           | Purpose                                                                                                                                                                                                 | Package docs                                       | Reference                                    |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------- |
+| `@cookbook/router`                | Route definitions, validation, normalization, matching, href generation, middleware, lifecycle, SSR, histories, slots, intercepts, redirects, renderer-neutral traversal, and generated contract types. | [README](packages/router/README.md)                | [API](docs/api.md#cookbookrouter)            |
+| `@cookbook/router-react`          | React provider, links, nav links, outlets, slots, hooks, outlet context, unload blockers, and static rendering integration.                                                                             | [README](packages/router-react/README.md)          | [API](docs/api.md#cookbookrouter-react)      |
+| `@cookbook/router-cli`            | Contract generation, manifest generation, route validation, static route extraction, watch mode, and programmatic generation APIs.                                                                      | [README](packages/router-cli/README.md)            | [API](docs/api.md#cookbookrouter-cli)        |
+| `@cookbook/router-vite-plugin`    | Vite plugin that runs the shared route artifact generator before dev/build compilation.                                                                                                                 | [README](packages/router-vite-plugin/README.md)    | [Guide](docs/plugins.md#vite)                |
+| `@cookbook/router-webpack-plugin` | Webpack plugin that runs the shared route artifact generator before normal and watch compilation.                                                                                                       | [README](packages/router-webpack-plugin/README.md) | [Guide](docs/plugins.md#webpack)             |
+| `@cookbook/router-rspack-plugin`  | Rspack plugin that wraps the Webpack-compatible generator integration with an explicit Rspack package/import.                                                                                           | [README](packages/router-rspack-plugin/README.md)  | [Guide](docs/plugins.md#rspack)              |
+| `@cookbook/router-rollup-plugin`  | Rollup/Rolldown plugin that runs the shared route artifact generator from `buildStart`.                                                                                                                 | [README](packages/router-rollup-plugin/README.md)  | [Guide](docs/plugins.md#rollup-and-rolldown) |
+| `@cookbook/router-esbuild-plugin` | esbuild plugin that runs the shared route artifact generator from `onStart`.                                                                                                                            | [README](packages/router-esbuild-plugin/README.md) | [Guide](docs/plugins.md#esbuild)             |
+| `@cookbook/router-bun-plugin`     | Bun bundler plugin that runs the shared route artifact generator from `PluginBuilder.onStart`.                                                                                                          | [README](packages/router-bun-plugin/README.md)     | [Guide](docs/plugins.md#bun)                 |
 
-All builder plugins use the same `@cookbook/router-cli` generation runner and config discovery rules. They accept `cwd`, `configFile`, `routeFiles`, and `outDir` where supported by the target builder lifecycle.
+All builder plugins use the same `@cookbook/router-cli` generation runner and config discovery rules. See [Bundler plugins](docs/plugins.md) for the complete options, watch behavior, recovery guarantees, and builder-specific setup.
 
 The root package does not expose runtime APIs. Use package-root imports from the packages above and avoid deep imports from `src` or `dist`.
 
@@ -144,7 +144,7 @@ npm install -D @cookbook/router-cli
 yarn add -D @cookbook/router-cli
 ```
 
-Install a build plugin when you want generation integrated into your bundler instead of a separate watch command.
+Install a build plugin when you want generation integrated into your bundler instead of a separate watch command. See the [bundler plugin guide](docs/plugins.md) for configuration and watch behavior.
 
 ```sh
 pnpm add -D @cookbook/router-vite-plugin
@@ -262,6 +262,15 @@ export function UserPage() {
     </h1>
   );
 }
+```
+
+The root React entrypoint remains available. Focused public entrypoints are also available for smaller import surfaces:
+
+```tsx
+import { useNavigate, useRouteMeta } from '@cookbook/router-react/hooks';
+import { Link, NavLink } from '@cookbook/router-react/links';
+import { Outlet, Slot } from '@cookbook/router-react/outlets';
+import { RouterProvider, StaticRouterProvider } from '@cookbook/router-react/provider';
 ```
 
 ### 3. Build URLs from the contract
@@ -611,7 +620,7 @@ Custom constraints generate `string` params unless the same constraint chain als
 | Example                     | Shows                                                                                                         |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `examples/react-basic`      | Typed params, search, hash, middleware, lifecycle, and generated contracts.                                   |
-| `examples/react-slots`      | Layout slots, slot fallbacks, slot routes, disabled slots, and outlet context.                                |
+| `examples/react-slots`      | Layout slots, default slot views, slot routes, disabled slots, and outlet context.                            |
 | `examples/react-intercepts` | Configured and call-site route interception.                                                                  |
 | `examples/react-blog`       | Real-world blog routing, protected area, login redirect, slots, search, archive, and modal article previews.  |
 | `examples/react-dashboard`  | Dashboard shell, header slots, search-driven nav matching, custom constraints, and create modal interception. |
@@ -628,13 +637,14 @@ pnpm --filter react-dashboard dev
 
 ## Documentation
 
-| Need                              | Start here                                     | Then read                                                                                                       |
-| --------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Start with Cookbook Router        | [Getting started](docs/getting-started.md)     | [Routing](docs/routing.md), [Navigation](docs/navigation.md), [Search and hash](docs/search-and-hash.md)        |
-| Use React                         | [React integration](docs/react-integration.md) | [Getting started](docs/getting-started.md), [Examples guide](docs/examples.md)                                  |
-| Define route contracts            | [Routing](docs/routing.md)                     | [Contracts](docs/contracts.md), [Code generation](docs/codegen.md), [API reference](docs/api.md)                |
-| Generate route types              | [Code generation](docs/codegen.md)             | [Contracts](docs/contracts.md), [API reference](docs/api.md#contract-registration)                              |
-| Add middleware or lifecycle hooks | [Middleware](docs/middleware.md)               | [Lifecycle](docs/lifecycle.md), [Troubleshooting](docs/troubleshooting.md)                                      |
-| Render on the server              | [SSR](docs/ssr.md)                             | [React integration](docs/react-integration.md#static-provider), [API reference](docs/api.md#serialization-apis) |
-| Test routing behavior             | [Testing](docs/testing.md)                     | [Troubleshooting](docs/troubleshooting.md), [API reference](docs/api.md)                                        |
-| Debug a failing route             | [Troubleshooting](docs/troubleshooting.md)     | [Testing](docs/testing.md), [Route validation errors](docs/route-validation-errors.md)                          |
+| Need                                | Start here                                     | Then read                                                                                                       |
+| ----------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Start with Cookbook Router          | [Getting started](docs/getting-started.md)     | [Routing](docs/routing.md), [Navigation](docs/navigation.md), [Search and hash](docs/search-and-hash.md)        |
+| Use React                           | [React integration](docs/react-integration.md) | [Getting started](docs/getting-started.md), [Examples guide](docs/examples.md)                                  |
+| Define route contracts              | [Routing](docs/routing.md)                     | [Contracts](docs/contracts.md), [Code generation](docs/codegen.md), [API reference](docs/api.md)                |
+| Generate route types                | [Code generation](docs/codegen.md)             | [Contracts](docs/contracts.md), [API reference](docs/api.md#contract-registration)                              |
+| Integrate generation with a bundler | [Bundler plugins](docs/plugins.md)             | [Code generation](docs/codegen.md), [Troubleshooting](docs/troubleshooting.md)                                  |
+| Add middleware or lifecycle hooks   | [Middleware](docs/middleware.md)               | [Lifecycle](docs/lifecycle.md), [Troubleshooting](docs/troubleshooting.md)                                      |
+| Render on the server                | [SSR](docs/ssr.md)                             | [React integration](docs/react-integration.md#static-provider), [API reference](docs/api.md#serialization-apis) |
+| Test routing behavior               | [Testing](docs/testing.md)                     | [Troubleshooting](docs/troubleshooting.md), [API reference](docs/api.md)                                        |
+| Debug a failing route               | [Troubleshooting](docs/troubleshooting.md)     | [Testing](docs/testing.md), [Router error reference](docs/route-validation-errors.md)                           |
