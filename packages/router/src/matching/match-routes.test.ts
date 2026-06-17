@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { matchRoutes } from './match-routes';
+import {
+  createRouteUrlStateOptions,
+  matchRoutePathCandidates,
+  matchRoutes,
+  resolveRouteUrlContractStore,
+} from './match-routes';
 import { normalizeRoutes } from '../route-config/normalize-routes';
 
 describe('matchRoutes', () => {
@@ -74,7 +79,7 @@ describe('matchRoutes', () => {
     expect(matchRoutes(routes, '/missing/page/')?.params).toEqual({ path: ['missing', 'page'] });
   });
 
-  it('returns null for non-matches and pathkit constraint failures', () => {
+  it('returns null for non-matches and URLKit constraint failures', () => {
     const routes = normalizeRoutes([{ id: 'users.show', path: '/users/{id:int}' }]);
 
     expect(matchRoutes(routes, '/teams/1')).toBeNull();
@@ -106,4 +111,77 @@ it('matches static, dynamic, then wildcard routes by specificity regardless of d
   expect(matchRoutes(routes, '/users/new')?.id).toBe('users.new');
   expect(matchRoutes(routes, '/users/42')?.id).toBe('users.show');
   expect(matchRoutes(routes, '/users/unknown/path')?.id).toBe('users.catch');
+});
+
+describe('match route path candidates', () => {
+  it('returns path-only candidates without resolving slots', () => {
+    const routes = normalizeRoutes([
+      {
+        id: 'dashboard',
+        path: '/dashboard',
+        layout: {
+          slots: {
+            modal: {
+              routes: [{ id: 'dashboard.modal', path: 'modal/{id:int}' }],
+            },
+          },
+        },
+        children: [{ id: 'dashboard.show', path: 'show/{id:int}' }],
+      },
+    ]);
+
+    const [candidate] = matchRoutePathCandidates(routes, '/dashboard/show/7');
+
+    expect(candidate).toMatchObject({
+      id: 'dashboard.show',
+      pathname: '/dashboard/show/7',
+      params: { id: 7 },
+    });
+    expect(candidate?.branch.map((entry) => entry.id)).toEqual(['dashboard', 'dashboard.show']);
+    expect('slots' in (candidate ?? {})).toBe(false);
+  });
+
+  it('uses one reusable RouteUrlStateOptions object with all supported option families', () => {
+    const contractStore = resolveRouteUrlContractStore({});
+    const options = createRouteUrlStateOptions(
+      {
+        routerUrl: { pathMatch: { sensitive: true }, arrayFormat: 'comma' },
+        callUrl: { pathMatch: { decode: true }, arrayFormat: 'repeat' },
+        pathConstraints: {},
+      },
+      contractStore,
+    );
+
+    expect(options).toEqual({
+      routerUrl: { pathMatch: { sensitive: true }, arrayFormat: 'comma' },
+      callUrl: { pathMatch: { decode: true }, arrayFormat: 'repeat' },
+      pathConstraints: {},
+      contractStore,
+    });
+  });
+
+  it('reuses a supplied contract store and preserves combined path match options', () => {
+    const contractStore = resolveRouteUrlContractStore({});
+    const routes = normalizeRoutes([{ id: 'files', path: '/Files/{*path}' }]);
+    const [candidate] = matchRoutePathCandidates(
+      routes,
+      '/Files/a%2Fb/c',
+      {
+        routeUrlContracts: contractStore,
+        callUrl: {
+          pathMatch: {
+            sensitive: true,
+            decode: true,
+            trailing: false,
+            strict: false,
+            wildcardFormat: 'array',
+          },
+        },
+      },
+      contractStore,
+    );
+
+    expect(resolveRouteUrlContractStore({ routeUrlContracts: contractStore })).toBe(contractStore);
+    expect(candidate?.params).toEqual({ path: ['a/b', 'c'] });
+  });
 });

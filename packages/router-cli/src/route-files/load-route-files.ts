@@ -1,5 +1,5 @@
 import { dirname, extname, join } from 'node:path';
-import { defineRouteTree, registerUrlPathConstraints, validateRoutes } from '@cookbook/router';
+import { defineRouteTree, registerPathConstraints, validateRoutes } from '@cookbook/router';
 import type { DefineRoutesOptions, RouteDeclaration } from '@cookbook/router';
 import type { CliFileSystem, CliRouteSource, LoadRouteFilesOptions, RouteFile } from '../contracts';
 import { nodeFileSystem } from '../fs/node-file-system';
@@ -48,7 +48,7 @@ export async function loadRouteFiles(
     const parsed = await loadRouteFile(path, fs, staticModuleCache);
 
     if (!hasCompositionFields(parsed.routes) && !hasExternalInterceptTargets(parsed.routes)) {
-      registerUrlPathConstraints(parsed.routeOptions?.pathConstraints);
+      registerPathConstraints(parsed.routeOptions?.pathConstraints);
       validateRoutes(parsed.routes, parsed.routeOptions?.pathOptions);
     }
 
@@ -71,7 +71,7 @@ export async function validateRouteFiles(
   const routeOptions = mergeLoadedRouteOptions(sources);
   const routes = sources.flatMap((source) => source.routes);
 
-  registerUrlPathConstraints(routeOptions?.pathConstraints);
+  registerPathConstraints(routeOptions?.pathConstraints);
 
   if (hasCompositionFields(routes)) {
     defineRouteTree({
@@ -620,7 +620,13 @@ function previousNonWhitespace(source: string, start: number): string | undefine
 }
 
 function isKnownRuntimeHelperImport(source: string): boolean {
-  return source === '@cookbook/router' || source === '@cookbook/urlkit';
+  return (
+    source === '@cookbook/router' ||
+    source === '@cookbook/router/path' ||
+    source === '@cookbook/router/route-config' ||
+    source === '@cookbook/router/url-state' ||
+    source === '@cookbook/urlkit'
+  );
 }
 
 async function resolveModuleCandidate(

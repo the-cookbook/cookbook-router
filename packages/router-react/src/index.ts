@@ -23,11 +23,12 @@ export type {
   RouteLoadingFallbackProps,
   RouterErrorFallbackProps,
   RouterProviderProps,
+  RouterScrollBehavior,
 } from './provider/router-provider';
 export { StaticRouterProvider } from './provider/static-router-provider';
 export type { StaticRouterProviderProps } from './provider/static-router-provider';
 export { Slot } from './outlets/slot';
-export type { SlotErrorFallbackProps, SlotProps } from './outlets/slot';
+export type { SlotErrorFallback, SlotErrorFallbackProps, SlotProps } from './outlets/slot';
 export {
   RouterContext,
   OutletContext,

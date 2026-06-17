@@ -1,6 +1,7 @@
 import { parseHref, type RouterLocation } from '../history/memory-history';
 import { matchRoutes } from '../matching/match-routes';
-import type { RouterPathOptions } from '../path';
+import type { RouterPathOptions } from '../path/options';
+import type { RouteUrlContractStore } from '../url-state/route-url-contract-store';
 import type {
   NormalizedRoute,
   ResolvedInterceptedRoute,
@@ -73,6 +74,7 @@ export function resolveActiveInterceptSource(
   routes: readonly NormalizedRoute[],
   basename: string | undefined,
   pathOptions: RouterPathOptions,
+  routeUrlContracts?: RouteUrlContractStore,
 ): RouteMatch | null {
   if (!fromMatch?.intercepted) {
     return fromMatch;
@@ -86,6 +88,7 @@ export function resolveActiveInterceptSource(
     routes,
     stripBasename(parseHref(fromMatch.intercepted.previousHref).pathname, basename),
     pathOptions,
+    routeUrlContracts === undefined ? {} : { routeUrlContracts },
   );
 }
 
@@ -94,6 +97,7 @@ export function restorePreviousSource(
   routes: readonly NormalizedRoute[],
   basename: string | undefined,
   pathOptions: RouterPathOptions,
+  routeUrlContracts?: RouteUrlContractStore,
 ): RouteMatch | null {
   if (!state || typeof state !== 'object' || !('__cookbookRouterIntercept' in state)) {
     return null;
@@ -111,6 +115,7 @@ export function restorePreviousSource(
     routes,
     stripBasename(parseHref(intercept.previousHref).pathname, basename),
     pathOptions,
+    routeUrlContracts === undefined ? {} : { routeUrlContracts },
   );
 }
 

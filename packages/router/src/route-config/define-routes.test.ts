@@ -1,10 +1,9 @@
 import { afterEach, describe, expect, expectTypeOf, it } from 'vitest';
-import { resetConstraints } from '@cookbook/pathkit';
-import { createPathConstraint } from '../path';
+import { createPathConstraint, resetPathConstraints } from '../path/constraints';
 import { defineRoutes, getDefineRoutesOptions } from './define-routes';
 
 afterEach(() => {
-  resetConstraints();
+  resetPathConstraints();
 });
 
 describe('defineRoutes', () => {

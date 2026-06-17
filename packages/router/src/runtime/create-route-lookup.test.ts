@@ -9,6 +9,7 @@ function route(id: string, children: readonly NormalizedRoute[] = []): Normalize
     params: [],
     index: false,
     score: 0,
+    pathDepth: 0,
     order: 0,
     route: { id },
     slotRoute: false,

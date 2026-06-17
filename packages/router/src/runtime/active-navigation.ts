@@ -1,5 +1,5 @@
 import type { InterceptInput } from '../rendering/resolve-intercepts';
-import type { RouterUrlBuildOptions } from '../url-state';
+import type { RouterUrlBuildOptions } from '../url-state/contracts';
 import type { RouterState } from './contracts';
 
 export interface ActiveNavigationRequest {

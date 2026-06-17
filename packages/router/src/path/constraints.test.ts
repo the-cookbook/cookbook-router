@@ -1,15 +1,15 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { resetConstraints } from '@cookbook/pathkit';
 import {
   createPathConstraint,
   getPathConstraint,
   hasPathConstraint,
   registerPathConstraints,
+  resetPathConstraints,
   unregisterPathConstraint,
 } from './constraints';
 
 afterEach(() => {
-  resetConstraints();
+  resetPathConstraints();
 });
 
 describe('path constraints', () => {
@@ -39,7 +39,7 @@ describe('path constraints', () => {
     const slug = createPathConstraint({ parse() {}, verify() {}, toRegExp: () => '[a-z]+' });
 
     expect(() => registerPathConstraints({ ' ': slug })).toThrow(
-      'Router path constraint names must be non-empty strings.',
+      'Path constraint name must be a non-empty string.',
     );
   });
 });

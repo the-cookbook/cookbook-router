@@ -14,7 +14,6 @@ export type {
   UrlContractRouteDescriptor,
 } from './contracts';
 export { createRouteUrlContract } from './create-route-url-contract';
-export { registerUrlPathConstraints } from './register-url-path-constraints';
 export { resolveUrlOptions } from './resolve-url-options';
 export {
   buildRouteHash,

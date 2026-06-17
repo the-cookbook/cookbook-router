@@ -1,4 +1,4 @@
-import { registerUrlPathConstraints, validateResolvedRouteTree } from '@cookbook/router';
+import { registerPathConstraints, validateResolvedRouteTree } from '@cookbook/router';
 import type {
   DefineRoutesOptions,
   NormalizedRoute,
@@ -126,11 +126,11 @@ function resolveGenerationPathOptions(
   options: DefineRoutesOptions | RouterPathOptions,
 ): RouterPathOptions {
   if (isDefineRoutesOptions(options)) {
-    registerUrlPathConstraints(options.pathConstraints);
+    registerPathConstraints(options.pathConstraints);
     return options.pathOptions ?? {};
   }
 
-  registerUrlPathConstraints();
+  registerPathConstraints();
   return options;
 }
 

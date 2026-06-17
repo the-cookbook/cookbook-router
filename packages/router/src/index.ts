@@ -96,7 +96,7 @@ export type {
 } from './rendering/resolve-intercepts';
 export type { RouterNavigationState } from './transition/run-transition';
 export type { DefineRoutesOptions } from './route-config/define-routes';
-export type { DefineRouteTreeOptions } from './route-config/define-route';
+export type { DefineRouteTreeOptions } from './route-config/define-route-tree';
 export type { MergedSearchDescriptors } from './url-state/define-url-descriptors';
 export type {
   RouteMetaEntry,
@@ -124,9 +124,10 @@ export {
   createPathConstraint,
   registerPathConstraints,
 } from './path';
-export { createRouteUrlContract, registerUrlPathConstraints, resolveUrlOptions } from './url-state';
+export { createRouteUrlContract, resolveUrlOptions } from './url-state';
 export { defineRoutes } from './route-config/define-routes';
-export { defineRoute, defineRouteTree } from './route-config/define-route';
+export { defineRoute } from './route-config/define-route';
+export { defineRouteTree } from './route-config/define-route-tree';
 export { defineHash, defineSearch, mergeSearch } from './url-state/define-url-descriptors';
 export { renderRouteMatch } from './rendering';
 export {

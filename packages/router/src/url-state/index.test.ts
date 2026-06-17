@@ -3,6 +3,7 @@ import * as url from './index';
 
 describe('url module exports', () => {
   it('exports the URLKit-backed route URL helpers', () => {
+    expect(url).not.toHaveProperty('createRouteUrlContractStore');
     expect(url).toMatchObject({
       buildRouteHash: expect.any(Function),
       buildRoutePath: expect.any(Function),
@@ -12,7 +13,6 @@ describe('url module exports', () => {
       parseRoutePathParams: expect.any(Function),
       parseRouteSearch: expect.any(Function),
       parseRouteUrlState: expect.any(Function),
-      registerUrlPathConstraints: expect.any(Function),
       resolveUrlOptions: expect.any(Function),
     });
   });

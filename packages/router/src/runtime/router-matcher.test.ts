@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizePathOptions } from '../path';
+import { normalizePathOptions } from '../path/options';
 import { normalizeRoutes } from '../route-config/normalize-routes';
 import { createRouterMatcher } from './router-matcher';
 

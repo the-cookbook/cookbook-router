@@ -49,7 +49,7 @@ describe('generateRoutesModule', () => {
         ],
         '.cookbook-router/routes.ts',
       ),
-    ).toContain("import { defineRoutes } from '@cookbook/router';");
+    ).toContain("import { defineRoutes } from '@cookbook/router/route-config';");
   });
 
   it('treats defineRouteTree exports as route arrays in generated modules', () => {
@@ -107,9 +107,9 @@ describe('generateRoutesModule', () => {
       'src/.cookbook-router/routes.ts',
     );
 
-    expect(output).toContain("import { defineRouteTree } from '@cookbook/router';");
+    expect(output).toContain("import { defineRouteTree } from '@cookbook/router/route-config';");
     expect(output).toContain(
-      "import type { RouteDefinition, RouteModulePreload } from '@cookbook/router';",
+      "import type { RouteDefinition, RouteModulePreload } from '@cookbook/router/route-config';",
     );
     expect(output).toContain(
       "__cookbookWithModulePreload(route0, () => import('../routes/users.route').then(() => undefined))",
@@ -133,9 +133,9 @@ describe('generateRoutesModule', () => {
       'src/.cookbook-router/routes.ts',
     );
 
-    expect(output).toContain("import { defineRoutes } from '@cookbook/router';");
+    expect(output).toContain("import { defineRoutes } from '@cookbook/router/route-config';");
     expect(output).toContain(
-      "import type { RouteDefinition, RouteModulePreload } from '@cookbook/router';",
+      "import type { RouteDefinition, RouteModulePreload } from '@cookbook/router/route-config';",
     );
     expect(output).toContain(
       "...__cookbookWithModulePreloads(routes0, () => import('../a.routes').then(() => undefined))",

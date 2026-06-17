@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 export type {
   CliFileSystem,
   CliOutputOptions,
@@ -76,17 +74,3 @@ export {
   ROUTER_CONFIG_FILENAMES,
 } from './config/router-config-filenames';
 export type { RouterConfigFilename } from './config/router-config-filenames';
-
-import { runCli, shouldRunCli } from './cli/run-cli';
-
-if (shouldRunCli()) {
-  runCli(process.argv.slice(2)).then(
-    (exitCode) => {
-      process.exitCode = exitCode;
-    },
-    (error: unknown) => {
-      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-      process.exitCode = 1;
-    },
-  );
-}

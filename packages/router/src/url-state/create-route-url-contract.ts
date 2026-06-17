@@ -7,7 +7,7 @@ import type {
 } from './contracts';
 import { createRouteUrlContractDiagnostic } from './create-route-url-contract-diagnostic';
 import { toUrlKitContractOptions } from './map-router-url-options';
-import { registerUrlPathConstraints } from './register-url-path-constraints';
+import { registerPathConstraints } from '../path/constraints';
 import { resolveUrlOptions } from './resolve-url-options';
 
 interface UrlKitStaticRouteDescriptor {
@@ -28,7 +28,7 @@ export function createRouteUrlContract(
   route: RouterRouteUrlDescriptor,
   options: CreateRouterRouteUrlContractOptions = {},
 ): RouterRouteUrlContract {
-  registerUrlPathConstraints(options.pathConstraints);
+  registerPathConstraints(options.pathConstraints);
 
   const urlOptions = resolveUrlOptions({
     ...(options.routerUrl === undefined ? {} : { router: options.routerUrl }),

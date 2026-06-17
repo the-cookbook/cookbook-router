@@ -5,7 +5,7 @@ import {
   createMissingPathError,
   createUnknownRouteError,
 } from '../diagnostics/router-errors';
-import type { RouterPathConstraints } from '../path';
+import type { RouterPathConstraints } from '../path/constraints';
 import type { NormalizedRoute } from '../route-config/contracts';
 import {
   buildRouteHash,
@@ -13,7 +13,8 @@ import {
   buildRouteSearch,
   parseRoutePathParams,
 } from '../url-state/route-url-state';
-import type { RouterUrlBuildOptions, RouterUrlOptions } from '../url-state';
+import type { RouterUrlBuildOptions, RouterUrlOptions } from '../url-state/contracts';
+import type { RouteUrlContractStore } from '../url-state/route-url-contract-store';
 import { applyBasename, stripBasename } from './pathname';
 
 export interface CreateHrefOptions {
@@ -30,6 +31,7 @@ export interface CreateRouteHrefOptions<Route extends string = string> {
   readonly basename?: string;
   readonly routerUrl?: RouterUrlOptions;
   readonly pathConstraints?: RouterPathConstraints;
+  readonly routeUrlContracts?: RouteUrlContractStore;
 }
 
 /** Builds an href for a route id using URLKit for params, search, and hash. */
@@ -52,6 +54,9 @@ export function createRouteHref<Route extends string>(
     ...(options.routerUrl === undefined ? {} : { routerUrl: options.routerUrl }),
     ...(options.options?.url === undefined ? {} : { callUrl: options.options.url }),
     ...(options.pathConstraints === undefined ? {} : { pathConstraints: options.pathConstraints }),
+    ...(options.routeUrlContracts === undefined
+      ? {}
+      : { contractStore: options.routeUrlContracts }),
   };
   const pathname = applyBasename(
     buildRoutePathWithDiagnostics(route, options.options?.params, routeUrlOptions),
@@ -97,8 +102,25 @@ function assertRequiredPathParams(route: NormalizedRoute, params: unknown): void
 }
 
 function mapUrlKitPathError(route: NormalizedRoute, params: unknown, error: unknown): Error {
-  const message = error instanceof Error ? error.message : String(error);
   const values = asParamRecord(params);
+  const metadata = getUrlKitErrorMetadata(error);
+  const paramName = metadata?.path[0] === 'params' ? metadata.path[1] : undefined;
+
+  if (metadata && typeof paramName === 'string') {
+    const param = route.params.find((candidate) => candidate.name === paramName);
+
+    if (param) {
+      if (metadata.code === 'missing-param') {
+        return createMissingParamError(route.id, param.name, param.token, values[param.name]);
+      }
+
+      if (metadata.code === 'invalid-param') {
+        return createInvalidParamError(route.id, param.name, param.token, values[param.name]);
+      }
+    }
+  }
+
+  const message = error instanceof Error ? error.message : String(error);
   const invalid = route.params.find((candidate) => message.includes(`"${candidate.name}"`));
 
   if (invalid) {
@@ -106,6 +128,24 @@ function mapUrlKitPathError(route: NormalizedRoute, params: unknown, error: unkn
   }
 
   return error instanceof Error ? error : new Error(message);
+}
+
+function getUrlKitErrorMetadata(
+  error: unknown,
+): { readonly code: string; readonly path: readonly unknown[] } | null {
+  if (!error || typeof error !== 'object') {
+    return null;
+  }
+
+  if (!('code' in error) || typeof error.code !== 'string') {
+    return null;
+  }
+
+  if (!('path' in error) || !Array.isArray(error.path)) {
+    return null;
+  }
+
+  return { code: error.code, path: error.path };
 }
 
 function asParamRecord(params: unknown): Record<string, unknown> {

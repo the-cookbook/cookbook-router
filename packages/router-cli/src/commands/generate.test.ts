@@ -174,7 +174,7 @@ export const routes = defineRoutes([
 
     expect(result.ok).toBe(true);
     expect(fs.files.get('.cookbook-router/routes.ts')).toContain(
-      "import { defineRoutes } from '@cookbook/router';",
+      "import { defineRoutes } from '@cookbook/router/route-config';",
     );
     expect(fs.files.get('.cookbook-router/routes.ts')).toContain(
       'export const routes = defineRoutes([',

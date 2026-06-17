@@ -2,7 +2,7 @@ import { createStaticHistory } from '../history/static-history';
 import { resolveSafeStaticUrl } from '../security/ssr-request';
 import { createRouterRuntime } from './create-router-runtime';
 import type { CreateRouterOptions, Router } from './contracts';
-import type { RouterUrlOptions } from '../url-state';
+import type { RouterUrlOptions } from '../url-state/contracts';
 
 export type StaticRouterUrl = string | URL | Request;
 

@@ -5,10 +5,16 @@ import {
   parseHash as parseUrlKitHash,
   parseSearch as parseUrlKitSearch,
 } from '@cookbook/urlkit/router-runtime';
-import { type RouterPathConstraints, type RouterPathMatchOptions } from '../path';
+import type { RouterPathConstraints } from '../path/constraints';
+import type { RouterPathMatchOptions } from '../path/options';
 import type { NormalizedRoute } from '../route-config/contracts';
-import type { RouterUnknownSearchParams, RouterUrlOptions } from './contracts';
+import type {
+  RouterRouteUrlContract,
+  RouterUnknownSearchParams,
+  RouterUrlOptions,
+} from './contracts';
 import { createRouteUrlContract } from './create-route-url-contract';
+import type { RouteUrlContractStore } from './route-url-contract-store';
 import {
   toUrlKitHashParseOptions,
   toUrlKitBuildOptions,
@@ -21,6 +27,7 @@ export interface RouteUrlStateOptions {
   readonly routerUrl?: RouterUrlOptions;
   readonly callUrl?: RouterUrlOptions;
   readonly pathConstraints?: RouterPathConstraints;
+  readonly contractStore?: RouteUrlContractStore;
 }
 
 export interface ParsedRouteSearchState {
@@ -72,7 +79,7 @@ export function buildRoutePath(
   params: unknown,
   options: RouteUrlStateOptions = {},
 ): string {
-  const contract = createNormalizedRouteUrlContract(route, options);
+  const contract = resolveRouteUrlContract(route, options);
   const pathname = contract.buildPath(params ?? {}) as string;
 
   // URLKit canonicalizes a trailing slash during path building today. Keep the
@@ -144,10 +151,7 @@ export function buildRouteSearch(
   };
 
   if (route.route.search) {
-    return createNormalizedRouteUrlContract(route, options).buildSearch(
-      (search ?? {}) as never,
-      urlOptions,
-    );
+    return resolveRouteUrlContract(route, options).buildSearch((search ?? {}) as never, urlOptions);
   }
 
   return buildUrlKitSearch((search ?? {}) as Record<string, unknown>, urlOptions);
@@ -177,7 +181,7 @@ export function buildRouteHash(
   const normalized = normalizeHash(hash);
 
   if (route.route.hash) {
-    return createNormalizedRouteUrlContract(route, options).buildHash(
+    return resolveRouteUrlContract(route, options).buildHash(
       normalized as never,
       toUrlKitBuildOptions(resolveRouteUrlOptions(route, options)),
     );
@@ -204,7 +208,7 @@ function parseSchemaRouteSearch(
   options: RouteUrlStateOptions,
   urlOptions: RouterUrlOptions,
 ): Record<string, unknown> {
-  return createNormalizedRouteUrlContract(route, options).parseSearch(
+  return resolveRouteUrlContract(route, options).parseSearch(
     search,
     toUrlKitSearchParseOptions(urlOptions),
   ) as Record<string, unknown>;
@@ -218,7 +222,7 @@ function parseSchemaRouteSearchState(
   urlOptions: RouterUrlOptions,
 ): ParsedRouteSearchState {
   return toParsedRouteSearchState(
-    createNormalizedRouteUrlContract(route, options).parse(
+    resolveRouteUrlContract(route, options).parse(
       createUrlInput(pathname, search),
       toUrlKitSearchParseOptions(urlOptions),
     ),
@@ -247,7 +251,7 @@ function parseRoutePathParamsOrThrow(
   options: RouteUrlStateOptions,
 ): Record<string, unknown> {
   const urlOptions = resolveRouteUrlOptions(route, options);
-  const contract = createNormalizedRouteUrlContract(route, options);
+  const contract = resolveRouteUrlContract(route, options);
   const params = contract.parsePathname(
     pathname,
     toRoutePathMatchOptions(route, urlOptions),
@@ -313,7 +317,21 @@ function toWildcardSegments(value: unknown): readonly string[] {
   return segments;
 }
 
-function createNormalizedRouteUrlContract(route: NormalizedRoute, options: RouteUrlStateOptions) {
+function resolveRouteUrlContract(
+  route: NormalizedRoute,
+  options: RouteUrlStateOptions,
+): RouterRouteUrlContract {
+  if (options.contractStore) {
+    return options.contractStore.get(route);
+  }
+
+  return createNormalizedRouteUrlContract(route, options);
+}
+
+function createNormalizedRouteUrlContract(
+  route: NormalizedRoute,
+  options: RouteUrlStateOptions,
+): RouterRouteUrlContract {
   return createRouteUrlContract(
     {
       ...(route.fullPath === undefined ? {} : { path: route.fullPath }),

@@ -2,7 +2,7 @@ import type { RouterLocation } from '../history/memory-history';
 import type { ResolvedInterceptedRoute } from '../route-config/contracts';
 import type { MatchLocationResult } from '../matching/match-location';
 import type { RouterNavigationState } from '../transition/run-transition';
-import type { RouterUrlBuildOptions } from '../url-state';
+import type { RouterUrlBuildOptions } from '../url-state/contracts';
 import type { RouterState } from './contracts';
 
 export interface CreateRouterStateOptions {

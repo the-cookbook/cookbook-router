@@ -1,8 +1,9 @@
-import type { RouterPathConstraints } from '../path';
+import type { RouterPathConstraints } from '../path/constraints';
 import type { NormalizedRoute, RouteMatch, RouteRedirect } from '../route-config/contracts';
 import { createRouteHref } from './create-href';
 import type { CreateRouterOptions } from './contracts';
-import type { RouterUrlOptions } from '../url-state';
+import type { RouterUrlOptions } from '../url-state/contracts';
+import type { RouteUrlContractStore } from '../url-state/route-url-contract-store';
 
 export function normalizeMaxRedirectDepth(options: CreateRouterOptions): number {
   const value = options.maxRedirectDepth ?? options.maxRedirectionDepth ?? 10;
@@ -33,6 +34,7 @@ export function resolveMatchedRouteRedirect(match: RouteMatch | null): RouteRedi
 interface RouteRedirectHrefOptions {
   readonly routerUrl?: RouterUrlOptions;
   readonly pathConstraints?: RouterPathConstraints;
+  readonly routeUrlContracts?: RouteUrlContractStore;
 }
 
 export function createRouteRedirectHref(
@@ -56,6 +58,9 @@ export function createRouteRedirectHref(
     ...(basename === undefined ? {} : { basename }),
     ...(options.routerUrl === undefined ? {} : { routerUrl: options.routerUrl }),
     ...(options.pathConstraints === undefined ? {} : { pathConstraints: options.pathConstraints }),
+    ...(options.routeUrlContracts === undefined
+      ? {}
+      : { routeUrlContracts: options.routeUrlContracts }),
   });
 }
 

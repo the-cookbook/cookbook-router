@@ -1,8 +1,11 @@
 import { parseHref, type RouterLocation } from '../history/memory-history';
 import type { MatchLocationResult } from '../matching/match-location';
-import { prunePathname, type RouterPathConstraints, type RouterPathOptions } from '../path';
+import type { RouterPathConstraints } from '../path/constraints';
+import { prunePathname, type RouterPathOptions } from '../path/options';
 import type { RouteMatch } from '../route-config/contracts';
-import { buildRoutePath, type RouterUrlOptions } from '../url-state';
+import type { RouterUrlOptions } from '../url-state/contracts';
+import { buildRoutePath } from '../url-state/route-url-state';
+import type { RouteUrlContractStore } from '../url-state/route-url-contract-store';
 import { applyBasename } from './pathname';
 
 export interface CanonicalizeLocationOptions {
@@ -14,6 +17,7 @@ export interface CanonicalizeLocationOptions {
   readonly pathConstraints?: RouterPathConstraints;
   readonly routerUrl?: RouterUrlOptions;
   readonly matchHrefResult: (href: string, callUrl?: RouterUrlOptions) => MatchLocationResult;
+  readonly routeUrlContracts?: RouteUrlContractStore;
 }
 
 export interface CanonicalizedLocation {
@@ -67,6 +71,9 @@ export function canonicalizeLocation(options: CanonicalizeLocationOptions): Cano
       ...(options.pathConstraints === undefined
         ? {}
         : { pathConstraints: options.pathConstraints }),
+      ...(options.routeUrlContracts === undefined
+        ? {}
+        : { contractStore: options.routeUrlContracts }),
     }),
     options.basename,
   );

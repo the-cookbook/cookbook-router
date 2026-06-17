@@ -91,7 +91,7 @@ describe('generateContracts', () => {
     expect(output).toContain("'products.show': 'details' | 'reviews' | undefined;");
   });
 
-  it('infers params from full PathKit constraint chains', () => {
+  it('infers params from full URLKit path constraint chains', () => {
     const output = generateContracts([
       { id: 'bounded.price', path: '/prices/{price:decimal:min(1):max(10)}' },
       { id: 'numeric.regex', path: '/scores/{id:regex(\\d):min(1)}' },

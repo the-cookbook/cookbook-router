@@ -1,4 +1,4 @@
-import { type RouterPathOptions } from '../path';
+import type { RouterPathOptions } from '../path/options';
 import type {
   MatchedRoute,
   NormalizedIntercept,

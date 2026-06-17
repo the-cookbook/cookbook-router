@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { defineRouteTree, registerUrlPathConstraints, validateRoutes } from '@cookbook/router';
+import { defineRouteTree, registerPathConstraints, validateRoutes } from '@cookbook/router';
 import type { DefineRoutesOptions, RouteDeclaration, RouteDefinition } from '@cookbook/router';
 import type { CliRouteOptions, CliRouteSource, RouteFile } from '../contracts';
 import { loadRouterConfig } from '../config/load-router-config';
@@ -215,7 +215,7 @@ function resolveAndValidateLoadedRoutes(
   routes: readonly RouteDefinition[],
   routeOptions: DefineRoutesOptions | undefined,
 ): readonly RouteDefinition[] {
-  registerUrlPathConstraints(routeOptions?.pathConstraints);
+  registerPathConstraints(routeOptions?.pathConstraints);
 
   if (!hasCompositionFields(routes)) {
     validateRoutes(routes, routeOptions?.pathOptions);

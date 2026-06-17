@@ -53,6 +53,46 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./route-config": {
+      "types": "./dist/route-config/index.d.ts",
+      "import": "./dist/route-config/index.js",
+      "require": "./dist/route-config/index.cjs"
+    },
+    "./runtime": {
+      "types": "./dist/runtime/index.d.ts",
+      "import": "./dist/runtime/index.js",
+      "require": "./dist/runtime/index.cjs"
+    },
+    "./history": {
+      "types": "./dist/history/index.d.ts",
+      "import": "./dist/history/index.js",
+      "require": "./dist/history/index.cjs"
+    },
+    "./matching": {
+      "types": "./dist/matching/index.d.ts",
+      "import": "./dist/matching/index.js",
+      "require": "./dist/matching/index.cjs"
+    },
+    "./path": {
+      "types": "./dist/path/index.d.ts",
+      "import": "./dist/path/index.js",
+      "require": "./dist/path/index.cjs"
+    },
+    "./url-state": {
+      "types": "./dist/url-state/index.d.ts",
+      "import": "./dist/url-state/index.js",
+      "require": "./dist/url-state/index.cjs"
+    },
+    "./rendering": {
+      "types": "./dist/rendering/index.d.ts",
+      "import": "./dist/rendering/index.js",
+      "require": "./dist/rendering/index.cjs"
+    },
+    "./diagnostics": {
+      "types": "./dist/diagnostics/index.d.ts",
+      "import": "./dist/diagnostics/index.js",
+      "require": "./dist/diagnostics/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "engines": {
@@ -71,7 +111,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@cookbook/pathkit": "^1.0.0",
-    "@cookbook/urlkit": "^v2.1.0"
+    "@cookbook/urlkit": "^2.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3"
   }
 }

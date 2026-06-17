@@ -3,7 +3,7 @@ import { parseHref } from '../history/memory-history';
 import { matchLocationResult } from '../matching/match-location';
 import { normalizeRoutes } from '../route-config/normalize-routes';
 import { defineRoutes } from '../route-config/define-routes';
-import { normalizePathOptions } from '../path';
+import { normalizePathOptions } from '../path/options';
 import { canonicalizeLocation } from './canonical-location';
 
 const routes = normalizeRoutes(

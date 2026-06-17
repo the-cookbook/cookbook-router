@@ -47,6 +47,31 @@ export const routes = defineRoutes([
     ).resolves.toHaveLength(2);
   });
 
+  it('loads route files that use focused Router subpath entrypoints', async () => {
+    const fs = createMemoryFileSystem({
+      'src/routes.tsx': `import { createPathConstraint } from '@cookbook/router/path';
+import { defineRoutes } from '@cookbook/router/route-config';
+const slug = createPathConstraint({
+  parse: () => undefined,
+  verify: () => undefined,
+  toRegExp: () => '[a-z-]+',
+});
+
+export const routes = defineRoutes([
+  {
+    id: 'post',
+    path: '/posts/{slug:slug}',
+  },
+] as const, { pathConstraints: { slug } });
+`,
+    });
+
+    const sources = await loadRouteFiles({ routeFiles: ['src/routes.tsx'], fs });
+
+    expect(sources[0]?.routes[0]?.id).toBe('post');
+    expect(sources[0]?.routeOptions?.pathConstraints).toHaveProperty('slug');
+  });
+
   it('rejects conflicting pathOptions across route files during validation', async () => {
     const fs = createMemoryFileSystem({
       'src/a.route.tsx': `import { defineRoutes } from '@cookbook/router';

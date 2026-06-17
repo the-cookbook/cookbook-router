@@ -1,5 +1,6 @@
 import type { UnknownSearchBehavior, UnknownSearchParams } from '@cookbook/urlkit';
-import type { RouterPathConstraints, RouterPathMatchOptions } from '../path';
+import type { RouterPathConstraints } from '../path/constraints';
+import type { RouterPathMatchOptions } from '../path/options';
 export type { RouterPathMatchOptions };
 import type {
   RouteDefinition,

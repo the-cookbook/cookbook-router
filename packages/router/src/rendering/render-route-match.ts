@@ -262,6 +262,7 @@ function createSlotFallbackMatch(
       params: [],
       index: false,
       score: 0,
+      pathDepth: 0,
       order: -1,
       route: {
         id: fallbackId,

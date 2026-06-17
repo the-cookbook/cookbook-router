@@ -21,7 +21,7 @@ export function renderRouteParamsInput(params: readonly RouteParamDefinition[]):
   return renderObject(entries);
 }
 
-/** Maps a PathKit constraint chain to its generated parsed value type. */
+/** Maps a URLKit path constraint chain to its generated parsed value type. */
 export function renderParamType(param: RouteParamDefinition): string {
   if (param.wildcard) {
     return 'readonly string[]';
@@ -34,7 +34,7 @@ export function renderParamType(param: RouteParamDefinition): string {
   return 'string';
 }
 
-/** Maps a PathKit constraint chain to its generated href/navigation input type. */
+/** Maps a URLKit path constraint chain to its generated href/navigation input type. */
 export function renderParamInputType(param: RouteParamDefinition): string {
   if (param.wildcard) {
     return 'string | readonly string[]';

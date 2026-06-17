@@ -1,4 +1,4 @@
-import { registerUrlPathConstraints } from '@cookbook/router';
+import { registerPathConstraints } from '@cookbook/router';
 import type { CliFileSystem, CliRouteOptions, CliRouteSource, CommandResult } from '../contracts';
 import { nodeFileSystem } from '../fs/node-file-system';
 import { generateContracts } from './generate-contracts';
@@ -33,7 +33,7 @@ export async function generateRouterArtifacts(
   const routesPath = resolveGeneratedRoutesPath(output);
   const shouldGenerateRoutesModule = hasGeneratedRoutesModuleSources(routeFile.routeSources);
 
-  registerUrlPathConstraints(routeFile.routeOptions?.pathConstraints);
+  registerPathConstraints(routeFile.routeOptions?.pathConstraints);
   await fs.mkdir(outDir, { recursive: true });
 
   const files = shouldGenerateRoutesModule

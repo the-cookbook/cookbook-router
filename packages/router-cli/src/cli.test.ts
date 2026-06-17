@@ -142,13 +142,13 @@ export const homeRoute = defineRoute({ id: 'home', path: '/' } as const);
 
   it('detects when the built file is executed directly', () => {
     expect(
-      shouldRunCli('file:///repo/packages/router-cli/dist/index.js', [
+      shouldRunCli('file:///repo/packages/router-cli/dist/bin.js', [
         '/usr/bin/node',
-        '/repo/packages/router-cli/dist/index.js',
+        '/repo/packages/router-cli/dist/bin.js',
       ]),
     ).toBe(true);
     expect(
-      shouldRunCli('file:///repo/packages/router-cli/dist/index.js', [
+      shouldRunCli('file:///repo/packages/router-cli/dist/bin.js', [
         '/usr/bin/node',
         '/repo/other.js',
       ]),

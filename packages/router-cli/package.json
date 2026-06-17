@@ -43,8 +43,8 @@
     "CHANGELOG.md"
   ],
   "bin": {
-    "cbr": "./dist/index.js",
-    "cookbook-router": "./dist/index.js"
+    "cbr": "./dist/bin.js",
+    "cookbook-router": "./dist/bin.js"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

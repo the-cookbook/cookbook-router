@@ -3,8 +3,9 @@
   "compilerOptions": {
     "rootDir": "src",
     "paths": {},
-    "tsBuildInfoFile": "dist/tsconfig.build.tsbuildinfo",
-    "declarationMap": false
+    "removeComments": false,
+    "declarationMap": false,
+    "tsBuildInfoFile": "dist/tsconfig.build.tsbuildinfo"
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "dist", "node_modules"]

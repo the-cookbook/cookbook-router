@@ -58,27 +58,11 @@ function compareRoutes(left: NormalizedRoute, right: NormalizedRoute): number {
     return scoreDifference;
   }
 
-  const depthDifference = countSegments(right.fullPath) - countSegments(left.fullPath);
+  const depthDifference = right.pathDepth - left.pathDepth;
 
   if (depthDifference) {
     return depthDifference;
   }
 
   return left.order - right.order;
-}
-
-function countSegments(path?: string): number {
-  if (!path || path === '/') {
-    return 0;
-  }
-
-  let count = 1;
-
-  for (let index = 1; index < path.length; index++) {
-    if (path[index] === '/') {
-      count++;
-    }
-  }
-
-  return count;
 }

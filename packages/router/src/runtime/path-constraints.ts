@@ -1,4 +1,4 @@
-import type { RouterPathConstraints } from '../path';
+import type { RouterPathConstraints } from '../path/constraints';
 
 export function mergePathConstraints(
   left?: RouterPathConstraints,

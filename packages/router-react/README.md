@@ -9,7 +9,7 @@ Use this package to render a `@cookbook/router` instance with providers, links, 
 - [Install](#install)
 - [Requirements](#requirements)
 - [Quick start](#quick-start)
-- [Public entrypoint](#public-entrypoint)
+- [Public entrypoints](#public-entrypoints)
 - [Components](#components)
 - [Hooks](#hooks)
 - [Interception and slots](#interception-and-slots)
@@ -82,16 +82,34 @@ function UserPage() {
 }
 ```
 
-## Public entrypoint
+## Public entrypoints
 
-The package exposes only the package root and `./package.json`:
+The package root remains the complete React integration entrypoint:
 
 ```tsx
-import { Link, RouterProvider, useNavigate } from '@cookbook/router-react';
+import { Link, Outlet, RouterProvider, useNavigate } from '@cookbook/router-react';
 import type { LinkProps, RouterProviderProps } from '@cookbook/router-react';
 ```
 
-Package-root exports are documented in the [API reference](../../docs/api.md#cookbookrouter-react).
+Focused entrypoints are available when an application only needs one integration area:
+
+| Entry point                       | Exports                                                                     |
+| --------------------------------- | --------------------------------------------------------------------------- |
+| `@cookbook/router-react/hooks`    | Router hooks and their option/state types.                                  |
+| `@cookbook/router-react/links`    | `Link`, `NavLink`, browser-click handling, and link types.                  |
+| `@cookbook/router-react/outlets`  | `Outlet`, `Slot`, and outlet/slot types.                                    |
+| `@cookbook/router-react/provider` | Live/static providers, public contexts, render helpers, and provider types. |
+
+```tsx
+import { useNavigate, useRouteMeta } from '@cookbook/router-react/hooks';
+import { Link, NavLink } from '@cookbook/router-react/links';
+import { Outlet, Slot } from '@cookbook/router-react/outlets';
+import { RouterProvider, StaticRouterProvider } from '@cookbook/router-react/provider';
+```
+
+These are public package subpaths, not private source-file imports. The package also exports `./package.json` for tooling.
+
+Package exports are documented in the [API reference](../../docs/api.md#cookbookrouter-react).
 
 ## Components
 
@@ -100,6 +118,7 @@ Package-root exports are documented in the [API reference](../../docs/api.md#coo
 ```ts
 interface RouterProviderProps {
   readonly router: Router;
+  readonly autoStart?: boolean;
   readonly children?: ReactNode;
   readonly fallback?: ReactNode;
   readonly loadingFallback?: ReactNode;
@@ -110,7 +129,7 @@ interface RouterProviderProps {
 }
 ```
 
-Renders the live route branch and subscribes to router state. `fallback` is not-found UI, `loadingFallback` is the global React Suspense fallback, `errorFallback` is the global React render-error fallback, and `middleware` registers provider-level middleware while the provider is mounted. When `scrollRestoration` is enabled, scroll positions are saved per location key and restored on navigation; new non-hash locations scroll to the top.
+Renders the live route branch and subscribes to router state. The provider starts the router after mount unless `autoStart={false}` is supplied. `fallback` is not-found UI, `loadingFallback` is the global React Suspense fallback, `errorFallback` is the global React render-error fallback, and `middleware` registers provider-level middleware while the provider is mounted. When `scrollRestoration` is enabled, scroll positions are saved per location key and restored on navigation; new non-hash locations scroll to the top.
 
 ```tsx
 <RouterProvider
@@ -135,10 +154,11 @@ interface StaticRouterProviderProps {
   readonly fallback?: ReactNode;
   readonly loadingFallback?: ReactNode;
   readonly errorFallback?: ComponentType<RouterErrorFallbackProps>;
+  readonly middleware?: readonly Middleware[];
 }
 ```
 
-Renders static route output for SSR.
+Renders static route output for SSR. The router must already be started; call `await router.start()` before rendering.
 
 ### `Link`
 
@@ -154,10 +174,11 @@ interface LinkProps<Route extends RouteId = RouteId> extends Omit<
   readonly search?: HrefOptions<Route>['search'];
   readonly hash?: HrefOptions<Route>['hash'];
   readonly url?: HrefOptions<Route>['url'];
-  readonly intercept?: InterceptInput;
+  readonly intercept?: InterceptInput | false;
   readonly context?: HrefOptions<Route>['context'];
   readonly preventScrollReset?: boolean;
   readonly replace?: boolean;
+  readonly prefetch?: LinkPrefetch;
   readonly children?: ReactNode;
 }
 ```
@@ -193,14 +214,16 @@ interface NavLinkProps<Route extends RouteId = RouteId> extends Omit<
 > {
   readonly route?: Route;
   readonly to?: Route;
+  readonly href?: string;
   readonly params?: HrefOptions<Route>['params'];
   readonly search?: HrefOptions<Route>['search'];
   readonly hash?: HrefOptions<Route>['hash'];
   readonly url?: HrefOptions<Route>['url'];
   readonly replace?: boolean;
-  readonly intercept?: InterceptInput;
+  readonly intercept?: InterceptInput | false;
   readonly context?: HrefOptions<Route>['context'];
   readonly preventScrollReset?: boolean;
+  readonly prefetch?: LinkPrefetch;
   readonly end?: boolean | { readonly search?: 'all' | 'ignore' };
   readonly children?: ReactNode | ((props: NavLinkRenderProps) => ReactNode);
 }
@@ -254,7 +277,7 @@ Renders a named layout slot.
 <Slot name="modal" context={{ source: 'dashboard' }} />
 ```
 
-A slot can render a matched slot route, fallback, intercepted destination, route-level not-found view, or nothing. Slot render errors bubble to route/provider error fallbacks unless `errorFallback` is provided.
+A slot can render a matched slot route, its declared default view, an intercepted destination, route-level not-found UI, or nothing. Slot render errors bubble to route/provider error fallbacks unless `errorFallback` is provided.
 
 ```tsx
 <Slot name="modal" errorFallback={null} />
@@ -275,6 +298,7 @@ A slot can render a matched slot route, fallback, intercepted destination, route
 | `useSearchParams(routeId?)`                     | Read declared URLKit-parsed search params.                |
 | `useUnknownSearchParams()`                      | Read URLKit-preserved unknown search params.              |
 | `useHashParams(routeId?)`                       | Read URLKit-parsed hash, or `null`.                       |
+| `useRouteMeta(routeId?, options?)`              | Read local or ancestor-merged route metadata.             |
 | `useOutletContext()`                            | Read nearest outlet or slot context.                      |
 | `useBlocker({ when, message? })`                | Block in-app navigation and browser unload while enabled. |
 

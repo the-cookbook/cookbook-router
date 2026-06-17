@@ -1,14 +1,24 @@
 import type { RouterLocation } from '../history/memory-history';
-import { matchRouteCandidates } from '../matching/match-routes';
-import type { RouterPathConstraints, RouterPathOptions } from '../path';
+import {
+  createRouteUrlStateOptions,
+  matchRoutePathCandidates,
+  resolveRouteUrlContractStore,
+  type MatchRoutesOptions,
+  type RoutePathCandidate,
+} from './match-routes';
+import type { RouterPathConstraints } from '../path/constraints';
+import type { RouterPathOptions } from '../path/options';
 import type { NormalizedRoute, RouteMatch, RouteSearchSchema } from '../route-config/contracts';
+import { resolveSlots } from '../rendering/resolve-slots';
+import { stripBasename } from '../runtime/pathname';
 import {
   parseRouteHash,
   parseRouteSearchState,
   resolveRouteUrlOptions,
+  type RouteUrlStateOptions,
 } from '../url-state/route-url-state';
-import type { RouterUrlOptions } from '../url-state';
-import { stripBasename } from '../runtime/pathname';
+import type { RouterUrlOptions } from '../url-state/contracts';
+import type { RouteUrlContractStore } from '../url-state/route-url-contract-store';
 
 export interface MatchLocationOptions {
   readonly routes: readonly NormalizedRoute[];
@@ -18,6 +28,7 @@ export interface MatchLocationOptions {
   readonly routerUrl?: RouterUrlOptions;
   readonly callUrl?: RouterUrlOptions;
   readonly pathConstraints?: RouterPathConstraints;
+  readonly routeUrlContracts?: RouteUrlContractStore;
 }
 
 export type MatchLocationResult =
@@ -42,14 +53,18 @@ export function matchLocation(options: MatchLocationOptions): RouteMatch | null 
  */
 export function matchLocationResult(options: MatchLocationOptions): MatchLocationResult {
   const pathname = stripBasename(options.location.pathname, options.basename);
-  const candidates = matchRouteCandidates(options.routes, pathname, options.pathOptions, {
-    ...(options.routerUrl === undefined ? {} : { routerUrl: options.routerUrl }),
-    ...(options.callUrl === undefined ? {} : { callUrl: options.callUrl }),
-    ...(options.pathConstraints === undefined ? {} : { pathConstraints: options.pathConstraints }),
-  });
+  const matchOptions = toMatchRoutesOptions(options);
+  const routeUrlContracts = resolveRouteUrlContractStore(matchOptions);
+  const routeUrlStateOptions = createRouteUrlStateOptions(matchOptions, routeUrlContracts);
+  const candidates = matchRoutePathCandidates(
+    options.routes,
+    pathname,
+    matchOptions,
+    routeUrlContracts,
+  );
 
   for (const candidate of candidates) {
-    const result = parseCandidateUrlState(candidate, options);
+    const result = parseCandidateUrlState(candidate, options, routeUrlStateOptions);
 
     if (result.status === 'no-match') {
       continue;
@@ -61,39 +76,65 @@ export function matchLocationResult(options: MatchLocationOptions): MatchLocatio
   return { status: 'no-match' };
 }
 
+function toMatchRoutesOptions(options: MatchLocationOptions): MatchRoutesOptions {
+  const matchOptions: {
+    routerUrl?: RouterUrlOptions;
+    callUrl?: RouterUrlOptions;
+    pathConstraints?: RouterPathConstraints;
+    routeUrlContracts?: RouteUrlContractStore;
+  } = {};
+
+  if (options.routerUrl !== undefined) {
+    matchOptions.routerUrl = options.routerUrl;
+  }
+
+  if (options.callUrl !== undefined) {
+    matchOptions.callUrl = options.callUrl;
+  }
+
+  if (options.pathConstraints !== undefined) {
+    matchOptions.pathConstraints = options.pathConstraints;
+  }
+
+  if (options.routeUrlContracts !== undefined) {
+    matchOptions.routeUrlContracts = options.routeUrlContracts;
+  }
+
+  return matchOptions;
+}
+
 function parseCandidateUrlState(
-  match: RouteMatch,
+  candidate: RoutePathCandidate,
   options: MatchLocationOptions,
+  routeUrlStateOptions: RouteUrlStateOptions,
 ): MatchLocationResult {
   let search: unknown;
   let unknownSearch: unknown;
 
   try {
     const searchState = parseRouteSearchState(
-      match.route,
-      match.pathname,
+      candidate.route,
+      candidate.pathname,
       options.location.search,
-      options,
+      routeUrlStateOptions,
     );
     search = searchState.search;
     unknownSearch = searchState.unknownSearch;
   } catch (error) {
-    const urlOptions = resolveRouteUrlOptions(match.route, options);
+    const urlOptions = resolveRouteUrlOptions(candidate.route, routeUrlStateOptions);
     const policy = urlOptions.invalidSearch ?? 'recover';
 
     if (
       urlOptions.unknownSearch === 'error' &&
-      isUnknownSearchError(error, match.route.route.search)
+      isUnknownSearchError(error, candidate.route.route.search)
     ) {
       return {
         status: 'error',
         error,
-        match: {
-          ...match,
+        match: createRouteMatch(candidate, options, routeUrlStateOptions, {
           search: {} as never,
           hash: undefined as never,
-          href: options.location.href,
-        },
+        }),
       };
     }
 
@@ -104,28 +145,25 @@ function parseCandidateUrlState(
     return {
       status: 'error',
       error,
-      match: {
-        ...match,
+      match: createRouteMatch(candidate, options, routeUrlStateOptions, {
         search: {} as never,
         hash: undefined as never,
-        href: options.location.href,
-      },
+      }),
     };
   }
 
   try {
     return {
       status: 'matched',
-      match: {
-        ...match,
+      match: createRouteMatch(candidate, options, routeUrlStateOptions, {
         search: search as never,
-        ...(unknownSearch === undefined ? {} : { unknownSearch: unknownSearch as never }),
-        hash: parseRouteHash(match.route, options.location.hash, options) as never,
-        href: options.location.href,
-      },
+        unknownSearch,
+        hash: parseRouteHash(candidate.route, options.location.hash, routeUrlStateOptions) as never,
+      }),
     };
   } catch (error) {
-    const policy = resolveRouteUrlOptions(match.route, options).invalidHash ?? 'recover';
+    const policy =
+      resolveRouteUrlOptions(candidate.route, routeUrlStateOptions).invalidHash ?? 'recover';
 
     if (policy === 'no-match') {
       return { status: 'no-match' };
@@ -134,15 +172,38 @@ function parseCandidateUrlState(
     return {
       status: 'error',
       error,
-      match: {
-        ...match,
+      match: createRouteMatch(candidate, options, routeUrlStateOptions, {
         search: search as never,
-        ...(unknownSearch === undefined ? {} : { unknownSearch: unknownSearch as never }),
+        unknownSearch,
         hash: undefined as never,
-        href: options.location.href,
-      },
+      }),
     };
   }
+}
+
+function createRouteMatch(
+  candidate: RoutePathCandidate,
+  options: MatchLocationOptions,
+  routeUrlStateOptions: RouteUrlStateOptions,
+  state: {
+    readonly search: never;
+    readonly unknownSearch?: unknown;
+    readonly hash: never;
+  },
+): RouteMatch {
+  return {
+    ...candidate,
+    search: state.search,
+    ...(state.unknownSearch === undefined ? {} : { unknownSearch: state.unknownSearch as never }),
+    hash: state.hash,
+    href: options.location.href,
+    slots: resolveSlots(
+      candidate.branch,
+      candidate.pathname,
+      options.pathOptions,
+      routeUrlStateOptions,
+    ),
+  };
 }
 
 function isUnknownSearchError(error: unknown, schema: RouteSearchSchema | undefined): boolean {

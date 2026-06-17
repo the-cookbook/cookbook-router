@@ -1,4 +1,4 @@
-import { normalizeRoutes, registerUrlPathConstraints, validateRoutes } from '@cookbook/router';
+import { registerPathConstraints, validateResolvedRouteTree } from '@cookbook/router';
 import type {
   DefineRoutesOptions,
   RouteDefinition,
@@ -28,8 +28,7 @@ export function generateManifest(
   options: DefineRoutesOptions | RouterPathOptions = {},
 ): RouteManifest {
   const pathOptions = resolveGenerationPathOptions(options);
-  validateRoutes(routes, pathOptions);
-  const normalized = normalizeRoutes(routes, pathOptions);
+  const normalized = validateResolvedRouteTree(routes, pathOptions);
 
   return {
     routes: flattenNormalizedRoutes(normalized).map((route) => ({
@@ -51,11 +50,11 @@ function resolveGenerationPathOptions(
   options: DefineRoutesOptions | RouterPathOptions,
 ): RouterPathOptions {
   if (isDefineRoutesOptions(options)) {
-    registerUrlPathConstraints(options.pathConstraints);
+    registerPathConstraints(options.pathConstraints);
     return options.pathOptions ?? {};
   }
 
-  registerUrlPathConstraints();
+  registerPathConstraints();
   return options;
 }
 

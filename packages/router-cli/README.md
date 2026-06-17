@@ -100,7 +100,7 @@ export const routes = defineRoutes([
 
 The extractor expects a static `defineRoutes([...])` call, a static `defineRouteTree({ routes: [...] })` call, colocated exported `defineRoute({...})` declarations, named export aliases such as `export { appRoutes as routes }`, or a static `routes = [...]` array. Avoid runtime-generated route trees in files consumed by the CLI. URL state descriptors must also stay static: use route `path`, `search`, `hash`, and `url` objects rather than URLKit runtime builders.
 
-Imported route views are supported. The static extractor replaces view-bearing fields such as `view`, `layout.view`, slot fallback views, `loading`, `error`, and `intercepts.*.view` with placeholders before evaluating route metadata. Imports that are required by static metadata, such as statically declared `defineRoute()`, `defineSearch()`, `mergeSearch()`, `defineHash()` values and static data constants, must use relative or absolute file paths. Path aliases such as `@/` and bare package imports are rejected for static metadata, but remain fine for runtime-only values such as components.
+Imported route views are supported. The static extractor replaces view-bearing fields such as `view`, `layout.view`, slot views, `loading`, `error`, and `intercepts.*.view` with placeholders before evaluating route metadata. Imports that are required by static metadata, such as statically declared `defineRoute()`, `defineSearch()`, `mergeSearch()`, `defineHash()` values and static data constants, must use relative or absolute file paths. Path aliases such as `@/` and bare package imports are rejected for static metadata, but remain fine for runtime-only values such as components.
 
 Generated contracts are URLKit-backed. Built-in parsed path constraints such as `{id:int}`, `{price:decimal}`, `{price:range(1,100)}`, `{price:min(1)}`, and `{price:max(100)}` generate `number` params, while `uuid`, `minlength`, `maxlength`, `list`, `regex`, and custom constraints generate `string` params unless the same chain also includes a numeric built-in constraint. Static `date` and `date-time` search descriptors generate `Date` values. Unix timestamp search params use `{ type: 'date', format: 'unix-seconds' }` or `{ type: 'date', format: 'unix-ms' }` and also generate `Date` values that URLKit parses and serializes with UTC semantics.
 
@@ -188,7 +188,7 @@ export default defineRouterConfig({
 }
 ```
 
-`routes.ts` is generated when route files export colocated `defineRoute()` declarations, manual `defineRouteTree()` exports, or static `defineRoutes()` trees. Colocated declarations are composed with `defineRouteTree()`, multiple pure static tree exports are combined with `defineRoutes()`, and a single static tree export is re-exported directly when that is needed to preserve source-level route options. `contracts.ts` contains route-specific type-only contracts. Path params, search values, and hash values follow URLKit static parsing semantics. `register.d.ts` augments `@cookbook/router` and `@cookbook/router-react`. `manifest.json` contains a tooling-friendly route list and includes route-level `url` options such as `arrayFormat`, `defaults`, `invalidSearch`, `invalidHash`, and `unknownSearch` when configured.
+`routes.ts` is generated when route files export colocated `defineRoute()` declarations, manual `defineRouteTree()` exports, or static `defineRoutes()` trees. Colocated declarations are composed with `defineRouteTree()`, multiple pure static tree exports are combined with `defineRoutes()`, and a single static tree export is re-exported directly when that is needed to preserve source-level route options. `contracts.ts` contains route-specific type-only contracts. Path params, search values, and hash values follow URLKit static parsing semantics. `register.d.ts` augments `@cookbook/router` and `@cookbook/router-react`. `manifest.json` contains a tooling-friendly route list and includes route-level `url` options such as `arrayFormat`, `defaults`, `invalidSearch`, `invalidHash`, and `unknownSearch` when configured. The focused `@cookbook/router-react/hooks` entrypoint consumes the same shared contract registry, so generated hook inference is preserved for subpath imports.
 
 ## Programmatic API
 
@@ -359,7 +359,7 @@ The package also exports `runCli(argv, runnerOptions?)` and `shouldRunCli(module
 - If a route file cannot be evaluated, simplify the route declaration into a static array and replace URLKit runtime builders with static descriptors.
 - If contracts are stale, rerun `generate` once to see diagnostics, then use `watch` during development.
 - If generated types are not visible, include generated files in `tsconfig.json`.
-- If a slot fallback ID is not generated, that is expected; fallbacks are not navigable routes.
+- Default slot views do not generate route IDs; only entries under `layout.slots.<name>.routes` are navigable routes.
 - If a command exits with `--routes requires a file path`, pass at least one route file with `--routes`.
 - If a generated output path is rejected, ensure `--out-dir` does not overlap with route source files.
 

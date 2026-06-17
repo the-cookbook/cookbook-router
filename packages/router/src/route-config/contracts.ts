@@ -1,6 +1,6 @@
 import type { RouterLocation } from '../history/memory-history';
 import type { StaticHashDescriptor, StaticSearchField } from '@cookbook/urlkit/static';
-import type { RouterPathOptions } from '../path';
+import type { RouterPathOptions } from '../path/options';
 import type { RouterUrlOptions } from '../url-state/contracts';
 import type { RouteHash, RouteId, RouteParams, RouteSearch } from '../contracts';
 import type { RouterUnknownSearchParams } from '../url-state/contracts';
@@ -236,7 +236,7 @@ export interface RouteDefinition {
 /**
  * Name of the path constraint applied to a route parameter token.
  *
- * Built-in constraints come from `@cookbook/pathkit`; custom constraints can be
+ * Built-in constraints come from URLKit; custom constraints can be
  * registered through `defineRoutes({ pathConstraints })` or router path options.
  */
 export interface RouteParamConstraint {
@@ -320,6 +320,7 @@ export interface NormalizedRoute {
   readonly params: readonly RouteParamDefinition[];
   readonly index: boolean;
   readonly score: number;
+  readonly pathDepth: number;
   readonly order: number;
   readonly route: RouteDefinition;
   readonly meta?: RouteMeta;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createPathConstraint } from '../path';
+import { createPathConstraint } from '../path/constraints';
 import { mergePathConstraints } from './path-constraints';
 
 describe('mergePathConstraints', () => {

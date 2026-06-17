@@ -1,10 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { resetConstraints } from '@cookbook/pathkit';
-import { createPathConstraint } from '../path';
+import { createPathConstraint, resetPathConstraints } from '../path/constraints';
 import { createRouteUrlContract } from './create-route-url-contract';
 
 afterEach(() => {
-  resetConstraints();
+  resetPathConstraints();
 });
 
 describe('createRouteUrlContract', () => {

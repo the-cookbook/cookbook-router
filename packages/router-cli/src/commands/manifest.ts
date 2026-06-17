@@ -1,4 +1,4 @@
-import { registerUrlPathConstraints } from '@cookbook/router';
+import { registerPathConstraints } from '@cookbook/router';
 import { generateManifest, serializeManifest } from '../generation/generate-manifest';
 import { writeGeneratedFile } from '../generation/write-generated-file';
 import { resolveRouteInputWithOptions } from '../generation/resolve-route-input';
@@ -24,7 +24,7 @@ export async function manifestCommand(options: ManifestOptions): Promise<Command
     assertGeneratedOutputDoesNotClobberRouteFiles(output, effectiveOptions.routeFiles);
     const { outDir, manifestPath } = output;
 
-    registerUrlPathConstraints(routeFile.routeOptions?.pathConstraints);
+    registerPathConstraints(routeFile.routeOptions?.pathConstraints);
     await fs.mkdir(outDir, { recursive: true });
     const changed = await writeGeneratedFile(
       fs,

@@ -1,5 +1,6 @@
 import type { RouterHistory, RouterLocation } from '../history/memory-history';
-import type { RouterPathConstraints, RouterPathOptions } from '../path';
+import type { RouterPathConstraints } from '../path/constraints';
+import type { RouterPathOptions } from '../path/options';
 import type {
   GlobalLifecycle,
   Middleware,
@@ -12,7 +13,7 @@ import type {
 import type { InterceptInput } from '../rendering/resolve-intercepts';
 import type { RouterNavigationState } from '../transition/run-transition';
 import type { RouteId, RouteUrlOptions } from '../contracts';
-import type { RouterUrlBuildOptions, RouterUrlOptions } from '../url-state';
+import type { RouterUrlBuildOptions, RouterUrlOptions } from '../url-state/contracts';
 
 /**
  * Options for creating a router runtime.

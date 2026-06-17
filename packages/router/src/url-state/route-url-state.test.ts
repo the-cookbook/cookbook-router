@@ -28,6 +28,7 @@ function normalizedRoute(route: NormalizedRoute['route']): NormalizedRoute {
     ],
     index: false,
     score: 0,
+    pathDepth: 0,
     order: 0,
     route,
     slotRoute: false,

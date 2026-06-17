@@ -1,7 +1,12 @@
-import { getPathParams, prunePathname, validatePathPattern, type RouterPathOptions } from '../path';
-import { registerUrlPathConstraints } from '../url-state/register-url-path-constraints';
+import { analyzePathPattern } from '../path/analyze-path-pattern';
+import {
+  hasPathConstraint,
+  registerPathConstraints,
+  type RouterPathConstraints,
+} from '../path/constraints';
+import { prunePathname, type RouterPathOptions } from '../path/options';
 import { validateRouteUrlDescriptor } from './validate-route-url-descriptor';
-import { normalizeRoutes } from './normalize-routes';
+import { normalizeValidatedRoutes } from './normalize-routes';
 import type {
   NormalizedRoute,
   RouteDefinition,
@@ -9,9 +14,13 @@ import type {
   RouteSlotConfig,
   RouteSlotDefinition,
 } from '../route-config/contracts';
+import type { RouterRouteUrlContract, RouterUrlOptions } from '../url-state/contracts';
 
 interface ValidationContext {
   readonly pathOptions: RouterPathOptions;
+  readonly pathConstraints?: RouterPathConstraints;
+  readonly routerUrl?: RouterUrlOptions;
+  readonly contracts: WeakMap<RouteDefinition, RouterRouteUrlContract>;
   readonly ids: Set<string>;
   readonly paths: Map<string, string>;
   readonly slotFallbackIds: Set<string>;
@@ -29,16 +38,34 @@ interface InterceptTargetValidation {
   readonly targetRouteId: string;
 }
 
+export interface ValidatedRouteTree {
+  readonly contracts: WeakMap<RouteDefinition, RouterRouteUrlContract>;
+}
+
+export interface ValidateRoutesWithContractsOptions {
+  readonly pathOptions?: RouterPathOptions;
+  readonly pathConstraints?: RouterPathConstraints;
+  readonly routerUrl?: RouterUrlOptions;
+}
+
 export function validateRoutes(
   routes: readonly RouteDefinition[],
   pathOptions: RouterPathOptions = {},
 ): void {
+  validateRoutesWithContracts(routes, { pathOptions });
+}
+
+export function validateRoutesWithContracts(
+  routes: readonly RouteDefinition[],
+  options: ValidateRoutesWithContractsOptions = {},
+): ValidatedRouteTree {
   if (!Array.isArray(routes)) {
     throw new Error('Router routes must be an array.');
   }
 
-  registerUrlPathConstraints();
+  registerPathConstraints(options.pathConstraints);
 
+  const contracts = new WeakMap<RouteDefinition, RouterRouteUrlContract>();
   const context: ValidationContext = {
     ids: new Set<string>(),
     paths: new Map<string, string>(),
@@ -46,8 +73,11 @@ export function validateRoutes(
     inheritedParams: [],
     declaredSlots: new Set<string>(),
     pathScope: 'primary',
-    pathOptions,
+    pathOptions: options.pathOptions ?? {},
+    contracts,
     interceptTargets: [],
+    ...(options.pathConstraints === undefined ? {} : { pathConstraints: options.pathConstraints }),
+    ...(options.routerUrl === undefined ? {} : { routerUrl: options.routerUrl }),
   };
 
   for (const route of routes) {
@@ -55,6 +85,8 @@ export function validateRoutes(
   }
 
   validateCollectedInterceptTargets(context);
+
+  return { contracts };
 }
 
 /**
@@ -65,8 +97,8 @@ export function validateResolvedRouteTree(
   routes: readonly RouteDefinition[],
   pathOptions: RouterPathOptions = {},
 ): readonly NormalizedRoute[] {
-  validateRoutes(routes, pathOptions);
-  return normalizeRoutes(routes, pathOptions);
+  validateRoutesWithContracts(routes, { pathOptions });
+  return normalizeValidatedRoutes(routes, pathOptions);
 }
 
 function validateRoute(route: RouteDefinition, context: ValidationContext): void {
@@ -79,7 +111,16 @@ function validateRoute(route: RouteDefinition, context: ValidationContext): void
   validateRouteMetadata(route.id, route.meta);
 
   const fullPath = validateRoutePath(route, context);
-  validateRouteUrlDescriptor({ route, ...(fullPath === undefined ? {} : { fullPath }) });
+  const contract = validateRouteUrlDescriptor({
+    route,
+    ...(fullPath === undefined ? {} : { fullPath }),
+    ...(context.routerUrl === undefined ? {} : { routerUrl: context.routerUrl }),
+    ...(context.pathConstraints === undefined ? {} : { pathConstraints: context.pathConstraints }),
+  });
+
+  if (contract) {
+    context.contracts.set(route, contract);
+  }
   const params = mergeParamNames(
     route.id,
     context.inheritedParams,
@@ -124,7 +165,10 @@ function createChildValidationContext(
     inheritedParams,
     pathScope: context.pathScope,
     pathOptions: context.pathOptions,
+    contracts: context.contracts,
     interceptTargets: context.interceptTargets,
+    ...(context.pathConstraints === undefined ? {} : { pathConstraints: context.pathConstraints }),
+    ...(context.routerUrl === undefined ? {} : { routerUrl: context.routerUrl }),
     declaredSlots,
     ...(activeLayoutRouteId === undefined ? {} : { activeLayoutRouteId }),
     ...(parentPath === undefined ? {} : { parentPath }),
@@ -308,7 +352,7 @@ function getOwnParamNames(
   }
 
   const path = route.path.startsWith('/') ? route.path : `/${route.path}`;
-  return getPathParams(prunePathname(path, pathOptions)).map((param) => param.name);
+  return analyzePathPattern(prunePathname(path, pathOptions)).params.map((param) => param.name);
 }
 
 function validateRouteMetadata(routeId: string, meta: RouteMeta | undefined): void {
@@ -324,7 +368,6 @@ function validateRoutePath(route: RouteDefinition, context: ValidationContext): 
     return fullPath;
   }
 
-  validatePathPattern(fullPath, context.pathOptions);
   const normalizedFullPath = prunePathname(fullPath, context.pathOptions);
   const pathKey = `${context.pathScope}::${normalizedFullPath}`;
   const existingOwner = context.paths.get(pathKey);
@@ -336,7 +379,20 @@ function validateRoutePath(route: RouteDefinition, context: ValidationContext): 
   }
 
   context.paths.set(pathKey, route.id);
+  validatePathConstraintReferences(normalizedFullPath);
   return normalizedFullPath;
+}
+
+function validatePathConstraintReferences(path: string): void {
+  for (const param of analyzePathPattern(path).params) {
+    for (const constraint of param.constraints) {
+      if (hasPathConstraint(constraint.type)) {
+        continue;
+      }
+
+      throw new Error(`Unknown constraint type: "${constraint.type}"`);
+    }
+  }
 }
 
 function resolveFullPath(route: RouteDefinition, parentPath?: string): string | undefined {

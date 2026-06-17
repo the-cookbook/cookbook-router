@@ -1,12 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { resetConstraints } from '@cookbook/pathkit';
 import { createMemoryHistory } from '../history/memory-history';
-import { createPathConstraint } from '../path';
+import { createPathConstraint, resetPathConstraints } from '../path/constraints';
 import { defineRoutes } from '../route-config/define-routes';
 import { createRouter } from './create-router';
 
 afterEach(() => {
-  resetConstraints();
+  resetPathConstraints();
 });
 
 describe('create-router URLKit runtime integration', () => {
@@ -37,10 +36,12 @@ describe('create-router URLKit runtime integration', () => {
       },
       toRegExp: () => '[a-z0-9-]+',
     });
+
     const routes = defineRoutes([{ id: 'post', path: '/posts/{slug:slug}' }], {
       pathConstraints: { slug },
     });
-    resetConstraints();
+
+    resetPathConstraints();
 
     const router = createRouter({ routes });
 

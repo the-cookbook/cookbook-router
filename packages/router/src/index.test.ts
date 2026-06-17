@@ -41,7 +41,6 @@ describe('package entrypoint', () => {
       'parseHref',
       'rankRoutes',
       'registerPathConstraints',
-      'registerUrlPathConstraints',
       'renderRouteMatch',
       'resolveUrlOptions',
       'serializeRouterState',

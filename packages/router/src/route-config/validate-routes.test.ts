@@ -55,7 +55,7 @@ describe('validateRoutes', () => {
     ).toThrow('must not define children');
   });
 
-  it('rejects empty paths and invalid pathkit patterns', () => {
+  it('rejects empty paths and invalid URLKit path patterns', () => {
     expect(() => validateRoutes([{ id: 'empty', path: '' }])).toThrow('empty path');
     expect(() => validateRoutes([{ id: 'bad', path: '/users/{id:unknown}' }])).toThrow(
       'Unknown constraint type',

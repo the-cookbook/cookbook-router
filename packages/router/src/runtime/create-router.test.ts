@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { resetConstraints } from '@cookbook/pathkit';
 import { createMemoryHistory } from '../history/memory-history';
-import { createPathConstraint } from '../path';
+import { createPathConstraint, resetPathConstraints } from '../path/constraints';
 import { defineRoutes } from '../route-config/define-routes';
 import { createRouter, deserializeRouterState, serializeRouterState } from './create-router';
 
@@ -11,7 +10,7 @@ const routes = defineRoutes([
 ] as const);
 
 afterEach(() => {
-  resetConstraints();
+  resetPathConstraints();
 });
 
 describe('create-router', () => {
@@ -57,7 +56,7 @@ describe('create-router', () => {
       pathConstraints: { slug },
     });
 
-    resetConstraints();
+    resetPathConstraints();
 
     const router = createRouter({
       routes: constrainedRoutes,

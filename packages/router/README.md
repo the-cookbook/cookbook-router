@@ -11,7 +11,7 @@ It does not mount UI, create DOM nodes, return JSX, or depend on a framework. Ro
 - [Install](#install)
 - [Requirements](#requirements)
 - [Quick start](#quick-start)
-- [Public entrypoint](#public-entrypoint)
+- [Public entrypoints](#public-entrypoints)
 - [Route definition API](#route-definition-api)
 - [Router creation API](#router-creation-api)
 - [Router instance API](#router-instance-api)
@@ -31,7 +31,7 @@ It does not mount UI, create DOM nodes, return JSX, or depend on a framework. Ro
 pnpm add @cookbook/router
 ```
 
-`@cookbook/urlkit` and `@cookbook/pathkit` are installed transitively by `@cookbook/router`. PathKit remains external and is used beneath URLKit for path-pattern primitives.
+`@cookbook/urlkit` is installed transitively by `@cookbook/router` and owns path-pattern parsing, validation, matching, and URL building.
 
 For React rendering, install `@cookbook/router-react` in addition to this package. For generated app-specific route contracts, install `@cookbook/router-cli` as a development dependency.
 
@@ -95,16 +95,29 @@ Expected `href`:
 /users/42?tab=settings#profile
 ```
 
-## Public entrypoint
+## Public entrypoints
 
-The package exposes only the package root and `./package.json`:
+The package root remains the complete compatibility entrypoint:
 
 ```ts
 import { createRouter, defineRoutes } from '@cookbook/router';
 import type { RouteId, RouteParams } from '@cookbook/router';
 ```
 
-Package-root exports are documented in the [API reference](../../docs/api.md#cookbookrouter).
+Focused subpath entrypoints are also available for smaller module graphs:
+
+| Entry point                     | Purpose                                                       |
+| ------------------------------- | ------------------------------------------------------------- |
+| `@cookbook/router/route-config` | route declarations, validation, and normalization             |
+| `@cookbook/router/runtime`      | router factories, state serialization, and route meta helpers |
+| `@cookbook/router/history`      | browser, memory, and static history adapters                  |
+| `@cookbook/router/matching`     | route matching and ranking helpers                            |
+| `@cookbook/router/path`         | path options and custom path constraints                      |
+| `@cookbook/router/url-state`    | route URL contracts and URL-state helpers                     |
+| `@cookbook/router/rendering`    | renderer-neutral traversal                                    |
+| `@cookbook/router/diagnostics`  | public diagnostic error factories                             |
+
+Package-root and subpath exports are documented in the [API reference](../../docs/api.md#cookbookrouter).
 
 ## Route definition API
 

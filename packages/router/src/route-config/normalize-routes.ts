@@ -1,11 +1,7 @@
-import {
-  getPathParams,
-  getPathTokens,
-  prunePathname,
-  validatePathPattern,
-  type RouterPathOptions,
-} from '../path';
+import { analyzePathPattern, type AnalyzedPathPattern } from '../path/analyze-path-pattern';
+import { prunePathname, type RouterPathOptions } from '../path/options';
 import { normalizeConfiguredIntercepts } from '../rendering/resolve-intercepts';
+import { createRouteUrlContract } from '../url-state/create-route-url-contract';
 import type {
   NormalizedRoute,
   NormalizedRouteSlotConfig,
@@ -16,41 +12,84 @@ import type {
   RouteSlotDefinition,
 } from '../route-config/contracts';
 
+const EMPTY_ROUTE_PARAMS = Object.freeze([]) as readonly RouteParamDefinition[];
+const EMPTY_PATH_ANALYSIS = Object.freeze({
+  params: EMPTY_ROUTE_PARAMS,
+  score: 0,
+  depth: 0,
+}) satisfies AnalyzedPathPattern;
+
 interface NormalizeContext {
   readonly parentId?: string;
   readonly parentPath?: string;
   readonly inheritedParams: readonly RouteParamDefinition[];
+  readonly parentScore: number;
+  readonly parentDepth: number;
   readonly nextOrder: () => number;
   readonly slotOwnerId?: string;
   readonly slotName?: string;
   readonly pathOptions: RouterPathOptions;
+  readonly validatePaths: boolean;
 }
 
 export function normalizeRoutes(
   routes: readonly RouteDefinition[],
   pathOptions: RouterPathOptions = {},
 ): readonly NormalizedRoute[] {
+  return normalizeRoutesInternal(routes, pathOptions, true);
+}
+
+export function normalizeValidatedRoutes(
+  routes: readonly RouteDefinition[],
+  pathOptions: RouterPathOptions = {},
+): readonly NormalizedRoute[] {
+  return normalizeRoutesInternal(routes, pathOptions, false);
+}
+
+function normalizeRoutesInternal(
+  routes: readonly RouteDefinition[],
+  pathOptions: RouterPathOptions,
+  validatePaths: boolean,
+): readonly NormalizedRoute[] {
   let order = 0;
   const nextOrder = (): number => order++;
 
   return routes.map((route) =>
-    normalizeRoute(route, { inheritedParams: [], nextOrder, pathOptions }),
+    normalizeRoute(route, {
+      inheritedParams: [],
+      parentScore: 0,
+      parentDepth: 0,
+      nextOrder,
+      pathOptions,
+      validatePaths,
+    }),
   );
 }
 
 function normalizeRoute(route: RouteDefinition, context: NormalizeContext): NormalizedRoute {
   const localPath = route.path;
-  const fullPath = resolveFullPath(route, context.parentPath, context.pathOptions);
-  const ownParams = getOwnRouteParams(route);
+  const fullPath = resolveFullPath(
+    route,
+    context.parentPath,
+    context.pathOptions,
+    context.validatePaths,
+  );
+  const localAnalysis = analyzeRouteLocalPath(route);
+  const ownParams = route.index ? [] : localAnalysis.params;
   const params = mergeInheritedParams(route.id, context.inheritedParams, ownParams);
+  const score = context.parentScore + (route.index ? 2 : localAnalysis.score);
+  const pathDepth = context.parentDepth + (route.index ? 0 : localAnalysis.depth);
   const routeOrder = context.nextOrder();
   const normalizedSlots = normalizeLayoutSlots(route, {
     ...((fullPath ?? context.parentPath) === undefined
       ? {}
       : { parentPath: fullPath ?? context.parentPath }),
     inheritedParams: params,
+    parentScore: score,
+    parentDepth: pathDepth,
     nextOrder: context.nextOrder,
     pathOptions: context.pathOptions,
+    validatePaths: context.validatePaths,
   });
   const childParentPath = fullPath ?? context.parentPath;
   const children = (route.children ?? []).map((child) =>
@@ -58,8 +97,11 @@ function normalizeRoute(route: RouteDefinition, context: NormalizeContext): Norm
       parentId: route.id,
       ...(childParentPath === undefined ? {} : { parentPath: childParentPath }),
       inheritedParams: params,
+      parentScore: score,
+      parentDepth: pathDepth,
       nextOrder: context.nextOrder,
       pathOptions: context.pathOptions,
+      validatePaths: context.validatePaths,
     }),
   );
   const normalizedLayout = route.layout
@@ -79,7 +121,8 @@ function normalizeRoute(route: RouteDefinition, context: NormalizeContext): Norm
     ...(route.view === undefined ? {} : { view: route.view }),
     params,
     index: route.index === true,
-    score: fullPath ? scorePath(fullPath, route.index === true) : 0,
+    score,
+    pathDepth,
     order: routeOrder,
     route,
     ...(route.meta === undefined ? {} : { meta: route.meta }),
@@ -128,8 +171,11 @@ function normalizeSlotConfig(
       parentId: ownerRouteId,
       ...(context.parentPath === undefined ? {} : { parentPath: context.parentPath }),
       inheritedParams: context.inheritedParams,
+      parentScore: context.parentScore,
+      parentDepth: context.parentDepth,
       nextOrder: context.nextOrder,
       pathOptions: context.pathOptions,
+      validatePaths: context.validatePaths,
       slotOwnerId: ownerRouteId,
       slotName,
     }),
@@ -180,18 +226,19 @@ function isSlotConfigObject(slot: RouteSlotDefinition): slot is RouteSlotConfig 
   );
 }
 
-function getOwnRouteParams(route: RouteDefinition): readonly RouteParamDefinition[] {
+function analyzeRouteLocalPath(route: RouteDefinition): AnalyzedPathPattern {
   if (!route.path || route.index) {
-    return [];
+    return EMPTY_PATH_ANALYSIS;
   }
 
-  return getPathParams(route.path.startsWith('/') ? route.path : `/${route.path}`);
+  return analyzePathPattern(route.path.startsWith('/') ? route.path : `/${route.path}`);
 }
 
 function resolveFullPath(
   route: RouteDefinition,
   parentPath: string | undefined,
   pathOptions: RouterPathOptions,
+  validatePath: boolean,
 ): string | undefined {
   if (route.index) {
     return parentPath ?? '/';
@@ -202,7 +249,10 @@ function resolveFullPath(
   }
 
   const fullPath = resolveRoutePath(parentPath, route.path);
-  validatePathPattern(fullPath, pathOptions);
+
+  if (validatePath) {
+    createRouteUrlContract({ path: prunePathname(fullPath, pathOptions) }, { routeId: route.id });
+  }
 
   return prunePathname(fullPath, pathOptions);
 }
@@ -241,20 +291,4 @@ function mergeInheritedParams(
   }
 
   return params;
-}
-
-function scorePath(path: string, index: boolean): number {
-  const segmentScore = getPathTokens(path).reduce((score, segment) => {
-    if (segment.type === 'literal') {
-      return score + scoreLiteralSegments(segment.value ?? '');
-    }
-
-    return score + (segment.wildcard ? 1 : 3);
-  }, 0);
-
-  return segmentScore + (index ? 2 : 0);
-}
-
-function scoreLiteralSegments(value: string): number {
-  return value.split('/').filter(Boolean).length * 5;
 }

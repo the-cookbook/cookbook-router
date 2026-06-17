@@ -1,8 +1,10 @@
 import { parseHref } from '../history/memory-history';
 import { matchLocationResult, type MatchLocationResult } from '../matching/match-location';
-import type { RouterPathConstraints, RouterPathOptions } from '../path';
+import type { RouterPathConstraints } from '../path/constraints';
+import type { RouterPathOptions } from '../path/options';
 import type { NormalizedRoute, RouteMatch } from '../route-config/contracts';
-import type { RouterUrlOptions } from '../url-state';
+import type { RouterUrlOptions } from '../url-state/contracts';
+import type { RouteUrlContractStore } from '../url-state/route-url-contract-store';
 
 export interface RouterMatcherOptions {
   readonly routes: readonly NormalizedRoute[];
@@ -10,6 +12,7 @@ export interface RouterMatcherOptions {
   readonly pathOptions: RouterPathOptions;
   readonly pathConstraints?: RouterPathConstraints;
   readonly routerUrl?: RouterUrlOptions;
+  readonly routeUrlContracts?: RouteUrlContractStore;
 }
 
 export interface RouterMatcher {
@@ -29,6 +32,9 @@ export function createRouterMatcher(options: RouterMatcherOptions): RouterMatche
       ...(options.pathConstraints === undefined
         ? {}
         : { pathConstraints: options.pathConstraints }),
+      ...(options.routeUrlContracts === undefined
+        ? {}
+        : { routeUrlContracts: options.routeUrlContracts }),
     });
   }
 

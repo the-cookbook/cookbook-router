@@ -54,6 +54,26 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./hooks": {
+      "types": "./dist/hooks/index.d.ts",
+      "import": "./dist/hooks/index.js",
+      "require": "./dist/hooks/index.cjs"
+    },
+    "./links": {
+      "types": "./dist/links/index.d.ts",
+      "import": "./dist/links/index.js",
+      "require": "./dist/links/index.cjs"
+    },
+    "./outlets": {
+      "types": "./dist/outlets/index.d.ts",
+      "import": "./dist/outlets/index.js",
+      "require": "./dist/outlets/index.cjs"
+    },
+    "./provider": {
+      "types": "./dist/provider/index.d.ts",
+      "import": "./dist/provider/index.js",
+      "require": "./dist/provider/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "engines": {

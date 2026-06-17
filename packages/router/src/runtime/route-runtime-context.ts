@@ -1,10 +1,11 @@
 import { rankRoutes } from '../matching/rank-routes';
-import { normalizePathOptions } from '../path';
+import { registerPathConstraints } from '../path/constraints';
+import { normalizePathOptions } from '../path/options';
 import { getDefineRoutesOptions } from '../route-config/define-routes';
-import { normalizeRoutes } from '../route-config/normalize-routes';
-import { validateRoutes } from '../route-config/validate-routes';
+import { normalizeValidatedRoutes } from '../route-config/normalize-routes';
+import { validateRoutesWithContracts } from '../route-config/validate-routes';
 import { validateInterceptTargets } from '../rendering/resolve-intercepts';
-import { registerUrlPathConstraints } from '../url-state';
+import { createRouteUrlContractStore } from '../url-state/route-url-contract-store';
 import { createRouteLookup } from './create-route-lookup';
 import type { CreateRouterOptions } from './contracts';
 import { mergePathConstraints } from './path-constraints';
@@ -16,12 +17,21 @@ export function createRouteRuntimeContext(options: CreateRouterOptions) {
     definedRouteOptions?.pathConstraints,
     options.pathConstraints,
   );
-  registerUrlPathConstraints(pathConstraints);
+  registerPathConstraints(pathConstraints);
   const pathOptions = normalizePathOptions(options.pathOptions ?? definedRouteOptions?.pathOptions);
   const maxRedirectDepth = normalizeMaxRedirectDepth(options);
 
-  validateRoutes(options.routes, pathOptions);
-  const normalizedRoutes = normalizeRoutes(options.routes, pathOptions);
+  const validated = validateRoutesWithContracts(options.routes, {
+    pathOptions,
+    ...(pathConstraints === undefined ? {} : { pathConstraints }),
+    ...(options.url === undefined ? {} : { routerUrl: options.url }),
+  });
+  const normalizedRoutes = normalizeValidatedRoutes(options.routes, pathOptions);
+  const routeUrlContracts = createRouteUrlContractStore({
+    contracts: validated.contracts,
+    ...(pathConstraints === undefined ? {} : { pathConstraints }),
+    ...(options.url === undefined ? {} : { routerUrl: options.url }),
+  });
   validateInterceptTargets(normalizedRoutes);
 
   return {
@@ -31,5 +41,6 @@ export function createRouteRuntimeContext(options: CreateRouterOptions) {
     pathOptions,
     rankedRoutes: rankRoutes(normalizedRoutes),
     routeLookup: createRouteLookup(normalizedRoutes),
+    routeUrlContracts,
   };
 }

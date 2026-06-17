@@ -1,4 +1,4 @@
-import type { RouterPathOptions } from '../path';
+import type { RouterPathOptions } from '../path/options';
 import { parseRoutePathParams, type RouteUrlStateOptions } from '../url-state/route-url-state';
 import type {
   MatchedRoute,

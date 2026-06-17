@@ -16,7 +16,7 @@ import type {
   Router,
   RouterState,
 } from './contracts';
-import { type RouterUrlBuildOptions, type RouterUrlOptions } from '../url-state';
+import type { RouterUrlBuildOptions, RouterUrlOptions } from '../url-state/contracts';
 import { createRouteHref } from './create-href';
 import { normalizeNavigateTarget, resolveNavigationTarget } from './navigation-target';
 import { createScrollHistoryState } from './scroll-history-state';
@@ -55,6 +55,7 @@ export function createRouterRuntime(
     pathOptions,
     rankedRoutes,
     routeLookup,
+    routeUrlContracts,
   } = createRouteRuntimeContext(options);
   const matcher = createRouterMatcher({
     routes: normalizedRoutes,
@@ -62,6 +63,7 @@ export function createRouterRuntime(
     pathOptions,
     ...(pathConstraints === undefined ? {} : { pathConstraints }),
     ...(options.url === undefined ? {} : { routerUrl: options.url }),
+    routeUrlContracts,
   });
   const store = createRouterStateStore(createState(options.history.location, 'idle'));
   const blockerRegistry = createNavigationBlockerRegistry();
@@ -102,6 +104,7 @@ export function createRouterRuntime(
         ...(options.basename === undefined ? {} : { basename: options.basename }),
         ...(options.url === undefined ? {} : { routerUrl: options.url }),
         ...(pathConstraints === undefined ? {} : { pathConstraints }),
+        routeUrlContracts,
       });
     },
     resolve(routeOrOptions: string | NavigateOptions<string>, hrefOptions?: HrefOptions<string>) {
@@ -462,6 +465,7 @@ export function createRouterRuntime(
       ...(pathConstraints === undefined ? {} : { pathConstraints }),
       ...(options.url === undefined ? {} : { routerUrl: options.url }),
       matchHrefResult,
+      routeUrlContracts,
     });
     const transitionLocation = canonicalized.location;
     const nextMatch = canonicalized.match;
@@ -485,6 +489,7 @@ export function createRouterRuntime(
       const redirectHref = createRouteRedirectHref(routeRedirect, routeLookup, options.basename, {
         ...(options.url === undefined ? {} : { routerUrl: options.url }),
         ...(pathConstraints === undefined ? {} : { pathConstraints }),
+        routeUrlContracts,
       });
 
       if (isExternalHref(redirectHref)) {
@@ -531,12 +536,14 @@ export function createRouterRuntime(
       normalizedRoutes,
       options.basename,
       pathOptions,
+      routeUrlContracts,
     );
     const restoredSource = restorePreviousSource(
       transitionLocation.state,
       normalizedRoutes,
       options.basename,
       pathOptions,
+      routeUrlContracts,
     );
     const restoredIntercept = restoreInterceptFromState(
       transitionLocation.state,

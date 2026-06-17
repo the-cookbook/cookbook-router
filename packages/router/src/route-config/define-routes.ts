@@ -1,5 +1,6 @@
-import type { RouterPathConstraints, RouterPathOptions } from '../path';
-import { registerUrlPathConstraints } from '../url-state/register-url-path-constraints';
+import type { RouterPathConstraints } from '../path/constraints';
+import type { RouterPathOptions } from '../path/options';
+import { registerPathConstraints } from '../path/constraints';
 import { validateRoutes } from './validate-routes';
 import type { RouteDefinition } from './contracts';
 
@@ -32,7 +33,7 @@ export function defineRoutes<const Routes extends readonly RouteDefinition[]>(
   routes: Routes & readonly RouteDefinition[],
   options?: DefineRoutesOptions,
 ): Routes {
-  registerUrlPathConstraints(options?.pathConstraints);
+  registerPathConstraints(options?.pathConstraints);
   validateRoutes(routes, options?.pathOptions);
   setDefineRoutesOptions(routes, options ?? {});
 

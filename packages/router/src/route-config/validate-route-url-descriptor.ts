@@ -1,7 +1,7 @@
 import { createRouteUrlContract } from '../url-state/create-route-url-contract';
-import type { RouterPathConstraints } from '../path';
+import type { RouterPathConstraints } from '../path/constraints';
 import type { RouteDefinition } from '../route-config/contracts';
-import type { RouterUrlOptions } from '../url-state/contracts';
+import type { RouterRouteUrlContract, RouterUrlOptions } from '../url-state/contracts';
 
 interface ValidateRouteUrlDescriptorOptions {
   readonly route: RouteDefinition;
@@ -10,7 +10,9 @@ interface ValidateRouteUrlDescriptorOptions {
   readonly pathConstraints?: RouterPathConstraints;
 }
 
-export function validateRouteUrlDescriptor(options: ValidateRouteUrlDescriptorOptions): void {
+export function validateRouteUrlDescriptor(
+  options: ValidateRouteUrlDescriptorOptions,
+): RouterRouteUrlContract | undefined {
   validateRouterHashDescriptor(options.route);
 
   const hasUrlDescriptor =
@@ -20,10 +22,10 @@ export function validateRouteUrlDescriptor(options: ValidateRouteUrlDescriptorOp
     options.route.hash !== undefined;
 
   if (!hasUrlDescriptor) {
-    return;
+    return undefined;
   }
 
-  createRouteUrlContract(
+  return createRouteUrlContract(
     {
       ...(options.fullPath === undefined ? {} : { path: options.fullPath }),
       ...(options.route.search === undefined ? {} : { search: options.route.search }),

@@ -1,60 +1,54 @@
 import {
-  createConstraint as createPathConstraint,
-  getConstraint as getPathConstraint,
-  hasConstraint as hasPathConstraint,
-  unregisterConstraint as unregisterPathConstraint,
-  registerConstraint,
-} from '@cookbook/pathkit';
-import type { ConstraintValidation } from '@cookbook/pathkit';
+  createPathConstraint,
+  getPathConstraint,
+  hasPathConstraint,
+  registerPathConstraints as registerUrlKitPathConstraints,
+  resetPathConstraints as resetUrlKitPathConstraints,
+  unregisterPathConstraint as unregisterUrlKitPathConstraint,
+  type ConstraintValidation,
+} from '@cookbook/urlkit/router-runtime';
 
 /**
- * Re-exported path constraint helpers from `@cookbook/pathkit`.
+ * Re-exported URLKit path constraint helpers.
  *
  * Use `createPathConstraint` to author custom constraints, `hasPathConstraint` and
  * `getPathConstraint` for diagnostics, and `unregisterPathConstraint` in tests that need
  * to isolate global constraint registration.
  */
-export { createPathConstraint, getPathConstraint, hasPathConstraint, unregisterPathConstraint };
+export { createPathConstraint, getPathConstraint, hasPathConstraint };
 
-/**
- * Validation contract for a custom path constraint.
- */
+/** Validation contract for a custom path constraint. */
 export type RouterPathConstraint = ConstraintValidation;
 
-/**
- * Custom path constraints keyed by constraint name.
- */
+/** Custom path constraints keyed by constraint name. */
 export type RouterPathConstraints = Readonly<Record<string, RouterPathConstraint>>;
 
-export interface PathConstraintRegistry {
-  readonly clearCaches: () => void;
-}
-
-let registry: PathConstraintRegistry | null = null;
-
-export function setPathConstraintRegistry(next: PathConstraintRegistry | null): void {
-  registry = next;
-}
+let activePathConstraints: RouterPathConstraints | undefined;
 
 /**
- * Registers custom constraints with the underlying pathkit registry.
+ * Registers custom constraints with URLKit's path registry.
  *
- * Registration is global to the process, so tests that define temporary
- * constraints should unregister or isolate names. Caches are cleared after
- * registration so validation, matching, and compilation see the new behavior.
+ * Registration is global to the process. Re-registering a different constraint
+ * with the same name replaces it for contracts created afterwards; router-owned
+ * contract stores re-activate their constraint set before using cached contracts.
  */
 export function registerPathConstraints(constraints?: RouterPathConstraints): void {
-  if (!constraints) {
+  if (!constraints || activePathConstraints === constraints) {
     return;
   }
 
-  for (const [name, constraint] of Object.entries(constraints)) {
-    if (!name.trim()) {
-      throw new Error('Router path constraint names must be non-empty strings.');
-    }
+  registerUrlKitPathConstraints(constraints, { overwrite: true });
+  activePathConstraints = constraints;
+}
 
-    registerConstraint(name, constraint);
-  }
+export function resetPathConstraints(): void {
+  activePathConstraints = undefined;
+  resetUrlKitPathConstraints();
+}
 
-  registry?.clearCaches();
+export function unregisterPathConstraint(
+  ...args: Parameters<typeof unregisterUrlKitPathConstraint>
+): ReturnType<typeof unregisterUrlKitPathConstraint> {
+  activePathConstraints = undefined;
+  return unregisterUrlKitPathConstraint(...args);
 }
