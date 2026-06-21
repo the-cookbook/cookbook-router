@@ -2,7 +2,7 @@
   "name": "@cookbook/router-rspack-plugin",
   "version": "0.0.0",
   "description": "Rspack plugin for Cookbook Router generated route artifacts.",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": "The Cookbook",
   "homepage": "https://github.com/the-cookbook/cookbook-router#readme",
   "repository": {
