@@ -23,8 +23,8 @@ for (const packageName of packages) {
     failures.push(`${packageJson.name} must not be private.`);
   }
 
-  if (packageJson.license !== 'MIT') {
-    failures.push(`${packageJson.name} must declare the MIT license.`);
+  if (packageJson.license !== 'Apache-2.0') {
+    failures.push(`${packageJson.name} must declare the Apache-2.0 license.`);
   }
 
   if (packageJson.publishConfig?.access !== 'public') {
