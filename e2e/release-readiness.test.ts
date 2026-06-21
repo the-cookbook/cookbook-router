@@ -20,7 +20,7 @@ describe('production release readiness', () => {
       expect(rootExport.types).toBe('./dist/index.d.ts');
       expect(exports['./package.json']).toBe('./package.json');
       expect(packageJson.sideEffects).toBe(false);
-      expect(packageJson.license).toBe('MIT');
+      expect(packageJson.license).toBe('Apache-2.0');
       expect(packageJson.publishConfig).toEqual({ access: 'public' });
       expect(packageJson.repository).toEqual({
         type: 'git',
@@ -55,7 +55,7 @@ describe('production release readiness', () => {
   });
 
   it('release governance files are present', async () => {
-    await expect(readFile('LICENSE', 'utf8')).resolves.toContain('MIT License');
+    await expect(readFile('LICENSE', 'utf8')).resolves.toContain('Apache License');
     await expect(readFile('SECURITY.md', 'utf8')).resolves.toContain('Reporting a vulnerability');
     await expect(readFile('.github/workflows/ci.yml', 'utf8')).resolves.toContain(
       'Test packages with coverage',
