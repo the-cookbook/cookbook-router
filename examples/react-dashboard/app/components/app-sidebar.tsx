@@ -23,7 +23,7 @@ import {
 
 const data = {
   user: {
-    name: 'cookbook',
+    name: 'Cookbook',
     email: 'cookbook@example.com',
     avatar:
       'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Cookbook&eyes=shades&backgroundType=solid',

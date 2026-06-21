@@ -4,6 +4,18 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=22.22.2",
+    "pnpm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/the-cookbook/cookbook-router.git"
+  },
+  "bugs": {
+    "url": "https://github.com/the-cookbook/cookbook-router/issues"
+  },
+  "homepage": "https://github.com/the-cookbook/cookbook-router#readme",
   "scripts": {
     "build": "pnpm build:packages",
     "build:examples": "pnpm -r --filter './examples/*' build",
@@ -71,18 +83,6 @@
     "vite": "^8.0.16",
     "vitest": "^4.1.9"
   },
-  "engines": {
-    "node": ">=22.22.2",
-    "pnpm": ">=9.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/the-cookbook/cookbook-router.git"
-  },
-  "bugs": {
-    "url": "https://github.com/the-cookbook/cookbook-router/issues"
-  },
-  "homepage": "https://github.com/the-cookbook/cookbook-router#readme",
   "lint-staged": {
     "*.{js,jsx,ts,tsx,mjs,cjs}": [
       "eslint --max-warnings=0 --no-warn-ignored",
